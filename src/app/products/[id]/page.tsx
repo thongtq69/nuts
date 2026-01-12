@@ -5,11 +5,16 @@ import Product from '@/models/Product';
 import { IProduct } from '@/models/Product';
 
 export async function generateStaticParams() {
-    await dbConnect();
-    const products = await Product.find({}).select('_id id').lean();
-    return products.map((product: any) => ({
-        id: product.id || String(product._id),
-    }));
+    try {
+        await dbConnect();
+        const products = await Product.find({}).select('_id id').lean();
+        return products.map((product: any) => ({
+            id: product.id || String(product._id),
+        }));
+    } catch (error) {
+        console.warn('Database connection failed during build. Skipping static generation for products.', error);
+        return [];
+    }
 }
 
 async function getProduct(id: string) {
