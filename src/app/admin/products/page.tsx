@@ -3,6 +3,8 @@ import Product from '@/models/Product';
 import Link from 'next/link';
 import ProductListActions from '@/components/admin/ProductListActions';
 
+export const dynamic = 'force-dynamic';
+
 async function getProducts() {
     await dbConnect();
     const products = await Product.find({}).sort({ createdAt: -1 });

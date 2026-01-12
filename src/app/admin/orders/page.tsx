@@ -2,6 +2,8 @@ import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import User from '@/models/User';
 
+export const dynamic = 'force-dynamic';
+
 async function getOrders() {
     await dbConnect();
     // Populate user to get name/email if referenced
