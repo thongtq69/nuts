@@ -9,6 +9,8 @@ import FeaturesSection from '@/components/home/FeaturesSection';
 import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
 
+export const dynamic = 'force-dynamic';
+
 async function getProductsByTag(tag: string, limit = 4) {
   try {
     await dbConnect();

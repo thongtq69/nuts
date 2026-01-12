@@ -4,18 +4,7 @@ import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { IProduct } from '@/models/Product';
 
-export async function generateStaticParams() {
-    try {
-        await dbConnect();
-        const products = await Product.find({}).select('_id id').lean();
-        return products.map((product: any) => ({
-            id: product.id || String(product._id),
-        }));
-    } catch (error) {
-        console.warn('Database connection failed during build. Skipping static generation for products.', error);
-        return [];
-    }
-}
+export const dynamic = 'force-dynamic';
 
 async function getProduct(id: string) {
     await dbConnect();
