@@ -45,37 +45,6 @@ export default async function AdminDashboard() {
                     <p className="stat-value">{stats.totalRevenue.toLocaleString()}đ</p>
                 </div>
             </div>
-
-            <style jsx>{`
-                .stats-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
-                    margin-top: 20px;
-                }
-                .stat-card {
-                    background: #fff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                    border-left: 4px solid #3498db;
-                }
-                .stat-card h3 {
-                    margin: 0 0 10px 0;
-                    font-size: 14px;
-                    color: #7f8c8d;
-                    text-transform: uppercase;
-                }
-                .stat-value {
-                    font-size: 28px;
-                    font-weight: 700;
-                    color: #2c3e50;
-                    margin: 0;
-                }
-                .stat-card:nth-child(2) { border-left-color: #2ecc71; }
-                .stat-card:nth-child(3) { border-left-color: #f1c40f; }
-                .stat-card:nth-child(4) { border-left-color: #e74c3c; }
-            `}</style>
         </div>
     );
 }

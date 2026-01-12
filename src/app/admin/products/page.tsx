@@ -55,15 +55,6 @@ export default async function AdminProductsPage() {
                     </tbody>
                 </table>
             </div>
-
-            <style jsx>{`
-                .page-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-            `}</style>
         </div>
     );
 }
