@@ -31,7 +31,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
             <div className="container">
                 <div className="product-detail-layout">
                     <div className="gallery-section">
-                        <ProductGallery images={product.images} />
+                        <ProductGallery images={product.images || []} />
                     </div>
                     <div className="info-section">
                         <ProductInfo
