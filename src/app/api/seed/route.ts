@@ -29,6 +29,7 @@ export async function GET(request: Request) {
             currentPrice: priceValue, // Use the numeric value
             // Fix: Remove 'Rs.' explicitly and then parse. 'Rs. 400.00' -> ' 400.00' -> 400.00
             originalPrice: originalPrice ? parseFloat(originalPrice.replace('Rs.', '').replace(/[^0-9.]/g, '')) : 0,
+            tags: rest.tags || [], // Ensure tags are included
         }));
 
         await Product.insertMany(seedData);

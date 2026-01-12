@@ -6,46 +6,39 @@ import PromotionBanner from '@/components/home/PromotionBanner';
 import ProductSection from '@/components/home/ProductSection';
 import LargePromoBanner from '@/components/home/LargePromoBanner';
 import FeaturesSection from '@/components/home/FeaturesSection';
+import dbConnect from '@/lib/db';
+import Product, { IProduct } from '@/models/Product';
 
-// Mock Data matching index.html structure
-const bestSellers = [
-  { id: 1, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 2, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 3, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: 'red' as const },
-  { id: 4, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: 'red' as const },
-  { id: 5, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: 'green' as const, buttonColor: 'green' as const },
-  { id: 6, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: 'pink' as const, buttonColor: 'pink' as const, priceColor: 'pink' as const },
-];
+async function getProductsByTag(tag: string, limit = 4) {
+  try {
+    await dbConnect();
+    const products = await Product.find({ tags: tag }).limit(limit).lean();
+    return products.map((p: any) => ({
+      ...p,
+      id: p._id.toString(),
+      _id: p._id.toString()
+    })) as unknown as IProduct[];
+  } catch (error) {
+    console.error(`Error fetching products for tag ${tag}:`, error);
+    return [];
+  }
+}
 
-const newProducts = [
-  { id: 1, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 40.00', badgeColor: 'red' as const },
-  { id: 2, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 3, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 4, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 5, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 6, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-];
+export default async function Home() {
+  const bestSellers = await getProductsByTag('best-seller', 8);
+  const newProducts = await getProductsByTag('new', 8);
+  const promotionProducts = await getProductsByTag('promo', 8);
 
-const promotionProducts = [
-  { id: 1, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 40.00', badgeColor: 'red' as const },
-  { id: 2, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 3, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 4, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: 'red' as const },
-  { id: 5, image: '/assets/images/product1.jpg', name: 'Farmley Panchmeva', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-  { id: 6, image: '/assets/images/product2.jpg', name: 'Farmley Berry Mix', currentPrice: 'From Rs. 345.00', originalPrice: 'Rs. 400.00', badgeText: 'Save Rs. 55.00', badgeColor: '' as const },
-];
-
-export default function Home() {
   return (
     <main>
       <Header />
       <Navbar />
       <HeroSlider />
       <PromotionBanner />
-      <ProductSection title="Sản phẩm bán chạy" products={bestSellers} />
+      <ProductSection title="Sản phẩm bán chạy" products={bestSellers as any} />
       <LargePromoBanner />
-      <ProductSection title="Sản phẩm mới" products={newProducts} />
-      <ProductSection title="Khuyến mãi" products={promotionProducts} />
+      <ProductSection title="Sản phẩm mới" products={newProducts as any} />
+      <ProductSection title="Khuyến mãi" products={promotionProducts as any} />
       <FeaturesSection />
       <Footer />
     </main>

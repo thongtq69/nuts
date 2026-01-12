@@ -13,8 +13,11 @@ export interface IProduct {
     description?: string;
     images?: string[];
     category?: string;
+    tags?: string[];
     buttonColor?: string;
     priceColor?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 const ProductSchema: Schema<IProduct> = new Schema(
@@ -30,6 +33,7 @@ const ProductSchema: Schema<IProduct> = new Schema(
         description: { type: String },
         images: { type: [String] }, // Gallery images
         category: { type: String },
+        tags: { type: [String] }, // 'best-seller', 'new', 'promo'
         buttonColor: { type: String },
         priceColor: { type: String },
     },

@@ -2,13 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-const slides = [
-    { id: 1, image: '/assets/images/slide1.jpg', alt: 'Wholesome Indulgence - Farmley Date Bites' },
-    { id: 2, image: '/assets/images/slide1.jpg', alt: 'Banner 2' },
-    { id: 3, image: '/assets/images/slide1.jpg', alt: 'Banner 3' },
-    { id: 4, image: '/assets/images/slide1.jpg', alt: 'Banner 4' },
-    { id: 5, image: '/assets/images/slide1.jpg', alt: 'Banner 5' },
-];
+import { heroSlides } from '@/data/banners';
+
+const slides = heroSlides;
 
 export default function HeroSlider() {
     const [currentSlide, setCurrentSlide] = useState(0);

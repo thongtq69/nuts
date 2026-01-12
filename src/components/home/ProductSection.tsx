@@ -2,15 +2,15 @@ import React from 'react';
 import ProductCard from '../common/ProductCard';
 
 interface Product {
-    id: number;
+    id: string | number;
     image: string;
     name: string;
-    currentPrice: string;
-    originalPrice: string;
-    badgeText: string;
-    badgeColor?: 'red' | 'green' | 'pink' | '';
-    buttonColor?: 'green' | 'pink' | '';
-    priceColor?: 'pink' | '';
+    currentPrice: string | number;
+    originalPrice?: string | number;
+    badgeText?: string;
+    badgeColor?: string;
+    buttonColor?: string;
+    priceColor?: string;
 }
 
 interface ProductSectionProps {
