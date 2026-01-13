@@ -7,9 +7,10 @@ interface User {
     _id: string;
     name: string;
     email: string;
-    role: 'user' | 'admin';
+    role: 'user' | 'sale' | 'admin';
     phone?: string;
     address?: string;
+    saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
 }
 
 interface AuthContextType {
@@ -18,6 +19,8 @@ interface AuthContextType {
     login: (userData: User) => void;
     logout: () => void;
     checkUser: () => Promise<void>;
+    isAdmin: boolean;
+    isSale: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,19 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = (userData: User) => {
         setUser(userData);
-        checkUser(); // Re-verify to ensure consistency
+        checkUser();
     };
 
     const logout = async () => {
         try {
-            // Optional: call logout API to clear cookie
-            // For now, we assume cookie clearance is handled or we just clear client state
-            // Better to have a logout route
-            document.cookie = 'token=; Max-Age=0; path=/;'; // Simple client-side clear for now if not httpOnly, but better to use an API endpoint
-            // Since it is httpOnly, we CANNOT clear it from client JS directly.
-            // We MUST create a logout route. 
-            await fetch('/api/auth/logout', { method: 'POST' }); // We will implement this
-
+            await fetch('/api/auth/logout', { method: 'POST' });
         } catch (e) {
             console.error('Logout error', e);
         }
@@ -70,8 +66,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push('/login');
     };
 
+    const isAdmin = user?.role === 'admin';
+    const isSale = user?.role === 'sale';
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, checkUser }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, checkUser, isAdmin, isSale }}>
             {children}
         </AuthContext.Provider>
     );

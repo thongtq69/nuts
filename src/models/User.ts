@@ -4,12 +4,20 @@ export interface IUser {
     _id?: string;
     name: string;
     email: string;
-    password?: string; // Optional for social login users in future
+    password?: string;
     phone?: string;
-    role: 'user' | 'admin';
+    role: 'user' | 'sale' | 'admin';
     address?: string;
     city?: string;
     district?: string;
+    // Sale application fields
+    saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
+    saleAppliedAt?: Date;
+    saleApprovedAt?: Date;
+    saleRejectedAt?: Date;
+    saleRejectionReason?: string;
+    // Welcome voucher tracking
+    welcomeVoucherIssued?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -20,10 +28,22 @@ const UserSchema: Schema<IUser> = new Schema(
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true },
         phone: { type: String },
-        role: { type: String, enum: ['user', 'admin'], default: 'user' },
+        role: { type: String, enum: ['user', 'sale', 'admin'], default: 'user' },
         address: { type: String },
         city: { type: String },
         district: { type: String },
+        // Sale application fields
+        saleApplicationStatus: {
+            type: String,
+            enum: ['pending', 'approved', 'rejected', null],
+            default: null
+        },
+        saleAppliedAt: { type: Date },
+        saleApprovedAt: { type: Date },
+        saleRejectedAt: { type: Date },
+        saleRejectionReason: { type: String },
+        // Welcome voucher tracking
+        welcomeVoucherIssued: { type: Boolean, default: false },
     },
     {
         timestamps: true,

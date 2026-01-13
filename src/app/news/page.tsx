@@ -1,9 +1,6 @@
 'use client';
 
 import React from 'react';
-import Header from '@/components/layout/Header';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 
@@ -12,30 +9,49 @@ const newsItems = [
         id: 1,
         title: '5 Lợi ích tuyệt vời của hạt Macca',
         excerpt: 'Hạt Macca được mệnh danh là hoàng hậu của các loại hạt khô bởi giá trị dinh dưỡng và hương vị thơm ngon...',
-        image: '/assets/images/product1.jpg', // Placeholder
+        image: '/assets/images/product1.jpg',
         date: '12/01/2026'
     },
     {
         id: 2,
         title: 'Cách làm sữa hạt điều tại nhà đơn giản',
         excerpt: 'Sữa hạt điều là thức uống dinh dưỡng, dễ làm và phù hợp cho cả gia đình. Cùng xem công thức nhé...',
-        image: '/assets/images/product2.jpg', // Placeholder
+        image: '/assets/images/product2.jpg',
         date: '10/01/2026'
     },
     {
         id: 3,
         title: 'Chương trình khuyến mãi Tết 2026',
         excerpt: 'Đón Tết sang - Nhận ngàn quà tặng. Khám phá ngay các combo quà Tết ý nghĩa từ Go Nuts...',
-        image: '/assets/images/promotion.png', // Placeholder
+        image: '/assets/images/promotion.png',
         date: '05/01/2026'
+    },
+    {
+        id: 4,
+        title: 'Bí quyết bảo quản hạt dinh dưỡng đúng cách',
+        excerpt: 'Để giữ được hương vị và dinh dưỡng của hạt, bạn cần biết cách bảo quản đúng. Hãy cùng tìm hiểu...',
+        image: '/assets/images/product3.jpg',
+        date: '03/01/2026'
+    },
+    {
+        id: 5,
+        title: 'Tại sao nên ăn hạt mỗi ngày?',
+        excerpt: 'Hạt dinh dưỡng chứa nhiều vitamin, khoáng chất và chất chống oxy hóa tốt cho sức khỏe...',
+        image: '/assets/images/product4.jpg',
+        date: '28/12/2025'
+    },
+    {
+        id: 6,
+        title: 'Công thức granola homemade',
+        excerpt: 'Tự làm granola tại nhà vừa ngon vừa sạch với nguyên liệu từ Go Nuts. Xem ngay công thức...',
+        image: '/assets/images/product5.jpg',
+        date: '25/12/2025'
     }
 ];
 
 export default function NewsPage() {
     return (
-        <main>
-            <Header />
-            <Navbar />
+        <>
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Tin tức' }]} />
 
             <div className="container">
@@ -59,80 +75,6 @@ export default function NewsPage() {
                     ))}
                 </div>
             </div>
-
-            <Footer />
-
-            <style jsx>{`
-        .page-title {
-            margin-bottom: 30px;
-            font-size: 28px;
-            font-weight: 700;
-        }
-        .news-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            margin-bottom: 80px;
-        }
-        .news-card {
-            border: 1px solid #eee;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: box-shadow 0.2s;
-        }
-        .news-card:hover {
-            box-shadow: var(--shadow-md);
-        }
-        .news-image {
-            height: 200px;
-            background: #f5f5f5;
-        }
-        .news-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .news-content {
-            padding: 20px;
-        }
-        .news-date {
-            font-size: 13px;
-            color: #999;
-            margin-bottom: 10px;
-        }
-        .news-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            line-height: 1.4;
-            color: var(--color-text-dark);
-        }
-        .news-title:hover {
-            color: var(--color-primary-brown);
-        }
-        .news-excerpt {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        .read-more {
-            font-size: 14px;
-            color: var(--color-primary-brown);
-            font-weight: 600;
-        }
-
-        @media (max-width: 992px) {
-            .news-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        @media (max-width: 576px) {
-            .news-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-      `}</style>
-        </main>
+        </>
     );
 }

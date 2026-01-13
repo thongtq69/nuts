@@ -8,6 +8,17 @@ export default function AdminSidebar() {
 
     const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
+    const menuItems = [
+        { href: '/admin', label: 'Dashboard', exact: true },
+        { href: '/admin/products', label: 'Sản phẩm' },
+        { href: '/admin/orders', label: 'Đơn hàng' },
+        { href: '/admin/users', label: 'Người dùng' },
+        { href: '/admin/banners', label: 'Banner' },
+        { href: '/admin/blogs', label: 'Bài viết' },
+        { href: '/admin/packages', label: 'Gói VIP' },
+        { href: '/admin/vouchers', label: 'Voucher' },
+    ];
+
     return (
         <aside className="admin-sidebar">
             <div className="sidebar-header">
@@ -15,21 +26,17 @@ export default function AdminSidebar() {
             </div>
             <nav className="sidebar-nav">
                 <ul>
-                    <li>
-                        <Link href="/admin" className={pathname === '/admin' ? 'active' : ''}>
-                            Dashboard
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/admin/products" className={isActive('/admin/products') ? 'active' : ''}>
-                            Sản phẩm
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/admin/orders" className={isActive('/admin/orders') ? 'active' : ''}>
-                            Đơn hàng
-                        </Link>
-                    </li>
+                    {menuItems.map((item) => (
+                        <li key={item.href}>
+                            <Link
+                                href={item.href}
+                                className={item.exact ? (pathname === item.href ? 'active' : '') : (isActive(item.href) ? 'active' : '')}
+                            >
+                                {item.label}
+                            </Link>
+                        </li>
+                    ))}
+                    <li className="separator"></li>
                     <li>
                         <Link href="/" target="_blank">
                             Xem trang chủ
@@ -37,41 +44,6 @@ export default function AdminSidebar() {
                     </li>
                 </ul>
             </nav>
-            <style jsx>{`
-                .admin-sidebar {
-                    width: 250px;
-                    background: #2c3e50;
-                    color: white;
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                }
-                .sidebar-header {
-                    padding: 20px;
-                    border-bottom: 1px solid #34495e;
-                }
-                .sidebar-header h2 {
-                    margin: 0;
-                    font-size: 20px;
-                }
-                .sidebar-nav ul {
-                    list-style: none;
-                    padding: 0;
-                    margin: 0;
-                }
-                .sidebar-nav li a {
-                    display: block;
-                    padding: 15px 20px;
-                    color: #ecf0f1;
-                    text-decoration: none;
-                    border-bottom: 1px solid #34495e;
-                    transition: background 0.2s;
-                }
-                .sidebar-nav li a:hover, .sidebar-nav li a.active {
-                    background: #34495e;
-                    color: #fff;
-                }
-            `}</style>
         </aside>
     );
 }

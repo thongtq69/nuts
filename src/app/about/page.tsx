@@ -1,21 +1,16 @@
 'use client';
 
 import React from 'react';
-import Header from '@/components/layout/Header';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import FeaturesSection from '@/components/home/FeaturesSection';
 
 export default function AboutPage() {
     return (
-        <main>
-            <Header />
-            <Navbar />
+        <>
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Về chúng tôi' }]} />
 
             <div className="container">
-                <h1 className="page-title">Về Go Nuts</h1>
+                <h1 className="page-title center">Về Go Nuts</h1>
 
                 <div className="about-content">
                     <div className="about-section">
@@ -62,103 +57,6 @@ export default function AboutPage() {
 
                 <FeaturesSection />
             </div>
-
-            <Footer />
-
-            <style jsx>{`
-        .page-title {
-            margin-bottom: 30px;
-            font-size: 32px;
-            font-weight: 700;
-            text-align: center;
-        }
-        .about-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            margin-bottom: 80px;
-            align-items: center;
-        }
-        .lead-text {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--color-primary-brown);
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        .about-section p {
-            margin-bottom: 20px;
-            color: #555;
-            line-height: 1.6;
-        }
-        .about-image img {
-            width: 100%;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin: 40px 0;
-            background: #f9f9f9;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .stat-number {
-            display: block;
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--color-primary-brown);
-            margin-bottom: 5px;
-        }
-        .stat-label {
-            font-size: 13px;
-            color: #666;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        h2 {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        .values-list {
-            list-style: none;
-        }
-        .values-list li {
-            position: relative;
-            padding-left: 25px;
-            margin-bottom: 12px;
-            color: #555;
-        }
-        .values-list li::before {
-            content: '•';
-            color: var(--color-primary-brown);
-            font-size: 24px;
-            position: absolute;
-            left: 0;
-            top: -5px;
-        }
-
-        @media (max-width: 992px) {
-            .about-content {
-                grid-template-columns: 1fr;
-                gap: 40px;
-            }
-            .about-image {
-                order: -1;
-            }
-        }
-        @media (max-width: 576px) {
-            .stats-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-      `}</style>
-        </main>
+        </>
     );
 }

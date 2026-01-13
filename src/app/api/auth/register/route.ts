@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
+import UserVoucher from '@/models/UserVoucher';
 import bcrypt from 'bcryptjs';
+
+// Generate unique voucher code
+function generateVoucherCode(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'WELCOME';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
 
 export async function POST(req: Request) {
     try {
@@ -32,14 +43,34 @@ export async function POST(req: Request) {
             email,
             password: hashedPassword,
             phone,
+            welcomeVoucherIssued: false,
         });
 
         if (user) {
+            // Create welcome voucher for new user
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30); // 30 days validity
+
+            await UserVoucher.create({
+                userId: user._id,
+                code: generateVoucherCode(),
+                discountType: 'fixed',
+                discountValue: 50000, // 50,000 VND
+                maxDiscount: 50000,
+                minOrderValue: 300000, // Minimum order 300,000 VND
+                expiresAt,
+                isUsed: false,
+            });
+
+            // Mark welcome voucher as issued
+            await User.findByIdAndUpdate(user._id, { welcomeVoucherIssued: true });
+
             return NextResponse.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                message: 'Đăng ký thành công! Bạn đã nhận được voucher 50.000đ cho đơn hàng đầu tiên từ 300.000đ.'
             }, { status: 201 });
         } else {
             return NextResponse.json(
