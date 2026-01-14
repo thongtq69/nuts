@@ -18,6 +18,13 @@ export interface IUser {
     saleRejectionReason?: string;
     // Welcome voucher tracking
     welcomeVoucherIssued?: boolean;
+
+    // Affiliate Marketing Fields
+    referralCode?: string;
+    walletBalance?: number;
+    totalCommission?: number;
+    referrer?: Schema.Types.ObjectId; // Who referred this user
+
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -44,6 +51,12 @@ const UserSchema: Schema<IUser> = new Schema(
         saleRejectionReason: { type: String },
         // Welcome voucher tracking
         welcomeVoucherIssued: { type: Boolean, default: false },
+
+        // Affiliate Marketing Fields
+        referralCode: { type: String, unique: true, sparse: true },
+        walletBalance: { type: Number, default: 0 },
+        totalCommission: { type: Number, default: 0 }, // Lifetime earnings
+        referrer: { type: Schema.Types.ObjectId, ref: 'User' }, // Who referred this user
     },
     {
         timestamps: true,

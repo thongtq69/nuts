@@ -22,6 +22,14 @@ export async function POST(
         user.role = 'sale';
         user.saleApplicationStatus = 'approved';
         user.saleApprovedAt = new Date();
+
+        // Generate Referal Code if not exists
+        if (!user.referralCode) {
+            // Generate GN + 6 random alphanumeric characters
+            const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            user.referralCode = `GN${randomCode}`;
+        }
+
         await user.save();
 
         return NextResponse.json({ message: 'Sale application approved', user });

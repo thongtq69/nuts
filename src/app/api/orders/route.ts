@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
+import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
@@ -23,10 +24,35 @@ export async function POST(req: Request) {
         await dbConnect();
         const body = await req.json();
         const userId = await getUserId();
+        const cookieStore = await cookies();
+
+        // Affiliate Logic
+        const refCode = cookieStore.get('gonuts_ref')?.value;
+        let referrerId = undefined;
+        let commissionAmount = 0;
+        let commissionStatus = 'pending';
+
+        if (refCode) {
+            const referrerUser = await User.findOne({ referralCode: refCode });
+            if (referrerUser && referrerUser._id.toString() !== userId) { // Prevent self-referral
+                referrerId = referrerUser._id;
+                // Calculate Commission: 10% of Subtotal (excluding shipping)
+                // Assuming body.totalAmount includes shipping, we might need pre-shipping total.
+                // For simplicity, let's use (totalAmount - shippingFee) * 0.10
+
+                const subtotal = body.totalAmount - (body.shippingFee || 0);
+                if (subtotal > 0) {
+                    commissionAmount = Math.round(subtotal * 0.10);
+                }
+            }
+        }
 
         const order = await Order.create({
             ...body,
-            user: userId || undefined, // undefined if guest, though likely we want to force login or handle guest checkout
+            user: userId || undefined,
+            referrer: referrerId,
+            commissionAmount,
+            commissionStatus,
         });
 
         return NextResponse.json(order, { status: 201 });

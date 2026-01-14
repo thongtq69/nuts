@@ -1,146 +1,171 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Breadcrumb from '@/components/common/Breadcrumb';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
-export default function SaleAgentPage() {
+interface AgentStats {
+    referralCode: string;
+    walletBalance: number;
+    totalCommission: number;
+    totalReferrals: number; // Count of orders
+    recentOrders: any[];
+}
+
+export default function AgentDashboard() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
-    const [applying, setApplying] = useState(false);
-    const [status, setStatus] = useState<string | null>(null);
+    const [stats, setStats] = useState<AgentStats | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user) {
-            setStatus(user.saleApplicationStatus || null);
-        }
-    }, [user]);
-
-    const handleApply = async () => {
-        if (!user) {
+        if (!authLoading && !user) {
             router.push('/login');
             return;
         }
+        if (!authLoading && user && user.role !== 'sale') {
+            router.push('/');
+            return;
+        }
 
-        setApplying(true);
+        if (user) {
+            fetchAgentStats();
+        }
+    }, [user, authLoading, router]);
+
+    const fetchAgentStats = async () => {
         try {
-            const res = await fetch('/api/auth/apply-sale', { method: 'POST' });
-            const data = await res.json();
+            // In a real app, create a dedicated endpoint /api/agent/stats
+            // For now, we mock/derive from user object and maybe fetch orders?
+            // Let's create a dedicated API route for this to be clean.
+            const res = await fetch('/api/agent/stats');
             if (res.ok) {
-                setStatus('pending');
-                alert('Đăng ký thành công! Chúng tôi sẽ xem xét và phản hồi sớm nhất.');
-            } else {
-                alert(data.message || 'Có lỗi xảy ra');
+                const data = await res.json();
+                setStats(data);
             }
         } catch (error) {
-            alert('Có lỗi xảy ra, vui lòng thử lại sau.');
+            console.error('Error fetching stats:', error);
         } finally {
-            setApplying(false);
+            setLoading(false);
         }
     };
 
-    const benefits = [
-        {
-            icon: '💰',
-            title: 'Chiết khấu hấp dẫn',
-            description: 'Nhận chiết khấu lên đến 30% cho mỗi đơn hàng thành công'
-        },
-        {
-            icon: '🎁',
-            title: 'Voucher độc quyền',
-            description: 'Nhận voucher giảm giá đặc biệt dành riêng cho đại lý'
-        },
-        {
-            icon: '📦',
-            title: 'Hỗ trợ kho hàng',
-            description: 'Hỗ trợ ship hàng nhanh chóng từ kho gần nhất'
-        },
-        {
-            icon: '📈',
-            title: 'Hoa hồng theo cấp',
-            description: 'Hoa hồng tăng dần theo doanh số của bạn'
-        },
-        {
-            icon: '🎓',
-            title: 'Đào tạo miễn phí',
-            description: 'Được đào tạo về sản phẩm và kỹ năng bán hàng'
-        },
-        {
-            icon: '🤝',
-            title: 'Hỗ trợ 24/7',
-            description: 'Đội ngũ hỗ trợ luôn sẵn sàng giúp đỡ bạn'
+    const copyLink = () => {
+        if (stats?.referralCode) {
+            const link = `${window.location.origin}?ref=${stats.referralCode}`;
+            navigator.clipboard.writeText(link);
+            alert('Đã sao chép link giới thiệu!');
         }
-    ];
+    };
+
+    if (authLoading || loading) return <div className="p-8 text-center">Đang tải...</div>;
 
     return (
-        <>
-            <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Đăng ký Đại lý' }]} />
+        <div className="container mx-auto px-4 py-8">
+            <h1 className="text-2xl font-bold mb-6">Dành cho Đại lý</h1>
 
-            <div className="container">
-                <div className="agent-page">
-                    <div className="agent-hero">
-                        <h1>Trở thành Đại lý Go Nuts</h1>
-                        <p>Kinh doanh cùng Go Nuts - Nhận thu nhập hấp dẫn từ việc bán các sản phẩm hạt dinh dưỡng chất lượng cao</p>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h3 className="text-gray-500 text-sm font-medium">Số dư ví</h3>
+                    <p className="text-2xl font-bold text-green-600">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats?.walletBalance || 0)}
+                    </p>
+                    <button className="mt-4 text-sm text-green-700 font-medium hover:underline">
+                        Yêu cầu rút tiền
+                    </button>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h3 className="text-gray-500 text-sm font-medium">Tổng thu nhập</h3>
+                    <p className="text-2xl font-bold text-blue-600">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats?.totalCommission || 0)}
+                    </p>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <h3 className="text-gray-500 text-sm font-medium">Đơn hàng giới thiệu</h3>
+                    <p className="text-2xl font-bold text-orange-600">{stats?.totalReferrals || 0}</p>
+                </div>
+            </div>
+
+            {/* Tools */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-8">
+                <h2 className="text-lg font-bold mb-4">Công cụ tiếp thị</h2>
+                <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-50 p-4 rounded-md">
+                    <div className="flex-1">
+                        <label className="block text-xs text-gray-500 mb-1">Mã giới thiệu của bạn</label>
+                        <div className="font-mono font-bold text-lg">{stats?.referralCode}</div>
                     </div>
-
-                    <div className="benefits-grid">
-                        {benefits.map((benefit, index) => (
-                            <div key={index} className="benefit-card">
-                                <div className="benefit-icon">{benefit.icon}</div>
-                                <h3>{benefit.title}</h3>
-                                <p>{benefit.description}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="apply-section">
-                        {!user ? (
-                            <>
-                                <h2>Bắt đầu ngay hôm nay</h2>
-                                <p>Đăng nhập hoặc đăng ký tài khoản để trở thành đại lý Go Nuts</p>
-                                <Link href="/login" className="btn-apply">Đăng nhập / Đăng ký</Link>
-                            </>
-                        ) : user.role === 'sale' ? (
-                            <>
-                                <h2>🎉 Chào mừng Đại lý!</h2>
-                                <p>Bạn đã là đại lý của Go Nuts. Hãy tiếp tục bán hàng và nhận hoa hồng!</p>
-                                <div className="application-status approved">Đã là đại lý</div>
-                            </>
-                        ) : user.role === 'admin' ? (
-                            <>
-                                <h2>Bạn là Admin</h2>
-                                <p>Bạn đang đăng nhập với tài khoản Admin.</p>
-                            </>
-                        ) : status === 'pending' ? (
-                            <>
-                                <h2>Đơn đăng ký đang được xử lý</h2>
-                                <p>Chúng tôi đã nhận được đơn đăng ký của bạn và đang xem xét. Vui lòng chờ trong 1-3 ngày làm việc.</p>
-                                <div className="application-status pending">Đang chờ xét duyệt</div>
-                            </>
-                        ) : status === 'rejected' ? (
-                            <>
-                                <h2>Đơn đăng ký không được duyệt</h2>
-                                <p>Rất tiếc, đơn đăng ký đại lý của bạn chưa được phê duyệt. Bạn có thể liên hệ với chúng tôi để biết thêm chi tiết.</p>
-                                <div className="application-status rejected">Không được duyệt</div>
-                            </>
-                        ) : (
-                            <>
-                                <h2>Đăng ký trở thành Đại lý</h2>
-                                <p>Bấm nút bên dưới để gửi đơn đăng ký. Chúng tôi sẽ liên hệ với bạn sớm nhất.</p>
-                                <button
-                                    className="btn-apply"
-                                    onClick={handleApply}
-                                    disabled={applying}
-                                >
-                                    {applying ? 'Đang gửi...' : 'Đăng ký ngay'}
-                                </button>
-                            </>
-                        )}
+                    <div className="flex-1 w-full">
+                        <label className="block text-xs text-gray-500 mb-1">Link giới thiệu</label>
+                        <div className="flex">
+                            <input
+                                type="text"
+                                readOnly
+                                value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${stats?.referralCode}`}
+                                className="flex-1 p-2 text-sm border border-gray-300 rounded-l-md bg-white focus:outline-none"
+                            />
+                            <button
+                                onClick={copyLink}
+                                className="bg-blue-600 text-white px-4 py-2 text-sm rounded-r-md hover:bg-blue-700 transition-colors"
+                            >
+                                Sao chép
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </>
+
+            {/* Recent History */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                    <h2 className="text-lg font-bold">Lịch sử giới thiệu</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-gray-50 text-gray-500 font-medium">
+                            <tr>
+                                <th className="px-6 py-3">Mã đơn</th>
+                                <th className="px-6 py-3">Ngày</th>
+                                <th className="px-6 py-3">Giá trị đơn</th>
+                                <th className="px-6 py-3">Hoa hồng (10%)</th>
+                                <th className="px-6 py-3">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {stats?.recentOrders?.length ? (
+                                stats.recentOrders.map((order: any) => (
+                                    <tr key={order._id}>
+                                        <td className="px-6 py-4 font-medium">#{order._id.slice(-6).toUpperCase()}</td>
+                                        <td className="px-6 py-4">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
+                                        <td className="px-6 py-4">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount)}</td>
+                                        <td className="px-6 py-4 font-bold text-green-600">
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.commissionAmount)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${order.commissionStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                                    order.commissionStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                        'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                {order.commissionStatus === 'approved' ? 'Đã nhận' :
+                                                    order.commissionStatus === 'cancelled' ? 'Đã hủy' : 'Chờ duyệt'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                        Chưa có đơn hàng giới thiệu nào.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     );
 }

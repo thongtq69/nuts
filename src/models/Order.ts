@@ -22,6 +22,12 @@ export interface IOrder {
     totalAmount: number;
     status: string; // 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
     note?: string;
+
+    // Affiliate Marketing Fields
+    referrer?: mongoose.Types.ObjectId;
+    commissionAmount?: number;
+    commissionStatus?: 'pending' | 'approved' | 'cancelled';
+
     createdAt?: Date;
 }
 
@@ -50,6 +56,15 @@ const OrderSchema: Schema<IOrder> = new Schema(
         totalAmount: { type: Number, required: true },
         status: { type: String, default: 'pending' },
         note: { type: String },
+
+        // Affiliate Marketing Fields
+        referrer: { type: Schema.Types.ObjectId, ref: 'User' },
+        commissionAmount: { type: Number, default: 0 },
+        commissionStatus: {
+            type: String,
+            enum: ['pending', 'approved', 'cancelled'],
+            default: 'pending'
+        },
     },
     {
         timestamps: true,
