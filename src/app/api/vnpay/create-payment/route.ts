@@ -25,6 +25,18 @@ export async function POST(req: NextRequest) {
         const userId = await getUserId();
         const cookieStore = await cookies();
 
+        // Validate environment variables
+        if (!process.env.VNPAY_TMN_CODE || !process.env.VNPAY_HASH_SECRET) {
+            console.error('VNPay config missing:', {
+                hasTmnCode: !!process.env.VNPAY_TMN_CODE,
+                hasHashSecret: !!process.env.VNPAY_HASH_SECRET
+            });
+            return NextResponse.json(
+                { message: 'Cấu hình VNPay chưa đầy đủ' },
+                { status: 500 }
+            );
+        }
+
         // Affiliate Logic
         const refCode = cookieStore.get('gonuts_ref')?.value;
         let referrerId = undefined;
@@ -53,6 +65,8 @@ export async function POST(req: NextRequest) {
             status: 'pending',
         });
 
+        console.log('Order created:', order._id);
+
         // Get client IP
         const forwarded = req.headers.get('x-forwarded-for');
         const ip = forwarded ? forwarded.split(',')[0] : '127.0.0.1';
@@ -66,6 +80,8 @@ export async function POST(req: NextRequest) {
             locale: 'vn',
         });
 
+        console.log('Payment URL created:', paymentUrl.substring(0, 100) + '...');
+
         return NextResponse.json({ 
             success: true,
             paymentUrl,
@@ -74,7 +90,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         console.error('VNPay create payment error:', error);
         return NextResponse.json(
-            { message: 'Lỗi khi tạo thanh toán VNPay' },
+            { message: 'Lỗi khi tạo thanh toán VNPay', error: String(error) },
             { status: 500 }
         );
     }

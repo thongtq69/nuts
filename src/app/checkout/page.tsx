@@ -85,12 +85,19 @@ export default function CheckoutPage() {
                     body: JSON.stringify(orderData),
                 });
 
+                const data = await res.json();
+                
                 if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.message || 'Tạo thanh toán thất bại');
+                    console.error('VNPay error:', data);
+                    throw new Error(data.message || 'Tạo thanh toán thất bại');
                 }
 
-                const data = await res.json();
+                if (!data.paymentUrl) {
+                    console.error('No payment URL returned:', data);
+                    throw new Error('Không nhận được URL thanh toán từ VNPay');
+                }
+
+                console.log('Redirecting to VNPay:', data.paymentUrl);
                 
                 // Redirect to VNPay payment page
                 window.location.href = data.paymentUrl;
