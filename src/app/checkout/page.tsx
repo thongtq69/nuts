@@ -26,6 +26,7 @@ export default function CheckoutPage() {
     const total = subtotal + shippingFee;
 
     const [paymentMethod, setPaymentMethod] = useState('cod');
+    const [isProcessing, setIsProcessing] = useState(false);
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
@@ -50,7 +51,11 @@ export default function CheckoutPage() {
     }, [user]);
 
     const handlePlaceOrder = async () => {
+        if (isProcessing) return;
+        
         try {
+            setIsProcessing(true);
+
             const orderData = {
                 items: cartItems.map(item => ({
                     productId: item.id,
@@ -69,8 +74,30 @@ export default function CheckoutPage() {
                 paymentMethod,
                 shippingFee,
                 totalAmount: total,
+                note: formData.note,
             };
 
+            // Handle VNPay payment
+            if (paymentMethod === 'vnpay') {
+                const res = await fetch('/api/vnpay/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData),
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || 'Tạo thanh toán thất bại');
+                }
+
+                const data = await res.json();
+                
+                // Redirect to VNPay payment page
+                window.location.href = data.paymentUrl;
+                return;
+            }
+
+            // Handle COD and Banking
             const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -87,6 +114,8 @@ export default function CheckoutPage() {
         } catch (error: any) {
             console.error(error);
             alert(error.message || 'Đặt hàng thất bại');
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -188,7 +217,17 @@ export default function CheckoutPage() {
                                     checked={paymentMethod === 'cod'}
                                     onChange={() => setPaymentMethod('cod')}
                                 />
-                                <span>Thanh toán khi nhận hàng (COD)</span>
+                                <span>💵 Thanh toán khi nhận hàng (COD)</span>
+                            </label>
+                            <label className={`payment-option ${paymentMethod === 'vnpay' ? 'active' : ''}`}>
+                                <input
+                                    type="radio"
+                                    name="payment"
+                                    value="vnpay"
+                                    checked={paymentMethod === 'vnpay'}
+                                    onChange={() => setPaymentMethod('vnpay')}
+                                />
+                                <span>💳 Thanh toán qua VNPay</span>
                             </label>
                             <label className={`payment-option ${paymentMethod === 'banking' ? 'active' : ''}`}>
                                 <input
@@ -198,9 +237,16 @@ export default function CheckoutPage() {
                                     checked={paymentMethod === 'banking'}
                                     onChange={() => setPaymentMethod('banking')}
                                 />
-                                <span>Chuyển khoản ngân hàng</span>
+                                <span>🏦 Chuyển khoản ngân hàng</span>
                             </label>
                         </div>
+                        
+                        {paymentMethod === 'vnpay' && (
+                            <div className="payment-note">
+                                <p>✓ Hỗ trợ thanh toán qua ATM, Visa, MasterCard, JCB, QR Code</p>
+                                <p>✓ Bảo mật cao với công nghệ mã hóa SSL</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Column: Order Summary */}
@@ -232,7 +278,13 @@ export default function CheckoutPage() {
                                 <span className="total-amount">{total.toLocaleString()}₫</span>
                             </div>
 
-                            <button className="place-order-btn" onClick={handlePlaceOrder}>Đặt hàng</button>
+                            <button 
+                                className="place-order-btn" 
+                                onClick={handlePlaceOrder}
+                                disabled={isProcessing}
+                            >
+                                {isProcessing ? 'Đang xử lý...' : (paymentMethod === 'vnpay' ? 'Thanh toán ngay' : 'Đặt hàng')}
+                            </button>
 
                             <div className="security-note">
                                 🔒 Bảo mật thanh toán 100%
@@ -310,6 +362,18 @@ export default function CheckoutPage() {
                 border-color: var(--color-primary-brown);
                 background: #fffdf9;
             }
+            .payment-note {
+                margin-top: 15px;
+                padding: 15px;
+                background: #f0f9ff;
+                border-left: 3px solid #0ea5e9;
+                border-radius: 4px;
+            }
+            .payment-note p {
+                margin: 5px 0;
+                font-size: 14px;
+                color: #0c4a6e;
+            }
 
             /* Order Summary */
             .order-summary-box {
@@ -372,8 +436,12 @@ export default function CheckoutPage() {
                 cursor: pointer;
                 transition: background 0.2s;
             }
-            .place-order-btn:hover {
+            .place-order-btn:hover:not(:disabled) {
                 background: #7a5a36;
+            }
+            .place-order-btn:disabled {
+                background: #ccc;
+                cursor: not-allowed;
             }
 
             .security-note {

@@ -16,8 +16,9 @@ export interface IOrder {
         price: number;
         image: string;
     }[];
-    paymentMethod: string; // 'cod' | 'banking'
-    paymentStatus?: string; // 'pending' | 'completed'
+    paymentMethod: string; // 'cod' | 'banking' | 'vnpay'
+    paymentStatus?: string; // 'pending' | 'completed' | 'failed'
+    vnpayTransactionNo?: string;
     shippingFee: number;
     totalAmount: number;
     status: string; // 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
@@ -52,6 +53,7 @@ const OrderSchema: Schema<IOrder> = new Schema(
         ],
         paymentMethod: { type: String, required: true, default: 'cod' },
         paymentStatus: { type: String, default: 'pending' },
+        vnpayTransactionNo: { type: String },
         shippingFee: { type: Number, required: true },
         totalAmount: { type: Number, required: true },
         status: { type: String, default: 'pending' },
