@@ -30,6 +30,7 @@ export async function PATCH(
             (status === 'delivered' || status === 'completed') &&
             order.commissionStatus === 'pending' &&
             order.referrer &&
+            order.commissionAmount &&
             order.commissionAmount > 0
         ) {
             const referrer = await User.findById(order.referrer);
