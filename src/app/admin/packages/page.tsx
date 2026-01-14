@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-    Tag, 
-    CheckCircle, 
-    XCircle, 
-    Plus, 
-    Edit2, 
-    Trash2, 
-    Copy, 
-    TrendingUp, 
-    Users, 
+import {
+    Tag,
+    CheckCircle,
+    XCircle,
+    Plus,
+    Edit2,
+    Trash2,
+    Copy,
+    TrendingUp,
+    Users,
     DollarSign,
     Package as PackageIcon,
     Percent,
@@ -124,10 +124,10 @@ export default function AdminPackagesPage() {
                 </div>
                 <button
                     onClick={() => window.scrollTo({ top: document.getElementById('create-form')?.offsetTop, behavior: 'smooth' })}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg shadow-md hover:from-amber-600 hover:to-amber-700 transition-all hover:shadow-lg"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-lg shadow-lg hover:from-amber-600 hover:to-amber-700 transition-all hover:shadow-xl hover:scale-105"
                 >
-                    <Plus size={20} />
-                    Tạo gói mới
+                    <Plus size={22} strokeWidth={2.5} />
+                    <span className="text-base">Tạo gói mới</span>
                 </button>
             </div>
 
@@ -219,13 +219,13 @@ export default function AdminPackagesPage() {
                                 <Tag size={16} className="text-amber-600" />
                                 Tên gói
                             </label>
-                            <input 
-                                type="text" 
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" 
-                                value={newPkg.name} 
-                                onChange={e => setNewPkg({ ...newPkg, name: e.target.value })} 
-                                required 
-                                placeholder="VD: Gói Gold 1 Tháng" 
+                            <input
+                                type="text"
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                value={newPkg.name}
+                                onChange={e => setNewPkg({ ...newPkg, name: e.target.value })}
+                                required
+                                placeholder="VD: Gói Gold 1 Tháng"
                             />
                         </div>
 
@@ -234,12 +234,12 @@ export default function AdminPackagesPage() {
                                 <DollarSign size={16} className="text-emerald-600" />
                                 Giá bán (VND)
                             </label>
-                            <input 
-                                type="number" 
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" 
-                                value={newPkg.price} 
-                                onChange={e => setNewPkg({ ...newPkg, price: Number(e.target.value) })} 
-                                required 
+                            <input
+                                type="number"
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                value={newPkg.price}
+                                onChange={e => setNewPkg({ ...newPkg, price: Number(e.target.value) })}
+                                required
                                 placeholder="199000"
                             />
                             <p className="text-xs text-slate-500">Giá hiển thị: {newPkg.price ? newPkg.price.toLocaleString('vi-VN') + 'đ' : '0đ'}</p>
@@ -250,12 +250,12 @@ export default function AdminPackagesPage() {
                                 <Calendar size={16} className="text-blue-600" />
                                 Thời hạn gói (ngày)
                             </label>
-                            <input 
-                                type="number" 
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" 
-                                value={newPkg.validityDays} 
-                                onChange={e => setNewPkg({ ...newPkg, validityDays: Number(e.target.value) })} 
-                                required 
+                            <input
+                                type="number"
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                value={newPkg.validityDays}
+                                onChange={e => setNewPkg({ ...newPkg, validityDays: Number(e.target.value) })}
+                                required
                                 placeholder="30"
                             />
                             <p className="text-xs text-slate-500">Gói có hiệu lực trong {newPkg.validityDays || 0} ngày</p>
@@ -266,10 +266,10 @@ export default function AdminPackagesPage() {
                                 <ShoppingBag size={16} className="text-purple-600" />
                                 Mô tả gói
                             </label>
-                            <textarea 
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all resize-none" 
-                                value={newPkg.description} 
-                                onChange={e => setNewPkg({ ...newPkg, description: e.target.value })} 
+                            <textarea
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all resize-none"
+                                value={newPkg.description}
+                                onChange={e => setNewPkg({ ...newPkg, description: e.target.value })}
                                 rows={3}
                                 placeholder="Mô tả chi tiết về gói hội viên..."
                             />
@@ -287,21 +287,21 @@ export default function AdminPackagesPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-semibold text-slate-700">Số lượng voucher</label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white" 
-                                        value={newPkg.voucherQuantity} 
-                                        onChange={e => setNewPkg({ ...newPkg, voucherQuantity: Number(e.target.value) })} 
-                                        required 
+                                    <input
+                                        type="number"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                                        value={newPkg.voucherQuantity}
+                                        onChange={e => setNewPkg({ ...newPkg, voucherQuantity: Number(e.target.value) })}
+                                        required
                                         min="1"
                                     />
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="block text-sm font-semibold text-slate-700">Loại giảm giá</label>
-                                    <select 
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white" 
-                                        value={newPkg.discountType} 
+                                    <select
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                                        value={newPkg.discountType}
                                         onChange={e => setNewPkg({ ...newPkg, discountType: e.target.value as any })}
                                     >
                                         <option value="percent">Phần trăm (%)</option>
@@ -313,23 +313,23 @@ export default function AdminPackagesPage() {
                                     <label className="block text-sm font-semibold text-slate-700">
                                         Giá trị giảm {newPkg.discountType === 'percent' ? '(%)' : '(VND)'}
                                     </label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white" 
-                                        value={newPkg.discountValue} 
-                                        onChange={e => setNewPkg({ ...newPkg, discountValue: Number(e.target.value) })} 
-                                        required 
+                                    <input
+                                        type="number"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                                        value={newPkg.discountValue}
+                                        onChange={e => setNewPkg({ ...newPkg, discountValue: Number(e.target.value) })}
+                                        required
                                         placeholder={newPkg.discountType === 'percent' ? '20' : '50000'}
                                     />
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="block text-sm font-semibold text-slate-700">Giảm tối đa (VND)</label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white" 
-                                        value={newPkg.maxDiscount} 
-                                        onChange={e => setNewPkg({ ...newPkg, maxDiscount: Number(e.target.value) })} 
+                                    <input
+                                        type="number"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                                        value={newPkg.maxDiscount}
+                                        onChange={e => setNewPkg({ ...newPkg, maxDiscount: Number(e.target.value) })}
                                         placeholder="50000"
                                     />
                                     <p className="text-xs text-slate-500">Để 0 nếu không giới hạn</p>
@@ -337,11 +337,11 @@ export default function AdminPackagesPage() {
 
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="block text-sm font-semibold text-slate-700">Áp dụng cho đơn tối thiểu (VND)</label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white" 
-                                        value={newPkg.minOrderValue} 
-                                        onChange={e => setNewPkg({ ...newPkg, minOrderValue: Number(e.target.value) })} 
+                                    <input
+                                        type="number"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                                        value={newPkg.minOrderValue}
+                                        onChange={e => setNewPkg({ ...newPkg, minOrderValue: Number(e.target.value) })}
                                         placeholder="100000"
                                     />
                                     <p className="text-xs text-slate-500">Giá trị đơn hàng tối thiểu để áp dụng voucher</p>
@@ -352,9 +352,9 @@ export default function AdminPackagesPage() {
 
                     {/* Action Buttons */}
                     <div className="lg:col-span-2 flex items-center gap-4 pt-6 border-t border-slate-200">
-                        <button 
-                            type="submit" 
-                            className="flex-1 md:flex-none px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2" 
+                        <button
+                            type="submit"
+                            className="flex-1 md:flex-none px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2"
                             disabled={loading}
                         >
                             {loading ? (
@@ -369,7 +369,7 @@ export default function AdminPackagesPage() {
                                 </>
                             )}
                         </button>
-                        <button 
+                        <button
                             type="button"
                             onClick={() => setNewPkg({
                                 name: '',
@@ -400,7 +400,7 @@ export default function AdminPackagesPage() {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>

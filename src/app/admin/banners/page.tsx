@@ -149,10 +149,10 @@ export default function AdminBannersPage() {
                 </div>
                 <button
                     onClick={() => openModal()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg shadow-md hover:from-amber-600 hover:to-amber-700 transition-all hover:shadow-lg"
+                    className="flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-white font-bold rounded-lg shadow-lg hover:!bg-blue-700 transition-all hover:shadow-xl hover:scale-105"
                 >
-                    <Plus size={20} />
-                    Thêm Banner
+                    <Plus size={22} strokeWidth={2.5} />
+                    <span className="text-base">Thêm Banner</span>
                 </button>
             </div>
 
@@ -213,8 +213,8 @@ export default function AdminBannersPage() {
                     <div key={banner._id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-all group">
                         {/* Banner Image */}
                         <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
-                            <img 
-                                src={banner.imageUrl} 
+                            <img
+                                src={banner.imageUrl}
                                 alt={banner.title}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 onError={(e) => {
@@ -249,7 +249,7 @@ export default function AdminBannersPage() {
                             <h3 className="font-bold text-slate-800 text-lg mb-2 line-clamp-1 group-hover:text-amber-600 transition-colors">
                                 {banner.title}
                             </h3>
-                            
+
                             {banner.link && (
                                 <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
                                     <LinkIcon size={14} />
@@ -261,11 +261,10 @@ export default function AdminBannersPage() {
                             <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
                                 <button
                                     onClick={() => handleToggleActive(banner)}
-                                    className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-all ${
-                                        banner.isActive
-                                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                                    }`}
+                                    className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-all ${banner.isActive
+                                        ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                        }`}
                                 >
                                     {banner.isActive ? 'Ẩn' : 'Hiển thị'}
                                 </button>
@@ -301,9 +300,10 @@ export default function AdminBannersPage() {
                             <p className="text-slate-500 mb-6">Thêm banner đầu tiên để hiển thị trên trang chủ</p>
                             <button
                                 onClick={() => openModal()}
-                                className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all"
+                                className="inline-flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-white font-bold rounded-lg hover:!bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                             >
-                                Tạo banner đầu tiên
+                                <Plus size={22} strokeWidth={2.5} />
+                                <span className="text-base">Tạo banner đầu tiên</span>
                             </button>
                         </div>
                     </div>
@@ -315,7 +315,7 @@ export default function AdminBannersPage() {
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeModal}>
                     <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
                         {/* Modal Header */}
-                        <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4 flex items-center justify-between">
+                        <div className="!bg-blue-600 px-6 py-4 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                 <ImageIcon size={24} />
                                 {editingBanner ? 'Chỉnh sửa Banner' : 'Thêm Banner mới'}
@@ -346,21 +346,53 @@ export default function AdminBannersPage() {
                                 <div className="space-y-2">
                                     <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                                         <ImageIcon size={16} className="text-blue-600" />
-                                        URL Hình ảnh
+                                        Hình ảnh Banner
                                     </label>
-                                    <input
-                                        type="url"
-                                        value={formData.imageUrl}
-                                        onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-                                        required
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                                        placeholder="https://example.com/banner.jpg"
-                                    />
+
+                                    {/* Upload Button */}
+                                    <div className="flex gap-3">
+                                        <label className="flex-1 cursor-pointer">
+                                            <div className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg border-2 border-blue-200 transition-all">
+                                                <ImageIcon size={18} />
+                                                <span>Chọn ảnh từ thiết bị</span>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        // Convert to base64 or upload to server
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setFormData({ ...formData, imageUrl: reader.result as string });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
+
+                                    {/* URL Input */}
+                                    <div className="relative">
+                                        <div className="text-xs text-slate-500 mb-2 text-center">hoặc nhập URL</div>
+                                        <input
+                                            type="url"
+                                            value={formData.imageUrl}
+                                            onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                            placeholder="https://example.com/banner.jpg"
+                                        />
+                                    </div>
+
+                                    {/* Image Preview */}
                                     {formData.imageUrl && (
                                         <div className="mt-3 rounded-lg overflow-hidden border-2 border-slate-200">
-                                            <img 
-                                                src={formData.imageUrl} 
-                                                alt="Preview" 
+                                            <img
+                                                src={formData.imageUrl}
+                                                alt="Preview"
                                                 className="w-full h-48 object-cover"
                                                 onError={(e) => {
                                                     e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f1f5f9" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EInvalid URL%3C/text%3E%3C/svg%3E';
@@ -428,7 +460,7 @@ export default function AdminBannersPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
+                                    className="flex-1 px-6 py-3 !bg-blue-600 !text-white hover:!bg-blue-700 font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
                                 >
                                     {editingBanner ? 'Cập nhật' : 'Thêm Banner'}
                                 </button>

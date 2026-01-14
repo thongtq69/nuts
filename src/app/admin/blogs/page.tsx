@@ -160,10 +160,10 @@ export default function AdminBlogsPage() {
                 </div>
                 <button
                     onClick={() => openModal()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg shadow-md hover:from-amber-600 hover:to-amber-700 transition-all hover:shadow-lg"
+                    className="flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-white font-bold rounded-lg shadow-lg hover:!bg-blue-700 transition-all hover:shadow-xl hover:scale-105"
                 >
-                    <Plus size={20} />
-                    Thêm bài viết
+                    <Plus size={22} strokeWidth={2.5} />
+                    <span className="text-base">Thêm bài viết</span>
                 </button>
             </div>
 
@@ -225,8 +225,8 @@ export default function AdminBlogsPage() {
                         {/* Cover Image */}
                         <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
                             {blog.coverImage ? (
-                                <img 
-                                    src={blog.coverImage} 
+                                <img
+                                    src={blog.coverImage}
                                     alt={blog.title}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
@@ -262,11 +262,11 @@ export default function AdminBlogsPage() {
                                     {new Date(blog.createdAt).toLocaleDateString('vi-VN')}
                                 </span>
                             </div>
-                            
+
                             <h3 className="font-bold text-slate-800 text-lg mb-2 line-clamp-2 group-hover:text-amber-600 transition-colors">
                                 {blog.title}
                             </h3>
-                            
+
                             <p className="text-slate-600 text-sm line-clamp-3 mb-4">
                                 {blog.excerpt}
                             </p>
@@ -275,11 +275,10 @@ export default function AdminBlogsPage() {
                             <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
                                 <button
                                     onClick={() => handleTogglePublish(blog)}
-                                    className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-all ${
-                                        blog.isPublished
-                                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                                    }`}
+                                    className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-all ${blog.isPublished
+                                        ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                        }`}
                                 >
                                     {blog.isPublished ? 'Ẩn' : 'Xuất bản'}
                                 </button>
@@ -315,9 +314,10 @@ export default function AdminBlogsPage() {
                             <p className="text-slate-500 mb-6">Thêm bài viết đầu tiên để hiển thị trên blog</p>
                             <button
                                 onClick={() => openModal()}
-                                className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all"
+                                className="inline-flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-white font-bold rounded-lg hover:!bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                             >
-                                Tạo bài viết đầu tiên
+                                <Plus size={22} strokeWidth={2.5} />
+                                <span className="text-base">Tạo bài viết đầu tiên</span>
                             </button>
                         </div>
                     </div>
@@ -329,7 +329,7 @@ export default function AdminBlogsPage() {
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeModal}>
                     <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
                         {/* Modal Header */}
-                        <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4 flex items-center justify-between">
+                        <div className="!bg-blue-600 px-6 py-4 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                 <FileText size={24} />
                                 {editingBlog ? 'Chỉnh sửa bài viết' : 'Thêm bài viết mới'}
@@ -393,15 +393,56 @@ export default function AdminBlogsPage() {
                                 <div className="space-y-2">
                                     <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                                         <ImageIcon size={16} className="text-purple-600" />
-                                        Ảnh bìa (URL)
+                                        Ảnh bìa
                                     </label>
-                                    <input
-                                        type="url"
-                                        value={formData.coverImage}
-                                        onChange={e => setFormData({ ...formData, coverImage: e.target.value })}
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                                        placeholder="https://example.com/image.jpg"
-                                    />
+
+                                    {/* Upload Button */}
+                                    <div className="flex gap-3">
+                                        <label className="flex-1 cursor-pointer">
+                                            <div className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium rounded-lg border-2 border-purple-200 transition-all">
+                                                <ImageIcon size={18} />
+                                                <span>Chọn ảnh từ thiết bị</span>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setFormData({ ...formData, coverImage: reader.result as string });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
+
+                                    {/* URL Input */}
+                                    <div className="relative">
+                                        <div className="text-xs text-slate-500 mb-2 text-center">hoặc nhập URL</div>
+                                        <input
+                                            type="url"
+                                            value={formData.coverImage}
+                                            onChange={e => setFormData({ ...formData, coverImage: e.target.value })}
+                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                            placeholder="https://example.com/image.jpg"
+                                        />
+                                    </div>
+
+                                    {/* Image Preview */}
+                                    {formData.coverImage && (
+                                        <div className="mt-3 rounded-lg overflow-hidden border-2 border-slate-200">
+                                            <img
+                                                src={formData.coverImage}
+                                                alt="Preview"
+                                                className="w-full h-48 object-cover"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -440,7 +481,7 @@ export default function AdminBlogsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
+                                    className="flex-1 px-6 py-3 !bg-blue-600 hover:!bg-blue-700 !text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
                                 >
                                     {editingBlog ? 'Cập nhật' : 'Thêm bài viết'}
                                 </button>
