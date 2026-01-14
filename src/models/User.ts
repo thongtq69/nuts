@@ -24,6 +24,12 @@ export interface IUser {
     walletBalance?: number;
     totalCommission?: number;
     referrer?: Schema.Types.ObjectId; // Who referred this user
+    commissionRateOverride?: number; // Custom rate for this specific user
+    bankInfo?: {
+        bankName: string;
+        accountNumber: string;
+        accountName: string;
+    };
 
     createdAt?: Date;
     updatedAt?: Date;
@@ -57,6 +63,12 @@ const UserSchema: Schema<IUser> = new Schema(
         walletBalance: { type: Number, default: 0 },
         totalCommission: { type: Number, default: 0 }, // Lifetime earnings
         referrer: { type: Schema.Types.ObjectId, ref: 'User' }, // Who referred this user
+        commissionRateOverride: { type: Number },
+        bankInfo: {
+            bankName: String,
+            accountNumber: String,
+            accountName: String,
+        },
     },
     {
         timestamps: true,

@@ -15,6 +15,7 @@ interface Voucher {
     expiresAt: string;
     isUsed: boolean;
     usedAt?: string;
+    source?: 'package' | 'manual' | 'campaign';
 }
 
 function formatPrice(price: number) {
@@ -150,6 +151,11 @@ export default function UserVouchersPage() {
                                                 </button>
                                             )}
                                         </div>
+                                        {voucher.source === 'package' && (
+                                            <div className="text-xs text-amber-600 font-bold mb-1">
+                                                ★ Từ Gói Hội Viên
+                                            </div>
+                                        )}
                                         <div className="voucher-condition">
                                             Đơn từ {formatPrice(voucher.minOrderValue)}
                                         </div>

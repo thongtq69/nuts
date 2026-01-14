@@ -26,6 +26,7 @@ export interface IOrder {
 
     // Affiliate Marketing Fields
     referrer?: mongoose.Types.ObjectId;
+    commissionId?: mongoose.Types.ObjectId;
     commissionAmount?: number;
     commissionStatus?: 'pending' | 'approved' | 'cancelled';
 
@@ -61,6 +62,7 @@ const OrderSchema: Schema<IOrder> = new Schema(
 
         // Affiliate Marketing Fields
         referrer: { type: Schema.Types.ObjectId, ref: 'User' },
+        commissionId: { type: Schema.Types.ObjectId, ref: 'AffiliateCommission' },
         commissionAmount: { type: Number, default: 0 },
         commissionStatus: {
             type: String,

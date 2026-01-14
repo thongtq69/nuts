@@ -13,6 +13,10 @@ export default function CheckoutPage() {
     const router = useRouter();
     const { cartItems, cartTotal, clearCart } = useCart();
     const { user } = useAuth();
+    const [voucherCode, setVoucherCode] = useState('');
+    const [voucherError, setVoucherError] = useState('');
+    const [appliedDiscount, setAppliedDiscount] = useState(0);
+    const [isVoucherApplied, setIsVoucherApplied] = useState(false);
 
     // Redirect if cart is empty
     useEffect(() => {
@@ -23,7 +27,7 @@ export default function CheckoutPage() {
 
     const subtotal = cartTotal;
     const shippingFee = subtotal > 500000 ? 0 : 30000;
-    const total = subtotal + shippingFee;
+    const total = subtotal + shippingFee - appliedDiscount;
 
     const [paymentMethod, setPaymentMethod] = useState('cod');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -50,9 +54,43 @@ export default function CheckoutPage() {
         }
     }, [user]);
 
+    const handleApplyVoucher = async () => {
+        if (!voucherCode) return;
+        setVoucherError('');
+        try {
+            const res = await fetch('/api/vouchers/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: voucherCode, orderValue: subtotal })
+            });
+            const data = await res.json();
+            if (res.ok && data.valid) {
+                setAppliedDiscount(data.discountAmount);
+                setIsVoucherApplied(true);
+                alert(`Đã áp dụng mã: Giảm ${new Intl.NumberFormat('vi-VN').format(data.discountAmount)}đ`);
+            } else {
+                setVoucherError(data.message || 'Mã không hợp lệ');
+                setAppliedDiscount(0);
+                setIsVoucherApplied(false);
+            }
+        } catch (e) {
+            setVoucherError('Lỗi khi kiểm tra mã');
+        }
+    };
+
     const handlePlaceOrder = async () => {
         if (isProcessing) return;
-        
+
+        // Strict Validation
+        if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
+            alert('Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.');
+            return;
+        }
+        if (!/^[0-9]{10,11}$/.test(formData.phone.replace(/\s/g, ''))) {
+            alert('Số điện thoại không hợp lệ.');
+            return;
+        }
+
         try {
             setIsProcessing(true);
 
@@ -75,45 +113,20 @@ export default function CheckoutPage() {
                 shippingFee,
                 totalAmount: total,
                 note: formData.note,
+                voucherCode: isVoucherApplied ? voucherCode : undefined // Send voucher to backend
             };
 
-            // Handle VNPay payment
-            if (paymentMethod === 'vnpay') {
-                const res = await fetch('/api/vnpay/create-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData),
-                });
-
-                const data = await res.json();
-                
-                if (!res.ok) {
-                    console.error('VNPay error:', data);
-                    throw new Error(data.message || 'Tạo thanh toán thất bại');
-                }
-
-                if (!data.paymentUrl) {
-                    console.error('No payment URL returned:', data);
-                    throw new Error('Không nhận được URL thanh toán từ VNPay');
-                }
-
-                console.log('Redirecting to VNPay:', data.paymentUrl);
-                
-                // Redirect to VNPay payment page
-                window.location.href = data.paymentUrl;
-                return;
-            }
-
-            // Handle COD and Banking
+            // Only COD/Banking supported now
             const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData),
             });
 
+            const data = await res.json();
+
             if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.message || 'Đặt hàng thất bại');
+                throw new Error(data.message || 'Đặt hàng thất bại');
             }
 
             clearCart();
@@ -141,7 +154,7 @@ export default function CheckoutPage() {
                         <h3 className="section-header">Thông tin giao hàng</h3>
                         <form className="checkout-form" onSubmit={(e) => { e.preventDefault(); }}>
                             <div className="form-group">
-                                <label>Họ và tên</label>
+                                <label>Họ và tên <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     placeholder="Nhập họ và tên"
@@ -156,13 +169,12 @@ export default function CheckoutPage() {
                                     <input
                                         type="email"
                                         placeholder="Nhập email"
-                                        required
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Số điện thoại</label>
+                                    <label>Số điện thoại <span className="text-red-500">*</span></label>
                                     <input
                                         type="tel"
                                         placeholder="Nhập số điện thoại"
@@ -173,7 +185,7 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label>Địa chỉ</label>
+                                <label>Địa chỉ <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     placeholder="Ví dụ: Số 23 ngõ 86..."
@@ -194,13 +206,12 @@ export default function CheckoutPage() {
                                 </div>
                                 <div className="form-group">
                                     <label>Quận / Huyện</label>
-                                    <select value={formData.district} onChange={e => setFormData({ ...formData, district: e.target.value })}>
-                                        <option value="">Chọn Quận/Huyện</option>
-                                        <option value="Ba Đình">Ba Đình</option>
-                                        <option value="Cầu Giấy">Cầu Giấy</option>
-                                        <option value="Hoàn Kiếm">Hoàn Kiếm</option>
-                                        <option value="Khác">Khác</option>
-                                    </select>
+                                    <input
+                                        type="text"
+                                        placeholder="Quận/Huyện"
+                                        value={formData.district}
+                                        onChange={e => setFormData({ ...formData, district: e.target.value })}
+                                    />
                                 </div>
                             </div>
                             <div className="form-group">
@@ -226,16 +237,7 @@ export default function CheckoutPage() {
                                 />
                                 <span>💵 Thanh toán khi nhận hàng (COD)</span>
                             </label>
-                            <label className={`payment-option ${paymentMethod === 'vnpay' ? 'active' : ''}`}>
-                                <input
-                                    type="radio"
-                                    name="payment"
-                                    value="vnpay"
-                                    checked={paymentMethod === 'vnpay'}
-                                    onChange={() => setPaymentMethod('vnpay')}
-                                />
-                                <span>💳 Thanh toán qua VNPay</span>
-                            </label>
+                            {/* VNPay Disabled temporarily */}
                             <label className={`payment-option ${paymentMethod === 'banking' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
@@ -247,13 +249,6 @@ export default function CheckoutPage() {
                                 <span>🏦 Chuyển khoản ngân hàng</span>
                             </label>
                         </div>
-                        
-                        {paymentMethod === 'vnpay' && (
-                            <div className="payment-note">
-                                <p>✓ Hỗ trợ thanh toán qua ATM, Visa, MasterCard, JCB, QR Code</p>
-                                <p>✓ Bảo mật cao với công nghệ mã hóa SSL</p>
-                            </div>
-                        )}
                     </div>
 
                     {/* Right Column: Order Summary */}
@@ -272,6 +267,41 @@ export default function CheckoutPage() {
                                 ))}
                             </div>
 
+                            {/* Voucher Input */}
+                            <div className="mb-4 pt-4 border-t">
+                                <label className="block text-sm font-medium mb-2">Mã voucher</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        className="flex-1 border p-2 rounded text-sm uppercase"
+                                        placeholder="Nhập mã giảm giá"
+                                        value={voucherCode}
+                                        onChange={e => setVoucherCode(e.target.value)}
+                                        disabled={isVoucherApplied}
+                                    />
+                                    {isVoucherApplied ? (
+                                        <button
+                                            className="bg-red-500 text-white px-3 py-2 rounded text-sm"
+                                            onClick={() => {
+                                                setIsVoucherApplied(false);
+                                                setAppliedDiscount(0);
+                                                setVoucherCode('');
+                                            }}
+                                        >
+                                            Xoá
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="bg-gray-800 text-white px-3 py-2 rounded text-sm hover:bg-black"
+                                            onClick={handleApplyVoucher}
+                                        >
+                                            Áp dụng
+                                        </button>
+                                    )}
+                                </div>
+                                {voucherError && <p className="text-red-500 text-xs mt-1">{voucherError}</p>}
+                            </div>
+
                             <div className="summary-row">
                                 <span>Tạm tính</span>
                                 <span>{subtotal.toLocaleString()}₫</span>
@@ -280,17 +310,23 @@ export default function CheckoutPage() {
                                 <span>Phí vận chuyển</span>
                                 <span>{shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString()}₫`}</span>
                             </div>
+                            {isVoucherApplied && (
+                                <div className="summary-row text-green-600 font-medium">
+                                    <span>Voucher giảm giá</span>
+                                    <span>- {appliedDiscount.toLocaleString()}₫</span>
+                                </div>
+                            )}
                             <div className="summary-row total">
                                 <span>Tổng cộng</span>
-                                <span className="total-amount">{total.toLocaleString()}₫</span>
+                                <span className="total-amount">{total > 0 ? total.toLocaleString() : 0}₫</span>
                             </div>
 
-                            <button 
-                                className="place-order-btn" 
+                            <button
+                                className="place-order-btn"
                                 onClick={handlePlaceOrder}
                                 disabled={isProcessing}
                             >
-                                {isProcessing ? 'Đang xử lý...' : (paymentMethod === 'vnpay' ? 'Thanh toán ngay' : 'Đặt hàng')}
+                                {isProcessing ? 'Đang xử lý...' : 'Đặt hàng'}
                             </button>
 
                             <div className="security-note">
@@ -369,19 +405,7 @@ export default function CheckoutPage() {
                 border-color: var(--color-primary-brown);
                 background: #fffdf9;
             }
-            .payment-note {
-                margin-top: 15px;
-                padding: 15px;
-                background: #f0f9ff;
-                border-left: 3px solid #0ea5e9;
-                border-radius: 4px;
-            }
-            .payment-note p {
-                margin: 5px 0;
-                font-size: 14px;
-                color: #0c4a6e;
-            }
-
+            
             /* Order Summary */
             .order-summary-box {
                 background: #f9f9f9;

@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
-import UserVoucher from '@/models/UserVoucher';
-import { verifyToken } from '@/lib/auth'; // Mock auth verification or implement it
+import Order from '@/models/Order';
 import User from '@/models/User';
+import AffiliateSettings from '@/models/AffiliateSettings';
+import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
 const getUserFromRequest = async (req: Request) => {
     // Basic JWT extraction
@@ -21,49 +23,97 @@ const getUserFromRequest = async (req: Request) => {
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const userId = await getUserFromRequest(req);
-
+        const userId = await getUserFromRequest(req); // Optional for guest? But this is membership. Must be logged in?
+        // Let's assume must be logged in for membership.
         if (!userId) {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ message: 'Vui lòng đăng nhập để mua gói' }, { status: 401 });
         }
 
-        const { packageId } = await req.json();
+        const { packageId, shippingInfo } = await req.json();
         const pkg = await SubscriptionPackage.findById(packageId);
 
         if (!pkg) {
-            return NextResponse.json({ message: 'Package not found' }, { status: 404 });
+            return NextResponse.json({ message: 'Gói không tồn tại' }, { status: 404 });
         }
 
-        // Mock Payment Verification (Assume success)
-        // In real app, verify payment status here.
+        // Affiliate Tracking
+        const user = await User.findById(userId);
+        const cookieStore = await cookies();
+        const refCode = cookieStore.get('gonuts_ref')?.value;
+        let referrerId: any = user?.referrer; // Default to existing referrer
 
-        // Generate Vouchers
-        // Package: 49k -> 20 vouchers
-        const vouchers = [];
-        const quantity = pkg.voucherQuantity;
-        const now = new Date();
-        const expiresAt = new Date(now.getTime() + pkg.validityDays * 24 * 60 * 60 * 1000);
+        // Check if cookie overrides or sets referrer (if not set)
+        if (refCode && !referrerId) {
+            const refUser = await User.findOne({ referralCode: refCode });
+            if (refUser && refUser._id.toString() !== userId) {
+                referrerId = refUser._id;
+            }
+        }
 
-        for (let i = 0; i < quantity; i++) {
-            const code = `PKG-${pkg.discountValue}${pkg.discountType === 'percent' ? 'P' : 'F'}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-            vouchers.push({
-                userId,
-                code,
-                discountType: pkg.discountType,
-                discountValue: pkg.discountValue,
-                maxDiscount: pkg.maxDiscount,
-                minOrderValue: pkg.minOrderValue,
-                expiresAt,
-                isUsed: false
+        // Commission Calculation
+        let commissionAmount = 0;
+        let commissionId = undefined;
+        let commissionStatus: any = undefined;
+
+        if (referrerId) {
+            // Get settings
+            const settings = await AffiliateSettings.findOne();
+            const rate = user?.commissionRateOverride ?? settings?.defaultCommissionRate ?? 10;
+            commissionAmount = Math.round(pkg.price * (rate / 100));
+            commissionStatus = 'pending';
+        }
+
+        // Create Order
+        // Treat package as 1 item
+        const order = await Order.create({
+            user: userId,
+            shippingInfo: shippingInfo || {
+                fullName: user?.name || 'Guest',
+                phone: user?.phone || '0000',
+                address: 'Membership Purchase',
+                city: 'N/A',
+                district: 'N/A'
+            },
+            items: [{
+                productId: pkg._id, // Use package ID as product ID
+                name: `Gói Hội Viên: ${pkg.name}`,
+                quantity: 1,
+                price: pkg.price,
+                image: '' // Optional pkg image
+            }],
+            paymentMethod: 'cod', // Enforce COD/Banking (Pending)
+            paymentStatus: 'pending',
+            totalAmount: pkg.price,
+            shippingFee: 0,
+            status: 'pending',
+            referrer: referrerId,
+            commissionAmount: commissionAmount,
+            commissionStatus: commissionStatus
+        });
+
+        // Create Commission Record if applicable
+        if (commissionAmount > 0 && referrerId) {
+            const comm = await AffiliateCommission.create({
+                affiliateId: referrerId,
+                orderId: order._id,
+                orderValue: pkg.price,
+                commissionRate: user?.commissionRateOverride ?? 10, // Approximate
+                commissionAmount,
+                status: 'pending',
+                note: 'Hoa hồng mua gói hội viên'
             });
+
+            // Link back to order
+            await Order.findByIdAndUpdate(order._id, { commissionId: comm._id });
         }
 
-        await UserVoucher.insertMany(vouchers);
-
-        return NextResponse.json({ message: 'Purchase successful', vouchersCount: vouchers.length }, { status: 200 });
+        return NextResponse.json({
+            message: 'Đặt hàng thành công. Vui lòng thanh toán để kích hoạt gói.',
+            orderId: order._id
+        }, { status: 201 });
 
     } catch (error) {
         console.error("Buy package error:", error);
-        return NextResponse.json({ message: 'Error processing purchase' }, { status: 500 });
+        return NextResponse.json({ message: 'Lỗi khi tạo đơn hàng' }, { status: 500 });
     }
 }

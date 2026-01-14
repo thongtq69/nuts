@@ -12,6 +12,8 @@ export interface IUserVoucher {
     isUsed: boolean;
     usedAt?: Date;
     orderId?: mongoose.Types.ObjectId;
+    source?: 'package' | 'manual' | 'campaign'; // Where did this voucher come from?
+    sourceId?: mongoose.Types.ObjectId; // ID of package or campaign
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -28,6 +30,8 @@ const UserVoucherSchema: Schema<IUserVoucher> = new Schema(
         isUsed: { type: Boolean, default: false },
         usedAt: { type: Date },
         orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
+        source: { type: String, enum: ['package', 'manual', 'campaign'], default: 'manual' },
+        sourceId: { type: Schema.Types.ObjectId }, // e.g., Package ID
     },
     {
         timestamps: true,

@@ -14,6 +14,8 @@ function generateVoucherCode(): string {
     return code;
 }
 
+import { cookies } from 'next/headers';
+
 export async function POST(req: Request) {
     try {
         await dbConnect();
@@ -35,15 +37,28 @@ export async function POST(req: Request) {
             );
         }
 
+        // Check referrer
+        const cookieStore = await cookies();
+        const refCode = cookieStore.get('gonuts_ref')?.value;
+        let referrerId: any = undefined;
+
+        if (refCode) {
+            const referrerUser = await User.findOne({ referralCode: refCode });
+            if (referrerUser) {
+                referrerId = referrerUser._id;
+            }
+        }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const user = await User.create({
+        const user: any = await User.create({
             name,
             email,
             password: hashedPassword,
             phone,
             welcomeVoucherIssued: false,
+            referrer: referrerId || undefined,
         });
 
         if (user) {

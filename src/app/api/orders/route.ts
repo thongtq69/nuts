@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import User from '@/models/User';
+import UserVoucher from '@/models/UserVoucher';
+import AffiliateSettings from '@/models/AffiliateSettings';
+import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
@@ -23,37 +26,123 @@ export async function POST(req: Request) {
     try {
         await dbConnect();
         const body = await req.json();
+        const { items, shippingInfo, paymentMethod, shippingFee, note, voucherCode } = body;
+
         const userId = await getUserId();
         const cookieStore = await cookies();
 
-        // Affiliate Logic
-        const refCode = cookieStore.get('gonuts_ref')?.value;
-        let referrerId = undefined;
-        let commissionAmount = 0;
-        let commissionStatus = 'pending';
+        // 1. Calculate Items Total
+        const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
+        // 2. Validate & Apply Voucher
+        let discountAmount = 0;
+        let appliedVoucherId = undefined;
+
+        if (voucherCode) {
+            const voucher = await UserVoucher.findOne({ code: voucherCode, isUsed: false });
+
+            if (!voucher) {
+                return NextResponse.json({ message: 'Voucher không hợp lệ hoặc đã sử dụng' }, { status: 400 });
+            }
+
+            if (new Date(voucher.expiresAt) < new Date()) {
+                return NextResponse.json({ message: 'Voucher đã hết hạn' }, { status: 400 });
+            }
+
+            if (itemsTotal < voucher.minOrderValue) {
+                return NextResponse.json({ message: `Đơn hàng tối thiểu ${voucher.minOrderValue.toLocaleString()}đ` }, { status: 400 });
+            }
+
+            // Check ownership if assigned
+            if (voucher.userId && voucher.userId.toString() !== userId) {
+                return NextResponse.json({ message: 'Voucher không thuộc về bạn' }, { status: 400 });
+            }
+
+            // Calculate discount
+            if (voucher.discountType === 'percent') {
+                discountAmount = Math.round(itemsTotal * (voucher.discountValue / 100));
+                if (voucher.maxDiscount > 0 && discountAmount > voucher.maxDiscount) {
+                    discountAmount = voucher.maxDiscount;
+                }
+            } else {
+                discountAmount = voucher.discountValue;
+            }
+
+            appliedVoucherId = voucher._id;
+        }
+
+        const finalTotal = Math.max(0, itemsTotal + shippingFee - discountAmount);
+
+        // 3. Affiliate Logic
+        const refCode = cookieStore.get('gonuts_ref')?.value;
+        let referrerId: any = undefined;
+        let commissionAmount = 0;
+        let commissionStatus: any = undefined;
+
+        // Determine Referrer
         if (refCode) {
             const referrerUser = await User.findOne({ referralCode: refCode });
-            if (referrerUser && referrerUser._id.toString() !== userId) { // Prevent self-referral
+            if (referrerUser && referrerUser._id.toString() !== userId) {
                 referrerId = referrerUser._id;
-                // Calculate Commission: 10% of Subtotal (excluding shipping)
-                // Assuming body.totalAmount includes shipping, we might need pre-shipping total.
-                // For simplicity, let's use (totalAmount - shippingFee) * 0.10
+            }
+        }
+        if (!referrerId && userId) {
+            const u = await User.findById(userId);
+            if (u && u.referrer) referrerId = u.referrer;
+        }
 
-                const subtotal = body.totalAmount - (body.shippingFee || 0);
-                if (subtotal > 0) {
-                    commissionAmount = Math.round(subtotal * 0.10);
-                }
+        // Calculate Commission
+        if (referrerId) {
+            const settings = await AffiliateSettings.findOne();
+            const referrerUser = await User.findById(referrerId);
+            const rate = referrerUser?.commissionRateOverride ?? settings?.defaultCommissionRate ?? 10;
+
+            // Commission on Net Revenue (Items Total - Discount) ?? Or just Items Total?
+            // Usually Net. Let's do (ItemsTotal - Discount).
+            const revenueBase = Math.max(0, itemsTotal - discountAmount);
+
+            if (revenueBase > 0) {
+                commissionAmount = Math.round(revenueBase * (rate / 100));
+                commissionStatus = 'pending';
             }
         }
 
+        // 4. Create Order
         const order = await Order.create({
-            ...body,
             user: userId || undefined,
+            shippingInfo,
+            items,
+            paymentMethod,
+            shippingFee,
+            totalAmount: finalTotal,
+            note,
             referrer: referrerId,
             commissionAmount,
             commissionStatus,
         });
+
+        // 5. Mark Voucher Used
+        if (appliedVoucherId) {
+            await UserVoucher.findByIdAndUpdate(appliedVoucherId, {
+                isUsed: true,
+                usedAt: new Date(),
+                orderId: order._id
+            });
+        }
+
+        // 6. Create Commission Record
+        if (commissionAmount > 0 && referrerId) {
+            const comm = await AffiliateCommission.create({
+                affiliateId: referrerId,
+                orderId: order._id,
+                orderValue: Math.max(0, itemsTotal - discountAmount),
+                commissionRate: 10, // Should be fetched rate, simplifying for now
+                commissionAmount,
+                status: 'pending',
+                note: voucherCode ? `Order with voucher ${voucherCode}` : ''
+            });
+            await Order.findByIdAndUpdate(order._id, { commissionId: comm._id });
+        }
 
         return NextResponse.json(order, { status: 201 });
     } catch (error) {

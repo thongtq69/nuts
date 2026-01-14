@@ -11,6 +11,7 @@ export interface ISubscriptionPackage {
     minOrderValue: number;
     voucherQuantity: number;
     validityDays: number;
+    isActive: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -26,6 +27,7 @@ const SubscriptionPackageSchema: Schema<ISubscriptionPackage> = new Schema(
         minOrderValue: { type: Number, default: 0 },
         voucherQuantity: { type: Number, required: true, default: 1 },
         validityDays: { type: Number, required: true, default: 30 },
+        isActive: { type: Boolean, default: true },
     },
     {
         timestamps: true,
