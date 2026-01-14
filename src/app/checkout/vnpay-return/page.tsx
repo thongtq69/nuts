@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { VNPayResponseCode } from '@/lib/vnpay-client';
 
-export default function VNPayReturnPage() {
+function VNPayReturnContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { clearCart } = useCart();
@@ -38,16 +38,11 @@ export default function VNPayReturnPage() {
 
     if (status === 'loading') {
         return (
-            <main>
-                <Header />
-                <Navbar />
-                <div className="container">
-                    <div className="loading-wrapper">
-                        <div className="spinner"></div>
-                        <p>Đang xử lý kết quả thanh toán...</p>
-                    </div>
+            <div className="container">
+                <div className="loading-wrapper">
+                    <div className="spinner"></div>
+                    <p>Đang xử lý kết quả thanh toán...</p>
                 </div>
-                <Footer />
                 <style jsx>{`
                     .loading-wrapper {
                         display: flex;
@@ -70,65 +65,58 @@ export default function VNPayReturnPage() {
                         100% { transform: rotate(360deg); }
                     }
                 `}</style>
-            </main>
+            </div>
         );
     }
 
     return (
-        <main>
-            <Header />
-            <Navbar />
-
-            <div className="container">
-                <div className="result-wrapper">
-                    <div className={`result-icon ${status}`}>
-                        {status === 'success' ? (
-                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                <polyline points="22 4 12 14.01 9 11.01" />
-                            </svg>
-                        ) : (
-                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="15" y1="9" x2="9" y2="15" />
-                                <line x1="9" y1="9" x2="15" y2="15" />
-                            </svg>
-                        )}
-                    </div>
-
-                    <h1>{status === 'success' ? 'Thanh toán thành công!' : 'Thanh toán thất bại'}</h1>
-                    
-                    {orderId && (
-                        <p className="order-id">Mã đơn hàng: <strong>#{orderId.slice(-8).toUpperCase()}</strong></p>
+        <div className="container">
+            <div className="result-wrapper">
+                <div className={`result-icon ${status}`}>
+                    {status === 'success' ? (
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                    ) : (
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="15" y1="9" x2="9" y2="15" />
+                            <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
                     )}
-                    
-                    <p className="result-message">{message}</p>
+                </div>
 
-                    <div className="action-buttons">
-                        {status === 'success' ? (
-                            <>
-                                <Link href="/account" className="btn-secondary">
-                                    Quản lý đơn hàng
-                                </Link>
-                                <Link href="/products" className="btn-primary">
-                                    Tiếp tục mua sắm
-                                </Link>
-                            </>
-                        ) : (
-                            <>
-                                <Link href="/cart" className="btn-secondary">
-                                    Quay lại giỏ hàng
-                                </Link>
-                                <Link href="/checkout" className="btn-primary">
-                                    Thử lại
-                                </Link>
-                            </>
-                        )}
-                    </div>
+                <h1>{status === 'success' ? 'Thanh toán thành công!' : 'Thanh toán thất bại'}</h1>
+                
+                {orderId && (
+                    <p className="order-id">Mã đơn hàng: <strong>#{orderId.slice(-8).toUpperCase()}</strong></p>
+                )}
+                
+                <p className="result-message">{message}</p>
+
+                <div className="action-buttons">
+                    {status === 'success' ? (
+                        <>
+                            <Link href="/account" className="btn-secondary">
+                                Quản lý đơn hàng
+                            </Link>
+                            <Link href="/products" className="btn-primary">
+                                Tiếp tục mua sắm
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link href="/cart" className="btn-secondary">
+                                Quay lại giỏ hàng
+                            </Link>
+                            <Link href="/checkout" className="btn-primary">
+                                Thử lại
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
-
-            <Footer />
 
             <style jsx>{`
                 .result-wrapper {
@@ -194,6 +182,40 @@ export default function VNPayReturnPage() {
                     background: #f9f9f9;
                 }
             `}</style>
+        </div>
+    );
+}
+
+export default function VNPayReturnPage() {
+    return (
+        <main>
+            <Header />
+            <Navbar />
+            <Suspense fallback={
+                <div className="container">
+                    <div style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        padding: '100px 0' 
+                    }}>
+                        <div style={{
+                            width: '50px',
+                            height: '50px',
+                            border: '4px solid #f3f3f3',
+                            borderTop: '4px solid #8B6F47',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                            marginBottom: '20px'
+                        }}></div>
+                        <p>Đang tải...</p>
+                    </div>
+                </div>
+            }>
+                <VNPayReturnContent />
+            </Suspense>
+            <Footer />
         </main>
     );
 }
