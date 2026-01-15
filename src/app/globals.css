@@ -1145,6 +1145,17 @@ input {
   cursor: not-allowed;
 }
 
+/* Global styles */
+.custom-dashed-border {
+  border: 2px dashed #d97706;
+  /* amber-600 */
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #fffbeb;
+  /* amber-50 */
+  display: inline-block;
+}
+
 .auth-divider {
   margin: 30px 0 20px;
   text-align: center;

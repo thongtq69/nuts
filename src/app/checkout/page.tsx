@@ -18,6 +18,30 @@ export default function CheckoutPage() {
     const [appliedDiscount, setAppliedDiscount] = useState(0);
     const [isVoucherApplied, setIsVoucherApplied] = useState(false);
 
+    const [paymentMethod, setPaymentMethod] = useState('cod');
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    // Voucher State
+    const [vouchers, setVouchers] = useState<any[]>([]);
+    const [showVoucherModal, setShowVoucherModal] = useState(false);
+    const [loadingVouchers, setLoadingVouchers] = useState(false);
+
+    // Fetch vouchers
+    useEffect(() => {
+        if (user) {
+            setLoadingVouchers(true);
+            fetch('/api/user/vouchers')
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        setVouchers(data.filter(v => !v.isUsed && new Date(v.expiresAt) > new Date()));
+                    }
+                })
+                .catch(err => console.error(err))
+                .finally(() => setLoadingVouchers(false));
+        }
+    }, [user]);
+
     // Redirect if cart is empty
     useEffect(() => {
         if (cartItems.length === 0) {
@@ -29,8 +53,6 @@ export default function CheckoutPage() {
     const shippingFee = subtotal > 500000 ? 0 : 30000;
     const total = subtotal + shippingFee - appliedDiscount;
 
-    const [paymentMethod, setPaymentMethod] = useState('cod');
-    const [isProcessing, setIsProcessing] = useState(false);
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
@@ -291,16 +313,76 @@ export default function CheckoutPage() {
                                             Xoá
                                         </button>
                                     ) : (
-                                        <button
-                                            className="bg-gray-800 text-white px-3 py-2 rounded text-sm hover:bg-black"
-                                            onClick={handleApplyVoucher}
-                                        >
-                                            Áp dụng
-                                        </button>
+                                        <>
+                                            <button
+                                                className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
+                                                onClick={() => setShowVoucherModal(true)}
+                                            >
+                                                Chọn
+                                            </button>
+                                            <button
+                                                className="bg-gray-800 text-white px-3 py-2 rounded text-sm hover:bg-black"
+                                                onClick={handleApplyVoucher}
+                                            >
+                                                Áp dụng
+                                            </button>
+                                        </>
                                     )}
                                 </div>
                                 {voucherError && <p className="text-red-500 text-xs mt-1">{voucherError}</p>}
                             </div>
+
+                            {/* Voucher Selection Modal */}
+                            {showVoucherModal && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+                                        <div className="p-4 border-b flex justify-between items-center">
+                                            <h3 className="font-bold text-lg">Chọn Voucher của bạn</h3>
+                                            <button onClick={() => setShowVoucherModal(false)} className="text-gray-500 hover:text-black">
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <div className="p-4 overflow-y-auto flex-1 space-y-3">
+                                            {loadingVouchers ? (
+                                                <div className="text-center py-4 text-gray-500">Đang tải voucher...</div>
+                                            ) : vouchers.length === 0 ? (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    <p>Bạn chưa có voucher nào khả dụng.</p>
+                                                </div>
+                                            ) : (
+                                                vouchers.map(voucher => (
+                                                    <div
+                                                        key={voucher._id}
+                                                        className="border rounded-lg p-3 hover:border-amber-500 cursor-pointer transition-colors relative group"
+                                                        onClick={() => {
+                                                            setVoucherCode(voucher.code);
+                                                            setShowVoucherModal(false);
+                                                        }}
+                                                    >
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <div className="font-bold text-amber-600 custom-dashed-border">{voucher.code}</div>
+                                                                <div className="text-sm font-medium mt-1">
+                                                                    Giảm {voucher.discountType === 'percent' ? `${voucher.discountValue}%` : `${voucher.discountValue.toLocaleString()}đ`}
+                                                                </div>
+                                                                <div className="text-xs text-gray-500">
+                                                                    Đơn tối thiểu: {voucher.minOrderValue.toLocaleString()}đ
+                                                                </div>
+                                                                <div className="text-xs text-gray-400 mt-1">
+                                                                    HSD: {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                                                                Dùng ngay
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="summary-row">
                                 <span>Tạm tính</span>
