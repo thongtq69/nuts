@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import { revalidatePath } from 'next/cache';
 
 export async function POST(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
+    req: NextRequest,
+    props: { params: Promise<any> }
 ) {
     try {
         await dbConnect();
-        const { id } = await params;
+        const params = await props.params;
+        const { id } = params;
         const formData = await req.formData();
         const status = formData.get('status') as string;
 
