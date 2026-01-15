@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
     }
 
     // Agent routes protection
-    if (path.startsWith('/agent')) {
+    if (path.startsWith('/agent') || path.startsWith('/staff')) {
         if (!token) {
             return NextResponse.redirect(new URL('/login', request.url));
         }

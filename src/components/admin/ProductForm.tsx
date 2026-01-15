@@ -100,8 +100,56 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
             </div>
 
             <div className="form-group">
-                <label>Image URL</label>
-                <input type="text" name="image" value={formData.image} onChange={handleChange} required />
+                <label>Image</label>
+                <div className="image-upload-container">
+                    <input
+                        type="text"
+                        name="image"
+                        value={formData.image}
+                        onChange={handleChange}
+                        placeholder="Image URL"
+                        required
+                    />
+                    <div className="file-input-wrapper">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+
+                                const uploadData = new FormData();
+                                uploadData.append('file', file);
+
+                                try {
+                                    setLoading(true);
+                                    const res = await fetch('/api/upload', {
+                                        method: 'POST',
+                                        body: uploadData
+                                    });
+
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        setFormData(prev => ({ ...prev, image: data.url }));
+                                    } else {
+                                        alert('Upload failed');
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                    alert('Error uploading image');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                        />
+                        <span className="upload-btn-text">Upload from Device</span>
+                    </div>
+                </div>
+                {formData.image && (
+                    <div className="image-preview" style={{ marginTop: '10px' }}>
+                        <img src={formData.image} alt="Preview" style={{ maxHeight: '200px', borderRadius: '4px' }} />
+                    </div>
+                )}
             </div>
 
             <div className="form-group">
@@ -155,6 +203,36 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                     border-color: #3498db;
                 }
                 .form-actions { margin-top: 30px; }
+                .image-upload-container {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                }
+                .file-input-wrapper {
+                    position: relative;
+                    overflow: hidden;
+                    display: inline-block;
+                }
+                .file-input-wrapper input[type=file] {
+                    font-size: 100px;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    opacity: 0;
+                    cursor: pointer;
+                }
+                .upload-btn-text {
+                    display: inline-block;
+                    padding: 10px 15px;
+                    background: #f1f1f1;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                }
+                .upload-btn-text:hover {
+                    background: #e1e1e1;
+                }
             `}</style>
         </form>
     );

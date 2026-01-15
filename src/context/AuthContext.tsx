@@ -7,7 +7,7 @@ interface User {
     _id: string;
     name: string;
     email: string;
-    role: 'user' | 'sale' | 'admin';
+    role: 'user' | 'sale' | 'admin' | 'staff';
     phone?: string;
     address?: string;
     saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
@@ -21,6 +21,7 @@ interface AuthContextType {
     checkUser: () => Promise<void>;
     isAdmin: boolean;
     isSale: boolean;
+    isStaff: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,9 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const isAdmin = user?.role === 'admin';
     const isSale = user?.role === 'sale';
+    const isStaff = user?.role === 'staff';
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, checkUser, isAdmin, isSale }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, checkUser, isAdmin, isSale, isStaff }}>
             {children}
         </AuthContext.Provider>
     );

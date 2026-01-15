@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Header() {
     const router = useRouter();
     const { cartCount, cartTotal } = useCart();
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSearch = () => {
@@ -96,13 +98,15 @@ export default function Header() {
                         </div>
 
                         <div className="header-actions">
-                            <Link href="/login" className="action-link account-link">
+                            <Link href={user ? "/account" : "/login"} className="action-link account-link">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                                     <circle cx="12" cy="7" r="4" />
                                 </svg>
                                 <div className="account-info">
-                                    <span className="account-label">Đăng nhập / Đăng ký</span>
+                                    <span className="account-label">
+                                        {user ? `Xin chào, ${user.name}` : 'Đăng nhập / Đăng ký'}
+                                    </span>
                                     <span className="account-title">
                                         Tài khoản của tôi{' '}
                                         <svg width="10" height="10" viewBox="0 0 12 12">
