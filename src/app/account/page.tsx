@@ -6,19 +6,55 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+interface ProfileFormData {
+    name: string;
+    phone: string;
+    address: string;
+    city: string;
+    district: string;
+}
+
 export default function AccountPage() {
     const [activeTab, setActiveTab] = useState('orders');
-    const { user, logout, loading: authLoading } = useAuth();
+    const { user, logout, loading: authLoading, checkUser } = useAuth();
     const router = useRouter();
 
+    // Orders state
     const [orders, setOrders] = useState<any[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
+
+    // Profile form state
+    const [profileForm, setProfileForm] = useState<ProfileFormData>({
+        name: '',
+        phone: '',
+        address: '',
+        city: '',
+        district: ''
+    });
+    const [savingProfile, setSavingProfile] = useState(false);
+    const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    // Agent application state
+    const [applyingAgent, setApplyingAgent] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
             router.push('/login');
         }
     }, [authLoading, user, router]);
+
+    // Initialize profile form when user loads
+    useEffect(() => {
+        if (user) {
+            setProfileForm({
+                name: user.name || '',
+                phone: user.phone || '',
+                address: user.address || '',
+                city: '',
+                district: ''
+            });
+        }
+    }, [user]);
 
     useEffect(() => {
         if (user && activeTab === 'orders') {
@@ -39,6 +75,65 @@ export default function AccountPage() {
             fetchOrders();
         }
     }, [user, activeTab]);
+
+    const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setProfileForm(prev => ({
+            ...prev,
+            [e.target.name]: e.target.value
+        }));
+    };
+
+    const handleProfileSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingProfile(true);
+        setProfileMessage(null);
+
+        try {
+            const res = await fetch('/api/user/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profileForm)
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setProfileMessage({ type: 'success', text: data.message || 'Cập nhật thành công!' });
+                await checkUser(); // Refresh user data from context
+            } else {
+                setProfileMessage({ type: 'error', text: data.message || 'Có lỗi xảy ra' });
+            }
+        } catch (error) {
+            setProfileMessage({ type: 'error', text: 'Không thể kết nối server' });
+        } finally {
+            setSavingProfile(false);
+        }
+    };
+
+    const handleApplyAgent = async () => {
+        if (!confirm('Bạn muốn đăng ký trở thành Đại lý? Yêu cầu của bạn sẽ được xem xét bởi Admin.')) {
+            return;
+        }
+
+        setApplyingAgent(true);
+        try {
+            const res = await fetch('/api/auth/apply-sale', {
+                method: 'POST'
+            });
+
+            if (res.ok) {
+                alert('Đã gửi yêu cầu! Chúng tôi sẽ liên hệ bạn trong thời gian sớm nhất.');
+                await checkUser();
+            } else {
+                const data = await res.json();
+                alert(data.message || 'Có lỗi xảy ra');
+            }
+        } catch (error) {
+            alert('Không thể kết nối server');
+        } finally {
+            setApplyingAgent(false);
+        }
+    };
 
     if (authLoading || !user) {
         return (
@@ -66,35 +161,51 @@ export default function AccountPage() {
                             <div className="user-text">
                                 <span className="welcome">Xin chào,</span>
                                 <span className="username">{user.name}</span>
+                                {user.role !== 'user' && (
+                                    <span className="user-role-badge">
+                                        {user.role === 'admin' ? '👑 Admin' : '🏪 Đại lý'}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
                         <ul className="account-menu">
                             <li className={activeTab === 'profile' ? 'active' : ''} onClick={() => setActiveTab('profile')}>
-                                Thông tin cá nhân
+                                👤 Thông tin cá nhân
                             </li>
                             <li className={activeTab === 'orders' ? 'active' : ''} onClick={() => setActiveTab('orders')}>
-                                Đơn hàng của tôi
+                                📦 Đơn hàng của tôi
                             </li>
-                            <li className={activeTab === 'vouchers' ? 'active' : ''} onClick={() => router.push('/account/vouchers')}>
-                                Voucher của tôi
+                            <li onClick={() => router.push('/account/vouchers')}>
+                                🎟️ Voucher của tôi
                             </li>
                             <li className={activeTab === 'address' ? 'active' : ''} onClick={() => setActiveTab('address')}>
-                                Sổ địa chỉ
+                                📍 Sổ địa chỉ
                             </li>
+                            {user.role === 'user' && !user.saleApplicationStatus && (
+                                <li className={activeTab === 'agent' ? 'active' : ''} onClick={() => setActiveTab('agent')}>
+                                    🚀 Trở thành Đại lý
+                                </li>
+                            )}
+                            {user.role === 'sale' && (
+                                <li onClick={() => router.push('/agent')}>
+                                    📊 Bảng điều khiển Đại lý
+                                </li>
+                            )}
                             {user.role === 'admin' && (
                                 <li onClick={() => router.push('/admin')}>
                                     🔒 Trang Admin
                                 </li>
                             )}
                             <li className="logout-btn" onClick={logout}>
-                                Đăng xuất
+                                🚪 Đăng xuất
                             </li>
                         </ul>
                     </aside>
 
                     {/* Content Area */}
                     <div className="account-content">
+                        {/* Orders Tab */}
                         {activeTab === 'orders' && (
                             <div className="tab-pane">
                                 <h2>Đơn hàng gần đây</h2>
@@ -113,7 +224,10 @@ export default function AccountPage() {
                                                     <span className="order-id">Đơn hàng #{order._id.slice(-6).toUpperCase()}</span>
                                                     <span className={`order-status ${order.status}`}>
                                                         {order.status === 'pending' ? 'Đang xử lý' :
-                                                            order.status === 'completed' ? 'Hoàn thành' : order.status}
+                                                            order.status === 'confirmed' ? 'Đã xác nhận' :
+                                                                order.status === 'shipping' ? 'Đang giao' :
+                                                                    order.status === 'completed' ? 'Hoàn thành' :
+                                                                        order.status === 'cancelled' ? 'Đã hủy' : order.status}
                                                     </span>
                                                 </div>
                                                 <div className="order-body">
@@ -132,37 +246,113 @@ export default function AccountPage() {
                             </div>
                         )}
 
+                        {/* Profile Tab */}
                         {activeTab === 'profile' && (
                             <div className="tab-pane">
                                 <h2>Thông tin cá nhân</h2>
-                                <form className="profile-form" onSubmit={(e) => e.preventDefault()}>
+
+                                {profileMessage && (
+                                    <div className={`profile-message ${profileMessage.type}`}>
+                                        {profileMessage.text}
+                                    </div>
+                                )}
+
+                                <form className="profile-form" onSubmit={handleProfileSubmit}>
                                     <div className="form-group">
-                                        <label>Họ tên</label>
-                                        <input type="text" defaultValue={user.name} disabled />
+                                        <label>Họ tên *</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={profileForm.name}
+                                            onChange={handleProfileChange}
+                                            required
+                                        />
                                     </div>
                                     <div className="form-group">
                                         <label>Email</label>
-                                        <input type="email" defaultValue={user.email} disabled />
+                                        <input type="email" value={user.email} disabled title="Email không thể thay đổi" />
+                                        <small>Email không thể thay đổi</small>
                                     </div>
                                     <div className="form-group">
                                         <label>Số điện thoại</label>
-                                        <input type="tel" defaultValue={user.phone || ''} disabled />
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={profileForm.phone}
+                                            onChange={handleProfileChange}
+                                            placeholder="Nhập số điện thoại"
+                                        />
                                     </div>
-                                    <button className="update-btn" disabled>Cập nhật thông tin (Đang phát triển)</button>
+                                    <div className="form-group">
+                                        <label>Địa chỉ</label>
+                                        <input
+                                            type="text"
+                                            name="address"
+                                            value={profileForm.address}
+                                            onChange={handleProfileChange}
+                                            placeholder="Số nhà, tên đường..."
+                                        />
+                                    </div>
+                                    <button type="submit" className="update-btn" disabled={savingProfile}>
+                                        {savingProfile ? 'Đang lưu...' : 'Cập nhật thông tin'}
+                                    </button>
                                 </form>
                             </div>
                         )}
 
+                        {/* Address Tab */}
                         {activeTab === 'address' && (
                             <div className="tab-pane">
                                 <h2>Sổ địa chỉ</h2>
                                 <div className="address-card">
                                     <span className="tag-default">Mặc định</span>
                                     <p className="add-name">{user.name}</p>
-                                    <p className="add-phone">{user.phone}</p>
+                                    <p className="add-phone">{user.phone || 'Chưa có SĐT'}</p>
                                     <p className="add-detail">{user.address || 'Chưa cập nhật địa chỉ'}</p>
-                                    <button className="edit-btn">Chỉnh sửa</button>
+                                    <button className="edit-btn" onClick={() => setActiveTab('profile')}>
+                                        Chỉnh sửa
+                                    </button>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Agent Application Tab */}
+                        {activeTab === 'agent' && (
+                            <div className="tab-pane">
+                                <h2>Trở thành Đại lý</h2>
+
+                                {user.saleApplicationStatus === 'pending' ? (
+                                    <div className="agent-status pending">
+                                        <div className="status-icon">⏳</div>
+                                        <h3>Đang chờ duyệt</h3>
+                                        <p>Yêu cầu của bạn đang được xem xét. Chúng tôi sẽ liên hệ trong 1-2 ngày làm việc.</p>
+                                    </div>
+                                ) : user.saleApplicationStatus === 'rejected' ? (
+                                    <div className="agent-status rejected">
+                                        <div className="status-icon">❌</div>
+                                        <h3>Yêu cầu bị từ chối</h3>
+                                        <p>Rất tiếc, yêu cầu của bạn đã bị từ chối. Vui lòng liên hệ chúng tôi để biết thêm chi tiết.</p>
+                                    </div>
+                                ) : (
+                                    <div className="agent-apply-section">
+                                        <div className="agent-benefits">
+                                            <h3>Lợi ích khi trở thành Đại lý</h3>
+                                            <ul>
+                                                <li>✓ Hoa hồng 10% cho mỗi đơn hàng giới thiệu</li>
+                                                <li>✓ Nhận mã giới thiệu riêng</li>
+                                                <li>✓ Dashboard theo dõi doanh thu</li>
+                                                <li>✓ Rút tiền hoa hồng dễ dàng</li>
+                                            </ul>
+                                        </div>
+                                        <button
+                                            className="apply-agent-btn"
+                                            onClick={handleApplyAgent}
+                                            disabled={applyingAgent}
+                                        >
+                                            {applyingAgent ? 'Đang gửi...' : 'Đăng ký ngay'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
