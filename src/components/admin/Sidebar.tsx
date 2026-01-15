@@ -13,7 +13,9 @@ import {
     PenTool,
     Image,
     Settings,
-    Crown
+    Crown,
+    TrendingUp,
+    ExternalLink
 } from 'lucide-react';
 
 const menuItems = [
@@ -26,9 +28,9 @@ const menuItems = [
     {
         title: 'QUẢN LÝ BÁN HÀNG',
         items: [
-            { href: '/admin/orders', icon: ShoppingBag, label: 'Đơn hàng' },
+            { href: '/admin/orders', icon: ShoppingBag, label: 'Đơn hàng', badge: 'orders' },
             { href: '/admin/products', icon: Package, label: 'Sản phẩm' },
-            { href: '/admin/vouchers', icon: Ticket, label: 'Vouchher' },
+            { href: '/admin/vouchers', icon: Ticket, label: 'Voucher' },
         ],
     },
     {
@@ -59,22 +61,25 @@ export default function AdminSidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className="w-64 bg-slate-900 dark:bg-slate-950 text-slate-300 dark:text-slate-400 flex flex-col fixed inset-y-0 left-0 z-20 border-r border-slate-800 dark:border-slate-900 transition-colors duration-200">
+        <aside className="w-64 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300 flex flex-col fixed inset-y-0 left-0 z-20 border-r border-slate-800/50 transition-colors duration-200">
             {/* Logo */}
-            <div className="h-16 flex items-center px-6 border-b border-slate-800 dark:border-slate-900">
-                <Link href="/admin" className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-lg">
+            <div className="h-16 flex items-center px-6 border-b border-slate-800/50">
+                <Link href="/admin" className="flex items-center gap-3 group">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-amber-500/25 group-hover:shadow-amber-500/40 transition-shadow">
                         G
                     </div>
-                    <span className="text-white font-bold text-lg tracking-tight">Go Nuts Admin</span>
+                    <div className="flex flex-col">
+                        <span className="text-white font-bold text-lg tracking-tight">Go Nuts</span>
+                        <span className="text-[10px] text-amber-500/80 font-medium uppercase tracking-wider">Admin Panel</span>
+                    </div>
                 </Link>
             </div>
 
             {/* Navigation */}
-            <div className="flex-1 overflow-y-auto py-6 px-3 space-y-8">
+            <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
                 {menuItems.map((group, groupIndex) => (
                     <div key={groupIndex}>
-                        <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                        <h3 className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
                             {group.title}
                         </h3>
                         <div className="space-y-1">
@@ -85,15 +90,26 @@ export default function AdminSidebar() {
                                         key={item.href}
                                         href={item.href}
                                         className={`
-                                            flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                                            sidebar-item-glow relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
                                             ${isActive
-                                                ? 'bg-amber-600/10 text-amber-500'
-                                                : 'hover:bg-slate-800 hover:text-white dark:hover:bg-slate-900'
+                                                ? 'active bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-400'
+                                                : 'hover:bg-slate-800/50 hover:text-white'
                                             }
                                         `}
                                     >
-                                        <item.icon size={18} className={isActive ? 'text-amber-500' : 'text-slate-400 group-hover:text-white'} />
-                                        {item.label}
+                                        <div className={`
+                                            w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200
+                                            ${isActive
+                                                ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20'
+                                                : 'bg-slate-800/50 group-hover:bg-slate-700/50'
+                                            }
+                                        `}>
+                                            <item.icon size={16} className={isActive ? 'text-amber-400' : 'text-slate-400'} />
+                                        </div>
+                                        <span className="flex-1">{item.label}</span>
+                                        {isActive && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                                        )}
                                     </Link>
                                 );
                             })}
@@ -102,17 +118,35 @@ export default function AdminSidebar() {
                 ))}
             </div>
 
-            {/* Footer User Info */}
-            <div className="p-4 border-t border-slate-800 dark:border-slate-900 bg-slate-900/50 dark:bg-slate-950/50">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-medium text-white">
-                        A
+            {/* Quick Stats */}
+            <div className="px-4 py-4 border-t border-slate-800/50">
+                <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl p-4 border border-slate-700/50">
+                    <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp size={14} className="text-emerald-400" />
+                        <span className="text-xs font-semibold text-slate-400">Hôm nay</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">Administrator</div>
-                        <div className="text-xs text-slate-500 truncate">admin@gonuts.com</div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <div className="text-lg font-bold text-white">--</div>
+                            <div className="text-[10px] text-slate-500">Đơn hàng</div>
+                        </div>
+                        <div>
+                            <div className="text-lg font-bold text-emerald-400">--</div>
+                            <div className="text-[10px] text-slate-500">Doanh thu</div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-800/50">
+                <Link
+                    href="/"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors text-sm"
+                >
+                    <ExternalLink size={14} />
+                    <span>Xem Website</span>
+                </Link>
             </div>
         </aside>
     );

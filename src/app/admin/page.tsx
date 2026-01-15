@@ -2,14 +2,17 @@ import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import Product from '@/models/Product';
 import User from '@/models/User';
+import Link from 'next/link';
 import {
     DollarSign,
     ShoppingCart,
     Package,
     Users,
-    Clock,
-    CheckCircle,
-    XCircle
+    Plus,
+    FileText,
+    Settings,
+    ArrowRight,
+    Sparkles
 } from 'lucide-react';
 import {
     StatsCards,
@@ -42,8 +45,6 @@ async function getStats() {
         .lean();
 
     // Chart Data Aggregation
-
-    // 1. Revenue Last 7 Days
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -68,7 +69,6 @@ async function getStats() {
         revenue: item.revenue
     }));
 
-    // 2. Top Products
     const productAggregation = await Order.aggregate([
         { $match: { status: { $in: ['completed', 'paid'] } } },
         { $unwind: "$items" },
@@ -87,11 +87,10 @@ async function getStats() {
         sales: item.sales
     }));
 
-    // 3. Order Status
     const statusData = [
-        { name: 'Hoàn thành', value: completedOrders, color: '#10b981' }, // emerald-500
-        { name: 'Chờ xử lý', value: pendingOrders, color: '#f59e0b' },   // amber-500
-        { name: 'Hủy', value: cancelledOrders, color: '#ef4444' },       // red-500
+        { name: 'Hoàn thành', value: completedOrders, color: '#10b981' },
+        { name: 'Chờ xử lý', value: pendingOrders, color: '#f59e0b' },
+        { name: 'Hủy', value: cancelledOrders, color: '#ef4444' },
     ];
 
     return {
@@ -147,35 +146,92 @@ export default async function AdminDashboard() {
         },
     ];
 
+    const quickActions = [
+        { icon: Plus, label: 'Thêm sản phẩm', href: '/admin/products/new' },
+        { icon: ShoppingCart, label: 'Xử lý đơn hàng', href: '/admin/orders' },
+        { icon: FileText, label: 'Viết bài mới', href: '/admin/blogs' },
+        { icon: Settings, label: 'Cài đặt', href: '/admin/affiliate-settings' },
+    ];
+
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Dashboard</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Tổng quan tình hình kinh doanh hôm nay.</p>
+        <div className="space-y-8">
+            {/* Welcome Banner */}
+            <div className="welcome-banner animate-fade-in">
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-5 h-5 text-amber-400" />
+                        <span className="text-amber-400 font-semibold text-sm">Xin chào!</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                        Chào mừng trở lại, Admin 👋
+                    </h1>
+                    <p className="text-slate-400 text-sm sm:text-base max-w-xl">
+                        Đây là tổng quan về tình hình kinh doanh của bạn hôm nay.
+                        Tiếp tục phát triển nhé!
+                    </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" size="sm">Xuất báo cáo</Button>
-                    <Button size="sm">Tạo đơn hàng</Button>
+                <div className="flex items-center gap-3 mt-6 relative z-10">
+                    <Link href="/admin/orders">
+                        <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25">
+                            Xem đơn hàng mới
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                    </Link>
+                    <Link href="/" target="_blank">
+                        <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 hover:bg-slate-800">
+                            Xem website
+                        </Button>
+                    </Link>
                 </div>
             </div>
 
+            {/* Stats Cards */}
             <StatsCards stats={statCardsData} />
 
+            {/* Quick Actions */}
+            <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Thao tác nhanh</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {quickActions.map((action, index) => (
+                        <Link key={index} href={action.href}>
+                            <div className="quick-action-btn group">
+                                <div className="icon group-hover:scale-110 transition-transform">
+                                    <action.icon className="w-5 h-5" />
+                                </div>
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {action.label}
+                                </span>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            </div>
+
+            {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 glass-card p-6">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Doanh thu 7 ngày qua</h3>
                     <RevenueChart data={stats.revenueData} />
                 </div>
-                <div>
+                <div className="glass-card p-6">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Trạng thái đơn hàng</h3>
                     <OrderStatusChart data={stats.statusData} total={stats.orderCount} />
                 </div>
             </div>
 
+            {/* Bottom Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 glass-card p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">Đơn hàng gần đây</h3>
+                        <Link href="/admin/orders" className="text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1">
+                            Xem tất cả <ArrowRight size={14} />
+                        </Link>
+                    </div>
                     <RecentOrdersTable orders={stats.recentOrders} />
                 </div>
-                <div>
+                <div className="glass-card p-6">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Sản phẩm bán chạy</h3>
                     <TopProductsChart data={stats.topProductsData} />
                 </div>
             </div>
