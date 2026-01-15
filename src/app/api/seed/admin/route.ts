@@ -3,61 +3,50 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
-export async function GET(request: Request) {
+export async function GET() {
     try {
         await dbConnect();
 
-        const { searchParams } = new URL(request.url);
-        const force = searchParams.get('force') === 'true';
+        const email = 'admin@gonuts.com';
+        const password = 'Admin123!';
 
-        // Check if admin already exists
-        const existingAdmin = await User.findOne({ email: 'admin@gonuts.com' });
-        
-        if (existingAdmin && !force) {
-            return NextResponse.json({ 
-                message: 'Admin account already exists',
-                email: 'admin@gonuts.com',
-                note: 'Use ?force=true to reset password'
-            });
+        let user = await User.findOne({ email });
+
+        if (user) {
+            // Update to admin role if not already
+            if (user.role !== 'admin') {
+                user.role = 'admin';
+                await user.save();
+                return NextResponse.json({ message: 'User exists, updated role to admin', email });
+            }
+            return NextResponse.json({ message: 'Admin user already exists', email });
         }
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash('admin123', 10);
+        // Create new admin user
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        if (existingAdmin && force) {
-            // Update existing admin password
-            existingAdmin.password = hashedPassword;
-            await existingAdmin.save();
-            
-            return NextResponse.json({ 
-                message: 'Admin password reset successfully',
-                email: 'admin@gonuts.com',
-                password: 'admin123',
-                note: 'Please change this password after first login'
-            });
-        }
-
-        // Create new admin account
-        const admin = await User.create({
-            name: 'Administrator',
-            email: 'admin@gonuts.com',
+        user = await User.create({
+            name: 'GoNuts Admin',
+            email,
             password: hashedPassword,
             role: 'admin',
-            phone: '0123456789',
+            phone: '0901234567',
+            address: '123 Admin St, HCM City',
+            city: 'Hồ Chí Minh',
+            district: 'Quận 1'
         });
 
-        return NextResponse.json({ 
-            message: 'Admin account created successfully',
-            email: 'admin@gonuts.com',
-            password: 'admin123',
-            note: 'Please change this password after first login',
-            adminId: admin._id
+        return NextResponse.json({
+            message: 'Admin user created successfully',
+            email,
+            password: 'Admin123!'
         });
-    } catch (error) {
-        console.error('Create admin error:', error);
-        return NextResponse.json({ 
-            error: 'Failed to create admin account', 
-            details: (error as Error).message 
-        }, { status: 500 });
+
+    } catch (error: any) {
+        console.error('Seed error:', error);
+        return NextResponse.json(
+            { message: 'Error seeding admin', error: error.message },
+            { status: 500 }
+        );
     }
 }

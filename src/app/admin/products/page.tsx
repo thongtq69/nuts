@@ -16,7 +16,7 @@ async function getProducts() {
         originalPrice: p.originalPrice,
         category: p.category,
         image: p.image,
-        inStock: p.inStock !== false,
+        inStock: true, // Default to true as stock management is not yet implemented
     }));
 }
 

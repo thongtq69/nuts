@@ -12,7 +12,7 @@ async function getOrders() {
     return orders.map(order => ({
         id: order._id.toString(),
         customer: (order.user as any)?.name || order.shippingInfo?.fullName || 'Khách vãng lai',
-        email: (order.user as any)?.email || order.shippingInfo?.email || '',
+        email: (order.user as any)?.email || '',
         total: order.totalAmount,
         status: order.status,
         paymentMethod: order.paymentMethod || 'COD',
