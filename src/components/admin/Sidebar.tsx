@@ -53,7 +53,8 @@ const menuItems = [
     {
         title: 'CÀI ĐẶT',
         items: [
-            { href: '/admin/affiliate-settings', icon: Settings, label: 'Cấu hình Affiliate' },
+            { href: '/admin/settings', icon: Settings, label: 'Cài đặt Website' },
+            { href: '/admin/affiliate-settings', icon: TrendingUp, label: 'Cấu hình Affiliate' },
         ],
     },
 ];
