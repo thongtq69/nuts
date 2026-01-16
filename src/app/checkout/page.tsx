@@ -38,7 +38,6 @@ export default function CheckoutPage() {
 
     // Voucher State
     const [vouchers, setVouchers] = useState<any[]>([]);
-    const [showVoucherModal, setShowVoucherModal] = useState(false);
     const [loadingVouchers, setLoadingVouchers] = useState(false);
 
     // Province/District/Ward State

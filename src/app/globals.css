@@ -1288,10 +1288,21 @@ input {
 
 .packages-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-xl);
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
   margin-bottom: var(--spacing-3xl);
-  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .packages-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .package-card {
@@ -1305,7 +1316,6 @@ input {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 520px;
 }
 
 .package-card:hover {
@@ -1314,8 +1324,7 @@ input {
 }
 
 .package-card.featured {
-  border-color: var(--accent-color, #ffd700);
-  transform: scale(1.02);
+  border-color: #f59e0b;
 }
 
 .package-card.featured::before {
@@ -1324,8 +1333,8 @@ input {
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--accent-color, #ffd700);
-  color: #333;
+  background: #f59e0b;
+  color: white;
   padding: 4px 16px;
   border-radius: 20px;
   font-size: 12px;
@@ -1338,10 +1347,9 @@ input {
 }
 
 .package-name {
-  font-size: 24px;
+  font-size: 22px;
   color: var(--color-text-dark);
   margin-bottom: var(--spacing-sm);
-  min-height: 32px;
 }
 
 .package-price {
@@ -1349,9 +1357,9 @@ input {
 }
 
 .price-amount {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
-  color: var(--accent-color, var(--color-primary-brown));
+  color: #f59e0b;
 }
 
 .package-description {
@@ -1387,26 +1395,36 @@ input {
 }
 
 .package-savings {
-  background: #fff8e6;
-  color: #856404;
+  background: #fef3c7;
+  color: #92400e;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   margin-bottom: var(--spacing-lg);
-  margin-top: auto;
 }
 
 .btn-purchase {
   display: inline-block;
   width: 100%;
   padding: var(--spacing-md);
-  background: var(--accent-color, var(--color-primary-brown));
+  background: #9C7044;
   color: white;
   font-weight: 600;
   border-radius: var(--radius-md);
-  transition: opacity 0.2s;
+  transition: all 0.2s;
   border: none;
   cursor: pointer;
+  margin-top: auto;
+}
+
+.btn-purchase:hover {
+  background: #7d5a36;
+  color: white;
+}
+
+.btn-purchase:active {
+  background: #5c4228;
+  transform: scale(0.98);
 }
 
 .btn-purchase:hover {
@@ -1518,10 +1536,6 @@ input {
 
   .package-card.featured {
     transform: none;
-  }
-  
-  .package-card {
-    min-height: auto;
   }
 
   .voucher-content {

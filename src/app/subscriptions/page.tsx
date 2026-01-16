@@ -3,6 +3,9 @@ import SubscriptionPackage from '@/models/SubscriptionPackage';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import BuyPackageButton from '@/components/subscription/BuyPackageButton';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,12 +25,14 @@ function formatPrice(price: number) {
 export default async function SubscriptionsPage() {
     const packages = await getPackages();
 
-    const packageColors = ['#cd7f32', '#c0c0c0', '#ffd700']; // Bronze, Silver, Gold
-    const packageIcons = ['🥉', '🥈', '🥇'];
+    const packageIcons = ['🥉', '🥈', '🥇', '✨'];
 
     return (
         <>
-            <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Gói VIP' }]} />
+            <Header />
+            <Navbar />
+            <main>
+                <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Gói VIP' }]} />
 
             <section className="subscriptions-hero">
                 <div className="container">
@@ -43,7 +48,6 @@ export default async function SubscriptionsPage() {
                             <div
                                 key={pkg._id}
                                 className={`package-card ${index === packages.length - 1 ? 'featured' : ''}`}
-                                style={{ '--accent-color': packageColors[index] || '#9C7044' } as any}
                             >
                                 <div className="package-icon">{packageIcons[index] || '✨'}</div>
                                 <h3 className="package-name">{pkg.name}</h3>
@@ -135,6 +139,8 @@ export default async function SubscriptionsPage() {
                     </div>
                 </div>
             </section>
+            </main>
+            <Footer />
         </>
     );
 }
