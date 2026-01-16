@@ -37,6 +37,7 @@ const menuItems = [
         title: 'HỆ THỐNG',
         items: [
             { href: '/admin/users', icon: Users, label: 'Người dùng' },
+            { href: '/admin/staff', icon: UserCheck, label: 'Nhân viên' },
             { href: '/admin/affiliates', icon: UserCheck, label: 'Cộng tác viên' },
             { href: '/admin/commissions', icon: CreditCard, label: 'Hoa hồng' },
             { href: '/admin/packages', icon: Crown, label: 'Gói Hội Viên' },

@@ -34,7 +34,7 @@ export async function GET() {
         const collaborators = await User.find({
             parentStaff: user._id,
             affiliateLevel: 'collaborator'
-        }).select('name email phone referralCode walletBalance totalCommission createdAt').sort({ createdAt: -1 });
+        } as any).select('name email phone referralCode walletBalance totalCommission createdAt').sort({ createdAt: -1 });
 
         // Get order stats for each collaborator
         const collaboratorsWithStats = await Promise.all(
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
         const collaboratorCount = await User.countDocuments({
             parentStaff: user._id,
             affiliateLevel: 'collaborator'
-        });
+        } as any);
 
         const newCode = `${user.staffCode}-CTV${collaboratorCount + 1}`;
 
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
             referralCode: newCode,
             walletBalance: 0,
             totalCommission: 0
-        });
+        } as any) as any;
 
         // Update staff's collaborator count
         await User.findByIdAndUpdate(user._id, {
@@ -161,7 +161,7 @@ export async function DELETE(req: Request) {
             _id: collaboratorId,
             parentStaff: user._id,
             affiliateLevel: 'collaborator'
-        });
+        } as any);
 
         if (!collaborator) {
             return NextResponse.json({ message: 'Không tìm thấy cộng tác viên' }, { status: 404 });

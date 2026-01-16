@@ -71,8 +71,8 @@ export default function StaffDashboard() {
     };
 
     const copyReferralLink = () => {
-        if (user?.referralCode) {
-            const link = `${window.location.origin}?ref=${user.referralCode}`;
+        if ((user as any)?.referralCode) {
+            const link = `${window.location.origin}?ref=${(user as any).referralCode}`;
             navigator.clipboard.writeText(link);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
@@ -132,14 +132,14 @@ export default function StaffDashboard() {
                             <input
                                 type="text"
                                 readOnly
-                                value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${user?.referralCode || ''}`}
+                                value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${(user as any)?.referralCode || ''}`}
                                 className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/50 focus:outline-none"
                             />
                             <button
                                 onClick={copyReferralLink}
                                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${copied
-                                        ? 'bg-emerald-500 text-white'
-                                        : 'bg-white text-blue-600 hover:bg-blue-50'
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-white text-blue-600 hover:bg-blue-50'
                                     }`}
                             >
                                 {copied ? 'Đã sao chép!' : 'Sao chép'}
@@ -234,7 +234,7 @@ export default function StaffDashboard() {
                                     tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                                 />
                                 <Tooltip
-                                    formatter={(value: number) => [`${value.toLocaleString('vi-VN')}đ`, 'Hoa hồng']}
+                                    formatter={(value) => [`${(value as number).toLocaleString('vi-VN')}đ`, 'Hoa hồng']}
                                     contentStyle={{
                                         backgroundColor: 'white',
                                         border: '1px solid #e2e8f0',
