@@ -1703,6 +1703,201 @@ input {
 }
 
 /* ========================================
+   Inline Voucher Cards (Account Page)
+   ======================================== */
+.vouchers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.voucher-card-inline {
+  display: flex;
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+  border: 1px solid #eee;
+}
+
+.voucher-card-inline.used,
+.voucher-card-inline.expired {
+  opacity: 0.6;
+}
+
+.voucher-left-inline {
+  background: linear-gradient(135deg, var(--color-primary-brown) 0%, #7a5a36 100%);
+  color: white;
+  padding: var(--spacing-lg);
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.voucher-discount-inline {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.voucher-max-inline {
+  font-size: 10px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+.voucher-right-inline {
+  flex: 1;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.voucher-code-inline {
+  font-family: monospace;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  margin-bottom: 4px;
+}
+
+.voucher-condition-inline {
+  font-size: var(--font-size-xs);
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.voucher-expiry-inline {
+  font-size: var(--font-size-xs);
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.copy-btn-inline {
+  padding: 4px 12px;
+  background: var(--color-primary-brown);
+  color: white;
+  font-size: 11px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity 0.2s;
+  width: fit-content;
+}
+
+.copy-btn-inline:hover {
+  opacity: 0.8;
+}
+
+.voucher-overlay-inline {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  font-size: 18px;
+  font-weight: 700;
+  color: #e74c3c;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ========================================
+   Membership Cards (Account Page)
+   ======================================== */
+.membership-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.membership-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 2px solid #eee;
+}
+
+.membership-card.active {
+  border-color: var(--color-success-green);
+}
+
+.membership-card.expired {
+  opacity: 0.7;
+  border-color: #ddd;
+}
+
+.membership-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+  border-bottom: 1px solid #eee;
+}
+
+.membership-header h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.membership-status {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.membership-status.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.membership-status.expired {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.membership-body {
+  padding: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.membership-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.membership-info span {
+  font-size: var(--font-size-xs);
+  color: #666;
+}
+
+.membership-info strong {
+  font-size: var(--font-size-md);
+  color: var(--color-text-dark);
+}
+
+@media (max-width: 480px) {
+  .vouchers-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .membership-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
    Common Page Styles
    ======================================== */
 .page-title {

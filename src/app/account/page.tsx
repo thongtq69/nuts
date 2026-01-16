@@ -377,6 +377,118 @@ export default function AccountPage() {
                             </div>
                         )}
 
+                        {/* Vouchers Tab */}
+                        {activeTab === 'vouchers' && (
+                            <div className="tab-pane">
+                                <h2>Voucher của tôi</h2>
+                                {loadingVouchers ? (
+                                    <p>Đang tải voucher...</p>
+                                ) : vouchers.length === 0 ? (
+                                    <div className="empty-cart">
+                                        <p>Bạn chưa có voucher nào.</p>
+                                        <Link href="/membership" className="continue-btn">Mua gói VIP để nhận voucher</Link>
+                                    </div>
+                                ) : (
+                                    <div className="vouchers-grid">
+                                        {vouchers.map((voucher: any) => {
+                                            const isExpired = new Date(voucher.expiresAt) < new Date();
+                                            const status = voucher.isUsed ? 'used' : isExpired ? 'expired' : 'available';
+                                            return (
+                                                <div key={voucher._id} className={`voucher-card-inline ${status}`}>
+                                                    <div className="voucher-left-inline">
+                                                        <div className="voucher-discount-inline">
+                                                            {voucher.discountType === 'percent'
+                                                                ? `${voucher.discountValue}%`
+                                                                : `${voucher.discountValue.toLocaleString()}đ`}
+                                                        </div>
+                                                        <div className="voucher-max-inline">
+                                                            Tối đa {voucher.maxDiscount?.toLocaleString() || 0}đ
+                                                        </div>
+                                                    </div>
+                                                    <div className="voucher-right-inline">
+                                                        <div className="voucher-code-inline">{voucher.code}</div>
+                                                        <div className="voucher-condition-inline">
+                                                            Đơn từ {voucher.minOrderValue?.toLocaleString() || 0}đ
+                                                        </div>
+                                                        <div className="voucher-expiry-inline">
+                                                            {status === 'used' ? 'Đã sử dụng' :
+                                                                status === 'expired' ? 'Đã hết hạn' :
+                                                                    `HSD: ${new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}`}
+                                                        </div>
+                                                        {status === 'available' && (
+                                                            <button
+                                                                className="copy-btn-inline"
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(voucher.code);
+                                                                    alert('Đã sao chép mã: ' + voucher.code);
+                                                                }}
+                                                            >
+                                                                Sao chép
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {status !== 'available' && (
+                                                        <div className="voucher-overlay-inline">
+                                                            {status === 'used' ? 'ĐÃ DÙNG' : 'HẾT HẠN'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Membership Tab */}
+                        {activeTab === 'membership' && (
+                            <div className="tab-pane">
+                                <h2>Gói hội viên của tôi</h2>
+                                {loadingMembership ? (
+                                    <p>Đang tải thông tin gói...</p>
+                                ) : membershipPackages.length === 0 ? (
+                                    <div className="empty-cart">
+                                        <p>Bạn chưa mua gói hội viên nào.</p>
+                                        <Link href="/membership" className="continue-btn">Xem các gói VIP</Link>
+                                    </div>
+                                ) : (
+                                    <div className="membership-list">
+                                        {membershipPackages.map((pkg: any) => {
+                                            const isActive = new Date(pkg.expiresAt) > new Date();
+                                            return (
+                                                <div key={pkg._id} className={`membership-card ${isActive ? 'active' : 'expired'}`}>
+                                                    <div className="membership-header">
+                                                        <h3>{pkg.packageName}</h3>
+                                                        <span className={`membership-status ${isActive ? 'active' : 'expired'}`}>
+                                                            {isActive ? '✓ Đang hoạt động' : '✗ Đã hết hạn'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="membership-body">
+                                                        <div className="membership-info">
+                                                            <span>Ngày mua:</span>
+                                                            <strong>{new Date(pkg.purchasedAt).toLocaleDateString('vi-VN')}</strong>
+                                                        </div>
+                                                        <div className="membership-info">
+                                                            <span>Ngày hết hạn:</span>
+                                                            <strong>{new Date(pkg.expiresAt).toLocaleDateString('vi-VN')}</strong>
+                                                        </div>
+                                                        <div className="membership-info">
+                                                            <span>Voucher đã nhận:</span>
+                                                            <strong>{pkg.vouchersReceived || 0} mã</strong>
+                                                        </div>
+                                                        <div className="membership-info">
+                                                            <span>Giá trị:</span>
+                                                            <strong>{pkg.price?.toLocaleString() || 0}đ</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Agent Application Tab */}
                         {activeTab === 'agent' && (
                             <div className="tab-pane">

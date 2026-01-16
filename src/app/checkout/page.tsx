@@ -473,34 +473,61 @@ export default function CheckoutPage() {
                                                     <p>Bạn chưa có voucher nào khả dụng.</p>
                                                 </div>
                                             ) : (
-                                                vouchers.map(voucher => (
-                                                    <div
-                                                        key={voucher._id}
-                                                        className="border rounded-lg p-3 hover:border-amber-500 cursor-pointer transition-colors relative group"
-                                                        onClick={() => {
-                                                            setVoucherCode(voucher.code);
-                                                            setShowVoucherModal(false);
-                                                        }}
-                                                    >
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <div className="font-bold text-amber-600 custom-dashed-border">{voucher.code}</div>
-                                                                <div className="text-sm font-medium mt-1">
-                                                                    Giảm {voucher.discountType === 'percent' ? `${voucher.discountValue}%` : `${voucher.discountValue.toLocaleString()}đ`}
+                                                vouchers.map(voucher => {
+                                                    const canApply = subtotal >= voucher.minOrderValue;
+                                                    return (
+                                                        <div
+                                                            key={voucher._id}
+                                                            className={`border rounded-lg p-3 transition-colors relative ${canApply ? 'hover:border-amber-500 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                                                            onClick={() => {
+                                                                if (canApply) {
+                                                                    // Set voucher code and auto-apply
+                                                                    setVoucherCode(voucher.code);
+                                                                    setShowVoucherModal(false);
+                                                                    // Calculate discount
+                                                                    let discount = 0;
+                                                                    if (voucher.discountType === 'percent') {
+                                                                        discount = Math.floor(subtotal * voucher.discountValue / 100);
+                                                                        if (voucher.maxDiscount && discount > voucher.maxDiscount) {
+                                                                            discount = voucher.maxDiscount;
+                                                                        }
+                                                                    } else {
+                                                                        discount = voucher.discountValue;
+                                                                    }
+                                                                    setAppliedDiscount(discount);
+                                                                    setIsVoucherApplied(true);
+                                                                    setVoucherError('');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <div className="font-bold text-amber-600">{voucher.code}</div>
+                                                                    <div className="text-sm font-medium mt-1">
+                                                                        Giảm {voucher.discountType === 'percent' ? `${voucher.discountValue}%` : `${voucher.discountValue.toLocaleString()}đ`}
+                                                                        {voucher.maxDiscount > 0 && voucher.discountType === 'percent' && (
+                                                                            <span className="text-gray-500"> (tối đa {voucher.maxDiscount.toLocaleString()}đ)</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="text-xs text-gray-500">
+                                                                        Đơn tối thiểu: {voucher.minOrderValue.toLocaleString()}đ
+                                                                    </div>
+                                                                    <div className="text-xs text-gray-400 mt-1">
+                                                                        HSD: {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
+                                                                    </div>
+                                                                    {!canApply && (
+                                                                        <div className="text-xs text-red-500 mt-1">
+                                                                            Đơn hàng chưa đủ điều kiện
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                                <div className="text-xs text-gray-500">
-                                                                    Đơn tối thiểu: {voucher.minOrderValue.toLocaleString()}đ
+                                                                <div className={`text-xs px-2 py-1 rounded-full ${canApply ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                                    {canApply ? 'Áp dụng' : 'Không đủ ĐK'}
                                                                 </div>
-                                                                <div className="text-xs text-gray-400 mt-1">
-                                                                    HSD: {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
-                                                                </div>
-                                                            </div>
-                                                            <div className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                                                                Dùng ngay
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                ))
+                                                    );
+                                                })
                                             )}
                                         </div>
                                     </div>
