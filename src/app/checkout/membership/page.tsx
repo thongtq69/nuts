@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { Suspense } from 'react';
 
 function MembershipCheckoutContent() {
@@ -14,6 +15,7 @@ function MembershipCheckoutContent() {
     const searchParams = useSearchParams();
     const packageId = searchParams.get('packageId');
     const { user } = useAuth();
+    const toast = useToast();
 
     const [pkg, setPkg] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ function MembershipCheckoutContent() {
                 if (found) {
                     setPkg(found);
                 } else {
-                    alert('Gói không tồn tại');
+                    toast.error('Không tìm thấy gói', 'Gói không tồn tại hoặc đã bị xóa.');
                     router.push('/membership');
                 }
                 setLoading(false);
@@ -70,7 +72,7 @@ function MembershipCheckoutContent() {
 
         // Validation
         if (!formData.name || !formData.phone || !formData.address) {
-            alert('Vui lòng điền đầy đủ thông tin nhận hàng/liên hệ');
+            toast.warning('Thiếu thông tin', 'Vui lòng điền đầy đủ thông tin nhận hàng/liên hệ');
             return;
         }
 
@@ -91,7 +93,7 @@ function MembershipCheckoutContent() {
             // Success
             router.push('/checkout/membership/success');
         } catch (error: any) {
-            alert(error.message);
+            toast.error('Lỗi đặt hàng', error.message);
         } finally {
             setIsProcessing(false);
         }

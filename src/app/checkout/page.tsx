@@ -39,6 +39,8 @@ export default function CheckoutPage() {
     // Voucher State
     const [vouchers, setVouchers] = useState<any[]>([]);
     const [loadingVouchers, setLoadingVouchers] = useState(false);
+    const [showVoucherModal, setShowVoucherModal] = useState(false);
+    const [manualVoucherCode, setManualVoucherCode] = useState('');
 
     // Province/District/Ward State
     const [provinces, setProvinces] = useState<Province[]>([]);
@@ -412,106 +414,162 @@ export default function CheckoutPage() {
                             </div>
 
                             {/* Voucher Selection */}
-                            <div className="mb-4 pt-4 border-t">
-                                <label className="block text-sm font-medium mb-2">Mã voucher</label>
+                            <div className="voucher-section">
+                                <div className="voucher-header">
+                                    <span className="voucher-icon">🎟️</span>
+                                    <span className="voucher-label">Mã giảm giá</span>
+                                </div>
                                 
                                 {isVoucherApplied ? (
-                                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
-                                        <div>
-                                            <span className="font-bold text-green-700">{voucherCode}</span>
-                                            <span className="text-green-600 text-sm ml-2">(-{appliedDiscount.toLocaleString()}đ)</span>
+                                    <div className="voucher-applied">
+                                        <div className="voucher-applied-info">
+                                            <div className="voucher-applied-code">{voucherCode}</div>
+                                            <div className="voucher-applied-discount">-{appliedDiscount.toLocaleString()}đ</div>
                                         </div>
                                         <button
-                                            className="text-red-500 hover:text-red-700 text-sm font-medium"
+                                            className="voucher-remove-btn"
                                             onClick={() => {
                                                 setIsVoucherApplied(false);
                                                 setAppliedDiscount(0);
                                                 setVoucherCode('');
                                             }}
                                         >
-                                            Xoá
+                                            ✕
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2">
-                                        {/* Voucher List */}
-                                        {loadingVouchers ? (
-                                            <div className="text-center py-3 text-gray-500 text-sm">Đang tải voucher...</div>
-                                        ) : vouchers.length > 0 ? (
-                                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                                                {vouchers.map(voucher => {
-                                                    const canApply = subtotal >= voucher.minOrderValue;
-                                                    return (
-                                                        <div
-                                                            key={voucher._id}
-                                                            className={`border rounded-lg p-3 transition-all ${canApply ? 'hover:border-amber-500 hover:bg-amber-50 cursor-pointer' : 'opacity-50 cursor-not-allowed bg-gray-50'}`}
-                                                            onClick={() => {
-                                                                if (canApply) {
-                                                                    setVoucherCode(voucher.code);
-                                                                    let discount = 0;
-                                                                    if (voucher.discountType === 'percent') {
-                                                                        discount = Math.floor(subtotal * voucher.discountValue / 100);
-                                                                        if (voucher.maxDiscount && discount > voucher.maxDiscount) {
-                                                                            discount = voucher.maxDiscount;
-                                                                        }
-                                                                    } else {
-                                                                        discount = voucher.discountValue;
-                                                                    }
-                                                                    setAppliedDiscount(discount);
-                                                                    setIsVoucherApplied(true);
-                                                                    setVoucherError('');
-                                                                }
-                                                            }}
-                                                        >
-                                                            <div className="flex justify-between items-center">
-                                                                <div className="flex-1">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="font-bold text-amber-600 text-sm">{voucher.code}</span>
-                                                                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
-                                                                            {voucher.discountType === 'percent' ? `-${voucher.discountValue}%` : `-${voucher.discountValue.toLocaleString()}đ`}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="text-xs text-gray-500 mt-1">
-                                                                        Đơn từ {voucher.minOrderValue.toLocaleString()}đ • HSD: {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
-                                                                    </div>
-                                                                </div>
-                                                                {canApply ? (
-                                                                    <span className="text-xs text-amber-600 font-medium">Chọn →</span>
-                                                                ) : (
-                                                                    <span className="text-xs text-red-500">Chưa đủ ĐK</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        ) : user ? (
-                                            <div className="text-center py-3 text-gray-500 text-sm border rounded-lg bg-gray-50">
-                                                Bạn chưa có voucher nào
-                                            </div>
-                                        ) : null}
+                                    <button 
+                                        className="voucher-select-btn"
+                                        onClick={() => setShowVoucherModal(true)}
+                                    >
+                                        <span>Chọn hoặc nhập mã</span>
+                                        <span className="voucher-arrow">→</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Voucher Modal */}
+                            {showVoucherModal && (
+                                <div className="voucher-modal-overlay" onClick={() => setShowVoucherModal(false)}>
+                                    <div className="voucher-modal" onClick={e => e.stopPropagation()}>
+                                        <div className="voucher-modal-header">
+                                            <h3>🎟️ Chọn mã giảm giá</h3>
+                                            <button className="voucher-modal-close" onClick={() => setShowVoucherModal(false)}>✕</button>
+                                        </div>
                                         
-                                        {/* Manual Input Option */}
-                                        <div className="flex gap-2 pt-2 border-t mt-2">
+                                        {/* Manual Input */}
+                                        <div className="voucher-input-section">
                                             <input
                                                 type="text"
-                                                className="flex-1 border p-2 rounded text-sm uppercase"
-                                                placeholder="Hoặc nhập mã khác..."
-                                                value={voucherCode}
-                                                onChange={e => setVoucherCode(e.target.value.toUpperCase())}
+                                                className="voucher-input"
+                                                placeholder="Nhập mã giảm giá"
+                                                value={manualVoucherCode}
+                                                onChange={e => setManualVoucherCode(e.target.value.toUpperCase())}
                                             />
                                             <button
-                                                className="bg-gray-800 text-white px-4 py-2 rounded text-sm hover:bg-black"
-                                                onClick={handleApplyVoucher}
-                                                disabled={!voucherCode}
+                                                className="voucher-apply-btn"
+                                                onClick={async () => {
+                                                    if (!manualVoucherCode) return;
+                                                    setVoucherCode(manualVoucherCode);
+                                                    setVoucherError('');
+                                                    try {
+                                                        const res = await fetch('/api/vouchers/apply', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ code: manualVoucherCode, orderValue: subtotal })
+                                                        });
+                                                        const data = await res.json();
+                                                        if (res.ok && data.valid) {
+                                                            setAppliedDiscount(data.discountAmount);
+                                                            setIsVoucherApplied(true);
+                                                            setShowVoucherModal(false);
+                                                            setManualVoucherCode('');
+                                                        } else {
+                                                            setVoucherError(data.message || 'Mã không hợp lệ');
+                                                        }
+                                                    } catch (e) {
+                                                        setVoucherError('Lỗi khi kiểm tra mã');
+                                                    }
+                                                }}
+                                                disabled={!manualVoucherCode}
                                             >
                                                 Áp dụng
                                             </button>
                                         </div>
-                                        {voucherError && <p className="text-red-500 text-xs mt-1">{voucherError}</p>}
+                                        {voucherError && <p className="voucher-error">{voucherError}</p>}
+                                        
+                                        {/* Voucher List */}
+                                        <div className="voucher-list-section">
+                                            <div className="voucher-list-title">Voucher của bạn ({vouchers.length})</div>
+                                            
+                                            {loadingVouchers ? (
+                                                <div className="voucher-loading">Đang tải...</div>
+                                            ) : vouchers.length === 0 ? (
+                                                <div className="voucher-empty">
+                                                    <span className="voucher-empty-icon">📭</span>
+                                                    <p>Bạn chưa có voucher nào</p>
+                                                </div>
+                                            ) : (
+                                                <div className="voucher-list">
+                                                    {vouchers.map(voucher => {
+                                                        const canApply = subtotal >= voucher.minOrderValue;
+                                                        return (
+                                                            <div
+                                                                key={voucher._id}
+                                                                className={`voucher-card ${canApply ? '' : 'disabled'}`}
+                                                                onClick={() => {
+                                                                    if (canApply) {
+                                                                        setVoucherCode(voucher.code);
+                                                                        let discount = 0;
+                                                                        if (voucher.discountType === 'percent') {
+                                                                            discount = Math.floor(subtotal * voucher.discountValue / 100);
+                                                                            if (voucher.maxDiscount && discount > voucher.maxDiscount) {
+                                                                                discount = voucher.maxDiscount;
+                                                                            }
+                                                                        } else {
+                                                                            discount = voucher.discountValue;
+                                                                        }
+                                                                        setAppliedDiscount(discount);
+                                                                        setIsVoucherApplied(true);
+                                                                        setVoucherError('');
+                                                                        setShowVoucherModal(false);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <div className="voucher-card-left">
+                                                                    <div className="voucher-card-discount">
+                                                                        {voucher.discountType === 'percent' 
+                                                                            ? `${voucher.discountValue}%` 
+                                                                            : `${(voucher.discountValue/1000).toFixed(0)}K`}
+                                                                    </div>
+                                                                    <div className="voucher-card-type">GIẢM</div>
+                                                                </div>
+                                                                <div className="voucher-card-right">
+                                                                    <div className="voucher-card-code">{voucher.code}</div>
+                                                                    <div className="voucher-card-condition">
+                                                                        Đơn từ {voucher.minOrderValue.toLocaleString()}đ
+                                                                    </div>
+                                                                    <div className="voucher-card-expiry">
+                                                                        HSD: {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
+                                                                    </div>
+                                                                    {!canApply && (
+                                                                        <div className="voucher-card-warning">Chưa đủ điều kiện</div>
+                                                                    )}
+                                                                </div>
+                                                                {canApply && (
+                                                                    <div className="voucher-card-select">
+                                                                        <span>Chọn</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
 
                             <div className="summary-row">
                                 <span>Tạm tính</span>
@@ -693,12 +751,315 @@ export default function CheckoutPage() {
                 color: #666;
             }
 
+            /* Voucher Section Styles */
+            .voucher-section {
+                padding: 16px 0;
+                border-top: 1px solid #eee;
+                border-bottom: 1px solid #eee;
+                margin-bottom: 16px;
+            }
+            .voucher-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+            .voucher-icon {
+                font-size: 18px;
+            }
+            .voucher-label {
+                font-weight: 600;
+                color: #333;
+            }
+            .voucher-select-btn {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px;
+                background: #fff;
+                border: 1px dashed #d1d5db;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+                color: #666;
+            }
+            .voucher-select-btn:hover {
+                border-color: #9C7044;
+                color: #9C7044;
+            }
+            .voucher-arrow {
+                font-size: 18px;
+            }
+            .voucher-applied {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px;
+                background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+                border: 1px solid #10b981;
+                border-radius: 8px;
+            }
+            .voucher-applied-info {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .voucher-applied-code {
+                font-weight: 700;
+                color: #059669;
+                font-size: 14px;
+            }
+            .voucher-applied-discount {
+                background: #059669;
+                color: white;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            .voucher-remove-btn {
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #fee2e2;
+                color: #dc2626;
+                border: none;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 14px;
+                transition: all 0.2s;
+            }
+            .voucher-remove-btn:hover {
+                background: #dc2626;
+                color: white;
+            }
+
+            /* Voucher Modal */
+            .voucher-modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                padding: 20px;
+            }
+            .voucher-modal {
+                background: white;
+                border-radius: 16px;
+                width: 100%;
+                max-width: 450px;
+                max-height: 80vh;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            }
+            .voucher-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px;
+                border-bottom: 1px solid #eee;
+            }
+            .voucher-modal-header h3 {
+                font-size: 18px;
+                font-weight: 700;
+                color: #333;
+                margin: 0;
+            }
+            .voucher-modal-close {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f3f4f6;
+                border: none;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 16px;
+                color: #666;
+                transition: all 0.2s;
+            }
+            .voucher-modal-close:hover {
+                background: #e5e7eb;
+                color: #333;
+            }
+            .voucher-input-section {
+                padding: 20px;
+                background: #f9fafb;
+                display: flex;
+                gap: 10px;
+            }
+            .voucher-input {
+                flex: 1;
+                padding: 12px 16px;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
+                font-size: 14px;
+                text-transform: uppercase;
+                font-weight: 600;
+                letter-spacing: 1px;
+                transition: border-color 0.2s;
+            }
+            .voucher-input:focus {
+                outline: none;
+                border-color: #9C7044;
+            }
+            .voucher-input::placeholder {
+                text-transform: none;
+                font-weight: 400;
+                letter-spacing: 0;
+                color: #9ca3af;
+            }
+            .voucher-apply-btn {
+                padding: 12px 24px;
+                background: #9C7044;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .voucher-apply-btn:hover:not(:disabled) {
+                background: #7d5a36;
+            }
+            .voucher-apply-btn:disabled {
+                background: #d1d5db;
+                cursor: not-allowed;
+            }
+            .voucher-error {
+                color: #dc2626;
+                font-size: 13px;
+                padding: 0 20px 10px;
+                margin: 0;
+            }
+            .voucher-list-section {
+                flex: 1;
+                overflow-y: auto;
+                padding: 0 20px 20px;
+            }
+            .voucher-list-title {
+                font-size: 13px;
+                color: #666;
+                margin-bottom: 12px;
+                font-weight: 500;
+            }
+            .voucher-loading, .voucher-empty {
+                text-align: center;
+                padding: 40px 20px;
+                color: #9ca3af;
+            }
+            .voucher-empty-icon {
+                font-size: 48px;
+                display: block;
+                margin-bottom: 12px;
+            }
+            .voucher-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .voucher-card {
+                display: flex;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                overflow: hidden;
+                cursor: pointer;
+                transition: all 0.2s;
+                background: white;
+            }
+            .voucher-card:hover:not(.disabled) {
+                border-color: #9C7044;
+                box-shadow: 0 4px 12px rgba(156, 112, 68, 0.15);
+            }
+            .voucher-card.disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                background: #f9fafb;
+            }
+            .voucher-card-left {
+                width: 80px;
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 16px 8px;
+                color: white;
+            }
+            .voucher-card.disabled .voucher-card-left {
+                background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            }
+            .voucher-card-discount {
+                font-size: 20px;
+                font-weight: 800;
+                line-height: 1;
+            }
+            .voucher-card-type {
+                font-size: 10px;
+                font-weight: 600;
+                margin-top: 4px;
+                opacity: 0.9;
+            }
+            .voucher-card-right {
+                flex: 1;
+                padding: 12px 16px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .voucher-card-code {
+                font-weight: 700;
+                color: #333;
+                font-size: 14px;
+                margin-bottom: 4px;
+            }
+            .voucher-card-condition {
+                font-size: 12px;
+                color: #666;
+            }
+            .voucher-card-expiry {
+                font-size: 11px;
+                color: #9ca3af;
+                margin-top: 4px;
+            }
+            .voucher-card-warning {
+                font-size: 11px;
+                color: #dc2626;
+                margin-top: 4px;
+                font-weight: 500;
+            }
+            .voucher-card-select {
+                display: flex;
+                align-items: center;
+                padding: 0 16px;
+                color: #9C7044;
+                font-weight: 600;
+                font-size: 13px;
+            }
+
             @media (max-width: 768px) {
                 .checkout-layout {
                     grid-template-columns: 1fr;
                 }
                 .order-summary-section {
                     order: -1; 
+                }
+                .voucher-modal {
+                    max-height: 90vh;
+                    border-radius: 16px 16px 0 0;
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    max-width: 100%;
                 }
             }
           `}</style>

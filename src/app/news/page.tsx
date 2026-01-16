@@ -3,6 +3,9 @@
 import React from 'react';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 
 const newsItems = [
     {
@@ -52,29 +55,34 @@ const newsItems = [
 export default function NewsPage() {
     return (
         <>
-            <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Tin tức' }]} />
+            <Header />
+            <Navbar />
+            <main>
+                <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Tin tức' }]} />
 
-            <div className="container">
-                <h1 className="page-title">Tin tức & Sự kiện</h1>
+                <div className="container">
+                    <h1 className="page-title">Tin tức & Sự kiện</h1>
 
-                <div className="news-grid">
-                    {newsItems.map((item) => (
-                        <article key={item.id} className="news-card">
-                            <div className="news-image">
-                                <img src={item.image} alt={item.title} />
-                            </div>
-                            <div className="news-content">
-                                <div className="news-date">{item.date}</div>
-                                <Link href="#">
-                                    <h2 className="news-title">{item.title}</h2>
-                                </Link>
-                                <p className="news-excerpt">{item.excerpt}</p>
-                                <Link href="#" className="read-more">Đọc tiếp →</Link>
-                            </div>
-                        </article>
-                    ))}
+                    <div className="news-grid">
+                        {newsItems.map((item) => (
+                            <article key={item.id} className="news-card">
+                                <div className="news-image">
+                                    <img src={item.image} alt={item.title} />
+                                </div>
+                                <div className="news-content">
+                                    <div className="news-date">{item.date}</div>
+                                    <Link href="#">
+                                        <h2 className="news-title">{item.title}</h2>
+                                    </Link>
+                                    <p className="news-excerpt">{item.excerpt}</p>
+                                    <Link href="#" className="read-more">Đọc tiếp →</Link>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            </main>
+            <Footer />
         </>
     );
 }

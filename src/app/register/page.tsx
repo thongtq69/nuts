@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/context/ToastContext';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -20,6 +21,7 @@ export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     const router = useRouter();
+    const toast = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -50,7 +52,7 @@ export default function RegisterPage() {
                 throw new Error(data.message || 'Đăng ký thất bại');
             }
 
-            alert('Đăng ký thành công! Vui lòng đăng nhập.');
+            toast.success('Đăng ký thành công!', 'Vui lòng đăng nhập để tiếp tục.');
             router.push('/login');
         } catch (err: any) {
             setError(err.message);

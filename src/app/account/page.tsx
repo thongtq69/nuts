@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -20,6 +21,7 @@ interface ProfileFormData {
 export default function AccountPage() {
     const [activeTab, setActiveTab] = useState('orders');
     const { user, logout, loading: authLoading, checkUser } = useAuth();
+    const toast = useToast();
     const router = useRouter();
 
     // Orders state
@@ -175,14 +177,14 @@ export default function AccountPage() {
             });
 
             if (res.ok) {
-                alert('Đã gửi yêu cầu! Chúng tôi sẽ liên hệ bạn trong thời gian sớm nhất.');
+                toast.success('Đã gửi yêu cầu!', 'Chúng tôi sẽ liên hệ bạn trong thời gian sớm nhất.');
                 await checkUser();
             } else {
                 const data = await res.json();
-                alert(data.message || 'Có lỗi xảy ra');
+                toast.error('Có lỗi xảy ra', data.message || 'Vui lòng thử lại sau.');
             }
         } catch (error) {
-            alert('Không thể kết nối server');
+            toast.error('Lỗi kết nối', 'Không thể kết nối server');
         } finally {
             setApplyingAgent(false);
         }
@@ -420,7 +422,7 @@ export default function AccountPage() {
                                                                 className="copy-btn-inline"
                                                                 onClick={() => {
                                                                     navigator.clipboard.writeText(voucher.code);
-                                                                    alert('Đã sao chép mã: ' + voucher.code);
+                                                                    toast.success('Đã sao chép!', `Mã voucher: ${voucher.code}`);
                                                                 }}
                                                             >
                                                                 Sao chép
