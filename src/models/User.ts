@@ -31,6 +31,13 @@ export interface IUser {
         accountName: string;
     };
 
+    // Multi-level Affiliate Fields (Staff → Collaborator)
+    parentStaff?: Schema.Types.ObjectId; // For collaborators: which staff manages them
+    affiliateLevel?: 'staff' | 'collaborator'; // Level in hierarchy
+    staffCode?: string; // Code assigned by admin to staff (e.g., NV001)
+    collaboratorCount?: number; // Number of collaborators under this staff
+    staffCommissionRate?: number; // Commission rate staff gets from collaborators' sales
+
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -69,6 +76,16 @@ const UserSchema: Schema<IUser> = new Schema(
             accountNumber: String,
             accountName: String,
         },
+
+        // Multi-level Affiliate Fields (Staff → Collaborator)
+        parentStaff: { type: Schema.Types.ObjectId, ref: 'User' }, // For collaborators: which staff manages them
+        affiliateLevel: {
+            type: String,
+            enum: ['staff', 'collaborator'],
+        },
+        staffCode: { type: String, unique: true, sparse: true }, // Code assigned by admin to staff (e.g., NV001)
+        collaboratorCount: { type: Number, default: 0 }, // Number of collaborators under this staff
+        staffCommissionRate: { type: Number, default: 2 }, // Commission rate staff gets from collaborators' sales (%)
     },
     {
         timestamps: true,
