@@ -70,50 +70,61 @@ export default function MembershipPage() {
                 {loading ? (
                     <div className="text-center py-20">Đang tải các gói...</div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {packages.map(pkg => (
-                            <div key={pkg._id} className="border rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow bg-white flex flex-col">
-                                <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white text-center">
-                                    <h3 className="text-2xl font-bold">{pkg.name}</h3>
-                                    <div className="mt-2 text-4xl font-extrabold">
-                                        {new Intl.NumberFormat('vi-VN').format(pkg.price)}đ
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                        {packages.map((pkg, index) => {
+                            // Màu sắc cho từng gói
+                            const colors = [
+                                { gradient: 'from-blue-500 to-blue-600', button: 'bg-blue-600 hover:bg-blue-700' },
+                                { gradient: 'from-amber-500 to-amber-600', button: 'bg-amber-600 hover:bg-amber-700' },
+                                { gradient: 'from-purple-500 to-purple-600', button: 'bg-purple-600 hover:bg-purple-700' },
+                            ];
+                            const color = colors[index % colors.length];
+
+                            return (
+                                <div key={pkg._id} className="border-2 border-slate-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1 bg-white flex flex-col h-full">
+                                    <div className={`bg-gradient-to-r ${color.gradient} p-6 text-white text-center`}>
+                                        <h3 className="text-2xl font-bold">{pkg.name}</h3>
+                                        <div className="mt-3 text-4xl font-extrabold">
+                                            {new Intl.NumberFormat('vi-VN').format(pkg.price)}đ
+                                        </div>
+                                        <div className="text-sm opacity-90 mt-2">Hiệu lực {pkg.validityDays} ngày</div>
                                     </div>
-                                    <div className="text-sm opacity-90 mt-1">/ {pkg.validityDays} ngày</div>
-                                </div>
 
-                                <div className="p-6 flex-1 flex flex-col">
-                                    <ul className="space-y-4 mb-8 flex-1">
-                                        <li className="flex items-start">
-                                            <span className="text-green-500 mr-2">✓</span>
-                                            <span className="font-semibold">Nhận {pkg.voucherQuantity} mã giảm giá</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <span className="text-green-500 mr-2">✓</span>
-                                            <span>
-                                                Giảm {pkg.discountValue}{pkg.discountType === 'percent' ? '%' : 'đ'}
-                                                {pkg.maxDiscount > 0 && ` (tối đa ${new Intl.NumberFormat('vi-VN').format(pkg.maxDiscount)}đ)`}
-                                            </span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <span className="text-green-500 mr-2">✓</span>
-                                            <span>Áp dụng cho đơn từ {new Intl.NumberFormat('vi-VN').format(pkg.minOrderValue)}đ</span>
-                                        </li>
-                                        {pkg.description && (
-                                            <li className="flex items-start text-gray-500 text-sm italic mt-2 border-t pt-2">
-                                                {pkg.description}
+                                    <div className="p-6 flex-1 flex flex-col">
+                                        <ul className="space-y-4 mb-6 flex-1">
+                                            <li className="flex items-start">
+                                                <span className="text-green-500 mr-3 text-xl">✓</span>
+                                                <span className="font-semibold text-slate-800">Nhận {pkg.voucherQuantity} mã giảm giá</span>
                                             </li>
-                                        )}
-                                    </ul>
+                                            <li className="flex items-start">
+                                                <span className="text-green-500 mr-3 text-xl">✓</span>
+                                                <span className="text-slate-700">
+                                                    Giảm {pkg.discountValue}{pkg.discountType === 'percent' ? '%' : 'đ'}
+                                                    {pkg.maxDiscount > 0 && ` (tối đa ${new Intl.NumberFormat('vi-VN').format(pkg.maxDiscount)}đ)`}
+                                                </span>
+                                            </li>
+                                            <li className="flex items-start">
+                                                <span className="text-green-500 mr-3 text-xl">✓</span>
+                                                <span className="text-slate-700">Áp dụng cho đơn từ {new Intl.NumberFormat('vi-VN').format(pkg.minOrderValue)}đ</span>
+                                            </li>
+                                            {pkg.description && (
+                                                <li className="flex items-start text-slate-500 text-sm italic mt-4 pt-4 border-t border-slate-200">
+                                                    <span className="mr-2">ℹ️</span>
+                                                    {pkg.description}
+                                                </li>
+                                            )}
+                                        </ul>
 
-                                    <button
-                                        onClick={() => handleBuy(pkg)}
-                                        className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-colors"
-                                    >
-                                        Đăng Ký Ngay
-                                    </button>
+                                        <button
+                                            onClick={() => handleBuy(pkg)}
+                                            className={`w-full ${color.button} text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg mt-auto`}
+                                        >
+                                            Mua ngay
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
