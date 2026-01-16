@@ -16,6 +16,7 @@ async function getOrderById(id: string) {
     return {
         id: order._id.toString(),
         orderNumber: order._id.toString().slice(-8).toUpperCase(),
+        orderType: (order as any).orderType || 'product',
         customer: {
             name: (order.user as any)?.name || order.shippingInfo?.fullName || 'Khách vãng lai',
             email: (order.user as any)?.email || '',
@@ -30,6 +31,7 @@ async function getOrderById(id: string) {
             quantity: item.quantity,
             total: item.price * item.quantity
         })),
+        packageInfo: (order as any).packageInfo || null,
         subtotal: order.items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0),
         shippingFee: order.shippingFee || 0,
         discount: (order as any).discount || 0,

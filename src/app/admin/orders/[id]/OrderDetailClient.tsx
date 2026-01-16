@@ -24,6 +24,7 @@ interface OrderDetailProps {
     order: {
         id: string;
         orderNumber: string;
+        orderType?: 'product' | 'membership';
         customer: {
             name: string;
             email: string;
@@ -44,6 +45,11 @@ interface OrderDetailProps {
             quantity: number;
             total: number;
         }>;
+        packageInfo?: {
+            name: string;
+            voucherQuantity: number;
+            expiresAt: string;
+        };
         subtotal: number;
         shippingFee: number;
         discount: number;
@@ -73,6 +79,10 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
     const [isUpdating, setIsUpdating] = useState(false);
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [adminNote, setAdminNote] = useState('');
+
+    // Check if this is a membership order
+    const isMembershipOrder = order.orderType === 'membership' || 
+        order.items.some(item => item.name?.includes('Gói Hội Viên') || item.name?.includes('Gói VIP'));
 
     const config = statusConfig[currentStatus] || statusConfig.pending;
     const StatusIcon = config.icon;
@@ -155,47 +165,101 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
 
                 {/* Status Actions */}
                 <div className="flex flex-wrap gap-3">
-                    {currentStatus === 'pending' && (
+                    {isMembershipOrder ? (
+                        // Membership Order: Only confirm payment → complete
                         <>
-                            <button
-                                onClick={() => handleStatusChange('confirmed')}
-                                disabled={isUpdating}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-200 hover:bg-blue-300 text-blue-900 font-medium rounded-lg transition-colors disabled:opacity-50"
-                            >
-                                <CheckCircle size={18} />
-                                Xác nhận đơn
-                            </button>
-                            <button
-                                onClick={() => handleStatusChange('cancelled')}
-                                disabled={isUpdating}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-200 hover:bg-red-300 text-red-900 font-medium rounded-lg transition-colors disabled:opacity-50"
-                            >
-                                <XCircle size={18} />
-                                Hủy đơn
-                            </button>
+                            {currentStatus === 'pending' && (
+                                <>
+                                    <button
+                                        onClick={() => handleStatusChange('paid')}
+                                        disabled={isUpdating}
+                                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                        <CheckCircle size={18} />
+                                        Xác nhận đã thanh toán
+                                    </button>
+                                    <button
+                                        onClick={() => handleStatusChange('cancelled')}
+                                        disabled={isUpdating}
+                                        className="flex items-center gap-2 px-4 py-2 bg-red-200 hover:bg-red-300 text-red-900 font-medium rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                        <XCircle size={18} />
+                                        Hủy đơn
+                                    </button>
+                                </>
+                            )}
+                            {currentStatus === 'paid' && (
+                                <button
+                                    onClick={() => handleStatusChange('completed')}
+                                    disabled={isUpdating}
+                                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                    <CheckCircle size={18} />
+                                    Hoàn thành & Kích hoạt gói
+                                </button>
+                            )}
+                        </>
+                    ) : (
+                        // Product Order: Normal flow with shipping
+                        <>
+                            {currentStatus === 'pending' && (
+                                <>
+                                    <button
+                                        onClick={() => handleStatusChange('confirmed')}
+                                        disabled={isUpdating}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-200 hover:bg-blue-300 text-blue-900 font-medium rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                        <CheckCircle size={18} />
+                                        Xác nhận đơn
+                                    </button>
+                                    <button
+                                        onClick={() => handleStatusChange('cancelled')}
+                                        disabled={isUpdating}
+                                        className="flex items-center gap-2 px-4 py-2 bg-red-200 hover:bg-red-300 text-red-900 font-medium rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                        <XCircle size={18} />
+                                        Hủy đơn
+                                    </button>
+                                </>
+                            )}
+                            {currentStatus === 'confirmed' && (
+                                <button
+                                    onClick={() => handleStatusChange('shipping')}
+                                    disabled={isUpdating}
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                    <Truck size={18} />
+                                    Bắt đầu giao hàng
+                                </button>
+                            )}
+                            {currentStatus === 'shipping' && (
+                                <button
+                                    onClick={() => handleStatusChange('completed')}
+                                    disabled={isUpdating}
+                                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                    <CheckCircle size={18} />
+                                    Hoàn thành đơn
+                                </button>
+                            )}
                         </>
                     )}
-                    {currentStatus === 'confirmed' && (
-                        <button
-                            onClick={() => handleStatusChange('shipping')}
-                            disabled={isUpdating}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-                        >
-                            <Truck size={18} />
-                            Bắt đầu giao hàng
-                        </button>
-                    )}
-                    {currentStatus === 'shipping' && (
-                        <button
-                            onClick={() => handleStatusChange('completed')}
-                            disabled={isUpdating}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-                        >
-                            <CheckCircle size={18} />
-                            Hoàn thành đơn
-                        </button>
-                    )}
                 </div>
+
+                {/* Membership Badge */}
+                {isMembershipOrder && (
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-amber-800">
+                            <span className="text-lg">🎟️</span>
+                            <span className="font-medium">Đơn hàng Gói Hội Viên</span>
+                            {order.packageInfo && (
+                                <span className="text-sm text-amber-600">
+                                    - {order.packageInfo.voucherQuantity} voucher
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

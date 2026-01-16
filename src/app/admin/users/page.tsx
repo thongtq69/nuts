@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, CheckCircle, XCircle, MoreHorizontal } from 'lucide-react';
+import { Users, CheckCircle, XCircle, MoreHorizontal, Trash2, Loader2 } from 'lucide-react';
 
 interface User {
     _id: string;
@@ -17,6 +17,7 @@ interface User {
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deleting, setDeleting] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | 'user' | 'sale' | 'admin' | 'pending'>('all');
 
     useEffect(() => {
@@ -82,6 +83,33 @@ export default function AdminUsersPage() {
             }
         } catch (error) {
             console.error('Error changing role:', error);
+        }
+    };
+
+    const handleDelete = async (userId: string, userName: string, userRole: string) => {
+        if (userRole === 'admin') {
+            alert('Không thể xóa tài khoản Admin!');
+            return;
+        }
+        if (!confirm(`Bạn có chắc muốn xóa người dùng "${userName}"? Hành động này không thể hoàn tác.`)) {
+            return;
+        }
+        try {
+            setDeleting(userId);
+            const res = await fetch(`/api/admin/users/${userId}`, {
+                method: 'DELETE',
+            });
+            if (res.ok) {
+                setUsers(prev => prev.filter(user => user._id !== userId));
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Lỗi xóa người dùng');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('Lỗi xóa người dùng');
+        } finally {
+            setDeleting(null);
         }
     };
 
@@ -227,6 +255,20 @@ export default function AdminUsersPage() {
                                                         onClick={() => handleChangeRole(user._id, 'user')}
                                                     >
                                                         Hạ cấp
+                                                    </button>
+                                                )}
+                                                {user.role !== 'admin' && (
+                                                    <button
+                                                        className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                                                        onClick={() => handleDelete(user._id, user.name, user.role)}
+                                                        disabled={deleting === user._id}
+                                                        title="Xóa người dùng"
+                                                    >
+                                                        {deleting === user._id ? (
+                                                            <Loader2 size={16} className="animate-spin" />
+                                                        ) : (
+                                                            <Trash2 size={16} />
+                                                        )}
                                                     </button>
                                                 )}
                                                 <button className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors">

@@ -14,7 +14,8 @@ import {
     Filter,
     ChevronDown,
     Loader2,
-    RefreshCw
+    RefreshCw,
+    Trash2
 } from 'lucide-react';
 
 interface Order {
@@ -49,6 +50,7 @@ export default function AdminOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState<string | null>(null);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -95,6 +97,29 @@ export default function AdminOrdersPage() {
         } finally {
             setUpdating(null);
             setOpenDropdown(null);
+        }
+    };
+
+    const handleDelete = async (orderId: string) => {
+        if (!confirm('Bạn có chắc muốn xóa đơn hàng này? Hành động này không thể hoàn tác.')) {
+            return;
+        }
+        try {
+            setDeleting(orderId);
+            const res = await fetch(`/api/admin/orders/${orderId}`, {
+                method: 'DELETE',
+            });
+            if (res.ok) {
+                setOrders(prev => prev.filter(order => order.id !== orderId));
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Lỗi xóa đơn hàng');
+            }
+        } catch (error) {
+            console.error('Error deleting order:', error);
+            alert('Lỗi xóa đơn hàng');
+        } finally {
+            setDeleting(null);
         }
     };
 
@@ -350,13 +375,27 @@ export default function AdminOrdersPage() {
                                                 </div>
                                             </td>
                                             <td className="text-center px-6 py-4">
-                                                <Link
-                                                    href={`/admin/orders/${order.id}`}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm font-medium transition-colors"
-                                                >
-                                                    <Eye size={14} />
-                                                    Chi tiết
-                                                </Link>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Link
+                                                        href={`/admin/orders/${order.id}`}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm font-medium transition-colors"
+                                                    >
+                                                        <Eye size={14} />
+                                                        Chi tiết
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDelete(order.id)}
+                                                        disabled={deleting === order.id}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors disabled:opacity-50"
+                                                    >
+                                                        {deleting === order.id ? (
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                        ) : (
+                                                            <Trash2 size={14} />
+                                                        )}
+                                                        Xóa
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
