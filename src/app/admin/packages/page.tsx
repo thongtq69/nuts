@@ -124,7 +124,7 @@ export default function AdminPackagesPage() {
                 </div>
                 <button
                     onClick={() => window.scrollTo({ top: document.getElementById('create-form')?.offsetTop, behavior: 'smooth' })}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-lg shadow-lg hover:from-emerald-600 hover:to-emerald-700 transition-all hover:shadow-xl hover:scale-105"
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg transition-all hover:shadow-xl hover:scale-105"
                 >
                     <Plus size={22} strokeWidth={2.5} />
                     <span className="text-base">Tạo gói mới</span>
@@ -204,7 +204,7 @@ export default function AdminPackagesPage() {
 
             {/* Create Form */}
             <div id="create-form" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
+                <div className="bg-blue-600 px-6 py-4">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                         <Plus className="w-6 h-6" />
                         Tạo Gói Hội Viên Mới
@@ -351,24 +351,7 @@ export default function AdminPackagesPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="lg:col-span-2 flex items-center gap-4 pt-6 border-t border-slate-200">
-                        <button
-                            type="submit"
-                            className="flex-1 md:flex-none px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2"
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    Đang tạo...
-                                </>
-                            ) : (
-                                <>
-                                    <Plus size={20} />
-                                    Tạo Gói Mới
-                                </>
-                            )}
-                        </button>
+                    <div className="lg:col-span-2 flex items-center justify-end gap-4 pt-6 mt-4 border-t border-slate-200">
                         <button
                             type="button"
                             onClick={() => setNewPkg({
@@ -382,9 +365,27 @@ export default function AdminPackagesPage() {
                                 minOrderValue: 0,
                                 validityDays: 30
                             })}
-                            className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all"
+                            className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg transition-all"
                         >
                             Đặt lại
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="px-8 py-3 bg-blue-200 hover:bg-blue-300 text-slate-800 font-bold rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-slate-600/30 border-t-slate-600 rounded-full animate-spin"></div>
+                                    <span>Đang tạo...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Plus size={20} />
+                                    <span>Tạo Gói Mới</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>

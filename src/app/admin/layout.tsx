@@ -32,7 +32,7 @@ export default function AdminLayout({
 
     if (loading || !isAuthorized) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+            <div className="flex items-center justify-center min-h-screen bg-white">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
                     <div className="text-slate-500 font-medium">Đang kiểm tra quyền truy cập...</div>
@@ -42,7 +42,7 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex transition-colors duration-200">
+        <div className="min-h-screen bg-white dark:bg-slate-950 flex transition-colors duration-200">
             {/* Sidebar Desktop */}
             <div className="hidden lg:block w-64 flex-shrink-0">
                 <AdminSidebar />

@@ -32,15 +32,15 @@ async function getOrderById(id: string) {
         })),
         subtotal: order.items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0),
         shippingFee: order.shippingFee || 0,
-        discount: order.discount || 0,
+        discount: (order as any).discount || 0,
         totalAmount: order.totalAmount,
         status: order.status,
         paymentMethod: order.paymentMethod || 'COD',
         paymentStatus: order.paymentStatus || 'pending',
         note: order.note || '',
-        voucherCode: order.voucherCode || '',
+        voucherCode: (order as any).voucherCode || '',
         createdAt: order.createdAt ? new Date(order.createdAt).toISOString() : new Date().toISOString(),
-        updatedAt: order.updatedAt ? new Date(order.updatedAt).toISOString() : new Date().toISOString(),
+        updatedAt: (order as any).updatedAt ? new Date((order as any).updatedAt).toISOString() : new Date().toISOString(),
     };
 }
 
