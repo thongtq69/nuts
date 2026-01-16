@@ -7,6 +7,7 @@ import AffiliateSettings from '@/models/AffiliateSettings';
 import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { sendOrderConfirmationEmail } from '@/lib/email';
 
 // Helper to get user ID if logged in
 async function getUserId() {
@@ -142,6 +143,34 @@ export async function POST(req: Request) {
                 note: voucherCode ? `Order with voucher ${voucherCode}` : ''
             });
             await Order.findByIdAndUpdate(order._id, { commissionId: comm._id });
+        }
+
+        // 7. Send Order Confirmation Email
+        if (shippingInfo.email || (userId && await User.findById(userId))) {
+            try {
+                const user = userId ? await User.findById(userId) : null;
+                const email = shippingInfo.email || user?.email;
+                
+                if (email) {
+                    await sendOrderConfirmationEmail(email, {
+                        orderId: order._id.toString().slice(-6).toUpperCase(),
+                        customerName: shippingInfo.fullName,
+                        items: items.map((item: any) => ({
+                            name: item.name,
+                            quantity: item.quantity,
+                            price: item.price
+                        })),
+                        shippingFee,
+                        discount: discountAmount,
+                        totalAmount: finalTotal,
+                        shippingAddress: `${shippingInfo.address}, ${shippingInfo.ward || ''}, ${shippingInfo.district}, ${shippingInfo.city}`,
+                        paymentMethod
+                    });
+                }
+            } catch (emailError) {
+                console.error('Failed to send order confirmation email:', emailError);
+                // Don't fail the order if email fails
+            }
         }
 
         return NextResponse.json(order, { status: 201 });
