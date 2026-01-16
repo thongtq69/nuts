@@ -118,13 +118,30 @@ input {
 }
 
 /* ========================================
-   Top Bar
+   Promo Bar - Yellow
    ======================================== */
-.top-bar {
-  background: var(--color-dark-blue);
-  color: var(--color-white);
+.promo-bar {
+  background: #F5C518;
+  color: #333;
   padding: var(--spacing-sm) 0;
   font-size: var(--font-size-xs);
+  text-align: center;
+}
+
+.promo-bar .promo-text {
+  font-weight: 500;
+  color: #333;
+}
+
+/* ========================================
+   Top Bar - White
+   ======================================== */
+.top-bar {
+  background: #fff;
+  color: #333;
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-size-xs);
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .top-bar-content {
@@ -140,7 +157,8 @@ input {
 }
 
 .hotline {
-  font-weight: 400;
+  font-weight: 500;
+  color: #333;
 }
 
 .zalo-icon {
@@ -155,22 +173,27 @@ input {
 }
 
 .promo-text {
-  color: var(--color-white);
+  color: #333;
+  font-weight: 500;
 }
 
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 .top-bar-right a {
-  color: var(--color-white);
+  color: #666;
   font-size: var(--font-size-xs);
 }
 
 .top-bar-right a:hover {
-  text-decoration: underline;
+  color: #9C7044;
+}
+
+.top-bar-right .divider {
+  color: #ddd;
 }
 
 .social-icons-top {
@@ -209,11 +232,12 @@ input {
 }
 
 /* ========================================
-   Header
+   Header - White
    ======================================== */
 .header {
-  background-color: var(--color-primary-yellow);
+  background-color: #fff;
   padding: var(--spacing-md) 0;
+  border-bottom: 1px solid #eee;
 }
 
 .header-content {
