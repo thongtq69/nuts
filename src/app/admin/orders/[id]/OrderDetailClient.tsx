@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    ArrowLeft, 
-    User, 
-    Phone, 
-    Mail, 
-    MapPin, 
-    Package, 
-    CreditCard, 
+import {
+    ArrowLeft,
+    User,
+    Phone,
+    Mail,
+    MapPin,
+    Package,
+    CreditCard,
     Truck,
     Clock,
     CheckCircle,
@@ -160,7 +160,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                             <button
                                 onClick={() => handleStatusChange('confirmed')}
                                 disabled={isUpdating}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-200 hover:bg-blue-300 text-blue-900 font-medium rounded-lg transition-colors disabled:opacity-50"
                             >
                                 <CheckCircle size={18} />
                                 Xác nhận đơn
@@ -168,7 +168,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                             <button
                                 onClick={() => handleStatusChange('cancelled')}
                                 disabled={isUpdating}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                                className="flex items-center gap-2 px-4 py-2 bg-red-200 hover:bg-red-300 text-red-900 font-medium rounded-lg transition-colors disabled:opacity-50"
                             >
                                 <XCircle size={18} />
                                 Hủy đơn
@@ -322,16 +322,15 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                             <div>
                                 <div className="text-sm text-slate-500">Phương thức</div>
                                 <div className="font-semibold text-slate-800">
-                                    {order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 
-                                     order.paymentMethod === 'Banking' ? 'Chuyển khoản ngân hàng' :
-                                     order.paymentMethod === 'VNPay' ? 'VNPay' : order.paymentMethod}
+                                    {order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' :
+                                        order.paymentMethod === 'Banking' ? 'Chuyển khoản ngân hàng' :
+                                            order.paymentMethod === 'VNPay' ? 'VNPay' : order.paymentMethod}
                                 </div>
                             </div>
                             <div>
                                 <div className="text-sm text-slate-500">Trạng thái thanh toán</div>
-                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1 ${
-                                    order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                                }`}>
+                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1 ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                    }`}>
                                     {order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                                 </div>
                             </div>

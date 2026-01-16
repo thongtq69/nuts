@@ -117,18 +117,9 @@ export default function AdminPackagesPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-800">Quản lý Gói Hội Viên</h1>
-                    <p className="text-slate-500 mt-1">Cấu hình các gói đăng ký và ưu đãi voucher cho hội viên</p>
-                </div>
-                <button
-                    onClick={() => window.scrollTo({ top: document.getElementById('create-form')?.offsetTop, behavior: 'smooth' })}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg transition-all hover:shadow-xl hover:scale-105"
-                >
-                    <Plus size={22} strokeWidth={2.5} />
-                    <span className="text-base">Tạo gói mới</span>
-                </button>
+            <div>
+                <h1 className="text-3xl font-bold text-slate-800">Quản lý Gói Hội Viên</h1>
+                <p className="text-slate-500 mt-1">Cấu hình các gói đăng ký và ưu đãi voucher cho hội viên</p>
             </div>
 
             {/* Stats Cards */}
@@ -200,6 +191,17 @@ export default function AdminPackagesPage() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Create New Button */}
+            <div className="flex justify-center">
+                <button
+                    onClick={() => window.scrollTo({ top: document.getElementById('create-form')?.offsetTop, behavior: 'smooth' })}
+                    className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-lg font-bold rounded-xl shadow-lg transition-all hover:shadow-xl hover:scale-105"
+                >
+                    <Plus size={24} strokeWidth={2.5} />
+                    <span>Tạo Gói Hội Viên Mới</span>
+                </button>
             </div>
 
             {/* Create Form */}

@@ -40,7 +40,7 @@ export default async function AdminProductsPage() {
                 </div>
                 <Link
                     href="/admin/products/new"
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+                    className="inline-flex items-center gap-2 bg-amber-200 hover:bg-amber-300 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                 >
                     <PlusCircle size={18} />
                     Thêm Sản phẩm Mới

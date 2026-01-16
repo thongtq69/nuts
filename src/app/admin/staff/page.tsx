@@ -146,7 +146,7 @@ export default function AdminStaffPage() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-200 hover:bg-indigo-300 text-slate-800 font-bold rounded-xl hover:shadow-md transition-all"
                 >
                     <Plus size={18} />
                     Thêm nhân viên
@@ -406,14 +406,14 @@ export default function AdminStaffPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+                                    className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 transition-colors"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={creating}
-                                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2.5 bg-indigo-200 hover:bg-indigo-300 text-slate-800 font-bold rounded-xl hover:shadow-md disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                                 >
                                     {creating ? (
                                         <>
