@@ -9,6 +9,21 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
+interface Province {
+    code: number;
+    name: string;
+}
+
+interface District {
+    code: number;
+    name: string;
+}
+
+interface Ward {
+    code: number;
+    name: string;
+}
+
 export default function CheckoutPage() {
     const router = useRouter();
     const { cartItems, cartTotal, clearCart } = useCart();
@@ -26,6 +41,14 @@ export default function CheckoutPage() {
     const [showVoucherModal, setShowVoucherModal] = useState(false);
     const [loadingVouchers, setLoadingVouchers] = useState(false);
 
+    // Province/District/Ward State
+    const [provinces, setProvinces] = useState<Province[]>([]);
+    const [districts, setDistricts] = useState<District[]>([]);
+    const [wards, setWards] = useState<Ward[]>([]);
+    const [selectedProvince, setSelectedProvince] = useState('');
+    const [selectedDistrict, setSelectedDistrict] = useState('');
+    const [selectedWard, setSelectedWard] = useState('');
+
     // Fetch vouchers
     useEffect(() => {
         if (user) {
@@ -41,6 +64,54 @@ export default function CheckoutPage() {
                 .finally(() => setLoadingVouchers(false));
         }
     }, [user]);
+
+    // Fetch provinces on mount
+    useEffect(() => {
+        fetch('https://provinces.open-api.vn/api/p/')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setProvinces(data);
+                }
+            })
+            .catch(err => console.error('Error fetching provinces:', err));
+    }, []);
+
+    // Fetch districts when province changes
+    useEffect(() => {
+        if (selectedProvince) {
+            setDistricts([]);
+            setWards([]);
+            setSelectedDistrict('');
+            setSelectedWard('');
+            
+            fetch(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.districts) {
+                        setDistricts(data.districts);
+                    }
+                })
+                .catch(err => console.error('Error fetching districts:', err));
+        }
+    }, [selectedProvince]);
+
+    // Fetch wards when district changes
+    useEffect(() => {
+        if (selectedDistrict) {
+            setWards([]);
+            setSelectedWard('');
+            
+            fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.wards) {
+                        setWards(data.wards);
+                    }
+                })
+                .catch(err => console.error('Error fetching wards:', err));
+        }
+    }, [selectedDistrict]);
 
     // Redirect if cart is empty
     useEffect(() => {
@@ -58,8 +129,9 @@ export default function CheckoutPage() {
         email: user?.email || '',
         phone: user?.phone || '',
         address: user?.address || '',
-        city: 'Hà Nội',
+        city: '',
         district: '',
+        ward: '',
         note: ''
     });
 
@@ -108,6 +180,10 @@ export default function CheckoutPage() {
             alert('Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.');
             return;
         }
+        if (!selectedProvince || !selectedDistrict || !selectedWard) {
+            alert('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã.');
+            return;
+        }
         if (!/^[0-9]{10,11}$/.test(formData.phone.replace(/\s/g, ''))) {
             alert('Số điện thoại không hợp lệ.');
             return;
@@ -115,6 +191,11 @@ export default function CheckoutPage() {
 
         try {
             setIsProcessing(true);
+
+            // Get names from selected codes
+            const provinceName = provinces.find(p => p.code.toString() === selectedProvince)?.name || '';
+            const districtName = districts.find(d => d.code.toString() === selectedDistrict)?.name || '';
+            const wardName = wards.find(w => w.code.toString() === selectedWard)?.name || '';
 
             const orderData = {
                 items: cartItems.map(item => ({
@@ -128,8 +209,9 @@ export default function CheckoutPage() {
                     fullName: formData.name,
                     phone: formData.phone,
                     address: formData.address,
-                    city: formData.city,
-                    district: formData.district,
+                    city: provinceName,
+                    district: districtName,
+                    ward: wardName,
                 },
                 paymentMethod,
                 shippingFee,
@@ -218,23 +300,64 @@ export default function CheckoutPage() {
                             </div>
                             <div className="form-group-row">
                                 <div className="form-group">
-                                    <label>Tỉnh / Thành phố</label>
-                                    <select value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })}>
-                                        <option>Hà Nội</option>
-                                        <option>TP. Hồ Chí Minh</option>
-                                        <option>Đà Nẵng</option>
-                                        <option>Khác</option>
+                                    <label>Tỉnh / Thành phố <span className="text-red-500">*</span></label>
+                                    <select 
+                                        value={selectedProvince} 
+                                        onChange={e => {
+                                            setSelectedProvince(e.target.value);
+                                            const provinceName = provinces.find(p => p.code.toString() === e.target.value)?.name || '';
+                                            setFormData({ ...formData, city: provinceName });
+                                        }}
+                                        required
+                                    >
+                                        <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                        {provinces.map(province => (
+                                            <option key={province.code} value={province.code}>
+                                                {province.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Quận / Huyện</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Quận/Huyện"
-                                        value={formData.district}
-                                        onChange={e => setFormData({ ...formData, district: e.target.value })}
-                                    />
+                                    <label>Quận / Huyện <span className="text-red-500">*</span></label>
+                                    <select 
+                                        value={selectedDistrict} 
+                                        onChange={e => {
+                                            setSelectedDistrict(e.target.value);
+                                            const districtName = districts.find(d => d.code.toString() === e.target.value)?.name || '';
+                                            setFormData({ ...formData, district: districtName });
+                                        }}
+                                        disabled={!selectedProvince}
+                                        required
+                                    >
+                                        <option value="">-- Chọn Quận/Huyện --</option>
+                                        {districts.map(district => (
+                                            <option key={district.code} value={district.code}>
+                                                {district.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Phường / Xã <span className="text-red-500">*</span></label>
+                                <select 
+                                    value={selectedWard} 
+                                    onChange={e => {
+                                        setSelectedWard(e.target.value);
+                                        const wardName = wards.find(w => w.code.toString() === e.target.value)?.name || '';
+                                        setFormData({ ...formData, ward: wardName });
+                                    }}
+                                    disabled={!selectedDistrict}
+                                    required
+                                >
+                                    <option value="">-- Chọn Phường/Xã --</option>
+                                    {wards.map(ward => (
+                                        <option key={ward.code} value={ward.code}>
+                                            {ward.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>Ghi chú đơn hàng (tùy chọn)</label>
