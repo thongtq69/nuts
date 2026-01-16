@@ -1,12 +1,17 @@
 'use client';
 
 import React from 'react';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import FeaturesSection from '@/components/home/FeaturesSection';
 
 export default function AboutPage() {
     return (
-        <>
+        <main>
+            <Header />
+            <Navbar />
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Về chúng tôi' }]} />
 
             <div className="container">
@@ -57,6 +62,7 @@ export default function AboutPage() {
 
                 <FeaturesSection />
             </div>
-        </>
+            <Footer />
+        </main>
     );
 }

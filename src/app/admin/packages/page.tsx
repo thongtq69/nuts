@@ -15,8 +15,19 @@ import {
     Package as PackageIcon,
     Percent,
     Calendar,
-    ShoppingBag
+    ShoppingBag,
+    ChevronDown,
+    ChevronUp,
+    X
 } from 'lucide-react';
+
+interface VoucherConfig {
+    discountType: 'percent' | 'fixed';
+    discountValue: number;
+    maxDiscount: number;
+    minOrderValue: number;
+    quantity: number;
+}
 
 interface Package {
     _id: string;
@@ -31,35 +42,35 @@ interface Package {
     validityDays: number;
     isActive: boolean;
     purchaseCount?: number;
+    vouchers?: VoucherConfig[];
 }
 
-interface Package {
-    _id: string;
-    name: string;
-    price: number;
-    description: string;
-    voucherQuantity: number;
-    discountValue: number;
-    discountType: 'percent' | 'fixed';
-    maxDiscount: number;
-    minOrderValue: number;
-    validityDays: number;
-    isActive: boolean;
-}
+const defaultVoucher: VoucherConfig = {
+    discountType: 'percent',
+    discountValue: 0,
+    maxDiscount: 0,
+    minOrderValue: 0,
+    quantity: 1
+};
+
+const defaultPackage: Partial<Package> = {
+    name: '',
+    price: 0,
+    description: '',
+    voucherQuantity: 1,
+    discountType: 'percent',
+    discountValue: 0,
+    maxDiscount: 0,
+    minOrderValue: 0,
+    validityDays: 30
+};
 
 export default function AdminPackagesPage() {
     const [packages, setPackages] = useState<Package[]>([]);
-    const [newPkg, setNewPkg] = useState<Partial<Package>>({
-        name: '',
-        price: 0,
-        description: '',
-        voucherQuantity: 1,
-        discountType: 'percent',
-        discountValue: 0,
-        maxDiscount: 0,
-        minOrderValue: 0,
-        validityDays: 30
-    });
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [formData, setFormData] = useState<Partial<Package>>(defaultPackage);
+    const [vouchers, setVouchers] = useState<VoucherConfig[]>([{ ...defaultVoucher }]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -73,31 +84,48 @@ export default function AdminPackagesPage() {
         }
     };
 
+    const resetForm = () => {
+        setFormData(defaultPackage);
+        setVouchers([{ ...defaultVoucher }]);
+        setEditingId(null);
+        setShowForm(false);
+    };
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
+            // Calculate total voucher quantity from all vouchers
+            const totalVoucherQty = vouchers.reduce((sum, v) => sum + v.quantity, 0);
+
+            // For backward compatibility, use first voucher's config as main config
+            const mainVoucher = vouchers[0];
+
+            const payload = {
+                ...formData,
+                voucherQuantity: totalVoucherQty,
+                discountType: mainVoucher.discountType,
+                discountValue: mainVoucher.discountValue,
+                maxDiscount: mainVoucher.maxDiscount,
+                minOrderValue: mainVoucher.minOrderValue,
+                vouchers: vouchers
+            };
+
+            const method = editingId ? 'PUT' : 'POST';
+            const body = editingId ? { ...payload, id: editingId } : payload;
+
             const res = await fetch('/api/packages', {
-                method: 'POST',
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newPkg),
+                body: JSON.stringify(body),
             });
+
             if (res.ok) {
                 fetchPackages();
-                setNewPkg({
-                    name: '',
-                    price: 0,
-                    description: '',
-                    voucherQuantity: 1,
-                    discountType: 'percent',
-                    discountValue: 0,
-                    maxDiscount: 0,
-                    minOrderValue: 0,
-                    validityDays: 30
-                });
-                alert('Tạo gói thành công');
+                resetForm();
+                alert(editingId ? 'Cập nhật gói thành công' : 'Tạo gói thành công');
             } else {
-                alert('Lỗi khi tạo gói');
+                alert('Lỗi khi lưu gói');
             }
         } catch (err) {
             console.error(err);
@@ -106,7 +134,51 @@ export default function AdminPackagesPage() {
         }
     };
 
-    // Mock stats - replace with real data
+    const handleEdit = (pkg: Package) => {
+        setEditingId(pkg._id);
+        setFormData({
+            name: pkg.name,
+            price: pkg.price,
+            description: pkg.description,
+            validityDays: pkg.validityDays,
+        });
+
+        // If package has vouchers array, use it; otherwise create from single config
+        if (pkg.vouchers && pkg.vouchers.length > 0) {
+            setVouchers(pkg.vouchers);
+        } else {
+            setVouchers([{
+                discountType: pkg.discountType,
+                discountValue: pkg.discountValue,
+                maxDiscount: pkg.maxDiscount,
+                minOrderValue: pkg.minOrderValue,
+                quantity: pkg.voucherQuantity
+            }]);
+        }
+
+        setShowForm(true);
+        setTimeout(() => {
+            document.getElementById('create-form')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    };
+
+    const addVoucher = () => {
+        setVouchers([...vouchers, { ...defaultVoucher }]);
+    };
+
+    const removeVoucher = (index: number) => {
+        if (vouchers.length > 1) {
+            setVouchers(vouchers.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateVoucher = (index: number, field: keyof VoucherConfig, value: any) => {
+        const updated = [...vouchers];
+        updated[index] = { ...updated[index], [field]: value };
+        setVouchers(updated);
+    };
+
+    // Mock stats
     const stats = {
         totalPackages: packages.filter(p => p.isActive).length,
         totalRevenue: 15750000,
@@ -123,11 +195,33 @@ export default function AdminPackagesPage() {
                     <p className="text-slate-500 mt-1">Cấu hình các gói đăng ký và ưu đãi voucher cho hội viên</p>
                 </div>
                 <button
-                    onClick={() => window.scrollTo({ top: document.getElementById('create-form')?.offsetTop, behavior: 'smooth' })}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg transition-all hover:shadow-xl hover:scale-105"
+                    onClick={() => {
+                        if (showForm && !editingId) {
+                            resetForm();
+                        } else {
+                            resetForm();
+                            setShowForm(true);
+                            setTimeout(() => {
+                                document.getElementById('create-form')?.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                        }
+                    }}
+                    className={`flex items-center gap-2 px-6 py-3 font-bold rounded-lg shadow-lg transition-all hover:shadow-xl hover:scale-105 ${showForm && !editingId
+                            ? 'bg-slate-600 hover:bg-slate-700 text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
                 >
-                    <Plus size={22} strokeWidth={2.5} />
-                    <span className="text-base">Tạo gói mới</span>
+                    {showForm && !editingId ? (
+                        <>
+                            <X size={22} strokeWidth={2.5} />
+                            <span className="text-base">Đóng</span>
+                        </>
+                    ) : (
+                        <>
+                            <Plus size={22} strokeWidth={2.5} />
+                            <span className="text-base">Tạo gói mới</span>
+                        </>
+                    )}
                 </button>
             </div>
 
@@ -202,194 +296,216 @@ export default function AdminPackagesPage() {
                 </div>
             </div>
 
-            {/* Create Form */}
-            <div id="create-form" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-blue-600 px-6 py-4">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Plus className="w-6 h-6" />
-                        Tạo Gói Hội Viên Mới
-                    </h2>
-                    <p className="text-emerald-50 text-sm mt-1">Điền thông tin để tạo gói ưu đãi cho khách hàng</p>
-                </div>
-                <form onSubmit={handleCreate} className="p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Basic Info */}
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <Tag size={16} className="text-amber-600" />
-                                Tên gói
-                            </label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                                value={newPkg.name}
-                                onChange={e => setNewPkg({ ...newPkg, name: e.target.value })}
-                                required
-                                placeholder="VD: Gói Gold 1 Tháng"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <DollarSign size={16} className="text-emerald-600" />
-                                Giá bán (VND)
-                            </label>
-                            <input
-                                type="number"
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                                value={newPkg.price}
-                                onChange={e => setNewPkg({ ...newPkg, price: Number(e.target.value) })}
-                                required
-                                placeholder="199000"
-                            />
-                            <p className="text-xs text-slate-500">Giá hiển thị: {newPkg.price ? newPkg.price.toLocaleString('vi-VN') + 'đ' : '0đ'}</p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <Calendar size={16} className="text-blue-600" />
-                                Thời hạn gói (ngày)
-                            </label>
-                            <input
-                                type="number"
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
-                                value={newPkg.validityDays}
-                                onChange={e => setNewPkg({ ...newPkg, validityDays: Number(e.target.value) })}
-                                required
-                                placeholder="30"
-                            />
-                            <p className="text-xs text-slate-500">Gói có hiệu lực trong {newPkg.validityDays || 0} ngày</p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <ShoppingBag size={16} className="text-purple-600" />
-                                Mô tả gói
-                            </label>
-                            <textarea
-                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all resize-none"
-                                value={newPkg.description}
-                                onChange={e => setNewPkg({ ...newPkg, description: e.target.value })}
-                                rows={3}
-                                placeholder="Mô tả chi tiết về gói hội viên..."
-                            />
-                        </div>
-
+            {/* Create/Edit Form - Collapsible */}
+            {showForm && (
+                <div id="create-form" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-fade-in">
+                    <div className={`px-6 py-4 ${editingId ? 'bg-amber-600' : 'bg-blue-600'}`}>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            {editingId ? <Edit2 className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+                            {editingId ? 'Chỉnh sửa Gói Hội Viên' : 'Tạo Gói Hội Viên Mới'}
+                        </h2>
+                        <p className="text-white/80 text-sm mt-1">
+                            {editingId ? 'Cập nhật thông tin gói hội viên' : 'Điền thông tin để tạo gói ưu đãi cho khách hàng'}
+                        </p>
                     </div>
+                    <form onSubmit={handleCreate} className="p-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Basic Info */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                    <Tag size={16} className="text-amber-600" />
+                                    Tên gói
+                                </label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                    placeholder="VD: Gói Gold 1 Tháng"
+                                />
+                            </div>
 
-                    {/* Voucher Configuration */}
-                    <div className="lg:col-span-2 mt-6">
-                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border-2 border-blue-100">
-                            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                <Percent className="text-blue-600" size={20} />
-                                Cấu hình Voucher
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Số lượng voucher</label>
-                                    <input
-                                        type="number"
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-                                        value={newPkg.voucherQuantity}
-                                        onChange={e => setNewPkg({ ...newPkg, voucherQuantity: Number(e.target.value) })}
-                                        required
-                                        min="1"
-                                    />
-                                </div>
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                    <DollarSign size={16} className="text-emerald-600" />
+                                    Giá bán (VND)
+                                </label>
+                                <input
+                                    type="number"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                    value={formData.price}
+                                    onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
+                                    required
+                                    placeholder="199000"
+                                />
+                                <p className="text-xs text-slate-500">Giá hiển thị: {formData.price ? formData.price.toLocaleString('vi-VN') + 'đ' : '0đ'}</p>
+                            </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Loại giảm giá</label>
-                                    <select
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-                                        value={newPkg.discountType}
-                                        onChange={e => setNewPkg({ ...newPkg, discountType: e.target.value as any })}
-                                    >
-                                        <option value="percent">Phần trăm (%)</option>
-                                        <option value="fixed">Số tiền cố định (VND)</option>
-                                    </select>
-                                </div>
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                    <Calendar size={16} className="text-blue-600" />
+                                    Thời hạn gói (ngày)
+                                </label>
+                                <input
+                                    type="number"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                    value={formData.validityDays}
+                                    onChange={e => setFormData({ ...formData, validityDays: Number(e.target.value) })}
+                                    required
+                                    placeholder="30"
+                                />
+                                <p className="text-xs text-slate-500">Gói có hiệu lực trong {formData.validityDays || 0} ngày</p>
+                            </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">
-                                        Giá trị giảm {newPkg.discountType === 'percent' ? '(%)' : '(VND)'}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-                                        value={newPkg.discountValue}
-                                        onChange={e => setNewPkg({ ...newPkg, discountValue: Number(e.target.value) })}
-                                        required
-                                        placeholder={newPkg.discountType === 'percent' ? '20' : '50000'}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Giảm tối đa (VND)</label>
-                                    <input
-                                        type="number"
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-                                        value={newPkg.maxDiscount}
-                                        onChange={e => setNewPkg({ ...newPkg, maxDiscount: Number(e.target.value) })}
-                                        placeholder="50000"
-                                    />
-                                    <p className="text-xs text-slate-500">Để 0 nếu không giới hạn</p>
-                                </div>
-
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">Áp dụng cho đơn tối thiểu (VND)</label>
-                                    <input
-                                        type="number"
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-                                        value={newPkg.minOrderValue}
-                                        onChange={e => setNewPkg({ ...newPkg, minOrderValue: Number(e.target.value) })}
-                                        placeholder="100000"
-                                    />
-                                    <p className="text-xs text-slate-500">Giá trị đơn hàng tối thiểu để áp dụng voucher</p>
-                                </div>
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                    <ShoppingBag size={16} className="text-purple-600" />
+                                    Mô tả gói
+                                </label>
+                                <textarea
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all resize-none"
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    rows={3}
+                                    placeholder="Mô tả chi tiết về gói hội viên..."
+                                />
                             </div>
                         </div>
-                    </div>
 
-                    {/* Action Buttons */}
-                    <div className="lg:col-span-2 flex items-center justify-end gap-4 pt-6 mt-4 border-t border-slate-200">
-                        <button
-                            type="button"
-                            onClick={() => setNewPkg({
-                                name: '',
-                                price: 0,
-                                description: '',
-                                voucherQuantity: 1,
-                                discountType: 'percent',
-                                discountValue: 0,
-                                maxDiscount: 0,
-                                minOrderValue: 0,
-                                validityDays: 30
-                            })}
-                            className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg transition-all"
-                        >
-                            Đặt lại
-                        </button>
+                        {/* Multiple Vouchers Configuration */}
+                        <div className="mt-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                    <Percent className="text-blue-600" size={20} />
+                                    Cấu hình Voucher ({vouchers.length} loại)
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={addVoucher}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg transition-all"
+                                >
+                                    <Plus size={18} />
+                                    Thêm loại voucher
+                                </button>
+                            </div>
 
-                        <button
-                            type="submit"
-                            className="px-8 py-3 bg-blue-200 hover:bg-blue-300 text-slate-800 font-bold rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2"
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-slate-600/30 border-t-slate-600 rounded-full animate-spin"></div>
-                                    <span>Đang tạo...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Plus size={20} />
-                                    <span>Tạo Gói Mới</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </form>
-            </div>
+                            <div className="space-y-4">
+                                {vouchers.map((voucher, index) => (
+                                    <div key={index} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-5 border-2 border-blue-100 relative">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-sm font-bold text-slate-700 bg-white px-3 py-1 rounded-full">
+                                                Voucher #{index + 1}
+                                            </span>
+                                            {vouchers.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeVoucher(index)}
+                                                    className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="block text-xs font-semibold text-slate-600">Số lượng</label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    value={voucher.quantity}
+                                                    onChange={e => updateVoucher(index, 'quantity', Number(e.target.value))}
+                                                    required
+                                                    min="1"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-xs font-semibold text-slate-600">Loại giảm</label>
+                                                <select
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    value={voucher.discountType}
+                                                    onChange={e => updateVoucher(index, 'discountType', e.target.value)}
+                                                >
+                                                    <option value="percent">%</option>
+                                                    <option value="fixed">VND</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-xs font-semibold text-slate-600">
+                                                    Giá trị {voucher.discountType === 'percent' ? '(%)' : '(VND)'}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    value={voucher.discountValue}
+                                                    onChange={e => updateVoucher(index, 'discountValue', Number(e.target.value))}
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-xs font-semibold text-slate-600">Giảm tối đa (VND)</label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    value={voucher.maxDiscount}
+                                                    onChange={e => updateVoucher(index, 'maxDiscount', Number(e.target.value))}
+                                                    placeholder="0 = không giới hạn"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-xs font-semibold text-slate-600">Đơn tối thiểu (VND)</label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    value={voucher.minOrderValue}
+                                                    onChange={e => updateVoucher(index, 'minOrderValue', Number(e.target.value))}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-end gap-4 pt-6 mt-6 border-t border-slate-200">
+                            <button
+                                type="button"
+                                onClick={resetForm}
+                                className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg transition-all"
+                            >
+                                Hủy
+                            </button>
+
+                            <button
+                                type="submit"
+                                className={`px-8 py-3 font-bold rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2 ${editingId
+                                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    }`}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <span>Đang lưu...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        {editingId ? <Edit2 size={20} /> : <Plus size={20} />}
+                                        <span>{editingId ? 'Cập nhật' : 'Tạo Gói Mới'}</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             {/* Packages List */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -496,6 +612,7 @@ export default function AdminPackagesPage() {
                                             <button
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                 title="Chỉnh sửa"
+                                                onClick={() => handleEdit(pkg)}
                                             >
                                                 <Edit2 size={18} />
                                             </button>
@@ -503,12 +620,24 @@ export default function AdminPackagesPage() {
                                                 className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                                                 title="Nhân bản"
                                                 onClick={() => {
-                                                    setNewPkg({
-                                                        ...pkg,
+                                                    setFormData({
                                                         name: pkg.name + ' (Copy)',
-                                                        _id: undefined as any
+                                                        price: pkg.price,
+                                                        description: pkg.description,
+                                                        validityDays: pkg.validityDays,
                                                     });
-                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                    setVouchers([{
+                                                        discountType: pkg.discountType,
+                                                        discountValue: pkg.discountValue,
+                                                        maxDiscount: pkg.maxDiscount,
+                                                        minOrderValue: pkg.minOrderValue,
+                                                        quantity: pkg.voucherQuantity
+                                                    }]);
+                                                    setEditingId(null);
+                                                    setShowForm(true);
+                                                    setTimeout(() => {
+                                                        document.getElementById('create-form')?.scrollIntoView({ behavior: 'smooth' });
+                                                    }, 100);
                                                 }}
                                             >
                                                 <Copy size={18} />

@@ -1,12 +1,17 @@
 'use client';
 
 import React from 'react';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 
 export default function PolicyPage() {
     return (
-        <>
+        <main>
+            <Header />
+            <Navbar />
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Chính sách' }]} />
 
             <div className="container">
@@ -52,6 +57,7 @@ export default function PolicyPage() {
                     </div>
                 </div>
             </div>
-        </>
+            <Footer />
+        </main>
     );
 }

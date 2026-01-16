@@ -3,6 +3,9 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
@@ -44,7 +47,9 @@ export default function LoginPage() {
     };
 
     return (
-        <>
+        <main>
+            <Header />
+            <Navbar />
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Đăng nhập' }]} />
 
             <div className="container">
@@ -103,7 +108,7 @@ export default function LoginPage() {
                                 <label className="remember-me">
                                     <input type="checkbox" /> Ghi nhớ đăng nhập
                                 </label>
-                                <a href="#" className="forgot-password">Quên mật khẩu?</a>
+                                <a href="#" className="forgot-password" onClick={(e) => { e.preventDefault(); alert('Tính năng đang phát triển. Vui lòng liên hệ hỗ trợ để được cấp lại mật khẩu.'); }}>Quên mật khẩu?</a>
                             </div>
 
                             <button type="submit" className="auth-btn" disabled={isLoading}>
@@ -116,8 +121,8 @@ export default function LoginPage() {
                         </div>
 
                         <div className="social-login">
-                            <button className="social-btn facebook">Facebook</button>
-                            <button className="social-btn google">Google</button>
+                            <button className="social-btn facebook" onClick={() => alert('Đăng nhập bằng Facebook đang được phát triển.')}>Facebook</button>
+                            <button className="social-btn google" onClick={() => alert('Đăng nhập bằng Google đang được phát triển.')}>Google</button>
                         </div>
 
                         <div className="auth-footer">
@@ -126,6 +131,7 @@ export default function LoginPage() {
                     </div>
                 </div>
             </div>
-        </>
+            <Footer />
+        </main>
     );
 }

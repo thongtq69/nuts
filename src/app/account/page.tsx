@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -22,6 +25,14 @@ export default function AccountPage() {
     // Orders state
     const [orders, setOrders] = useState<any[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
+
+    // Vouchers state
+    const [vouchers, setVouchers] = useState<any[]>([]);
+    const [loadingVouchers, setLoadingVouchers] = useState(false);
+
+    // Membership packages state
+    const [membershipPackages, setMembershipPackages] = useState<any[]>([]);
+    const [loadingMembership, setLoadingMembership] = useState(false);
 
     // Profile form state
     const [profileForm, setProfileForm] = useState<ProfileFormData>({
@@ -73,6 +84,48 @@ export default function AccountPage() {
                 }
             };
             fetchOrders();
+        }
+    }, [user, activeTab]);
+
+    // Fetch vouchers when tab is active
+    useEffect(() => {
+        if (user && activeTab === 'vouchers') {
+            const fetchVouchers = async () => {
+                setLoadingVouchers(true);
+                try {
+                    const res = await fetch('/api/user/vouchers');
+                    if (res.ok) {
+                        const data = await res.json();
+                        setVouchers(data);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch vouchers', error);
+                } finally {
+                    setLoadingVouchers(false);
+                }
+            };
+            fetchVouchers();
+        }
+    }, [user, activeTab]);
+
+    // Fetch membership packages when tab is active
+    useEffect(() => {
+        if (user && activeTab === 'membership') {
+            const fetchMembership = async () => {
+                setLoadingMembership(true);
+                try {
+                    const res = await fetch('/api/user/membership');
+                    if (res.ok) {
+                        const data = await res.json();
+                        setMembershipPackages(data);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch membership', error);
+                } finally {
+                    setLoadingMembership(false);
+                }
+            };
+            fetchMembership();
         }
     }, [user, activeTab]);
 
@@ -137,17 +190,22 @@ export default function AccountPage() {
 
     if (authLoading || !user) {
         return (
-            <>
+            <main>
+                <Header />
+                <Navbar />
                 <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Tài khoản' }]} />
                 <div className="container" style={{ padding: '60px 20px', textAlign: 'center' }}>
                     Đang tải...
                 </div>
-            </>
+                <Footer />
+            </main>
         );
     }
 
     return (
-        <>
+        <main>
+            <Header />
+            <Navbar />
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Tài khoản' }]} />
 
             <div className="container">
@@ -176,8 +234,11 @@ export default function AccountPage() {
                             <li className={activeTab === 'orders' ? 'active' : ''} onClick={() => setActiveTab('orders')}>
                                 📦 Đơn hàng của tôi
                             </li>
-                            <li onClick={() => router.push('/account/vouchers')}>
+                            <li className={activeTab === 'vouchers' ? 'active' : ''} onClick={() => setActiveTab('vouchers')}>
                                 🎟️ Voucher của tôi
+                            </li>
+                            <li className={activeTab === 'membership' ? 'active' : ''} onClick={() => setActiveTab('membership')}>
+                                👑 Gói hội viên của tôi
                             </li>
                             <li className={activeTab === 'address' ? 'active' : ''} onClick={() => setActiveTab('address')}>
                                 📍 Sổ địa chỉ
@@ -358,6 +419,7 @@ export default function AccountPage() {
                     </div>
                 </div>
             </div>
-        </>
+            <Footer />
+        </main>
     );
 }

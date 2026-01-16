@@ -1,6 +1,9 @@
 'use client';
 
 import React from 'react';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 
 export default function ContactPage() {
@@ -10,7 +13,9 @@ export default function ContactPage() {
     };
 
     return (
-        <>
+        <main>
+            <Header />
+            <Navbar />
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Liên hệ' }]} />
 
             <div className="container">
@@ -65,6 +70,7 @@ export default function ContactPage() {
                     </div>
                 </div>
             </div>
-        </>
+            <Footer />
+        </main>
     );
 }

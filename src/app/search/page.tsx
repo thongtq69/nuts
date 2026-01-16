@@ -1,23 +1,61 @@
 'use client';
 
-import React, { useSearchParams } from 'next/navigation';
-import { products } from '@/data/products';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/common/ProductCard';
 import Breadcrumb from '@/components/common/Breadcrumb';
 
-// Suspense wrapper for search params
-import { Suspense } from 'react';
+interface Product {
+    _id: string;
+    id?: string;
+    image: string;
+    name: string;
+    currentPrice: string;
+    originalPrice: string;
+    badgeText?: string;
+    badgeColor?: string;
+    buttonColor?: string;
+    priceColor?: string;
+}
 
 function SearchResults() {
     const searchParams = useSearchParams();
     const query = searchParams.get('q') || '';
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(query.toLowerCase())
-    );
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setLoading(true);
+            try {
+                const res = await fetch(`/api/products?q=${encodeURIComponent(query)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setProducts(data);
+                }
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, [query]);
+
+    if (loading) {
+        return (
+            <div className="container">
+                <h1 className="search-title">
+                    Đang tìm kiếm: <span>&quot;{query}&quot;</span>
+                </h1>
+                <p>Đang tải...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="container">
@@ -25,20 +63,20 @@ function SearchResults() {
                 Kết quả tìm kiếm cho: <span>&quot;{query}&quot;</span>
             </h1>
 
-            {filteredProducts.length > 0 ? (
+            {products.length > 0 ? (
                 <div className="search-grid">
-                    {filteredProducts.map((product) => (
+                    {products.map((product) => (
                         <ProductCard
-                            key={product.id}
-                            id={product.id}
+                            key={product._id || product.id}
+                            id={product._id || product.id || ''}
                             image={product.image}
                             name={product.name}
                             currentPrice={product.currentPrice}
                             originalPrice={product.originalPrice}
                             badgeText={product.badgeText}
-                            badgeColor={product.badgeColor}
-                            buttonColor={product.buttonColor}
-                            priceColor={product.priceColor}
+                            badgeColor={product.badgeColor as any}
+                            buttonColor={product.buttonColor as any}
+                            priceColor={product.priceColor as any}
                         />
                     ))}
                 </div>
@@ -120,3 +158,4 @@ export default function SearchPage() {
         </main>
     );
 }
+

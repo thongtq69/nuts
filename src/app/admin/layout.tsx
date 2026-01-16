@@ -2,10 +2,11 @@
 
 import './admin.css';
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import AdminSidebar from '@/components/admin/Sidebar';
 import AdminHeader from '@/components/admin/Header';
+import { useTheme } from 'next-themes';
 
 export default function AdminLayout({
     children,
@@ -16,6 +17,12 @@ export default function AdminLayout({
     const { user, loading } = useAuth();
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { setTheme } = useTheme();
+
+    // Force light theme for admin
+    useEffect(() => {
+        setTheme('light');
+    }, [setTheme]);
 
     useEffect(() => {
         if (!loading) {
@@ -42,7 +49,7 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 flex transition-colors duration-200">
+        <div className="min-h-screen bg-white flex transition-colors duration-200">
             {/* Sidebar Desktop */}
             <div className="hidden lg:block w-64 flex-shrink-0">
                 <AdminSidebar />
@@ -55,7 +62,7 @@ export default function AdminLayout({
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                         onClick={() => setIsSidebarOpen(false)}
                     />
-                    <div className="absolute inset-y-0 left-0 w-64 bg-slate-900 dark:bg-slate-950 shadow-xl animate-in slide-in-from-left duration-300">
+                    <div className="absolute inset-y-0 left-0 w-64 bg-slate-900 shadow-xl animate-in slide-in-from-left duration-300">
                         <AdminSidebar />
                     </div>
                 </div>

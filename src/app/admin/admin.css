@@ -27,24 +27,25 @@
    Glassmorphism Cards
    ======================================== */
 .glass-card {
-  background: var(--admin-glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--admin-glass-border);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .glass-card {
+  background: #1e293b;
+  border-color: #334155;
 }
 
 .glass-card:hover {
   transform: translateY(-2px);
   box-shadow:
     0 10px 40px -10px var(--admin-shadow-color),
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 /* ========================================
@@ -195,14 +196,11 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  background: #ffffff;
 }
 
 .premium-table thead tr {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-}
-
-.dark .premium-table thead tr {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
 
 .premium-table th {
@@ -215,23 +213,16 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
-.dark .premium-table th {
-  color: #94a3b8;
-  border-bottom-color: #334155;
-}
-
 .premium-table td {
   padding: 16px 20px;
   border-bottom: 1px solid #f1f5f9;
   transition: background 0.2s ease;
-}
-
-.dark .premium-table td {
-  border-bottom-color: #1e293b;
+  color: #334155;
 }
 
 .premium-table tbody tr {
   transition: all 0.2s ease;
+  background: #ffffff;
 }
 
 .premium-table tbody tr:hover {

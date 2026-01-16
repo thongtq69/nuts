@@ -1,6 +1,9 @@
 'use client';
 
 import React from 'react';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
@@ -9,7 +12,9 @@ export default function CartPage() {
     const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
 
     return (
-        <>
+        <main>
+            <Header />
+            <Navbar />
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Giỏ hàng' }]} />
 
             <div className="container">
@@ -75,6 +80,7 @@ export default function CartPage() {
                     </div>
                 )}
             </div>
-        </>
+            <Footer />
+        </main>
     );
 }

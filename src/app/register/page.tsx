@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 
@@ -57,7 +60,9 @@ export default function RegisterPage() {
     };
 
     return (
-        <>
+        <main>
+            <Header />
+            <Navbar />
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Đăng ký' }]} />
 
             <div className="container">
@@ -131,6 +136,7 @@ export default function RegisterPage() {
                     </div>
                 </div>
             </div>
-        </>
+            <Footer />
+        </main>
     );
 }
