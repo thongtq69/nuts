@@ -10,7 +10,7 @@ export async function DELETE(
         await dbConnect();
         const { id } = await params;
 
-        const voucher = await Voucher.findByIdAndDelete(id);
+        const voucher = await UserVoucher.findByIdAndDelete(id);
         if (!voucher) {
             return NextResponse.json({ error: 'Voucher not found' }, { status: 404 });
         }
