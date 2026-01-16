@@ -6,11 +6,12 @@ import { verifyToken } from '@/lib/auth';
 // GET single order
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         await dbConnect();
-        const order = await Order.findById(params.id).populate('user', 'name email');
+        const order = await Order.findById(id).populate('user', 'name email');
         
         if (!order) {
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -25,7 +26,7 @@ export async function GET(
 // PATCH - Update order (status, payment, etc.)
 export async function PATCH(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         // Verify admin
@@ -34,10 +35,11 @@ export async function PATCH(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { id } = await params;
         await dbConnect();
         const body = await request.json();
         
-        const order = await Order.findById(params.id);
+        const order = await Order.findById(id);
         if (!order) {
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
@@ -64,7 +66,7 @@ export async function PATCH(
 // DELETE order
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         // Verify admin
@@ -73,8 +75,9 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { id } = await params;
         await dbConnect();
-        const order = await Order.findByIdAndDelete(params.id);
+        const order = await Order.findByIdAndDelete(id);
         
         if (!order) {
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
