@@ -124,7 +124,7 @@ export default function AdminPackagesPage() {
                 </div>
                 <button
                     onClick={() => window.scrollTo({ top: document.getElementById('create-form')?.offsetTop, behavior: 'smooth' })}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-lg shadow-lg hover:from-amber-600 hover:to-amber-700 transition-all hover:shadow-xl hover:scale-105"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-lg shadow-lg hover:from-emerald-600 hover:to-emerald-700 transition-all hover:shadow-xl hover:scale-105"
                 >
                     <Plus size={22} strokeWidth={2.5} />
                     <span className="text-base">Tạo gói mới</span>
@@ -204,12 +204,12 @@ export default function AdminPackagesPage() {
 
             {/* Create Form */}
             <div id="create-form" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4">
+                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                         <Plus className="w-6 h-6" />
                         Tạo Gói Hội Viên Mới
                     </h2>
-                    <p className="text-amber-50 text-sm mt-1">Điền thông tin để tạo gói ưu đãi cho khách hàng</p>
+                    <p className="text-emerald-50 text-sm mt-1">Điền thông tin để tạo gói ưu đãi cho khách hàng</p>
                 </div>
                 <form onSubmit={handleCreate} className="p-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -354,7 +354,7 @@ export default function AdminPackagesPage() {
                     <div className="lg:col-span-2 flex items-center gap-4 pt-6 border-t border-slate-200">
                         <button
                             type="submit"
-                            className="flex-1 md:flex-none px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2"
+                            className="flex-1 md:flex-none px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2"
                             disabled={loading}
                         >
                             {loading ? (
