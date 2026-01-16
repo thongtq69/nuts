@@ -412,21 +412,18 @@ export default function CheckoutPage() {
                                 ))}
                             </div>
 
-                            {/* Voucher Input */}
+                            {/* Voucher Selection */}
                             <div className="mb-4 pt-4 border-t">
                                 <label className="block text-sm font-medium mb-2">Mã voucher</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        className="flex-1 border p-2 rounded text-sm uppercase"
-                                        placeholder="Nhập mã giảm giá"
-                                        value={voucherCode}
-                                        onChange={e => setVoucherCode(e.target.value)}
-                                        disabled={isVoucherApplied}
-                                    />
-                                    {isVoucherApplied ? (
+                                
+                                {isVoucherApplied ? (
+                                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                                        <div>
+                                            <span className="font-bold text-green-700">{voucherCode}</span>
+                                            <span className="text-green-600 text-sm ml-2">(-{appliedDiscount.toLocaleString()}đ)</span>
+                                        </div>
                                         <button
-                                            className="bg-red-500 text-white px-3 py-2 rounded text-sm"
+                                            className="text-red-500 hover:text-red-700 text-sm font-medium"
                                             onClick={() => {
                                                 setIsVoucherApplied(false);
                                                 setAppliedDiscount(0);
@@ -435,56 +432,23 @@ export default function CheckoutPage() {
                                         >
                                             Xoá
                                         </button>
-                                    ) : (
-                                        <>
-                                            <button
-                                                className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
-                                                onClick={() => setShowVoucherModal(true)}
-                                            >
-                                                Chọn
-                                            </button>
-                                            <button
-                                                className="bg-gray-800 text-white px-3 py-2 rounded text-sm hover:bg-black"
-                                                onClick={handleApplyVoucher}
-                                            >
-                                                Áp dụng
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                                {voucherError && <p className="text-red-500 text-xs mt-1">{voucherError}</p>}
-                            </div>
-
-                            {/* Voucher Selection Modal */}
-                            {showVoucherModal && (
-                                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
-                                        <div className="p-4 border-b flex justify-between items-center">
-                                            <h3 className="font-bold text-lg">Chọn Voucher của bạn</h3>
-                                            <button onClick={() => setShowVoucherModal(false)} className="text-gray-500 hover:text-black">
-                                                ✕
-                                            </button>
-                                        </div>
-                                        <div className="p-4 overflow-y-auto flex-1 space-y-3">
-                                            {loadingVouchers ? (
-                                                <div className="text-center py-4 text-gray-500">Đang tải voucher...</div>
-                                            ) : vouchers.length === 0 ? (
-                                                <div className="text-center py-8 text-gray-500">
-                                                    <p>Bạn chưa có voucher nào khả dụng.</p>
-                                                </div>
-                                            ) : (
-                                                vouchers.map(voucher => {
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {/* Voucher List */}
+                                        {loadingVouchers ? (
+                                            <div className="text-center py-3 text-gray-500 text-sm">Đang tải voucher...</div>
+                                        ) : vouchers.length > 0 ? (
+                                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                                {vouchers.map(voucher => {
                                                     const canApply = subtotal >= voucher.minOrderValue;
                                                     return (
                                                         <div
                                                             key={voucher._id}
-                                                            className={`border rounded-lg p-3 transition-colors relative ${canApply ? 'hover:border-amber-500 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                                                            className={`border rounded-lg p-3 transition-all ${canApply ? 'hover:border-amber-500 hover:bg-amber-50 cursor-pointer' : 'opacity-50 cursor-not-allowed bg-gray-50'}`}
                                                             onClick={() => {
                                                                 if (canApply) {
-                                                                    // Set voucher code and auto-apply
                                                                     setVoucherCode(voucher.code);
-                                                                    setShowVoucherModal(false);
-                                                                    // Calculate discount
                                                                     let discount = 0;
                                                                     if (voucher.discountType === 'percent') {
                                                                         discount = Math.floor(subtotal * voucher.discountValue / 100);
@@ -500,39 +464,55 @@ export default function CheckoutPage() {
                                                                 }
                                                             }}
                                                         >
-                                                            <div className="flex justify-between items-start">
-                                                                <div>
-                                                                    <div className="font-bold text-amber-600">{voucher.code}</div>
-                                                                    <div className="text-sm font-medium mt-1">
-                                                                        Giảm {voucher.discountType === 'percent' ? `${voucher.discountValue}%` : `${voucher.discountValue.toLocaleString()}đ`}
-                                                                        {voucher.maxDiscount > 0 && voucher.discountType === 'percent' && (
-                                                                            <span className="text-gray-500"> (tối đa {voucher.maxDiscount.toLocaleString()}đ)</span>
-                                                                        )}
+                                                            <div className="flex justify-between items-center">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-bold text-amber-600 text-sm">{voucher.code}</span>
+                                                                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                                                                            {voucher.discountType === 'percent' ? `-${voucher.discountValue}%` : `-${voucher.discountValue.toLocaleString()}đ`}
+                                                                        </span>
                                                                     </div>
-                                                                    <div className="text-xs text-gray-500">
-                                                                        Đơn tối thiểu: {voucher.minOrderValue.toLocaleString()}đ
+                                                                    <div className="text-xs text-gray-500 mt-1">
+                                                                        Đơn từ {voucher.minOrderValue.toLocaleString()}đ • HSD: {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
                                                                     </div>
-                                                                    <div className="text-xs text-gray-400 mt-1">
-                                                                        HSD: {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
-                                                                    </div>
-                                                                    {!canApply && (
-                                                                        <div className="text-xs text-red-500 mt-1">
-                                                                            Đơn hàng chưa đủ điều kiện
-                                                                        </div>
-                                                                    )}
                                                                 </div>
-                                                                <div className={`text-xs px-2 py-1 rounded-full ${canApply ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                                    {canApply ? 'Áp dụng' : 'Không đủ ĐK'}
-                                                                </div>
+                                                                {canApply ? (
+                                                                    <span className="text-xs text-amber-600 font-medium">Chọn →</span>
+                                                                ) : (
+                                                                    <span className="text-xs text-red-500">Chưa đủ ĐK</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     );
-                                                })
-                                            )}
+                                                })}
+                                            </div>
+                                        ) : user ? (
+                                            <div className="text-center py-3 text-gray-500 text-sm border rounded-lg bg-gray-50">
+                                                Bạn chưa có voucher nào
+                                            </div>
+                                        ) : null}
+                                        
+                                        {/* Manual Input Option */}
+                                        <div className="flex gap-2 pt-2 border-t mt-2">
+                                            <input
+                                                type="text"
+                                                className="flex-1 border p-2 rounded text-sm uppercase"
+                                                placeholder="Hoặc nhập mã khác..."
+                                                value={voucherCode}
+                                                onChange={e => setVoucherCode(e.target.value.toUpperCase())}
+                                            />
+                                            <button
+                                                className="bg-gray-800 text-white px-4 py-2 rounded text-sm hover:bg-black"
+                                                onClick={handleApplyVoucher}
+                                                disabled={!voucherCode}
+                                            >
+                                                Áp dụng
+                                            </button>
                                         </div>
+                                        {voucherError && <p className="text-red-500 text-xs mt-1">{voucherError}</p>}
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
                             <div className="summary-row">
                                 <span>Tạm tính</span>

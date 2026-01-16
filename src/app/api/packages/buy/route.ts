@@ -3,46 +3,57 @@ import dbConnect from '@/lib/db';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
 import Order from '@/models/Order';
 import User from '@/models/User';
+import UserVoucher from '@/models/UserVoucher';
 import AffiliateSettings from '@/models/AffiliateSettings';
 import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
-const getUserFromRequest = async (req: Request) => {
-    // Basic JWT extraction
-    const token = req.headers.get('cookie')?.split('token=')[1]?.split(';')[0];
-    if (!token) return null;
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me') as any;
-        return decoded.id;
-    } catch (e) {
-        return null;
+function generateVoucherCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-};
+    return code;
+}
 
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const userId = await getUserFromRequest(req); // Optional for guest? But this is membership. Must be logged in?
-        // Let's assume must be logged in for membership.
-        if (!userId) {
+        
+        // Get user from cookies properly
+        const cookieStore = await cookies();
+        const token = cookieStore.get('token')?.value;
+        
+        if (!token) {
             return NextResponse.json({ message: 'Vui lòng đăng nhập để mua gói' }, { status: 401 });
         }
 
-        const { packageId, shippingInfo } = await req.json();
+        let userId: string;
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me') as any;
+            userId = decoded.id;
+        } catch (e) {
+            return NextResponse.json({ message: 'Phiên đăng nhập đã hết hạn' }, { status: 401 });
+        }
+
+        const { packageId } = await req.json();
         const pkg = await SubscriptionPackage.findById(packageId);
 
         if (!pkg) {
             return NextResponse.json({ message: 'Gói không tồn tại' }, { status: 404 });
         }
 
-        // Affiliate Tracking
         const user = await User.findById(userId);
-        const cookieStore = await cookies();
-        const refCode = cookieStore.get('gonuts_ref')?.value;
-        let referrerId: any = user?.referrer; // Default to existing referrer
+        if (!user) {
+            return NextResponse.json({ message: 'Người dùng không tồn tại' }, { status: 404 });
+        }
 
-        // Check if cookie overrides or sets referrer (if not set)
+        // Affiliate Tracking
+        const refCode = cookieStore.get('gonuts_ref')?.value;
+        let referrerId: any = user?.referrer;
+
         if (refCode && !referrerId) {
             const refUser = await User.findOne({ referralCode: refCode });
             if (refUser && refUser._id.toString() !== userId) {
@@ -52,44 +63,71 @@ export async function POST(req: Request) {
 
         // Commission Calculation
         let commissionAmount = 0;
-        let commissionId = undefined;
         let commissionStatus: any = undefined;
 
         if (referrerId) {
-            // Get settings
             const settings = await AffiliateSettings.findOne();
             const rate = user?.commissionRateOverride ?? settings?.defaultCommissionRate ?? 10;
             commissionAmount = Math.round(pkg.price * (rate / 100));
             commissionStatus = 'pending';
         }
 
-        // Create Order
-        // Treat package as 1 item
+        // Calculate expiry date
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + (pkg.validityDays || 30));
+
+        // Create Order with membership type
         const order = await Order.create({
             user: userId,
-            shippingInfo: shippingInfo || {
-                fullName: user?.name || 'Guest',
-                phone: user?.phone || '0000',
+            orderType: 'membership',
+            shippingInfo: {
+                fullName: user.name || 'Guest',
+                phone: user.phone || '0000',
                 address: 'Membership Purchase',
                 city: 'N/A',
                 district: 'N/A'
             },
             items: [{
-                productId: pkg._id, // Use package ID as product ID
+                productId: pkg._id,
                 name: `Gói Hội Viên: ${pkg.name}`,
                 quantity: 1,
                 price: pkg.price,
-                image: '' // Optional pkg image
+                image: ''
             }],
-            paymentMethod: 'cod', // Enforce COD/Banking (Pending)
-            paymentStatus: 'pending',
+            packageInfo: {
+                packageId: pkg._id,
+                name: pkg.name,
+                voucherQuantity: pkg.voucherQuantity,
+                expiresAt: expiresAt
+            },
+            paymentMethod: 'cod',
+            paymentStatus: 'paid', // Auto-mark as paid for now
             totalAmount: pkg.price,
             shippingFee: 0,
-            status: 'pending',
+            status: 'completed', // Auto-complete membership orders
             referrer: referrerId,
             commissionAmount: commissionAmount,
             commissionStatus: commissionStatus
         });
+
+        // Generate vouchers for the user
+        const vouchersToCreate = [];
+        for (let i = 0; i < pkg.voucherQuantity; i++) {
+            vouchersToCreate.push({
+                userId: userId,
+                code: generateVoucherCode(),
+                discountType: pkg.discountType,
+                discountValue: pkg.discountValue,
+                maxDiscount: pkg.maxDiscount,
+                minOrderValue: pkg.minOrderValue,
+                expiresAt: expiresAt,
+                isUsed: false,
+                source: 'package',
+                sourceId: pkg._id
+            });
+        }
+
+        await UserVoucher.insertMany(vouchersToCreate);
 
         // Create Commission Record if applicable
         if (commissionAmount > 0 && referrerId) {
@@ -97,23 +135,23 @@ export async function POST(req: Request) {
                 affiliateId: referrerId,
                 orderId: order._id,
                 orderValue: pkg.price,
-                commissionRate: user?.commissionRateOverride ?? 10, // Approximate
+                commissionRate: user?.commissionRateOverride ?? 10,
                 commissionAmount,
                 status: 'pending',
                 note: 'Hoa hồng mua gói hội viên'
             });
 
-            // Link back to order
             await Order.findByIdAndUpdate(order._id, { commissionId: comm._id });
         }
 
         return NextResponse.json({
-            message: 'Đặt hàng thành công. Vui lòng thanh toán để kích hoạt gói.',
-            orderId: order._id
+            message: 'Mua gói thành công!',
+            orderId: order._id,
+            vouchersCount: pkg.voucherQuantity
         }, { status: 201 });
 
     } catch (error) {
         console.error("Buy package error:", error);
-        return NextResponse.json({ message: 'Lỗi khi tạo đơn hàng' }, { status: 500 });
+        return NextResponse.json({ message: 'Lỗi khi mua gói' }, { status: 500 });
     }
 }

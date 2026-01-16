@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IOrder {
     user?: mongoose.Types.ObjectId;
+    orderType?: 'product' | 'membership'; // Type of order
     shippingInfo: {
         fullName: string;
         phone: string;
@@ -16,6 +17,13 @@ export interface IOrder {
         price: number;
         image: string;
     }[];
+    // Package info for membership orders
+    packageInfo?: {
+        packageId: mongoose.Types.ObjectId;
+        name: string;
+        voucherQuantity: number;
+        expiresAt: Date;
+    };
     paymentMethod: string; // 'cod' | 'banking' | 'vnpay'
     paymentStatus?: string; // 'pending' | 'completed' | 'failed'
     vnpayTransactionNo?: string;
@@ -36,6 +44,7 @@ export interface IOrder {
 const OrderSchema: Schema<IOrder> = new Schema(
     {
         user: { type: Schema.Types.ObjectId, ref: 'User' },
+        orderType: { type: String, enum: ['product', 'membership'], default: 'product' },
         shippingInfo: {
             fullName: { type: String, required: true },
             phone: { type: String, required: true },
@@ -52,6 +61,13 @@ const OrderSchema: Schema<IOrder> = new Schema(
                 image: { type: String },
             },
         ],
+        // Package info for membership orders
+        packageInfo: {
+            packageId: { type: Schema.Types.ObjectId, ref: 'SubscriptionPackage' },
+            name: { type: String },
+            voucherQuantity: { type: Number },
+            expiresAt: { type: Date },
+        },
         paymentMethod: { type: String, required: true, default: 'cod' },
         paymentStatus: { type: String, default: 'pending' },
         vnpayTransactionNo: { type: String },

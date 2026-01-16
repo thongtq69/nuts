@@ -17,25 +17,54 @@ export async function GET() {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+        let userId: string;
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me') as any;
+            userId = decoded.id || decoded.userId;
+        } catch (e) {
+            return NextResponse.json({ message: 'Token không hợp lệ' }, { status: 401 });
+        }
 
         // Find membership orders for this user
+        // Support both new orders with orderType and old orders with package info in items
         const membershipOrders = await Order.find({
-            user: decoded.userId,
-            orderType: 'membership',
-            status: { $in: ['completed', 'paid'] }
+            user: userId,
+            status: { $in: ['completed', 'paid', 'delivered'] },
+            $or: [
+                { orderType: 'membership' },
+                { 'items.name': { $regex: /Gói Hội Viên/i } },
+                { packageInfo: { $exists: true, $ne: null } }
+            ]
         }).sort({ createdAt: -1 }).lean();
 
         // Transform to membership package format
-        const packages = membershipOrders.map((order: any) => ({
-            _id: order._id.toString(),
-            packageName: order.packageInfo?.name || 'Gói hội viên',
-            price: order.totalAmount,
-            purchasedAt: order.createdAt,
-            expiresAt: order.packageInfo?.expiresAt || new Date(new Date(order.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000),
-            vouchersReceived: order.packageInfo?.voucherQuantity || 0,
-            status: new Date(order.packageInfo?.expiresAt || new Date()) > new Date() ? 'active' : 'expired'
-        }));
+        const packages = membershipOrders.map((order: any) => {
+            // Get package name from packageInfo or from items
+            let packageName = order.packageInfo?.name;
+            if (!packageName && order.items?.length > 0) {
+                const membershipItem = order.items.find((item: any) => 
+                    item.name?.includes('Gói Hội Viên') || item.name?.includes('Gói VIP')
+                );
+                if (membershipItem) {
+                    packageName = membershipItem.name.replace('Gói Hội Viên: ', '').replace('Gói VIP: ', '');
+                }
+            }
+            
+            // Calculate expiry - default 30 days from order date if not specified
+            const orderDate = new Date(order.createdAt);
+            const defaultExpiry = new Date(orderDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+            const expiresAt = order.packageInfo?.expiresAt || defaultExpiry;
+            
+            return {
+                _id: order._id.toString(),
+                packageName: packageName || 'Gói hội viên',
+                price: order.totalAmount,
+                purchasedAt: order.createdAt,
+                expiresAt: expiresAt,
+                vouchersReceived: order.packageInfo?.voucherQuantity || 0,
+                status: new Date(expiresAt) > new Date() ? 'active' : 'expired'
+            };
+        });
 
         return NextResponse.json(packages);
     } catch (error) {

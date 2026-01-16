@@ -1288,9 +1288,10 @@ input {
 
 .packages-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-xl);
   margin-bottom: var(--spacing-3xl);
+  align-items: stretch;
 }
 
 .package-card {
@@ -1302,6 +1303,9 @@ input {
   transition: transform 0.3s, box-shadow 0.3s;
   border: 2px solid transparent;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
 }
 
 .package-card:hover {
@@ -1311,7 +1315,7 @@ input {
 
 .package-card.featured {
   border-color: var(--accent-color, #ffd700);
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .package-card.featured::before {
@@ -1337,6 +1341,7 @@ input {
   font-size: 24px;
   color: var(--color-text-dark);
   margin-bottom: var(--spacing-sm);
+  min-height: 32px;
 }
 
 .package-price {
@@ -1344,7 +1349,7 @@ input {
 }
 
 .price-amount {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--accent-color, var(--color-primary-brown));
 }
@@ -1353,12 +1358,14 @@ input {
   color: #666;
   font-size: var(--font-size-sm);
   margin-bottom: var(--spacing-lg);
+  min-height: 20px;
 }
 
 .package-features {
   list-style: none;
   text-align: left;
   margin-bottom: var(--spacing-lg);
+  flex: 1;
 }
 
 .package-features li {
@@ -1367,6 +1374,7 @@ input {
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) 0;
   border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
 }
 
 .package-features li:last-child {
@@ -1374,7 +1382,8 @@ input {
 }
 
 .feature-icon {
-  font-size: 18px;
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .package-savings {
@@ -1384,6 +1393,7 @@ input {
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   margin-bottom: var(--spacing-lg);
+  margin-top: auto;
 }
 
 .btn-purchase {
@@ -1395,6 +1405,8 @@ input {
   font-weight: 600;
   border-radius: var(--radius-md);
   transition: opacity 0.2s;
+  border: none;
+  cursor: pointer;
 }
 
 .btn-purchase:hover {
@@ -1506,6 +1518,10 @@ input {
 
   .package-card.featured {
     transform: none;
+  }
+  
+  .package-card {
+    min-height: auto;
   }
 
   .voucher-content {
