@@ -57,6 +57,9 @@ export default function LoginPage() {
             <div className="container">
                 <div className="auth-wrapper">
                     <div className="auth-card">
+                        <div className="auth-logo">
+                            <img src="/assets/logo.png" alt="Go Nuts" />
+                        </div>
                         <h1>Đăng nhập</h1>
                         <p className="auth-subtitle">Chào mừng bạn quay trở lại!</p>
 

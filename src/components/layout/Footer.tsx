@@ -10,7 +10,7 @@ export default function Footer() {
                 <div className="footer-grid">
                     {/* Company Info */}
                     <div className="footer-col company-info">
-                        <img src="/assets/images/logo.png" alt="Go Nuts" className="footer-logo" />
+                        <img src="/assets/logo.png" alt="Go Nuts" className="footer-logo" />
                         <p className="company-name">Go Nuts Vietnam</p>
                         <p>Địa chỉ: 998 Cầu giấy, Hà Nội</p>
                         <p>Số điện thoại: 090xxxxxxx</p>

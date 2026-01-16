@@ -33,7 +33,7 @@ export default function MainHeader() {
                     {/* Logo */}
                     <Link href="/" className="logo">
                         <img
-                            src={settings?.logoUrl || "/assets/images/logo.png"}
+                            src={settings?.logoUrl || "/assets/logo.png"}
                             alt={settings?.companyName || "Go Nuts"}
                         />
                     </Link>

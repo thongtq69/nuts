@@ -67,9 +67,11 @@ export default function AdminSidebar() {
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-slate-800/50">
                 <Link href="/admin" className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-amber-500/25 group-hover:shadow-amber-500/40 transition-shadow">
-                        G
-                    </div>
+                    <img 
+                        src="/assets/logo.png" 
+                        alt="Go Nuts Logo" 
+                        className="w-10 h-10 rounded-xl object-contain shadow-lg shadow-amber-500/25 group-hover:shadow-amber-500/40 transition-shadow"
+                    />
                     <div className="flex flex-col">
                         <span className="text-white font-bold text-lg tracking-tight">Go Nuts</span>
                         <span className="text-[10px] text-amber-500/80 font-medium uppercase tracking-wider">Admin Panel</span>

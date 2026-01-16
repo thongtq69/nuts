@@ -70,6 +70,9 @@ export default function RegisterPage() {
             <div className="container">
                 <div className="auth-wrapper">
                     <div className="auth-card">
+                        <div className="auth-logo">
+                            <img src="/assets/logo.png" alt="Go Nuts" />
+                        </div>
                         <h1>Đăng ký tài khoản</h1>
                         <p className="auth-subtitle">Tạo tài khoản để nhận nhiều ưu đãi</p>
 

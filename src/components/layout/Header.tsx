@@ -114,7 +114,7 @@ export default function Header() {
                 <div className="container">
                     <div className="header-content">
                         <Link href="/" className="logo">
-                            <img src="/assets/images/logo.png" alt="Go Nuts Logo" />
+                            <img src="/assets/logo.png" alt="Go Nuts Logo" />
                         </Link>
 
                         <div className="search-container">

@@ -14,6 +14,8 @@ export default function OrderSuccessPage() {
 
             <div className="container">
                 <div className="success-wrapper">
+                    <img src="/assets/logo.png" alt="Go Nuts" className="success-logo" />
+                    
                     <div className="success-icon">
                         <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -23,7 +25,7 @@ export default function OrderSuccessPage() {
 
                     <h1>Đặt hàng thành công!</h1>
                     <p className="success-message">
-                        Cảm ơn bạn đã mua hàng tại Go Nuts. Mã đơn hàng của bạn là <strong>#GN202488</strong>.
+                        Cảm ơn bạn đã mua hàng tại Go Nuts. Đơn hàng của bạn đã được tiếp nhận.
                     </p>
                     <p className="success-note">
                         Chúng tôi đã gửi email xác nhận đến hộp thư của bạn. Vui lòng kiểm tra để biết thêm chi tiết.
@@ -52,6 +54,11 @@ export default function OrderSuccessPage() {
             text-align: center;
             max-width: 600px;
             margin: 0 auto;
+        }
+        .success-logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 20px;
         }
         .success-icon {
             color: var(--color-success-green);

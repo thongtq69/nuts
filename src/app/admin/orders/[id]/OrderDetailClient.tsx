@@ -113,7 +113,135 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
     };
 
     const handlePrint = () => {
-        window.print();
+        // Create print-friendly version with logo
+        const printContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Đơn hàng #${order.orderNumber} - Go Nuts</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+                    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #9C7044; padding-bottom: 20px; }
+                    .header img { max-width: 100px; height: auto; }
+                    .header h1 { color: #9C7044; margin: 10px 0 5px; font-size: 24px; }
+                    .header p { color: #666; margin: 0; }
+                    .order-info { margin-bottom: 20px; }
+                    .order-info h2 { color: #333; font-size: 18px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+                    .info-row { display: flex; margin-bottom: 8px; }
+                    .info-label { width: 150px; color: #666; }
+                    .info-value { flex: 1; font-weight: 500; }
+                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                    th { background: #f5f5f5; font-weight: 600; }
+                    .text-right { text-align: right; }
+                    .total-row { font-weight: bold; font-size: 16px; color: #9C7044; }
+                    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
+                    .footer img { max-width: 60px; opacity: 0.6; margin-bottom: 10px; }
+                    @media print { body { padding: 0; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <img src="/assets/logo.png" alt="Go Nuts Logo" />
+                    <h1>Go Nuts</h1>
+                    <p>Thực phẩm sạch, dinh dưỡng</p>
+                </div>
+                
+                <div class="order-info">
+                    <h2>Thông tin đơn hàng #${order.orderNumber}</h2>
+                    <div class="info-row">
+                        <span class="info-label">Ngày đặt:</span>
+                        <span class="info-value">${new Date(order.createdAt).toLocaleString('vi-VN')}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Trạng thái:</span>
+                        <span class="info-value">${config.label}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Thanh toán:</span>
+                        <span class="info-value">${order.paymentMethod === 'COD' ? 'COD' : order.paymentMethod}</span>
+                    </div>
+                </div>
+                
+                <div class="order-info">
+                    <h2>Thông tin khách hàng</h2>
+                    <div class="info-row">
+                        <span class="info-label">Họ tên:</span>
+                        <span class="info-value">${order.shippingInfo.fullName}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Điện thoại:</span>
+                        <span class="info-value">${order.shippingInfo.phone}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Địa chỉ:</span>
+                        <span class="info-value">${order.shippingInfo.address}${order.shippingInfo.district ? ', ' + order.shippingInfo.district : ''}${order.shippingInfo.city ? ', ' + order.shippingInfo.city : ''}</span>
+                    </div>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th class="text-right">Đơn giá</th>
+                            <th class="text-right">SL</th>
+                            <th class="text-right">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.items.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td class="text-right">${item.price.toLocaleString('vi-VN')}đ</td>
+                                <td class="text-right">${item.quantity}</td>
+                                <td class="text-right">${item.total.toLocaleString('vi-VN')}đ</td>
+                            </tr>
+                        `).join('')}
+                        <tr>
+                            <td colspan="3" class="text-right">Tạm tính:</td>
+                            <td class="text-right">${order.subtotal.toLocaleString('vi-VN')}đ</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-right">Phí vận chuyển:</td>
+                            <td class="text-right">${order.shippingFee.toLocaleString('vi-VN')}đ</td>
+                        </tr>
+                        ${order.discount > 0 ? `
+                        <tr>
+                            <td colspan="3" class="text-right">Giảm giá:</td>
+                            <td class="text-right" style="color: green;">-${order.discount.toLocaleString('vi-VN')}đ</td>
+                        </tr>
+                        ` : ''}
+                        <tr class="total-row">
+                            <td colspan="3" class="text-right">TỔNG CỘNG:</td>
+                            <td class="text-right">${order.totalAmount.toLocaleString('vi-VN')}đ</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                ${order.note ? `
+                <div class="order-info">
+                    <h2>Ghi chú</h2>
+                    <p>${order.note}</p>
+                </div>
+                ` : ''}
+                
+                <div class="footer">
+                    <img src="/assets/logo.png" alt="Go Nuts" />
+                    <p>Cảm ơn quý khách đã mua hàng tại Go Nuts!</p>
+                    <p>Hotline: 09xxxxxxxx | Email: support@gonuts.vn</p>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.onload = () => {
+                printWindow.print();
+            };
+        }
     };
 
     return (

@@ -55,14 +55,18 @@ async function createTransporter() {
     throw new Error('Gmail credentials not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local');
 }
 
+// Base URL for assets
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const LOGO_URL = `${BASE_URL}/assets/logo.png`;
+
 // Email Templates
 const emailStyles = `
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
         .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .header { background: linear-gradient(135deg, #9C7044 0%, #7d5a36 100%); padding: 30px; text-align: center; }
-        .header img { max-width: 150px; }
-        .header h1 { color: white; margin: 15px 0 0; font-size: 24px; }
+        .header img.logo { max-width: 120px; height: auto; margin-bottom: 10px; }
+        .header h1 { color: white; margin: 10px 0 0; font-size: 24px; }
         .content { padding: 30px; }
         .otp-box { background: #f8f4f0; border: 2px dashed #9C7044; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
         .otp-code { font-size: 36px; font-weight: bold; color: #9C7044; letter-spacing: 8px; }
@@ -72,7 +76,25 @@ const emailStyles = `
         .btn { display: inline-block; background: #9C7044; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; }
         .footer { background: #333; color: #999; padding: 20px; text-align: center; font-size: 12px; }
         .footer a { color: #9C7044; }
+        .footer img.logo-footer { max-width: 80px; height: auto; margin-bottom: 10px; opacity: 0.8; }
     </style>
+`;
+
+// Email header with logo
+const emailHeader = `
+    <div class="header">
+        <img src="${LOGO_URL}" alt="Go Nuts Logo" class="logo" />
+        <h1>Go Nuts</h1>
+    </div>
+`;
+
+// Email footer with logo
+const emailFooter = `
+    <div class="footer">
+        <img src="${LOGO_URL}" alt="Go Nuts" class="logo-footer" />
+        <p>© 2026 Go Nuts - Thực phẩm sạch, dinh dưỡng</p>
+        <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+    </div>
 `;
 
 // Generate OTP
@@ -90,9 +112,7 @@ export async function sendOTPEmail(to: string, otp: string, purpose: string = 'x
         <head>${emailStyles}</head>
         <body>
             <div class="container">
-                <div class="header">
-                    <h1>🥜 Go Nuts</h1>
-                </div>
+                ${emailHeader}
                 <div class="content">
                     <h2>Mã xác thực OTP</h2>
                     <p>Xin chào,</p>
@@ -107,10 +127,7 @@ export async function sendOTPEmail(to: string, otp: string, purpose: string = 'x
                         ⚠️ Không chia sẻ mã này với bất kỳ ai. Go Nuts sẽ không bao giờ yêu cầu mã OTP của bạn.
                     </p>
                 </div>
-                <div class="footer">
-                    <p>© 2026 Go Nuts - Thực phẩm sạch, dinh dưỡng</p>
-                    <p>Email này được gửi tự động, vui lòng không trả lời.</p>
-                </div>
+                ${emailFooter}
             </div>
         </body>
         </html>
@@ -154,9 +171,7 @@ export async function sendOrderConfirmationEmail(
         <head>${emailStyles}</head>
         <body>
             <div class="container">
-                <div class="header">
-                    <h1>🥜 Go Nuts</h1>
-                </div>
+                ${emailHeader}
                 <div class="content">
                     <h2>✅ Đặt hàng thành công!</h2>
                     <p>Xin chào <strong>${orderData.customerName}</strong>,</p>
@@ -208,7 +223,8 @@ export async function sendOrderConfirmationEmail(
                     </p>
                 </div>
                 <div class="footer">
-                    <p>Nếu có thắc mắc, vui lòng liên hệ hotline: <strong>09Dxxxxxxx</strong></p>
+                    <img src="${LOGO_URL}" alt="Go Nuts" class="logo-footer" />
+                    <p>Nếu có thắc mắc, vui lòng liên hệ hotline: <strong>09xxxxxxxx</strong></p>
                     <p>© 2026 Go Nuts - Thực phẩm sạch, dinh dưỡng</p>
                 </div>
             </div>
@@ -256,9 +272,7 @@ export async function sendOrderStatusEmail(
         <head>${emailStyles}</head>
         <body>
             <div class="container">
-                <div class="header">
-                    <h1>🥜 Go Nuts</h1>
-                </div>
+                ${emailHeader}
                 <div class="content">
                     <h2>${statusIcons[orderData.status] || '📋'} Cập nhật đơn hàng</h2>
                     <p>Xin chào <strong>${orderData.customerName}</strong>,</p>
@@ -273,9 +287,7 @@ export async function sendOrderStatusEmail(
                         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/account" class="btn">Xem chi tiết đơn hàng</a>
                     </p>
                 </div>
-                <div class="footer">
-                    <p>© 2026 Go Nuts - Thực phẩm sạch, dinh dưỡng</p>
-                </div>
+                ${emailFooter}
             </div>
         </body>
         </html>
@@ -299,9 +311,7 @@ export async function sendWelcomeEmail(to: string, name: string, voucherCode?: s
         <head>${emailStyles}</head>
         <body>
             <div class="container">
-                <div class="header">
-                    <h1>🥜 Go Nuts</h1>
-                </div>
+                ${emailHeader}
                 <div class="content">
                     <h2>🎉 Chào mừng bạn đến với Go Nuts!</h2>
                     <p>Xin chào <strong>${name}</strong>,</p>
@@ -321,9 +331,7 @@ export async function sendWelcomeEmail(to: string, name: string, voucherCode?: s
                         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/products" class="btn">Mua sắm ngay</a>
                     </p>
                 </div>
-                <div class="footer">
-                    <p>© 2026 Go Nuts - Thực phẩm sạch, dinh dưỡng</p>
-                </div>
+                ${emailFooter}
             </div>
         </body>
         </html>
@@ -348,9 +356,7 @@ export async function sendPasswordResetEmail(to: string, resetToken: string) {
         <head>${emailStyles}</head>
         <body>
             <div class="container">
-                <div class="header">
-                    <h1>🥜 Go Nuts</h1>
-                </div>
+                ${emailHeader}
                 <div class="content">
                     <h2>🔐 Đặt lại mật khẩu</h2>
                     <p>Xin chào,</p>
@@ -364,9 +370,7 @@ export async function sendPasswordResetEmail(to: string, resetToken: string) {
                         Link này sẽ hết hạn sau 1 giờ. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.
                     </p>
                 </div>
-                <div class="footer">
-                    <p>© 2026 Go Nuts - Thực phẩm sạch, dinh dưỡng</p>
-                </div>
+                ${emailFooter}
             </div>
         </body>
         </html>
