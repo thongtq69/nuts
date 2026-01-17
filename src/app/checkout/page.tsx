@@ -595,7 +595,7 @@ export default function CheckoutPage() {
                                 onClick={handlePlaceOrder}
                                 disabled={isProcessing}
                             >
-                                {isProcessing ? 'Đang xử lý...' : 'Đặt hàng'}
+                                {isProcessing ? 'Đang xử lý...' : 'Thanh toán'}
                             </button>
 
                             <div className="security-note">
@@ -737,7 +737,7 @@ export default function CheckoutPage() {
                 transition: background 0.2s;
             }
             .place-order-btn:hover:not(:disabled) {
-                background: #7a5a36;
+                background: #7d5a36;
             }
             .place-order-btn:disabled {
                 background: #ccc;

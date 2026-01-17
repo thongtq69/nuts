@@ -3121,7 +3121,7 @@ a[class*="from-orange"] {
 .checkout-btn {
   width: 100%;
   padding: 12px;
-  background: var(--color-sale-red);
+  background: var(--color-primary-brown);
   color: white;
   border: none;
   border-radius: 4px;
@@ -3132,7 +3132,7 @@ a[class*="from-orange"] {
 }
 
 .checkout-btn:hover {
-  background: #7a5a36;
+  background: #7d5a36;
 }
 
 .empty-cart {

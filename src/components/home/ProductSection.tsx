@@ -1,5 +1,7 @@
-import React from 'react';
+'use client';
+
 import ProductCard from '../common/ProductCard';
+import Link from 'next/link';
 
 interface Product {
     id: string | number;
@@ -26,9 +28,9 @@ export default function ProductSection({ title, products }: ProductSectionProps)
             <div className="container">
                 <div className="section-header">
                     <h2 className="section-title">{title}</h2>
-                    <a href="/products" className="view-more">
+                    <Link href="/products" className="view-more">
                         Xem thêm
-                    </a>
+                    </Link>
                 </div>
                 
                 {products.length > 0 ? (

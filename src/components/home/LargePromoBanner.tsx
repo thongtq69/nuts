@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function LargePromoBanner() {
     return (
         <section className="promo-banner-section">

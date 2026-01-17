@@ -246,26 +246,26 @@ export default function ImageCropper({
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [imageLoaded, imageError, onCancel]);
+    }, [imageLoaded, imageError, onCancel, handleZoom, handleReset, handleCropImage]);
 
     // Handle zoom
-    const handleZoom = (delta: number) => {
+    const handleZoom = useCallback((delta: number) => {
         const newScale = Math.max(0.1, Math.min(3, scale + delta));
         setScale(newScale);
-    };
+    }, [scale]);
 
     // Reset về vị trí ban đầu
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         const scaleX = cropArea.width / imageDimensions.width;
         const scaleY = cropArea.height / imageDimensions.height;
         const initialScale = Math.max(scaleX, scaleY);
         
         setScale(initialScale);
         setPosition({ x: 0, y: 0 });
-    };
+    }, [cropArea, imageDimensions]);
 
     // Crop và export ảnh
-    const handleCropImage = () => {
+    const handleCropImage = useCallback(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -290,7 +290,7 @@ export default function ImageCropper({
                 onCrop(croppedUrl);
             }
         }, 'image/jpeg', 0.9);
-    };
+    }, [aspectRatio, cropArea, onCrop]);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">

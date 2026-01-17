@@ -74,7 +74,7 @@ export default function CartPage() {
                                 <span>{cartTotal.toLocaleString()}₫</span>
                             </div>
                             <Link href="/checkout">
-                                <button className="checkout-btn">Tiến hành thanh toán</button>
+                                <button className="checkout-btn">Thanh toán</button>
                             </Link>
                         </div>
                     </div>
