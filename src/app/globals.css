@@ -955,12 +955,12 @@ input {
 }
 
 /* Admin buttons hover states */
-.admin-layout .hover\\:bg-amber-600:hover,
-.admin-layout .hover\\:bg-amber-300:hover,
-.admin-layout .hover\\:bg-blue-600:hover,
-.admin-layout .hover\\:bg-blue-300:hover,
-.admin-layout .hover\\:bg-green-600:hover,
-.admin-layout .hover\\:bg-green-300:hover {
+.admin-layout .hover\:bg-amber-600:hover,
+.admin-layout .hover\:bg-amber-300:hover,
+.admin-layout .hover\:bg-blue-600:hover,
+.admin-layout .hover\:bg-blue-300:hover,
+.admin-layout .hover\:bg-green-600:hover,
+.admin-layout .hover\:bg-green-300:hover {
   color: #000 !important;
 }
 

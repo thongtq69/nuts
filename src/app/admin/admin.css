@@ -565,25 +565,6 @@ html {
   color: #000 !important;
 }
 
-/* Hover states with black text */
-.hover\\:bg-amber-600:hover,
-.hover\\:bg-amber-300:hover,
-.hover\\:bg-amber-200:hover,
-.hover\\:bg-blue-600:hover,
-.hover\\:bg-blue-300:hover,
-.hover\\:bg-blue-200:hover,
-.hover\\:bg-green-600:hover,
-.hover\\:bg-green-300:hover,
-.hover\\:bg-green-200:hover,
-.hover\\:bg-purple-600:hover,
-.hover\\:bg-purple-300:hover,
-.hover\\:bg-purple-200:hover,
-.hover\\:bg-emerald-600:hover,
-.hover\\:bg-emerald-300:hover,
-.hover\\:bg-emerald-200:hover {
-  color: #000 !important;
-}
-
 /* Button elements specifically */
 button.bg-amber-500,
 button.bg-amber-600,

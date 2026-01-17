@@ -70,54 +70,122 @@ export default function MembershipPage() {
                 {loading ? (
                     <div className="text-center py-20">Đang tải các gói...</div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
                         {packages.map((pkg, index) => {
-                            // Màu sắc cho từng gói
+                            // Màu sắc cho từng gói theo thứ tự
                             const colors = [
-                                { gradient: 'from-blue-500 to-blue-600', button: 'bg-blue-600 hover:bg-blue-700' },
-                                { gradient: 'from-amber-500 to-amber-600', button: 'bg-amber-600 hover:bg-amber-700' },
-                                { gradient: 'from-purple-500 to-purple-600', button: 'bg-purple-600 hover:bg-purple-700' },
+                                { 
+                                    gradient: 'from-orange-400 to-orange-500', 
+                                    button: 'bg-orange-500 hover:bg-orange-600',
+                                    icon: '🥉',
+                                    badge: 'bg-orange-100 text-orange-700'
+                                },
+                                { 
+                                    gradient: 'from-gray-400 to-gray-500', 
+                                    button: 'bg-gray-500 hover:bg-gray-600',
+                                    icon: '🥈',
+                                    badge: 'bg-gray-100 text-gray-700'
+                                },
+                                { 
+                                    gradient: 'from-yellow-400 to-yellow-500', 
+                                    button: 'bg-yellow-500 hover:bg-yellow-600',
+                                    icon: '🥇',
+                                    badge: 'bg-yellow-100 text-yellow-700'
+                                },
+                                { 
+                                    gradient: 'from-purple-400 to-purple-500', 
+                                    button: 'bg-purple-500 hover:bg-purple-600',
+                                    icon: '✨',
+                                    badge: 'bg-purple-100 text-purple-700'
+                                },
                             ];
                             const color = colors[index % colors.length];
 
                             return (
-                                <div key={pkg._id} className="border-2 border-slate-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1 bg-white flex flex-col h-full">
-                                    <div className={`bg-gradient-to-r ${color.gradient} p-6 text-white text-center`}>
-                                        <h3 className="text-2xl font-bold">{pkg.name}</h3>
-                                        <div className="mt-3 text-4xl font-extrabold">
+                                <div key={pkg._id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 overflow-hidden border border-gray-200">
+                                    {/* Header với icon và tên */}
+                                    <div className="text-center p-6 border-b border-gray-100">
+                                        <div className="text-4xl mb-2">{color.icon}</div>
+                                        <h3 className="text-xl font-bold text-gray-800">{pkg.name}</h3>
+                                        <div className="text-3xl font-bold text-orange-500 mt-2">
                                             {new Intl.NumberFormat('vi-VN').format(pkg.price)}đ
                                         </div>
-                                        <div className="text-sm opacity-90 mt-2">Hiệu lực {pkg.validityDays} ngày</div>
+                                        <div className="text-sm text-gray-500 mt-1">{pkg.description || pkg.name}</div>
                                     </div>
 
-                                    <div className="p-6 flex-1 flex flex-col">
-                                        <ul className="space-y-4 mb-6 flex-1">
-                                            <li className="flex items-start">
-                                                <span className="text-green-500 mr-3 text-xl">✓</span>
-                                                <span className="font-semibold text-slate-800">Nhận {pkg.voucherQuantity} mã giảm giá</span>
-                                            </li>
-                                            <li className="flex items-start">
-                                                <span className="text-green-500 mr-3 text-xl">✓</span>
-                                                <span className="text-slate-700">
-                                                    Giảm {pkg.discountValue}{pkg.discountType === 'percent' ? '%' : 'đ'}
-                                                    {pkg.maxDiscount > 0 && ` (tối đa ${new Intl.NumberFormat('vi-VN').format(pkg.maxDiscount)}đ)`}
-                                                </span>
-                                            </li>
-                                            <li className="flex items-start">
-                                                <span className="text-green-500 mr-3 text-xl">✓</span>
-                                                <span className="text-slate-700">Áp dụng cho đơn từ {new Intl.NumberFormat('vi-VN').format(pkg.minOrderValue)}đ</span>
-                                            </li>
-                                            {pkg.description && (
-                                                <li className="flex items-start text-slate-500 text-sm italic mt-4 pt-4 border-t border-slate-200">
-                                                    <span className="mr-2">ℹ️</span>
-                                                    {pkg.description}
-                                                </li>
-                                            )}
-                                        </ul>
+                                    {/* Thông tin chi tiết */}
+                                    <div className="p-6 space-y-4">
+                                        {/* Số lượng voucher */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                                                <span className="text-red-600 text-xs">🎟️</span>
+                                            </div>
+                                            <span className="text-sm text-gray-700">
+                                                <strong>{pkg.voucherQuantity}</strong> mã giảm giá
+                                            </span>
+                                        </div>
 
+                                        {/* Giá trị giảm */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 bg-yellow-100 rounded flex items-center justify-center">
+                                                <span className="text-yellow-600 text-xs">💰</span>
+                                            </div>
+                                            <span className="text-sm text-gray-700">
+                                                Giảm <strong>{pkg.discountValue}{pkg.discountType === 'percent' ? '%' : 'đ'}</strong>
+                                            </span>
+                                        </div>
+
+                                        {/* Tối đa */}
+                                        {pkg.maxDiscount > 0 && (
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                                                    <span className="text-blue-600 text-xs">📊</span>
+                                                </div>
+                                                <span className="text-sm text-gray-700">
+                                                    Tối đa <strong>{new Intl.NumberFormat('vi-VN').format(pkg.maxDiscount)}đ</strong>/đơn
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Đơn tối thiểu */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                                                <span className="text-green-600 text-xs">🛒</span>
+                                            </div>
+                                            <span className="text-sm text-gray-700">
+                                                Đơn từ <strong>{new Intl.NumberFormat('vi-VN').format(pkg.minOrderValue)}đ</strong>
+                                            </span>
+                                        </div>
+
+                                        {/* Hiệu lực */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
+                                                <span className="text-purple-600 text-xs">⏰</span>
+                                            </div>
+                                            <span className="text-sm text-gray-700">
+                                                Hiệu lực <strong>{pkg.validityDays}</strong> ngày
+                                            </span>
+                                        </div>
+
+                                        {/* Tiết kiệm được */}
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
+                                            <div className="text-center">
+                                                <div className="text-xs text-yellow-600 font-medium">Tiết kiệm tối đa</div>
+                                                <div className="text-lg font-bold text-yellow-700">
+                                                    {pkg.maxDiscount > 0 
+                                                        ? `${(pkg.maxDiscount * pkg.voucherQuantity).toLocaleString()}đ`
+                                                        : `${((pkg.minOrderValue * pkg.discountValue / 100) * pkg.voucherQuantity).toLocaleString()}đ`
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Nút mua */}
+                                    <div className="p-6 pt-0">
                                         <button
                                             onClick={() => handleBuy(pkg)}
-                                            className={`w-full ${color.button} text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg mt-auto`}
+                                            className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all shadow-md hover:shadow-lg"
                                         >
                                             Mua ngay
                                         </button>
