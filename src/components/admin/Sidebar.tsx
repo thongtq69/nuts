@@ -16,7 +16,9 @@ import {
     Crown,
     TrendingUp,
     ExternalLink,
-    Gift
+    Gift,
+    Tag,
+    Home
 } from 'lucide-react';
 
 const menuItems = [
@@ -31,6 +33,7 @@ const menuItems = [
         items: [
             { href: '/admin/orders', icon: ShoppingBag, label: 'Đơn hàng', badge: 'orders' },
             { href: '/admin/products', icon: Package, label: 'Sản phẩm' },
+            { href: '/admin/product-tags', icon: Tag, label: 'Tags Sản phẩm' },
             { href: '/admin/vouchers', icon: Ticket, label: 'Voucher' },
         ],
     },
@@ -55,6 +58,7 @@ const menuItems = [
         title: 'CÀI ĐẶT',
         items: [
             { href: '/admin/voucher-rewards', icon: Gift, label: 'Tặng Voucher' },
+            { href: '/admin/fix-homepage', icon: Home, label: 'Sửa Trang Chủ' },
             { href: '/admin/settings', icon: Settings, label: 'Cài đặt Website' },
             { href: '/admin/affiliate-settings', icon: TrendingUp, label: 'Cấu hình Affiliate' },
         ],
