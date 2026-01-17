@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
+import PasswordInput from '@/components/common/PasswordInput';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -111,22 +112,20 @@ export default function RegisterPage() {
                             </div>
                             <div className="form-group">
                                 <label>Mật khẩu</label>
-                                <input
-                                    type="password"
+                                <PasswordInput
+                                    value={formData.password}
+                                    onChange={(value) => setFormData({ ...formData, password: value })}
                                     placeholder="Nhập mật khẩu"
                                     required
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 />
                             </div>
                             <div className="form-group">
                                 <label>Nhập lại mật khẩu</label>
-                                <input
-                                    type="password"
+                                <PasswordInput
+                                    value={formData.confirmPassword}
+                                    onChange={(value) => setFormData({ ...formData, confirmPassword: value })}
                                     placeholder="Xác nhận mật khẩu"
                                     required
-                                    value={formData.confirmPassword}
-                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                 />
                             </div>
 
