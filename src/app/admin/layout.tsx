@@ -49,7 +49,7 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="min-h-screen bg-white flex transition-colors duration-200">
+        <div className="admin-layout min-h-screen bg-white flex transition-colors duration-200">
             {/* Sidebar Desktop */}
             <div className="hidden lg:block w-64 flex-shrink-0">
                 <AdminSidebar />

@@ -530,6 +530,135 @@ html {
 }
 
 /* ========================================
+   Admin Button Overrides - Black Text
+   ======================================== */
+.bg-amber-500,
+.bg-amber-600,
+.bg-amber-200,
+.bg-amber-300,
+.bg-amber-50,
+.bg-amber-100,
+.bg-blue-500,
+.bg-blue-600,
+.bg-blue-200,
+.bg-blue-300,
+.bg-blue-50,
+.bg-blue-100,
+.bg-green-500,
+.bg-green-600,
+.bg-green-200,
+.bg-green-300,
+.bg-green-50,
+.bg-green-100,
+.bg-purple-500,
+.bg-purple-600,
+.bg-purple-200,
+.bg-purple-300,
+.bg-purple-50,
+.bg-purple-100,
+.bg-emerald-500,
+.bg-emerald-600,
+.bg-emerald-200,
+.bg-emerald-300,
+.bg-emerald-50,
+.bg-emerald-100 {
+  color: #000 !important;
+}
+
+/* Hover states with black text */
+.hover\\:bg-amber-600:hover,
+.hover\\:bg-amber-300:hover,
+.hover\\:bg-amber-200:hover,
+.hover\\:bg-blue-600:hover,
+.hover\\:bg-blue-300:hover,
+.hover\\:bg-blue-200:hover,
+.hover\\:bg-green-600:hover,
+.hover\\:bg-green-300:hover,
+.hover\\:bg-green-200:hover,
+.hover\\:bg-purple-600:hover,
+.hover\\:bg-purple-300:hover,
+.hover\\:bg-purple-200:hover,
+.hover\\:bg-emerald-600:hover,
+.hover\\:bg-emerald-300:hover,
+.hover\\:bg-emerald-200:hover {
+  color: #000 !important;
+}
+
+/* Button elements specifically */
+button.bg-amber-500,
+button.bg-amber-600,
+button.bg-amber-200,
+button.bg-amber-300,
+button.bg-blue-500,
+button.bg-blue-600,
+button.bg-blue-200,
+button.bg-blue-300,
+button.bg-green-500,
+button.bg-green-600,
+button.bg-green-200,
+button.bg-green-300,
+a.bg-amber-500,
+a.bg-amber-600,
+a.bg-amber-200,
+a.bg-amber-300,
+a.bg-blue-500,
+a.bg-blue-600,
+a.bg-blue-200,
+a.bg-blue-300,
+a.bg-green-500,
+a.bg-green-600,
+a.bg-green-200,
+a.bg-green-300 {
+  color: #000 !important;
+}
+
+/* Admin specific button classes */
+.admin-btn-primary {
+  background: #f59e0b !important;
+  color: #000 !important;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-primary:hover {
+  background: #d97706 !important;
+  color: #000 !important;
+}
+
+.admin-btn-secondary {
+  background: #3b82f6 !important;
+  color: #000 !important;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-secondary:hover {
+  background: #2563eb !important;
+  color: #000 !important;
+}
+
+.admin-btn-success {
+  background: #10b981 !important;
+  color: #000 !important;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-success:hover {
+  background: #059669 !important;
+  color: #000 !important;
+}
+
+/* ========================================
    Utility Classes
    ======================================== */
 .text-gradient {

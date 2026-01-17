@@ -928,6 +928,53 @@ input {
 }
 
 /* ========================================
+   Admin Button Text Override
+   ======================================== */
+/* Force black text for admin buttons */
+.admin-layout .bg-amber-500,
+.admin-layout .bg-amber-600,
+.admin-layout .bg-amber-200,
+.admin-layout .bg-amber-300,
+.admin-layout .bg-blue-500,
+.admin-layout .bg-blue-600,
+.admin-layout .bg-blue-200,
+.admin-layout .bg-blue-300,
+.admin-layout .bg-green-500,
+.admin-layout .bg-green-600,
+.admin-layout .bg-green-200,
+.admin-layout .bg-green-300,
+.admin-layout .bg-purple-500,
+.admin-layout .bg-purple-600,
+.admin-layout .bg-purple-200,
+.admin-layout .bg-purple-300,
+.admin-layout .bg-emerald-500,
+.admin-layout .bg-emerald-600,
+.admin-layout .bg-emerald-200,
+.admin-layout .bg-emerald-300 {
+  color: #000 !important;
+}
+
+/* Admin buttons hover states */
+.admin-layout .hover\\:bg-amber-600:hover,
+.admin-layout .hover\\:bg-amber-300:hover,
+.admin-layout .hover\\:bg-blue-600:hover,
+.admin-layout .hover\\:bg-blue-300:hover,
+.admin-layout .hover\\:bg-green-600:hover,
+.admin-layout .hover\\:bg-green-300:hover {
+  color: #000 !important;
+}
+
+/* Specific admin page overrides */
+[class*="admin"] .bg-amber-500,
+[class*="admin"] .bg-amber-600,
+[class*="admin"] .bg-blue-500,
+[class*="admin"] .bg-blue-600,
+[class*="admin"] .bg-green-500,
+[class*="admin"] .bg-green-600 {
+  color: #000 !important;
+}
+
+/* ========================================
    Responsive Design
    ======================================== */
 @media (max-width: 1400px) {
