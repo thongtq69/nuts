@@ -15,7 +15,8 @@ import {
     Settings,
     Crown,
     TrendingUp,
-    ExternalLink
+    ExternalLink,
+    Gift
 } from 'lucide-react';
 
 const menuItems = [
@@ -53,6 +54,7 @@ const menuItems = [
     {
         title: 'CÀI ĐẶT',
         items: [
+            { href: '/admin/voucher-rewards', icon: Gift, label: 'Tặng Voucher' },
             { href: '/admin/settings', icon: Settings, label: 'Cài đặt Website' },
             { href: '/admin/affiliate-settings', icon: TrendingUp, label: 'Cấu hình Affiliate' },
         ],
@@ -67,9 +69,9 @@ export default function AdminSidebar() {
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-slate-800/50">
                 <Link href="/admin" className="flex items-center gap-3 group">
-                    <img 
-                        src="/assets/logo.png" 
-                        alt="Go Nuts Logo" 
+                    <img
+                        src="/assets/logo.png"
+                        alt="Go Nuts Logo"
                         className="w-10 h-10 rounded-xl object-contain shadow-lg shadow-amber-500/25 group-hover:shadow-amber-500/40 transition-shadow"
                     />
                     <div className="flex flex-col">
