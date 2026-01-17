@@ -160,7 +160,7 @@ export default function AdminBlogsPage() {
                 </div>
                 <button
                     onClick={() => openModal()}
-                    className="flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-white font-bold rounded-lg shadow-lg hover:!bg-blue-700 transition-all hover:shadow-xl hover:scale-105"
+                    className="flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-black font-bold rounded-lg shadow-lg hover:!bg-blue-700 transition-all hover:shadow-xl hover:scale-105"
                 >
                     <Plus size={22} strokeWidth={2.5} />
                     <span className="text-base">Thêm bài viết</span>
@@ -314,7 +314,7 @@ export default function AdminBlogsPage() {
                             <p className="text-slate-500 mb-6">Thêm bài viết đầu tiên để hiển thị trên blog</p>
                             <button
                                 onClick={() => openModal()}
-                                className="inline-flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-white font-bold rounded-lg hover:!bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                                className="inline-flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-black font-bold rounded-lg hover:!bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                             >
                                 <Plus size={22} strokeWidth={2.5} />
                                 <span className="text-base">Tạo bài viết đầu tiên</span>
@@ -481,7 +481,7 @@ export default function AdminBlogsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-6 py-3 !bg-blue-600 hover:!bg-blue-700 !text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
+                                    className="flex-1 px-6 py-3 !bg-blue-600 hover:!bg-blue-700 !text-black font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
                                 >
                                     {editingBlog ? 'Cập nhật' : 'Thêm bài viết'}
                                 </button>

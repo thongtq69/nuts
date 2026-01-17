@@ -25,6 +25,7 @@ async function getPackages() {
         minOrderValue: pkg.minOrderValue,
         validityDays: pkg.validityDays,
         isUnlimitedVoucher: pkg.isUnlimitedVoucher || false,
+        terms: pkg.terms,
     }));
 }
 

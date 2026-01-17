@@ -17,6 +17,7 @@ interface Package {
     minOrderValue: number;
     validityDays: number;
     isUnlimitedVoucher?: boolean;
+    terms?: string;
 }
 
 interface Props {

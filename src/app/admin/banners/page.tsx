@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Image as ImageIcon, Plus, Edit2, Trash2, Eye, EyeOff, Link as LinkIcon, X, ArrowUpDown, TrendingUp } from 'lucide-react';
+import { Image as ImageIcon, Plus, Edit2, Trash2, Eye, EyeOff, Link as LinkIcon, X, ArrowUpDown, TrendingUp, Crop } from 'lucide-react';
+import ImageCropper from '@/components/admin/ImageCropper';
 
 interface Banner {
     _id: string;
@@ -16,6 +17,9 @@ export default function AdminBannersPage() {
     const [banners, setBanners] = useState<Banner[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showCropper, setShowCropper] = useState(false);
+    const [cropperImageUrl, setCropperImageUrl] = useState('');
+    const [showCropperMessage, setShowCropperMessage] = useState(false);
     const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
     const [formData, setFormData] = useState({
         title: '',
@@ -128,6 +132,51 @@ export default function AdminBannersPage() {
         setEditingBanner(null);
     };
 
+    // Handle file upload
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Kiểm tra tỉ lệ ảnh
+            const img = new Image();
+            img.onload = () => {
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                const targetRatio = 3; // 3:1
+                
+                // Nếu tỉ lệ không đúng (cho phép sai lệch 5%), mở cropper
+                if (Math.abs(aspectRatio - targetRatio) > 0.15) {
+                    setCropperImageUrl(URL.createObjectURL(file));
+                    setShowCropper(true);
+                    setShowCropperMessage(true);
+                    setTimeout(() => setShowCropperMessage(false), 3000);
+                } else {
+                    // Tỉ lệ đúng, sử dụng trực tiếp
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setFormData({ ...formData, imageUrl: reader.result as string });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            img.onerror = () => {
+                alert('Không thể đọc file ảnh. Vui lòng chọn file ảnh hợp lệ.');
+            };
+            img.src = URL.createObjectURL(file);
+        }
+    };
+
+    // Handle cropped image
+    const handleCroppedImage = (croppedImageUrl: string) => {
+        setFormData({ ...formData, imageUrl: croppedImageUrl });
+        setShowCropper(false);
+        setCropperImageUrl('');
+    };
+
+    // Handle cropper cancel
+    const handleCropperCancel = () => {
+        setShowCropper(false);
+        setCropperImageUrl('');
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -149,7 +198,7 @@ export default function AdminBannersPage() {
                 </div>
                 <button
                     onClick={() => openModal()}
-                    className="flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-white font-bold rounded-lg shadow-lg hover:!bg-blue-700 transition-all hover:shadow-xl hover:scale-105"
+                    className="flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-black font-bold rounded-lg shadow-lg hover:!bg-blue-700 transition-all hover:shadow-xl hover:scale-105"
                 >
                     <Plus size={22} strokeWidth={2.5} />
                     <span className="text-base">Thêm Banner</span>
@@ -300,7 +349,7 @@ export default function AdminBannersPage() {
                             <p className="text-slate-500 mb-6">Thêm banner đầu tiên để hiển thị trên trang chủ</p>
                             <button
                                 onClick={() => openModal()}
-                                className="inline-flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-white font-bold rounded-lg hover:!bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                                className="inline-flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-black font-bold rounded-lg hover:!bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                             >
                                 <Plus size={22} strokeWidth={2.5} />
                                 <span className="text-base">Tạo banner đầu tiên</span>
@@ -369,19 +418,23 @@ export default function AdminBannersPage() {
                                                 type="file"
                                                 accept="image/*"
                                                 className="hidden"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        // Convert to base64 or upload to server
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => {
-                                                            setFormData({ ...formData, imageUrl: reader.result as string });
-                                                        };
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                }}
+                                                onChange={handleFileUpload}
                                             />
                                         </label>
+                                        
+                                        {formData.imageUrl && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setCropperImageUrl(formData.imageUrl);
+                                                    setShowCropper(true);
+                                                }}
+                                                className="px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium rounded-lg border-2 border-orange-200 transition-all flex items-center gap-2"
+                                            >
+                                                <Crop size={18} />
+                                                <span>Chỉnh sửa</span>
+                                            </button>
+                                        )}
                                     </div>
 
                                     {/* URL Input */}
@@ -474,7 +527,7 @@ export default function AdminBannersPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-6 py-3 !bg-blue-600 !text-white hover:!bg-blue-700 font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
+                                    className="flex-1 px-6 py-3 !bg-blue-600 !text-black hover:!bg-blue-700 font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
                                 >
                                     {editingBanner ? 'Cập nhật' : 'Thêm Banner'}
                                 </button>
@@ -482,6 +535,24 @@ export default function AdminBannersPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {/* Auto-cropper notification */}
+            {showCropperMessage && (
+                <div className="fixed top-4 right-4 z-40 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in">
+                    <Crop className="w-5 h-5" />
+                    <span className="font-medium">Ảnh sẽ được tự động cắt về tỉ lệ 3:1</span>
+                </div>
+            )}
+
+            {/* Image Cropper Modal */}
+            {showCropper && cropperImageUrl && (
+                <ImageCropper
+                    imageUrl={cropperImageUrl}
+                    onCrop={handleCroppedImage}
+                    onCancel={handleCropperCancel}
+                    aspectRatio={3}
+                />
             )}
         </div>
     );

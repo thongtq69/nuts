@@ -216,7 +216,7 @@ export default function AdminPackagesPage() {
                     }}
                     className={`flex items-center gap-2 px-6 py-3 font-bold rounded-lg shadow-lg transition-all hover:shadow-xl hover:scale-105 ${showForm && !editingId
                         ? 'bg-slate-600 hover:bg-slate-700 text-white'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-black'
                         }`}
                 >
                     {showForm && !editingId ? (
@@ -548,7 +548,7 @@ export default function AdminPackagesPage() {
                                 type="submit"
                                 className={`px-8 py-3 font-bold rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2 ${editingId
                                     ? 'bg-amber-500 hover:bg-amber-600 text-black'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-black'
                                     }`}
                                 disabled={loading}
                             >

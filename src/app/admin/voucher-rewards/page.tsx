@@ -336,7 +336,7 @@ export default function AdminVoucherRewardsPage() {
                             </button>
                             <button
                                 onClick={() => handleEdit(selectedRule)}
-                                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all flex items-center gap-2"
+                                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-semibold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all flex items-center gap-2"
                             >
                                 <Edit3 size={18} />
                                 Sửa quy tắc
@@ -366,7 +366,7 @@ export default function AdminVoucherRewardsPage() {
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl shadow-lg transition-all"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-semibold rounded-xl shadow-lg transition-all"
                 >
                     <Plus size={18} />
                     Thêm quy tắc
@@ -583,7 +583,7 @@ export default function AdminVoucherRewardsPage() {
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
                                 >
                                     {saving ? (
                                         <Loader2 size={18} className="animate-spin" />
