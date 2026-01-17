@@ -21,20 +21,20 @@ export default function ContactPage() {
     const [settings, setSettings] = useState<SiteSettings | null>(null);
 
     useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch('/api/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSettings(data);
+                }
+            } catch (error) {
+                console.error('Error fetching settings:', error);
+            }
+        };
+        
         fetchSettings();
     }, []);
-
-    const fetchSettings = async () => {
-        try {
-            const res = await fetch('/api/settings');
-            if (res.ok) {
-                const data = await res.json();
-                setSettings(data);
-            }
-        } catch (error) {
-            console.error('Error fetching settings:', error);
-        }
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

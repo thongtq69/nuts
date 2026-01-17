@@ -8,6 +8,7 @@ interface Package {
     name: string;
     price: number;
     description?: string;
+    terms?: string; // HTML content for terms
     voucherQuantity: number;
     discountType: 'percent' | 'fixed';
     discountValue: number;
@@ -231,6 +232,43 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                         : formatPrice(selectedPackage.voucherQuantity * selectedPackage.maxDiscount)
                                     }
                                 </div>
+                            </div>
+
+                            {/* Terms & Conditions Section */}
+                            <div className="bg-slate-50 rounded-xl p-4 max-h-48 overflow-y-auto">
+                                <h4 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
+                                    📋 Điều khoản sử dụng gói
+                                </h4>
+
+                                {selectedPackage.terms ? (
+                                    // Render HTML terms from database
+                                    <div
+                                        className="text-xs text-slate-600 prose prose-xs prose-slate max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: selectedPackage.terms }}
+                                    />
+                                ) : (
+                                    // Fallback to auto-generated terms
+                                    <div className="text-xs text-slate-600 space-y-2">
+                                        <p className="font-semibold text-slate-700">Quyền lợi chính:</p>
+                                        <ul className="space-y-1.5 ml-1">
+                                            <li>- Giảm {selectedPackage.discountType === 'percent'
+                                                ? selectedPackage.discountValue + '%'
+                                                : formatPrice(selectedPackage.discountValue)
+                                            }: Tối đa {formatPrice(selectedPackage.maxDiscount)}/đơn, áp dụng với {selectedPackage.isUnlimitedVoucher ? '∞' : selectedPackage.voucherQuantity} mã.</li>
+                                            <li>- Thời hạn sử dụng: {selectedPackage.validityDays} ngày kể từ ngày mua.</li>
+                                            {selectedPackage.minOrderValue > 0 && (
+                                                <li>- Áp dụng cho đơn hàng từ {formatPrice(selectedPackage.minOrderValue)} trở lên.</li>
+                                            )}
+                                        </ul>
+
+                                        <p className="font-semibold text-slate-700 pt-2">Lưu ý:</p>
+                                        <ul className="space-y-1.5 ml-1">
+                                            <li>- Ưu đãi chưa sử dụng không được cộng dồn sang tháng tiếp theo.</li>
+                                            <li>- Khuyến mãi không áp dụng đồng thời với các chương trình khác.</li>
+                                            <li>- Khuyến mãi không được hoàn lại và không thể chuyển nhượng.</li>
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Buy Button */}

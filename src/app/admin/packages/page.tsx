@@ -383,18 +383,34 @@ export default function AdminPackagesPage() {
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                                     📋 Thể lệ gói hội viên
+                                    <span className="text-xs text-slate-400 font-normal">(Có thể copy từ Google Docs)</span>
                                 </label>
-                                <textarea
-                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all resize-none"
-                                    value={formData.terms}
-                                    onChange={e => setFormData({ ...formData, terms: e.target.value })}
-                                    rows={8}
-                                    placeholder="Nhập thể lệ chi tiết của gói hội viên...
-Ví dụ:
-- Ưu đãi 16% Xanh SM Car, Xanh SM Premium: Tối đa 50.000 VND/chuyến, áp dụng với 10 chuyến/tháng.
-- Ưu đãi 15% Xanh SM Bike và Xanh SM Bike Plus: Tối đa 50.000 VND/chuyến, áp dụng với 10 chuyến/tháng.
-- Quyền lợi bổ sung: Ưu tiên hỗ trợ, điểm đánh giá cao, nhận chuyến nhanh hơn..."
+                                <div
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    className="w-full min-h-[200px] max-h-[400px] overflow-y-auto px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white prose prose-sm prose-slate"
+                                    onBlur={(e) => {
+                                        setFormData({ ...formData, terms: e.currentTarget.innerHTML });
+                                    }}
+                                    onPaste={(e) => {
+                                        // Allow rich paste from Google Docs
+                                        const html = e.clipboardData.getData('text/html');
+                                        if (html) {
+                                            e.preventDefault();
+                                            // Clean up the HTML a bit but keep formatting
+                                            const cleanHtml = html
+                                                .replace(/<meta[^>]*>/gi, '')
+                                                .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                                                .replace(/class="[^"]*"/gi, '')
+                                                .replace(/style="[^"]*"/gi, '');
+                                            document.execCommand('insertHTML', false, cleanHtml);
+                                        }
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: formData.terms || '' }}
                                 />
+                                <p className="text-xs text-slate-500">
+                                    💡 Hỗ trợ copy/paste từ Google Docs, Word với đầy đủ định dạng (bold, italic, danh sách...)
+                                </p>
                             </div>
                         </div>
 
@@ -594,8 +610,8 @@ Ví dụ:
                                     </td>
                                 </tr>
                             ) : packages.map((pkg, index) => (
-                                <tr 
-                                    key={pkg._id} 
+                                <tr
+                                    key={pkg._id}
                                     className="hover:bg-slate-50 transition-colors cursor-pointer"
                                     onClick={() => handleEdit(pkg)}
                                 >

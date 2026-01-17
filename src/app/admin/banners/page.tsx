@@ -212,7 +212,7 @@ export default function AdminBannersPage() {
                 {banners.map((banner) => (
                     <div key={banner._id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-all group">
                         {/* Banner Image */}
-                        <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
+                        <div className="relative overflow-hidden" style={{ aspectRatio: '3/1' }}>
                             <img
                                 src={banner.imageUrl}
                                 alt={banner.title}
@@ -343,11 +343,20 @@ export default function AdminBannersPage() {
                                     />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                        <ImageIcon size={16} className="text-blue-600" />
-                                        Hình ảnh Banner
-                                    </label>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                            <ImageIcon size={16} className="text-blue-600" />
+                                            Hình ảnh Banner
+                                        </label>
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                            <div className="flex items-center gap-2 text-blue-700 text-sm">
+                                                <span className="font-medium">💡 Khuyến nghị:</span>
+                                                <span>Tỉ lệ 3:1 (VD: 2000x667px) để hiển thị tốt nhất</span>
+                                            </div>
+                                            <div className="text-blue-600 text-xs mt-1">
+                                                Ảnh sẽ được tự động cắt và điều chỉnh về đúng tỉ lệ
+                                            </div>
+                                        </div>
 
                                     {/* Upload Button */}
                                     <div className="flex gap-3">
@@ -390,14 +399,19 @@ export default function AdminBannersPage() {
                                     {/* Image Preview */}
                                     {formData.imageUrl && (
                                         <div className="mt-3 rounded-lg overflow-hidden border-2 border-slate-200">
-                                            <img
-                                                src={formData.imageUrl}
-                                                alt="Preview"
-                                                className="w-full h-48 object-cover"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f1f5f9" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EInvalid URL%3C/text%3E%3C/svg%3E';
-                                                }}
-                                            />
+                                            <div className="relative w-full" style={{ aspectRatio: '3/1' }}>
+                                                <img
+                                                    src={formData.imageUrl}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f1f5f9" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="14"%3EInvalid URL%3C/text%3E%3C/svg%3E';
+                                                    }}
+                                                />
+                                                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                                    Tỉ lệ 3:1
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>

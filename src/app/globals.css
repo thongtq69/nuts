@@ -528,15 +528,19 @@ input {
 .hero-slider {
   position: relative;
   overflow: hidden;
+  width: 100%;
+  background: #f8f9fa;
 }
 
 .slider-container {
   position: relative;
+  width: 100%;
 }
 
 .slides {
   display: flex;
   transition: transform 0.5s ease;
+  width: 100%;
 }
 
 .slide {
@@ -546,6 +550,11 @@ input {
   top: 0;
   left: 0;
   transition: opacity 0.5s ease;
+  width: 100%;
+  /* Tỉ lệ 3:1 cho banner (2000x667px) */
+  aspect-ratio: 3 / 1;
+  overflow: hidden;
+  background: #f8f9fa;
 }
 
 .slide.active {
@@ -555,8 +564,50 @@ input {
 
 .slide img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  /* Tự động crop ảnh về đúng tỉ lệ 3:1 */
   object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.slide a:hover img {
+  transform: scale(1.02);
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .slide {
+    /* Tỉ lệ 2:1 cho mobile để phù hợp hơn */
+    aspect-ratio: 2 / 1;
+  }
+  
+  .slider-dots {
+    bottom: var(--spacing-md);
+  }
+  
+  .dot {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Responsive cho tablet */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .slide {
+    /* Tỉ lệ 2.5:1 cho tablet */
+    aspect-ratio: 2.5 / 1;
+  }
+}
+
+/* Responsive cho màn hình lớn */
+@media (min-width: 1920px) {
+  .slide {
+    /* Giữ tỉ lệ 3:1 cho màn hình lớn */
+    aspect-ratio: 3 / 1;
+    max-height: 640px;
+  }
 }
 
 .slider-dots {
@@ -566,6 +617,7 @@ input {
   transform: translateX(-50%);
   display: flex;
   gap: var(--spacing-md);
+  z-index: 10;
 }
 
 .dot {
@@ -577,12 +629,14 @@ input {
   opacity: 0.5;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .dot:hover,
 .dot.active {
   opacity: 1;
   background: var(--color-white);
+  transform: scale(1.1);
 }
 
 .dot.active {
