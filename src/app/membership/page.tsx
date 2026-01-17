@@ -13,6 +13,7 @@ interface Package {
     name: string;
     price: number;
     description: string;
+    terms: string;
     voucherQuantity: number;
     discountValue: number;
     discountType: 'percent' | 'fixed';
@@ -25,6 +26,8 @@ interface Package {
 export default function MembershipPage() {
     const [packages, setPackages] = useState<Package[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showTermsModal, setShowTermsModal] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
     const router = useRouter();
     const { user } = useAuth();
 
@@ -51,6 +54,11 @@ export default function MembershipPage() {
         }
         // Redirect to specialized checkout for membership
         router.push(`/checkout/membership?packageId=${pkg._id}`);
+    };
+
+    const handleViewTerms = (pkg: Package) => {
+        setSelectedPackage(pkg);
+        setShowTermsModal(true);
     };
 
     return (
@@ -191,13 +199,22 @@ export default function MembershipPage() {
                                     </div>
 
                                     {/* Nút mua */}
-                                    <div className="p-6 pt-0">
+                                    <div className="p-6 pt-0 space-y-3">
                                         <button
                                             onClick={() => handleBuy(pkg)}
                                             className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all shadow-md hover:shadow-lg"
                                         >
                                             Mua ngay
                                         </button>
+                                        
+                                        {pkg.terms && (
+                                            <button
+                                                onClick={() => handleViewTerms(pkg)}
+                                                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg transition-all text-sm"
+                                            >
+                                                📋 Xem chi tiết thể lệ
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -211,6 +228,68 @@ export default function MembershipPage() {
                     </div>
                 )}
             </div>
+
+            {/* Modal hiển thị thể lệ */}
+            {showTermsModal && selectedPackage && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold">Thể lệ gói hội viên</h2>
+                                    <p className="text-blue-100 mt-1">{selectedPackage.name}</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowTermsModal(false)}
+                                    className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-all"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+                            <div className="prose prose-sm max-w-none">
+                                {selectedPackage.terms ? (
+                                    <div className="whitespace-pre-line text-gray-700 leading-relaxed">
+                                        {selectedPackage.terms}
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-gray-500 py-8">
+                                        <div className="text-4xl mb-4">📋</div>
+                                        <p>Chưa có thông tin thể lệ cho gói này.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="border-t border-gray-200 p-6 bg-gray-50">
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowTermsModal(false)}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 rounded-lg transition-all"
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowTermsModal(false);
+                                        handleBuy(selectedPackage);
+                                    }}
+                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-lg transition-all"
+                                >
+                                    Mua ngay gói này
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Footer />
         </main>

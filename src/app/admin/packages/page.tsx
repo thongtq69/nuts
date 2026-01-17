@@ -34,6 +34,7 @@ interface Package {
     name: string;
     price: number;
     description: string;
+    terms: string;
     voucherQuantity: number;
     discountValue: number;
     discountType: 'percent' | 'fixed';
@@ -58,6 +59,7 @@ const defaultPackage: Partial<Package> = {
     name: '',
     price: 0,
     description: '',
+    terms: '',
     voucherQuantity: 1,
     discountType: 'percent',
     discountValue: 0,
@@ -144,6 +146,7 @@ export default function AdminPackagesPage() {
             name: pkg.name,
             price: pkg.price,
             description: pkg.description,
+            terms: pkg.terms || '',
             validityDays: pkg.validityDays,
         });
 
@@ -374,6 +377,23 @@ export default function AdminPackagesPage() {
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                     rows={3}
                                     placeholder="Mô tả chi tiết về gói hội viên..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                    📋 Thể lệ gói hội viên
+                                </label>
+                                <textarea
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all resize-none"
+                                    value={formData.terms}
+                                    onChange={e => setFormData({ ...formData, terms: e.target.value })}
+                                    rows={8}
+                                    placeholder="Nhập thể lệ chi tiết của gói hội viên...
+Ví dụ:
+- Ưu đãi 16% Xanh SM Car, Xanh SM Premium: Tối đa 50.000 VND/chuyến, áp dụng với 10 chuyến/tháng.
+- Ưu đãi 15% Xanh SM Bike và Xanh SM Bike Plus: Tối đa 50.000 VND/chuyến, áp dụng với 10 chuyến/tháng.
+- Quyền lợi bổ sung: Ưu tiên hỗ trợ, điểm đánh giá cao, nhận chuyến nhanh hơn..."
                                 />
                             </div>
                         </div>
