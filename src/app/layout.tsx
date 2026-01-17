@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Titillium_Web } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/components/Providers';
+import ProductDebugInfo from '@/components/debug/ProductDebugInfo';
 
 const titillium = Titillium_Web({
   weight: ["400", "600", "700"],
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className={titillium.variable}>
         <Providers>
           {children}
+          {process.env.NODE_ENV === 'development' && <ProductDebugInfo />}
         </Providers>
       </body>
     </html>

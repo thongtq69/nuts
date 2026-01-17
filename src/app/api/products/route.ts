@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
     try {
+        console.log('🔍 Products API: Starting request...');
+        
         await dbConnect();
+        console.log('✅ Products API: Database connected');
 
         // Simple query handling could be added here (e.g., ?category=...)
         const { searchParams } = new URL(request.url);
@@ -19,10 +24,26 @@ export async function GET(request: Request) {
             filter.name = { $regex: query, $options: 'i' };
         }
 
-        const products = await Product.find(filter).sort({ createdAt: -1 });
-        return NextResponse.json(products);
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+        console.log('🔍 Products API: Query filter:', filter);
+
+        const products = await Product.find(filter).sort({ createdAt: -1 }).lean();
+        console.log(`✅ Products API: Found ${products.length} products`);
+
+        // Convert ObjectId to string for JSON serialization
+        const serializedProducts = products.map((product: any) => ({
+            ...product,
+            _id: product._id.toString(),
+            id: product._id.toString()
+        }));
+
+        return NextResponse.json(serializedProducts);
+    } catch (error: any) {
+        console.error('❌ Products API Error:', error);
+        return NextResponse.json({ 
+            error: 'Failed to fetch products',
+            message: error.message,
+            timestamp: new Date().toISOString()
+        }, { status: 500 });
     }
 }
 
