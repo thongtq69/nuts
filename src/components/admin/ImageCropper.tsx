@@ -10,16 +10,16 @@ interface ImageCropperProps {
     aspectRatio?: number; // 3:1 = 3
 }
 
-export default function ImageCropper({ 
-    imageUrl, 
-    onCrop, 
-    onCancel, 
-    aspectRatio = 3 
+export default function ImageCropper({
+    imageUrl,
+    onCrop,
+    onCancel,
+    aspectRatio = 3
 }: ImageCropperProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imageRef = useRef<HTMLImageElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    
+
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [scale, setScale] = useState(1);
@@ -27,7 +27,10 @@ export default function ImageCropper({
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
-    
+
+    // Device pixel ratio for high-DPI displays
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+
     // Responsive crop area size
     const getCropAreaSize = () => {
         if (typeof window !== 'undefined') {
@@ -40,7 +43,7 @@ export default function ImageCropper({
         }
         return { width: 600, height: 200 }; // Desktop
     };
-    
+
     const [cropArea] = useState(getCropAreaSize());
 
     // Load image và tính toán kích thước
@@ -49,17 +52,17 @@ export default function ImageCropper({
         img.crossOrigin = 'anonymous';
         img.onload = () => {
             setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-            
+
             // Tính toán scale và position ban đầu để fit ảnh vào crop area
             const scaleX = cropArea.width / img.naturalWidth;
             const scaleY = cropArea.height / img.naturalHeight;
             const initialScale = Math.max(scaleX, scaleY);
-            
+
             setScale(initialScale);
             setPosition({ x: 0, y: 0 });
             setImageLoaded(true);
             setImageError(false);
-            
+
             if (imageRef.current) {
                 imageRef.current.src = img.src;
             }
@@ -71,7 +74,7 @@ export default function ImageCropper({
         img.src = imageUrl;
     }, [imageUrl, cropArea]);
 
-    // Vẽ ảnh lên canvas
+    // Vẽ ảnh lên canvas với high DPI support
     const drawImage = useCallback(() => {
         const canvas = canvasRef.current;
         const img = imageRef.current;
@@ -80,19 +83,27 @@ export default function ImageCropper({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Reset transform và scale cho high DPI
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Fill white background first (prevents black borders)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, cropArea.width, cropArea.height);
+
+        // Enable high quality image smoothing for preview
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
         // Tính toán vị trí và kích thước ảnh
         const scaledWidth = imageDimensions.width * scale;
         const scaledHeight = imageDimensions.height * scale;
-        
+
         const x = (cropArea.width - scaledWidth) / 2 + position.x;
         const y = (cropArea.height - scaledHeight) / 2 + position.y;
 
-        // Vẽ ảnh
+        // Vẽ ảnh với chất lượng cao
         ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-    }, [imageLoaded, scale, position, imageDimensions, cropArea]);
+    }, [imageLoaded, scale, position, imageDimensions, cropArea, dpr]);
 
     // Redraw khi có thay đổi
     useEffect(() => {
@@ -109,20 +120,20 @@ export default function ImageCropper({
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!isDragging) return;
         e.preventDefault();
-        
+
         const newX = e.clientX - dragStart.x;
         const newY = e.clientY - dragStart.y;
-        
+
         // Giới hạn di chuyển để ảnh không ra khỏi crop area
         const scaledWidth = imageDimensions.width * scale;
         const scaledHeight = imageDimensions.height * scale;
-        
+
         const maxX = Math.max(0, (scaledWidth - cropArea.width) / 2);
         const maxY = Math.max(0, (scaledHeight - cropArea.height) / 2);
-        
+
         const clampedX = Math.max(-maxX, Math.min(maxX, newX));
         const clampedY = Math.max(-maxY, Math.min(maxY, newY));
-        
+
         setPosition({ x: clampedX, y: clampedY });
     };
 
@@ -136,16 +147,16 @@ export default function ImageCropper({
             const handleGlobalMouseMove = (e: MouseEvent) => {
                 const newX = e.clientX - dragStart.x;
                 const newY = e.clientY - dragStart.y;
-                
+
                 const scaledWidth = imageDimensions.width * scale;
                 const scaledHeight = imageDimensions.height * scale;
-                
+
                 const maxX = Math.max(0, (scaledWidth - cropArea.width) / 2);
                 const maxY = Math.max(0, (scaledHeight - cropArea.height) / 2);
-                
+
                 const clampedX = Math.max(-maxX, Math.min(maxX, newX));
                 const clampedY = Math.max(-maxY, Math.min(maxY, newY));
-                
+
                 setPosition({ x: clampedX, y: clampedY });
             };
 
@@ -174,20 +185,20 @@ export default function ImageCropper({
     const handleTouchMove = (e: React.TouchEvent) => {
         if (!isDragging) return;
         e.preventDefault();
-        
+
         const touch = e.touches[0];
         const newX = touch.clientX - dragStart.x;
         const newY = touch.clientY - dragStart.y;
-        
+
         const scaledWidth = imageDimensions.width * scale;
         const scaledHeight = imageDimensions.height * scale;
-        
+
         const maxX = Math.max(0, (scaledWidth - cropArea.width) / 2);
         const maxY = Math.max(0, (scaledHeight - cropArea.height) / 2);
-        
+
         const clampedX = Math.max(-maxX, Math.min(maxX, newX));
         const clampedY = Math.max(-maxY, Math.min(maxY, newY));
-        
+
         setPosition({ x: clampedX, y: clampedY });
     };
 
@@ -206,44 +217,67 @@ export default function ImageCropper({
         const scaleX = cropArea.width / imageDimensions.width;
         const scaleY = cropArea.height / imageDimensions.height;
         const initialScale = Math.max(scaleX, scaleY);
-        
+
         setScale(initialScale);
         setPosition({ x: 0, y: 0 });
     }, [cropArea, imageDimensions]);
 
-    // Crop và export ảnh
+    // Crop và export ảnh - VẼ TRỰC TIẾP TỪ ẢNH GỐC để giữ chất lượng cao
     const handleCropImage = useCallback(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        const img = imageRef.current;
+        if (!img || !imageLoaded) return;
 
-        // Tạo canvas mới với kích thước cuối cùng (2000x667 cho tỉ lệ 3:1)
+        // Tạo canvas với kích thước output cao (3000px width)
         const finalCanvas = document.createElement('canvas');
-        const finalWidth = 2000;
+        const finalWidth = 3000;
         const finalHeight = Math.round(finalWidth / aspectRatio);
-        
+
         finalCanvas.width = finalWidth;
         finalCanvas.height = finalHeight;
-        
+
         const finalCtx = finalCanvas.getContext('2d');
         if (!finalCtx) return;
 
-        // Copy nội dung từ canvas preview sang canvas cuối cùng
-        finalCtx.drawImage(canvas, 0, 0, cropArea.width, cropArea.height, 0, 0, finalWidth, finalHeight);
-        
-        // Convert sang blob và gọi callback
+        // Fill white background first (prevents black borders)
+        finalCtx.fillStyle = '#FFFFFF';
+        finalCtx.fillRect(0, 0, finalWidth, finalHeight);
+
+        // Tính toán tỉ lệ scale từ preview canvas sang output canvas
+        const outputScale = finalWidth / cropArea.width;
+
+        // Tính toán kích thước ảnh trên canvas output với tỉ lệ cao
+        const scaledWidthOnOutput = imageDimensions.width * scale * outputScale;
+        const scaledHeightOnOutput = imageDimensions.height * scale * outputScale;
+
+        // Tính vị trí ảnh trên canvas output
+        const xOnOutput = (finalWidth - scaledWidthOnOutput) / 2 + (position.x * outputScale);
+        const yOnOutput = (finalHeight - scaledHeightOnOutput) / 2 + (position.y * outputScale);
+
+        // Bật image smoothing chất lượng cao
+        finalCtx.imageSmoothingEnabled = true;
+        finalCtx.imageSmoothingQuality = 'high';
+
+        // Vẽ ảnh trực tiếp từ ảnh gốc lên canvas output với đầy đủ độ phân giải
+        finalCtx.drawImage(
+            img,
+            0, 0, img.naturalWidth, img.naturalHeight, // Source: toàn bộ ảnh gốc
+            xOnOutput, yOnOutput, scaledWidthOnOutput, scaledHeightOnOutput // Dest: vị trí và kích thước trên output
+        );
+
+        // Convert sang blob với chất lượng tối đa (PNG để giữ chất lượng cao nhất)
         finalCanvas.toBlob((blob) => {
             if (blob) {
                 const croppedUrl = URL.createObjectURL(blob);
                 onCrop(croppedUrl);
             }
-        }, 'image/jpeg', 0.9);
-    }, [aspectRatio, cropArea, onCrop]);
+        }, 'image/png');
+    }, [aspectRatio, cropArea, onCrop, scale, position, imageDimensions, imageLoaded]);
 
     // Keyboard support
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!imageLoaded || imageError) return;
-            
+
             switch (e.key) {
                 case 'ArrowLeft':
                     e.preventDefault();
@@ -302,7 +336,7 @@ export default function ImageCropper({
                             <Crop className="w-6 h-6" />
                             <div>
                                 <h2 className="text-xl font-bold">Chỉnh sửa Banner</h2>
-                                <p className="text-blue-100 text-sm">Khuyến nghị: Tỉ lệ {aspectRatio}:1 (VD: 2000x{Math.round(2000/aspectRatio)}px) để hiển thị tốt nhất</p>
+                                <p className="text-blue-100 text-sm">Khuyến nghị: Tỉ lệ {aspectRatio}:1 (VD: 2000x{Math.round(2000 / aspectRatio)}px) để hiển thị tốt nhất</p>
                             </div>
                         </div>
                         <button
@@ -322,7 +356,7 @@ export default function ImageCropper({
 
                     {/* Crop Area */}
                     <div className="flex justify-center mb-6">
-                        <div 
+                        <div
                             ref={containerRef}
                             className="relative border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-100 cropper-container flex-shrink-0"
                             style={{ width: cropArea.width, height: cropArea.height }}
@@ -335,7 +369,7 @@ export default function ImageCropper({
                                     </div>
                                 </div>
                             )}
-                            
+
                             {imageError && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-red-50">
                                     <div className="flex flex-col items-center gap-3">
@@ -347,17 +381,22 @@ export default function ImageCropper({
 
                             <canvas
                                 ref={canvasRef}
-                                width={cropArea.width}
-                                height={cropArea.height}
-                                className={`w-full h-full ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${!imageLoaded ? 'opacity-0' : 'opacity-100'}`}
+                                width={cropArea.width * dpr}
+                                height={cropArea.height * dpr}
+                                className={`${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${!imageLoaded ? 'opacity-0' : 'opacity-100'}`}
+                                style={{
+                                    width: cropArea.width,
+                                    height: cropArea.height,
+                                    userSelect: 'none',
+                                    touchAction: 'none'
+                                }}
                                 onMouseDown={handleMouseDown}
                                 onMouseLeave={handleMouseUp}
                                 onTouchStart={handleTouchStart}
                                 onTouchMove={handleTouchMove}
                                 onTouchEnd={handleTouchEnd}
-                                style={{ userSelect: 'none', touchAction: 'none' }}
                             />
-                            
+
                             {/* Grid overlay */}
                             <div className="absolute inset-0 pointer-events-none cropper-grid">
                                 <div className="w-full h-full grid grid-cols-3 grid-rows-3">
@@ -405,7 +444,7 @@ export default function ImageCropper({
                                 <ZoomOut className="w-4 h-4" />
                                 Thu nhỏ
                             </button>
-                            
+
                             <button
                                 onClick={handleReset}
                                 disabled={!imageLoaded || imageError}
@@ -414,7 +453,7 @@ export default function ImageCropper({
                                 <RotateCcw className="w-4 h-4" />
                                 Đặt lại
                             </button>
-                            
+
                             <button
                                 onClick={() => handleZoom(0.2)}
                                 disabled={!imageLoaded || imageError}
@@ -437,7 +476,7 @@ export default function ImageCropper({
                                         <li>• <strong>Phím mũi tên</strong> để di chuyển chính xác</li>
                                         <li>• <strong>+/- hoặc =/-</strong> để zoom in/out</li>
                                         <li>• <strong>R</strong> để đặt lại, <strong>Enter</strong> để áp dụng, <strong>Esc</strong> để hủy</li>
-                                        <li>• Ảnh sẽ được xuất với chất lượng cao (2000x{Math.round(2000/aspectRatio)}px)</li>
+                                        <li>• Ảnh sẽ được xuất với chất lượng cao (3000x{Math.round(3000 / aspectRatio)}px)</li>
                                     </ul>
                                 </div>
                             </div>

@@ -141,7 +141,7 @@ export default function AdminBannersPage() {
             img.onload = () => {
                 const aspectRatio = img.naturalWidth / img.naturalHeight;
                 const targetRatio = 3; // 3:1
-                
+
                 // Nếu tỉ lệ không đúng (cho phép sai lệch 5%), mở cropper
                 if (Math.abs(aspectRatio - targetRatio) > 0.15) {
                     setCropperImageUrl(URL.createObjectURL(file));
@@ -392,20 +392,20 @@ export default function AdminBannersPage() {
                                     />
                                 </div>
 
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                            <ImageIcon size={16} className="text-blue-600" />
-                                            Hình ảnh Banner
-                                        </label>
-                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                                            <div className="flex items-center gap-2 text-blue-700 text-sm">
-                                                <span className="font-medium">💡 Khuyến nghị:</span>
-                                                <span>Tỉ lệ 3:1 (VD: 2000x667px) để hiển thị tốt nhất</span>
-                                            </div>
-                                            <div className="text-blue-600 text-xs mt-1">
-                                                Ảnh sẽ được tự động cắt và điều chỉnh về đúng tỉ lệ
-                                            </div>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                        <ImageIcon size={16} className="text-blue-600" />
+                                        Hình ảnh Banner
+                                    </label>
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                        <div className="flex items-center gap-2 text-blue-700 text-sm">
+                                            <span className="font-medium">💡 Khuyến nghị:</span>
+                                            <span>Tỉ lệ 3:1 (VD: 2000x667px) để hiển thị tốt nhất</span>
                                         </div>
+                                        <div className="text-blue-600 text-xs mt-1">
+                                            Ảnh sẽ được tự động cắt và điều chỉnh về đúng tỉ lệ
+                                        </div>
+                                    </div>
 
                                     {/* Upload Button */}
                                     <div className="flex gap-3">
@@ -416,12 +416,12 @@ export default function AdminBannersPage() {
                                             </div>
                                             <input
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff"
                                                 className="hidden"
                                                 onChange={handleFileUpload}
                                             />
                                         </label>
-                                        
+
                                         {formData.imageUrl && (
                                             <button
                                                 type="button"
