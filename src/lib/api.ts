@@ -12,8 +12,18 @@ const getApiUrl = () => {
         return `https://${process.env.VERCEL_URL}/api`;
     }
     
+    if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+        return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/api`;
+    }
+    
     if (process.env.NEXT_PUBLIC_API_URL) {
         return process.env.NEXT_PUBLIC_API_URL;
+    }
+    
+    // For production, try to construct URL from headers or use relative
+    if (process.env.NODE_ENV === 'production') {
+        // Use relative URL for same-origin requests
+        return '/api';
     }
     
     return 'http://localhost:3000/api';

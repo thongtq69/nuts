@@ -22,6 +22,19 @@ async function getProductsByTag(tag: string, limit = 4) {
     const products = await Product.find({ tags: tag }).limit(limit).lean();
     console.log(`✅ Found ${products.length} products for tag: ${tag}`);
     
+    // If no products found with specific tag, get any products as fallback
+    if (products.length === 0) {
+      console.log(`⚠️ No products found for tag: ${tag}, getting fallback products`);
+      const fallbackProducts = await Product.find({}).limit(limit).lean();
+      console.log(`✅ Found ${fallbackProducts.length} fallback products`);
+      
+      return fallbackProducts.map((p: any) => ({
+        ...p,
+        id: p._id.toString(),
+        _id: p._id.toString()
+      })) as unknown as IProduct[];
+    }
+    
     return products.map((p: any) => ({
       ...p,
       id: p._id.toString(),
@@ -29,7 +42,22 @@ async function getProductsByTag(tag: string, limit = 4) {
     })) as unknown as IProduct[];
   } catch (error: any) {
     console.error(`❌ Error fetching products for tag ${tag}:`, error.message);
-    return [];
+    
+    // Final fallback: try to get any products
+    try {
+      await dbConnect();
+      const anyProducts = await Product.find({}).limit(limit).lean();
+      console.log(`🔄 Fallback: Found ${anyProducts.length} any products`);
+      
+      return anyProducts.map((p: any) => ({
+        ...p,
+        id: p._id.toString(),
+        _id: p._id.toString()
+      })) as unknown as IProduct[];
+    } catch (fallbackError) {
+      console.error(`❌ Fallback also failed:`, fallbackError);
+      return [];
+    }
   }
 }
 
