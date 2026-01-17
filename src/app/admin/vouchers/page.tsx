@@ -6,7 +6,7 @@ import { Ticket, Trash2, Loader2 } from 'lucide-react';
 interface UserVoucher {
     _id: string;
     code: string;
-    userId: { name: string; email: string } | string;
+    userId: { name: string; email: string } | string | null;
     discountType: 'percent' | 'fixed';
     discountValue: number;
     isUsed: boolean;
@@ -119,7 +119,7 @@ export default function AdminVouchersPage() {
                                             {v.code}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-slate-600 dark:text-slate-400">
-                                            {typeof v.userId === 'object' ? `${v.userId.name} (${v.userId.email})` : v.userId}
+                                            {typeof v.userId === 'object' && v.userId ? `${v.userId.name} (${v.userId.email})` : v.userId || 'Không xác định'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap font-semibold text-amber-600">
                                             {v.discountValue.toLocaleString()}{v.discountType === 'percent' ? '%' : 'đ'}
