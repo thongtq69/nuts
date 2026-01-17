@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, CheckCircle, XCircle, MoreHorizontal, Trash2, Loader2 } from 'lucide-react';
+import { Users, CheckCircle, XCircle, MoreHorizontal, Trash2, Loader2, Eye } from 'lucide-react';
 
 interface User {
     _id: string;
@@ -227,6 +227,14 @@ export default function AdminUsersPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <Link
+                                                    href={`/admin/users/${user._id}`}
+                                                    className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                                    title="Xem chi tiết"
+                                                >
+                                                    <Eye size={16} />
+                                                </Link>
+                                                
                                                 {user.saleApplicationStatus === 'pending' && (
                                                     <>
                                                         <button
