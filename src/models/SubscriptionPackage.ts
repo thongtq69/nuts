@@ -18,6 +18,7 @@ export interface ISubscriptionPackage {
     maxDiscount: number;
     minOrderValue: number;
     voucherQuantity: number;
+    isUnlimitedVoucher?: boolean; // If true, user gets unlimited voucher uses
     validityDays: number;
     isActive: boolean;
     vouchers?: IVoucherConfig[];
@@ -43,6 +44,7 @@ const SubscriptionPackageSchema: Schema<ISubscriptionPackage> = new Schema(
         maxDiscount: { type: Number, default: 0 },
         minOrderValue: { type: Number, default: 0 },
         voucherQuantity: { type: Number, required: true, default: 1 },
+        isUnlimitedVoucher: { type: Boolean, default: false },
         validityDays: { type: Number, required: true, default: 30 },
         isActive: { type: Boolean, default: true },
         vouchers: { type: [VoucherConfigSchema], default: [] },

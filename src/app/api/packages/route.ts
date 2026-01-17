@@ -32,17 +32,17 @@ export async function PUT(req: Request) {
         await dbConnect();
         const body = await req.json();
         const { id, ...updateData } = body;
-        
+
         if (!id) {
             return NextResponse.json({ message: 'Package ID is required' }, { status: 400 });
         }
-        
+
         const pkg = await SubscriptionPackage.findByIdAndUpdate(id, updateData, { new: true });
-        
+
         if (!pkg) {
             return NextResponse.json({ message: 'Package not found' }, { status: 404 });
         }
-        
+
         return NextResponse.json(pkg);
     } catch (error) {
         console.error('Error updating package:', error);
@@ -53,19 +53,19 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
     try {
         await dbConnect();
-        const { searchParams } = new URL(req.url);
-        const id = searchParams.get('id');
-        
+        const body = await req.json();
+        const id = body.id;
+
         if (!id) {
             return NextResponse.json({ message: 'Package ID is required' }, { status: 400 });
         }
-        
+
         const pkg = await SubscriptionPackage.findByIdAndDelete(id);
-        
+
         if (!pkg) {
             return NextResponse.json({ message: 'Package not found' }, { status: 404 });
         }
-        
+
         return NextResponse.json({ message: 'Package deleted successfully' });
     } catch (error) {
         console.error('Error deleting package:', error);
