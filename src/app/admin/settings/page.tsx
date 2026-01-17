@@ -33,25 +33,29 @@ interface SiteSettings {
     freeShippingThreshold: number;
     logoUrl: string;
     siteName: string;
+    businessLicense: string;
+    workingHours: string;
 }
 
 export default function AdminSettingsPage() {
     const [settings, setSettings] = useState<SiteSettings>({
-        hotline: '',
-        zaloLink: '',
-        email: '',
-        address: '',
-        facebookUrl: '',
-        instagramUrl: '',
-        youtubeUrl: '',
-        tiktokUrl: '',
-        promoText: '',
+        hotline: '090 118 5753',
+        zaloLink: 'https://zalo.me/...',
+        email: 'contact.gonuts@gmail.com',
+        address: 'Tầng 4, VT1-B09, Khu đô thị mới An Hưng, Phường Dương Nội, Thành phố Hà Nội, Việt Nam',
+        facebookUrl: 'https://www.facebook.com/profile.php?id=61572944004088',
+        instagramUrl: 'https://instagram.com/...',
+        youtubeUrl: 'https://youtube.com/...',
+        tiktokUrl: 'https://tiktok.com/...',
+        promoText: 'Giảm giá 8% khi mua hàng từ 899k trở lên với mã "SAVER8"',
         promoEnabled: true,
-        agentRegistrationUrl: '',
-        ctvRegistrationUrl: '',
-        freeShippingThreshold: 500000,
-        logoUrl: '',
-        siteName: '',
+        agentRegistrationUrl: '/agent/register',
+        ctvRegistrationUrl: '/agent/register',
+        freeShippingThreshold: 2000000,
+        logoUrl: '/assets/logo.png',
+        siteName: 'Go Nuts Vietnam',
+        businessLicense: '0123xxxxxx',
+        workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -170,6 +174,26 @@ export default function AdminSettingsPage() {
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                                 rows={2}
                                 placeholder="Địa chỉ cửa hàng..."
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Số giấy phép kinh doanh</label>
+                            <input
+                                type="text"
+                                value={settings.businessLicense}
+                                onChange={e => setSettings({ ...settings, businessLicense: e.target.value })}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                placeholder="0123xxxxxx"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Giờ làm việc</label>
+                            <input
+                                type="text"
+                                value={settings.workingHours}
+                                onChange={e => setSettings({ ...settings, workingHours: e.target.value })}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                placeholder="Thứ 2 - Thứ 7: 8:00 - 17:30"
                             />
                         </div>
                     </div>
