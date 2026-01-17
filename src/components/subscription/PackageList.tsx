@@ -235,7 +235,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                             {/* Buy Button */}
                             <button
                                 onClick={handleBuy}
-                                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
                             >
                                 <Star size={20} />
                                 Mua ngay - {formatPrice(selectedPackage.price)}

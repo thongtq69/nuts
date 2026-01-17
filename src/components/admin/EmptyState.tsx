@@ -23,7 +23,7 @@ export default function EmptyState({ icon: Icon, title, description, action }: E
             {action && (
                 <a
                     href={action.href}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-black rounded-lg hover:bg-amber-700 transition-colors font-medium"
                 >
                     {action.label}
                 </a>

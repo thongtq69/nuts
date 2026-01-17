@@ -511,7 +511,7 @@ export default function AdminPackagesPage() {
                             <button
                                 type="submit"
                                 className={`px-8 py-3 font-bold rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2 ${editingId
-                                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                                    ? 'bg-amber-500 hover:bg-amber-600 text-black'
                                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                                     }`}
                                 disabled={loading}

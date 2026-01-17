@@ -21,7 +21,7 @@ export default function MembershipSuccessPage() {
                     <Link href="/" className="bg-gray-100 text-gray-800 px-6 py-3 rounded font-medium hover:bg-gray-200">
                         Về trang chủ
                     </Link>
-                    <Link href="/account" className="bg-amber-600 text-white px-6 py-3 rounded font-medium hover:bg-amber-700">
+                    <Link href="/account" className="bg-amber-600 text-black px-6 py-3 rounded font-medium hover:bg-amber-700">
                         Xem đơn hàng
                     </Link>
                 </div>

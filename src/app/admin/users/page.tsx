@@ -165,7 +165,7 @@ export default function AdminUsersPage() {
                     </button>
                     {pendingCount > 0 && (
                         <button
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'pending' ? 'bg-amber-500 text-white shadow-md' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'pending' ? 'bg-amber-500 text-black shadow-md' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
                             onClick={() => setFilter('pending')}
                         >
                             Chờ duyệt ({pendingCount})

@@ -64,10 +64,10 @@ export default async function SubscriptionsPage() {
                                         <h3>Voucher chào mừng thành viên mới</h3>
                                         <p>Đăng ký tài khoản ngay để nhận voucher <strong>50.000đ</strong> cho đơn hàng đầu tiên từ 300.000đ</p>
                                     </div>
-                                    <Link href="/register" className="btn-register">
-                                        Đăng ký ngay
-                                    </Link>
                                 </div>
+                                <Link href="/register" className="btn-register">
+                                    Đăng ký ngay
+                                </Link>
                             </div>
                         </div>
 

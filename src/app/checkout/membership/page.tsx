@@ -167,7 +167,7 @@ function MembershipCheckoutContent() {
                         <button
                             type="submit"
                             disabled={isProcessing}
-                            className="w-full bg-amber-600 text-white font-bold py-3 rounded hover:bg-amber-700 transition disabled:bg-gray-400"
+                            className="w-full bg-amber-600 text-black font-bold py-3 rounded hover:bg-amber-700 transition disabled:bg-gray-400"
                         >
                             {isProcessing ? 'Đang xử lý...' : `Xác nhận đăng ký - ${new Intl.NumberFormat('vi-VN').format(pkg.price)}đ`}
                         </button>

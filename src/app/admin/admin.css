@@ -639,6 +639,18 @@ a.bg-green-300 {
   color: #000 !important;
 }
 
+/* Admin save button specific */
+.admin-save-btn {
+  background: linear-gradient(to right, #f59e0b, #d97706) !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+}
+
+.admin-save-btn:hover {
+  background: linear-gradient(to right, #d97706, #b45309) !important;
+  color: #000 !important;
+}
+
 /* ========================================
    Utility Classes
    ======================================== */

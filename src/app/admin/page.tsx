@@ -172,7 +172,7 @@ export default async function AdminDashboard() {
                 </div>
                 <div className="flex items-center gap-3 mt-6 relative z-10">
                     <Link href="/admin/orders">
-                        <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25">
+                        <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black shadow-lg shadow-amber-500/25">
                             Xem đơn hàng mới
                             <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>

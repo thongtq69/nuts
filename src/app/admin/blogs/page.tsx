@@ -243,7 +243,7 @@ export default function AdminBlogsPage() {
                                         Xuất bản
                                     </span>
                                 ) : (
-                                    <span className="px-3 py-1 bg-amber-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                    <span className="px-3 py-1 bg-amber-500 text-black text-xs font-semibold rounded-full flex items-center gap-1">
                                         <EyeOff size={12} />
                                         Nháp
                                     </span>
