@@ -26,7 +26,14 @@ export default function ProductList({ products }: ProductListProps) {
 
                 <div className="product-content">
                     <div className="product-banner">
-                        <img src="/assets/images/banner-shop.jpg" alt="Shop Banner" className="banner-img" />
+                        <img 
+                            src="/assets/images/slide1.jpg" 
+                            alt="Shop Banner" 
+                            className="banner-img"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                            }}
+                        />
                     </div>
 
                     <div className="sort-bar">

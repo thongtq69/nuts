@@ -6,6 +6,7 @@ import PromotionBanner from '@/components/home/PromotionBanner';
 import ProductSection from '@/components/home/ProductSection';
 import LargePromoBanner from '@/components/home/LargePromoBanner';
 import FeaturesSection from '@/components/home/FeaturesSection';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
 
@@ -35,12 +36,20 @@ export default async function Home() {
     <main>
       <Header />
       <Navbar />
-      <HeroSlider />
+      <ErrorBoundary>
+        <HeroSlider />
+      </ErrorBoundary>
       <PromotionBanner />
-      <ProductSection title="Sản phẩm bán chạy" products={bestSellers as any} />
+      <ErrorBoundary>
+        <ProductSection title="Sản phẩm bán chạy" products={bestSellers as any} />
+      </ErrorBoundary>
       <LargePromoBanner />
-      <ProductSection title="Sản phẩm mới" products={newProducts as any} />
-      <ProductSection title="Khuyến mãi" products={promotionProducts as any} />
+      <ErrorBoundary>
+        <ProductSection title="Sản phẩm mới" products={newProducts as any} />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <ProductSection title="Khuyến mãi" products={promotionProducts as any} />
+      </ErrorBoundary>
       <FeaturesSection />
       <Footer />
     </main>
