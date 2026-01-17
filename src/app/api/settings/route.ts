@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
+import dbConnect from '@/lib/db';
+import mongoose from 'mongoose';
 
 interface SiteSettings {
-    _id?: ObjectId;
+    _id?: mongoose.Types.ObjectId;
     hotline: string;
     zaloLink: string;
     email: string;
@@ -24,16 +24,40 @@ interface SiteSettings {
     updatedAt: Date;
 }
 
+// Mongoose Schema
+const settingsSchema = new mongoose.Schema({
+    hotline: { type: String, default: '' },
+    zaloLink: { type: String, default: '' },
+    email: { type: String, default: '' },
+    address: { type: String, default: '' },
+    facebookUrl: { type: String, default: '' },
+    instagramUrl: { type: String, default: '' },
+    youtubeUrl: { type: String, default: '' },
+    tiktokUrl: { type: String, default: '' },
+    promoText: { type: String, default: '' },
+    promoEnabled: { type: Boolean, default: true },
+    agentRegistrationUrl: { type: String, default: '' },
+    ctvRegistrationUrl: { type: String, default: '' },
+    freeShippingThreshold: { type: Number, default: 0 },
+    logoUrl: { type: String, default: '' },
+    siteName: { type: String, default: '' },
+    businessLicense: { type: String, default: '' },
+    workingHours: { type: String, default: '' },
+    updatedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+const Settings = mongoose.models.Settings || mongoose.model('Settings', settingsSchema);
+
 // GET - Lấy cài đặt website
 export async function GET() {
     try {
-        const { db } = await connectDB();
+        await dbConnect();
         
-        let settings = await db.collection('settings').findOne({});
+        let settings = await Settings.findOne({});
         
         // Nếu chưa có settings, tạo mặc định
         if (!settings) {
-            const defaultSettings: Omit<SiteSettings, '_id'> = {
+            const defaultSettings = {
                 hotline: '090 118 5753',
                 zaloLink: 'https://zalo.me/...',
                 email: 'contact.gonuts@gmail.com',
@@ -51,11 +75,9 @@ export async function GET() {
                 siteName: 'Go Nuts Vietnam',
                 businessLicense: '0123xxxxxx',
                 workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
-                updatedAt: new Date()
             };
             
-            const result = await db.collection('settings').insertOne(defaultSettings);
-            settings = { ...defaultSettings, _id: result.insertedId };
+            settings = await Settings.create(defaultSettings);
         }
         
         return NextResponse.json(settings);
@@ -69,7 +91,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
     try {
         const body = await request.json();
-        const { db } = await connectDB();
+        await dbConnect();
         
         const updateData = {
             ...body,
@@ -77,16 +99,16 @@ export async function PUT(request: NextRequest) {
         };
         
         // Upsert - cập nhật nếu có, tạo mới nếu chưa có
-        const result = await db.collection('settings').updateOne(
+        const settings = await Settings.findOneAndUpdate(
             {},
             { $set: updateData },
-            { upsert: true }
+            { upsert: true, new: true }
         );
         
         return NextResponse.json({ 
             success: true, 
             message: 'Cập nhật cài đặt thành công',
-            result 
+            settings 
         });
     } catch (error) {
         console.error('Error updating settings:', error);

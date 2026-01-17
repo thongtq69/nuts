@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import User from '@/models/User';
 import UserVoucher from '@/models/UserVoucher';
+import VoucherRewardRule from '@/models/VoucherRewardRule';
 import AffiliateSettings from '@/models/AffiliateSettings';
 import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
@@ -150,7 +151,7 @@ export async function POST(req: Request) {
             try {
                 const user = userId ? await User.findById(userId) : null;
                 const email = shippingInfo.email || user?.email;
-                
+
                 if (email) {
                     await sendOrderConfirmationEmail(email, {
                         orderId: order._id.toString().slice(-6).toUpperCase(),
@@ -170,6 +171,52 @@ export async function POST(req: Request) {
             } catch (emailError) {
                 console.error('Failed to send order confirmation email:', emailError);
                 // Don't fail the order if email fails
+            }
+        }
+
+        // 8. Generate Reward Voucher if eligible
+        if (userId && finalTotal > 0) {
+            try {
+                // Find matching reward rule (highest minOrderValue that qualifies)
+                const rewardRules = await VoucherRewardRule.find({ isActive: true })
+                    .sort({ minOrderValue: -1 })
+                    .lean();
+
+                const matchingRule = rewardRules.find(rule => finalTotal >= rule.minOrderValue);
+
+                if (matchingRule) {
+                    // Generate unique voucher code
+                    const timestamp = Date.now().toString(36).toUpperCase();
+                    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+                    const voucherCode = `REWARD${timestamp}${random}`;
+
+                    // Calculate expiry date
+                    const expiresAt = new Date();
+                    expiresAt.setDate(expiresAt.getDate() + (matchingRule.validityDays || 90));
+
+                    // Create reward voucher
+                    await UserVoucher.create({
+                        userId,
+                        code: voucherCode,
+                        discountType: 'fixed',
+                        discountValue: matchingRule.voucherValue,
+                        maxDiscount: matchingRule.voucherValue,
+                        minOrderValue: matchingRule.minOrderForVoucher || 0,
+                        expiresAt,
+                        isUsed: false,
+                        source: 'order_reward',
+                        sourceId: order._id,
+                        extensionFee: matchingRule.extensionFee,
+                        extensionDays: matchingRule.extensionDays || 90,
+                        maxExtensions: matchingRule.maxExtensions || 1,
+                        extensionCount: 0,
+                    });
+
+                    console.log(`Created reward voucher ${voucherCode} (${matchingRule.voucherValue}đ) for user ${userId}`);
+                }
+            } catch (voucherError) {
+                console.error('Failed to create reward voucher:', voucherError);
+                // Don't fail the order if voucher creation fails
             }
         }
 
