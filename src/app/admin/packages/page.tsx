@@ -41,6 +41,7 @@ interface Package {
     minOrderValue: number;
     validityDays: number;
     isActive: boolean;
+    isUnlimitedVoucher?: boolean;
     purchaseCount?: number;
     vouchers?: VoucherConfig[];
 }
@@ -71,6 +72,7 @@ export default function AdminPackagesPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<Package>>(defaultPackage);
     const [vouchers, setVouchers] = useState<VoucherConfig[]>([{ ...defaultVoucher }]);
+    const [isUnlimitedVoucher, setIsUnlimitedVoucher] = useState(false);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -87,6 +89,7 @@ export default function AdminPackagesPage() {
     const resetForm = () => {
         setFormData(defaultPackage);
         setVouchers([{ ...defaultVoucher }]);
+        setIsUnlimitedVoucher(false);
         setEditingId(null);
         setShowForm(false);
     };
@@ -104,6 +107,7 @@ export default function AdminPackagesPage() {
             const payload = {
                 ...formData,
                 voucherQuantity: totalVoucherQty,
+                isUnlimitedVoucher: isUnlimitedVoucher,
                 discountType: mainVoucher.discountType,
                 discountValue: mainVoucher.discountValue,
                 maxDiscount: mainVoucher.maxDiscount,
@@ -156,6 +160,7 @@ export default function AdminPackagesPage() {
             }]);
         }
 
+        setIsUnlimitedVoucher(pkg.isUnlimitedVoucher || false);
         setShowForm(true);
         setTimeout(() => {
             document.getElementById('create-form')?.scrollIntoView({ behavior: 'smooth' });
@@ -207,8 +212,8 @@ export default function AdminPackagesPage() {
                         }
                     }}
                     className={`flex items-center gap-2 px-6 py-3 font-bold rounded-lg shadow-lg transition-all hover:shadow-xl hover:scale-105 ${showForm && !editingId
-                            ? 'bg-slate-600 hover:bg-slate-700 text-white'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        ? 'bg-slate-600 hover:bg-slate-700 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }`}
                 >
                     {showForm && !editingId ? (
@@ -373,12 +378,33 @@ export default function AdminPackagesPage() {
                             </div>
                         </div>
 
+                        {/* Unlimited Voucher Toggle */}
+                        <div className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-200">
+                            <label className="flex items-center gap-4 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isUnlimitedVoucher}
+                                    onChange={e => setIsUnlimitedVoucher(e.target.checked)}
+                                    className="w-6 h-6 rounded-lg border-2 border-emerald-400 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer"
+                                />
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg font-bold text-emerald-700">♾️ Không giới hạn số lượng mã</span>
+                                        <span className="px-2 py-0.5 bg-emerald-600 text-white text-xs font-bold rounded-full">UNLIMITED</span>
+                                    </div>
+                                    <p className="text-sm text-emerald-600 mt-1">
+                                        Khi bật, hội viên có thể sử dụng mã giảm giá không giới hạn số lần trong thời hạn gói
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+
                         {/* Multiple Vouchers Configuration */}
                         <div className="mt-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                     <Percent className="text-blue-600" size={20} />
-                                    Cấu hình Voucher ({vouchers.length} loại)
+                                    Cấu hình Voucher ({isUnlimitedVoucher ? '∞' : vouchers.length} loại)
                                 </h3>
                                 <button
                                     type="button"
@@ -485,8 +511,8 @@ export default function AdminPackagesPage() {
                             <button
                                 type="submit"
                                 className={`px-8 py-3 font-bold rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2 ${editingId
-                                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
                                     }`}
                                 disabled={loading}
                             >
@@ -563,10 +589,17 @@ export default function AdminPackagesPage() {
                                         <div className="font-bold text-lg text-emerald-600">{pkg.price.toLocaleString('vi-VN')}đ</div>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
-                                            <Tag size={14} />
-                                            {pkg.voucherQuantity}
-                                        </div>
+                                        {pkg.isUnlimitedVoucher ? (
+                                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
+                                                <span className="text-lg">♾️</span>
+                                                UNLIMITED
+                                            </div>
+                                        ) : (
+                                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
+                                                <Tag size={14} />
+                                                {pkg.voucherQuantity}
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="space-y-1 text-sm">
