@@ -1,27 +1,82 @@
-import dbConnect from '@/lib/db';
-import Product from '@/models/Product';
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProductListActions from '@/components/admin/ProductListActions';
 import { PlusCircle, Search, Filter, Package, Grid3X3, List } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
-async function getProducts() {
-    await dbConnect();
-    const products = await Product.find({}).sort({ createdAt: -1 });
-    return products.map((p) => ({
-        id: p._id.toString(),
-        name: p.name,
-        currentPrice: p.currentPrice,
-        originalPrice: p.originalPrice,
-        category: p.category,
-        image: p.image,
-        inStock: true, // Default to true as stock management is not yet implemented
-    }));
+interface Product {
+    id: string;
+    name: string;
+    currentPrice: number;
+    originalPrice?: number;
+    category?: string;
+    image: string;
+    inStock: boolean;
 }
 
-export default async function AdminProductsPage() {
-    const products = await getProducts();
+export default function AdminProductsPage() {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/products');
+            if (!response.ok) {
+                throw new Error('Failed to fetch products');
+            }
+            const data = await response.json();
+            setProducts(data.map((p: any) => ({
+                id: p._id,
+                name: p.name,
+                currentPrice: p.currentPrice,
+                originalPrice: p.originalPrice,
+                category: p.category,
+                image: p.image,
+                inStock: true, // Default to true as stock management is not yet implemented
+            })));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRowClick = (productId: string) => {
+        window.location.href = `/admin/products/${productId}`;
+    };
+
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="space-y-6">
+                <div className="text-center py-12">
+                    <p className="text-red-500">Error: {error}</p>
+                    <button 
+                        onClick={fetchProducts}
+                        className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -109,7 +164,7 @@ export default async function AdminProductsPage() {
                                     <tr 
                                         key={product.id} 
                                         className="group cursor-pointer hover:bg-slate-50 transition-colors"
-                                        onClick={() => window.location.href = `/admin/products/${product.id}`}
+                                        onClick={() => handleRowClick(product.id)}
                                     >
                                         <td className="text-center font-semibold text-slate-500 text-sm">
                                             {index + 1}

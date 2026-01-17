@@ -25,14 +25,24 @@ import ProductCard from '../common/ProductCard';
 ```
 
 ### **3. Function Hoisting Issues (ImageCropper)**
-**Vấn đề**: Functions được gọi trước khi khai báo
-**Giải pháp**: Sử dụng `useCallback` để định nghĩa functions
+**Vấn đề**: Functions được gọi trước khi khai báo trong useEffect dependencies
+**Giải pháp**: Di chuyển function declarations trước useEffect và sử dụng `useCallback`
 ```typescript
-// Trước:
-const handleZoom = (delta: number) => { ... };
+// Trước: Functions được khai báo sau useEffect
+useEffect(() => {
+    // ... code sử dụng handleZoom, handleReset, handleCropImage
+}, [imageLoaded, imageError, onCancel, handleZoom, handleReset, handleCropImage]);
 
-// Sau:
 const handleZoom = useCallback((delta: number) => { ... }, [scale]);
+
+// Sau: Functions được khai báo trước useEffect
+const handleZoom = useCallback((delta: number) => { ... }, [scale]);
+const handleReset = useCallback(() => { ... }, [cropArea, imageDimensions]);
+const handleCropImage = useCallback(() => { ... }, [aspectRatio, cropArea, onCrop]);
+
+useEffect(() => {
+    // ... code sử dụng handleZoom, handleReset, handleCropImage
+}, [imageLoaded, imageError, onCancel, handleZoom, handleReset, handleCropImage]);
 ```
 
 ### **4. Missing Dependencies in useEffect**
@@ -57,15 +67,47 @@ const handleZoom = useCallback((delta: number) => { ... }, [scale]);
 <Link href="/products" className="view-more">Xem thêm</Link>
 ```
 
+### **6. Event Handlers in Server Components**
+**Vấn đề**: onClick handlers trong Server Components gây lỗi runtime
+**Giải pháp**: Chuyển đổi sang Client Component
+```typescript
+// Trước: Server Component với onClick handler
+export default async function AdminProductsPage() {
+    const products = await getProducts();
+    return (
+        <tr onClick={() => window.location.href = `/admin/products/${product.id}`}>
+            {/* ... */}
+        </tr>
+    );
+}
+
+// Sau: Client Component với proper event handling
+'use client';
+
+export default function AdminProductsPage() {
+    const [products, setProducts] = useState<Product[]>([]);
+    
+    const handleRowClick = (productId: string) => {
+        window.location.href = `/admin/products/${productId}`;
+    };
+    
+    return (
+        <tr onClick={() => handleRowClick(product.id)}>
+            {/* ... */}
+        </tr>
+    );
+}
+```
+
 ## 📊 Kết quả sau khi sửa:
 
 ### **✅ Build Status**
 ```bash
 npm run build
-✓ Compiled successfully in 5.9s
-✓ Collecting page data using 13 workers in 974.6ms
+✓ Compiled successfully in 7.3s
+✓ Collecting page data using 13 workers in 1060.7ms
 ✓ Generating static pages using 13 workers
-✓ Finalizing page optimization in 12.5ms
+✓ Finalizing page optimization in 10.4ms
 ```
 
 ### **✅ TypeScript Check**
@@ -74,12 +116,14 @@ npx tsc --noEmit
 ✓ No TypeScript errors found
 ```
 
-### **✅ Critical Errors Fixed**
+### **✅ All Critical Errors Fixed**
 - ✅ Build errors resolved
 - ✅ Invalid import errors fixed
 - ✅ Function hoisting issues resolved
 - ✅ React Hook dependency warnings fixed
 - ✅ Navigation link errors fixed
+- ✅ Event handler runtime errors fixed
+- ✅ Server/Client component conflicts resolved
 
 ## 🔧 Files Modified:
 
@@ -91,25 +135,33 @@ npx tsc --noEmit
 
 2. `src/components/admin/ImageCropper.tsx`
    - Fixed function hoisting with useCallback
+   - Moved function declarations before useEffect
    - Added proper dependencies to useEffect
    - Improved keyboard event handling
 
-3. `src/components/home/PromotionBanner.tsx`
+3. `src/app/admin/products/page.tsx`
+   - Converted from Server Component to Client Component
+   - Added `'use client'` directive
+   - Implemented proper state management with useState/useEffect
+   - Added loading and error states
+   - Fixed onClick event handler issues
+
+4. `src/components/home/PromotionBanner.tsx`
    - Removed unnecessary React import
 
-4. `src/components/home/FeaturesSection.tsx`
+5. `src/components/home/FeaturesSection.tsx`
    - Removed unnecessary React import
 
-5. `src/components/home/LargePromoBanner.tsx`
+6. `src/components/home/LargePromoBanner.tsx`
    - Removed unnecessary React import
 
-6. `src/components/common/ProductCard.tsx`
+7. `src/components/common/ProductCard.tsx`
    - Removed unnecessary React import
 
-7. `src/components/common/Breadcrumb.tsx`
+8. `src/components/common/Breadcrumb.tsx`
    - Removed unnecessary React import
 
-8. `src/components/common/Sidebar.tsx`
+9. `src/components/common/Sidebar.tsx`
    - Removed unnecessary React import
 
 ## ⚠️ Remaining Warnings (Non-Critical):

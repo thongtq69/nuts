@@ -195,6 +195,50 @@ export default function ImageCropper({
         setIsDragging(false);
     };
 
+    // Handle zoom
+    const handleZoom = useCallback((delta: number) => {
+        const newScale = Math.max(0.1, Math.min(3, scale + delta));
+        setScale(newScale);
+    }, [scale]);
+
+    // Reset về vị trí ban đầu
+    const handleReset = useCallback(() => {
+        const scaleX = cropArea.width / imageDimensions.width;
+        const scaleY = cropArea.height / imageDimensions.height;
+        const initialScale = Math.max(scaleX, scaleY);
+        
+        setScale(initialScale);
+        setPosition({ x: 0, y: 0 });
+    }, [cropArea, imageDimensions]);
+
+    // Crop và export ảnh
+    const handleCropImage = useCallback(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        // Tạo canvas mới với kích thước cuối cùng (2000x667 cho tỉ lệ 3:1)
+        const finalCanvas = document.createElement('canvas');
+        const finalWidth = 2000;
+        const finalHeight = Math.round(finalWidth / aspectRatio);
+        
+        finalCanvas.width = finalWidth;
+        finalCanvas.height = finalHeight;
+        
+        const finalCtx = finalCanvas.getContext('2d');
+        if (!finalCtx) return;
+
+        // Copy nội dung từ canvas preview sang canvas cuối cùng
+        finalCtx.drawImage(canvas, 0, 0, cropArea.width, cropArea.height, 0, 0, finalWidth, finalHeight);
+        
+        // Convert sang blob và gọi callback
+        finalCanvas.toBlob((blob) => {
+            if (blob) {
+                const croppedUrl = URL.createObjectURL(blob);
+                onCrop(croppedUrl);
+            }
+        }, 'image/jpeg', 0.9);
+    }, [aspectRatio, cropArea, onCrop]);
+
     // Keyboard support
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -247,50 +291,6 @@ export default function ImageCropper({
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [imageLoaded, imageError, onCancel, handleZoom, handleReset, handleCropImage]);
-
-    // Handle zoom
-    const handleZoom = useCallback((delta: number) => {
-        const newScale = Math.max(0.1, Math.min(3, scale + delta));
-        setScale(newScale);
-    }, [scale]);
-
-    // Reset về vị trí ban đầu
-    const handleReset = useCallback(() => {
-        const scaleX = cropArea.width / imageDimensions.width;
-        const scaleY = cropArea.height / imageDimensions.height;
-        const initialScale = Math.max(scaleX, scaleY);
-        
-        setScale(initialScale);
-        setPosition({ x: 0, y: 0 });
-    }, [cropArea, imageDimensions]);
-
-    // Crop và export ảnh
-    const handleCropImage = useCallback(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Tạo canvas mới với kích thước cuối cùng (2000x667 cho tỉ lệ 3:1)
-        const finalCanvas = document.createElement('canvas');
-        const finalWidth = 2000;
-        const finalHeight = Math.round(finalWidth / aspectRatio);
-        
-        finalCanvas.width = finalWidth;
-        finalCanvas.height = finalHeight;
-        
-        const finalCtx = finalCanvas.getContext('2d');
-        if (!finalCtx) return;
-
-        // Copy nội dung từ canvas preview sang canvas cuối cùng
-        finalCtx.drawImage(canvas, 0, 0, cropArea.width, cropArea.height, 0, 0, finalWidth, finalHeight);
-        
-        // Convert sang blob và gọi callback
-        finalCanvas.toBlob((blob) => {
-            if (blob) {
-                const croppedUrl = URL.createObjectURL(blob);
-                onCrop(croppedUrl);
-            }
-        }, 'image/jpeg', 0.9);
-    }, [aspectRatio, cropArea, onCrop]);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
