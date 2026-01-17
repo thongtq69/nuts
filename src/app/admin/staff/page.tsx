@@ -210,6 +210,7 @@ export default function AdminStaffPage() {
                     <table className="w-full">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
+                                <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase w-16">STT</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Nhân viên</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Mã NV</th>
                                 <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase">CTV</th>
@@ -221,13 +222,13 @@ export default function AdminStaffPage() {
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center">
+                                    <td colSpan={7} className="px-6 py-12 text-center">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-600" />
                                     </td>
                                 </tr>
                             ) : filteredStaff.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center">
+                                    <td colSpan={7} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
                                                 <UserCheck className="w-6 h-6 text-slate-400" />
@@ -247,8 +248,11 @@ export default function AdminStaffPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredStaff.map((staff) => (
+                                filteredStaff.map((staff, index) => (
                                     <tr key={staff.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
+                                            {index + 1}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">

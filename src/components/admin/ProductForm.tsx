@@ -54,11 +54,11 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 router.push('/admin/products');
                 router.refresh();
             } else {
-                alert('Failed to save product');
+                alert('Lỗi khi lưu sản phẩm');
             }
         } catch (error) {
             console.error(error);
-            alert('Error saving product');
+            alert('Lỗi khi lưu sản phẩm');
         } finally {
             setLoading(false);
         }
@@ -67,47 +67,47 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     return (
         <form onSubmit={handleSubmit} className="product-form">
             <div className="form-group">
-                <label>Product Name</label>
+                <label>Tên sản phẩm</label>
                 <input type="text" name="name" value={formData.name} onChange={handleChange} required />
             </div>
 
             <div className="form-row">
                 <div className="form-group">
-                    <label>Current Price</label>
+                    <label>Giá hiện tại</label>
                     <input type="number" name="currentPrice" value={formData.currentPrice} onChange={handleChange} required />
                 </div>
                 <div className="form-group">
-                    <label>Original Price</label>
+                    <label>Giá gốc</label>
                     <input type="number" name="originalPrice" value={formData.originalPrice} onChange={handleChange} />
                 </div>
             </div>
 
             <div className="form-group">
-                <label>Category</label>
+                <label>Danh mục</label>
                 <select name="category" value={formData.category} onChange={handleChange} required>
-                    <option value="">Select Category</option>
-                    <option value="Jars">Jars</option>
-                    <option value="Bags">Bags</option>
-                    <option value="Nuts">Nuts</option>
-                    <option value="Berries">Berries</option>
-                    <option value="Seeds">Seeds</option>
+                    <option value="">Chọn danh mục</option>
+                    <option value="Jars">Hũ</option>
+                    <option value="Bags">Túi</option>
+                    <option value="Nuts">Hạt</option>
+                    <option value="Berries">Quả mọng</option>
+                    <option value="Seeds">Hạt giống</option>
                 </select>
             </div>
 
             <div className="form-group">
-                <label>Tags (comma separated)</label>
-                <input type="text" name="tags" value={formData.tags} onChange={handleChange} placeholder="best-seller, new, promo" />
+                <label>Thẻ (phân cách bằng dấu phẩy)</label>
+                <input type="text" name="tags" value={formData.tags} onChange={handleChange} placeholder="bán-chạy, mới, khuyến-mãi" />
             </div>
 
             <div className="form-group">
-                <label>Image</label>
+                <label>Hình ảnh</label>
                 <div className="image-upload-container">
                     <input
                         type="text"
                         name="image"
                         value={formData.image}
                         onChange={handleChange}
-                        placeholder="Image URL"
+                        placeholder="URL hình ảnh"
                         required
                     />
                     <div className="file-input-wrapper">
@@ -132,11 +132,11 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         const data = await res.json();
                                         setFormData(prev => ({ ...prev, image: data.url }));
                                     } else {
-                                        alert('Upload failed');
+                                        alert('Tải lên thất bại');
                                     }
                                 } catch (err) {
                                     console.error(err);
-                                    alert('Error uploading image');
+                                    alert('Lỗi khi tải lên hình ảnh');
                                 } finally {
                                     setLoading(false);
                                 }
@@ -174,8 +174,29 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
             </div>
 
             <div className="form-actions">
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? 'Saving...' : (isEdit ? 'Update Product' : 'Create Product')}
+                <button 
+                    type="submit" 
+                    className="create-product-btn" 
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <>
+                            <div className="loading-spinner"></div>
+                            Đang lưu...
+                        </>
+                    ) : (
+                        <>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                {isEdit ? (
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                ) : (
+                                    <path d="M12 5v14M5 12h14" />
+                                )}
+                                {isEdit && <path d="m18.5 2.5-7 7L8 13l3.5-3.5 7-7z" />}
+                            </svg>
+                            {isEdit ? 'Cập nhật sản phẩm' : 'Tạo sản phẩm'}
+                        </>
+                    )}
                 </button>
             </div>
 
@@ -202,7 +223,51 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                     outline: none;
                     border-color: #3498db;
                 }
-                .form-actions { margin-top: 30px; }
+                .form-actions { 
+                    margin-top: 30px; 
+                    text-align: center;
+                }
+                .create-product-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 12px 32px;
+                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                    color: #000;
+                    border: none;
+                    border-radius: 12px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+                    min-width: 200px;
+                    justify-content: center;
+                }
+                .create-product-btn:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+                    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+                }
+                .create-product-btn:active:not(:disabled) {
+                    transform: translateY(0);
+                }
+                .create-product-btn:disabled {
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+                .loading-spinner {
+                    width: 20px;
+                    height: 20px;
+                    border: 2px solid transparent;
+                    border-top: 2px solid currentColor;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
                 .image-upload-container {
                     display: flex;
                     gap: 10px;

@@ -68,7 +68,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     className={`btn-choose ${buttonColor}`}
                     onClick={handleAddToCart}
                 >
-                    Add to cart
+                    Thêm vào giỏ
                 </button>
             </div>
         </div>

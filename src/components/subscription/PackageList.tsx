@@ -28,12 +28,12 @@ function formatPrice(price: number) {
 
 const packageIcons = ['🥉', '🥈', '🥇', '✨', '💎', '👑'];
 const cardGradients = [
-    'from-orange-100 to-amber-50',
-    'from-slate-100 to-gray-50',
-    'from-yellow-100 to-amber-50',
-    'from-purple-100 to-pink-50',
-    'from-sky-100 to-blue-50',
-    'from-emerald-100 to-teal-50',
+    'from-stone-100 to-stone-50',
+    'from-stone-100 to-stone-50',
+    'from-stone-100 to-stone-50',
+    'from-stone-100 to-stone-50',
+    'from-stone-100 to-stone-50',
+    'from-stone-100 to-stone-50',
 ];
 
 export default function PackageList({ packages, onBuyPackage }: Props) {
@@ -49,7 +49,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
     return (
         <>
             {/* Compact Package Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
                 {packages.map((pkg, index) => {
                     const maxSavings = pkg.isUnlimitedVoucher
                         ? '∞'
@@ -61,16 +61,17 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                             onClick={() => setSelectedPackage(pkg)}
                             className={`
                                 relative group cursor-pointer
+                                w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-0.7rem)] lg:w-[calc(25%-0.75rem)] xl:w-[calc(20%-0.8rem)]
                                 bg-gradient-to-br ${cardGradients[index % cardGradients.length]}
                                 rounded-2xl p-4 
                                 border-2 border-transparent
-                                hover:border-amber-400 hover:shadow-xl hover:scale-[1.02]
+                                hover:border-[#9C7044] hover:shadow-xl hover:scale-[1.02]
                                 transition-all duration-300 ease-out
                             `}
                         >
                             {/* Badge for featured/last package */}
                             {index === packages.length - 1 && (
-                                <div className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+                                <div className="absolute -top-2 -right-2 bg-[#9C7044] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
                                     HOT
                                 </div>
                             )}
@@ -90,7 +91,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
 
                             {/* Quick Stats */}
                             <div className="flex items-center gap-1 text-xs text-slate-600 mb-3">
-                                <Tag size={12} className="text-blue-500" />
+                                <Tag size={12} className="text-[#9C7044]" />
                                 <span className="font-semibold">
                                     {pkg.isUnlimitedVoucher ? '∞' : pkg.voucherQuantity}
                                 </span>
@@ -127,7 +128,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Header with gradient */}
-                        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 p-6 text-white relative">
+                        <div className="bg-[#9C7044] p-6 text-white relative">
                             <button
                                 onClick={() => setSelectedPackage(null)}
                                 className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
@@ -150,8 +151,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                         <div className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                                 {/* Voucher Count */}
-                                <div className="bg-blue-50 rounded-xl p-3 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <div className="bg-stone-100 rounded-xl p-3 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#9C7044] rounded-lg flex items-center justify-center">
                                         <Tag className="text-white" size={20} />
                                     </div>
                                     <div>
@@ -163,8 +164,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                 </div>
 
                                 {/* Discount */}
-                                <div className="bg-emerald-50 rounded-xl p-3 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                <div className="bg-stone-100 rounded-xl p-3 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#9C7044] rounded-lg flex items-center justify-center">
                                         <Percent className="text-white" size={20} />
                                     </div>
                                     <div>
@@ -179,8 +180,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                 </div>
 
                                 {/* Max Discount */}
-                                <div className="bg-purple-50 rounded-xl p-3 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                                <div className="bg-stone-100 rounded-xl p-3 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#9C7044] rounded-lg flex items-center justify-center">
                                         <Gift className="text-white" size={20} />
                                     </div>
                                     <div>
@@ -192,8 +193,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                 </div>
 
                                 {/* Validity */}
-                                <div className="bg-amber-50 rounded-xl p-3 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
+                                <div className="bg-stone-100 rounded-xl p-3 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#9C7044] rounded-lg flex items-center justify-center">
                                         <Clock className="text-white" size={20} />
                                     </div>
                                     <div>
@@ -215,16 +216,16 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
 
                             {/* Unlimited Badge */}
                             {selectedPackage.isUnlimitedVoucher && (
-                                <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 rounded-xl px-4 py-3 text-sm font-semibold">
+                                <div className="flex items-center gap-2 text-[#9C7044] bg-[#E3E846]/20 rounded-xl px-4 py-3 text-sm font-semibold">
                                     <Sparkles size={16} />
                                     Sử dụng không giới hạn trong thời hạn gói
                                 </div>
                             )}
 
                             {/* Total Savings */}
-                            <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl p-4 text-center">
-                                <div className="text-sm text-amber-700 mb-1">💡 Tiết kiệm tối đa lên đến</div>
-                                <div className="text-2xl font-black text-amber-600">
+                            <div className="bg-[#E3E846]/20 rounded-xl p-4 text-center">
+                                <div className="text-sm text-[#9C7044] mb-1">💡 Tiết kiệm tối đa lên đến</div>
+                                <div className="text-2xl font-black text-[#9C7044]">
                                     {selectedPackage.isUnlimitedVoucher
                                         ? '∞ Không giới hạn'
                                         : formatPrice(selectedPackage.voucherQuantity * selectedPackage.maxDiscount)
@@ -235,9 +236,9 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                             {/* Buy Button */}
                             <button
                                 onClick={handleBuy}
-                                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-[#E3E846] hover:bg-[#d4d942] text-black font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
                             >
-                                <Star size={20} />
+                                <Star size={20} className="text-black" />
                                 Mua ngay - {formatPrice(selectedPackage.price)}
                             </button>
                         </div>

@@ -34,6 +34,7 @@ export default function AdminAffiliatesPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold tracking-wider">
+                                <th className="px-6 py-4 text-center w-16">STT</th>
                                 <th className="px-6 py-4">Họ tên</th>
                                 <th className="px-6 py-4">Liên hệ</th>
                                 <th className="px-6 py-4">Mã Ref</th>
@@ -45,7 +46,7 @@ export default function AdminAffiliatesPage() {
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                                         <div className="flex justify-center items-center gap-2">
                                             <div className="w-4 h-4 border-2 border-slate-300 border-t-amber-500 rounded-full animate-spin"></div>
                                             Đang tải dữ liệu...
@@ -59,8 +60,11 @@ export default function AdminAffiliatesPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                affiliates.map((aff: any) => (
+                                affiliates.map((aff: any, index: number) => (
                                     <tr key={aff._id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
+                                            {index + 1}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-xs">

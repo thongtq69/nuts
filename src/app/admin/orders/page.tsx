@@ -243,6 +243,7 @@ export default function AdminOrdersPage() {
                     <table className="w-full">
                         <thead>
                             <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider w-16">STT</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Mã đơn</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Khách hàng</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Thời gian</th>
@@ -255,7 +256,7 @@ export default function AdminOrdersPage() {
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                             {filteredOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-16 text-center">
+                                    <td colSpan={8} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                                 <ShoppingCart className="w-8 h-8 text-slate-400" />
@@ -267,7 +268,7 @@ export default function AdminOrdersPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredOrders.map((order) => {
+                                filteredOrders.map((order, index) => {
                                     const config = statusConfig[order.status] || statusConfig.pending;
                                     const StatusIcon = config.icon;
                                     const isUpdating = updating === order.id;
@@ -275,6 +276,9 @@ export default function AdminOrdersPage() {
 
                                     return (
                                         <tr key={order.id} className="group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                                            <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
+                                                {index + 1}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="font-mono font-bold text-slate-700 dark:text-slate-300">
                                                     #{order.id.slice(-6).toUpperCase()}

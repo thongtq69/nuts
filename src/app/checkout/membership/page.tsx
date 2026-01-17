@@ -203,7 +203,7 @@ export default function MembershipCheckoutPage() {
             <Header />
             <Navbar />
             <Breadcrumb items={[{ label: 'Gói hội viên', href: '/membership' }, { label: 'Thanh toán' }]} />
-            <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+            <Suspense fallback={<div className="text-center py-10">Đang tải...</div>}>
                 <MembershipCheckoutContent />
             </Suspense>
             <Footer />

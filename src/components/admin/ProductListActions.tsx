@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function ProductListActions({ productId }: { productId: string }) {
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this product?')) return;
+        if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return;
 
         try {
             const res = await fetch(`/api/products/${productId}`, {
@@ -13,18 +13,18 @@ export default function ProductListActions({ productId }: { productId: string })
             if (res.ok) {
                 window.location.reload();
             } else {
-                alert('Failed to delete product');
+                alert('Xóa sản phẩm thất bại');
             }
         } catch (error) {
             console.error(error);
-            alert('Error deleting product');
+            alert('Lỗi khi xóa sản phẩm');
         }
     };
 
     return (
         <div className="actions">
-            <Link href={`/admin/products/${productId}`} className="btn-link">Edit</Link>
-            <button onClick={handleDelete} className="btn-link text-danger">Delete</button>
+            <Link href={`/admin/products/${productId}`} className="btn-link">Sửa</Link>
+            <button onClick={handleDelete} className="btn-link text-danger">Xóa</button>
 
             <style jsx>{`
                 .actions { display: flex; gap: 10px; }

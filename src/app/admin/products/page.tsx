@@ -79,6 +79,7 @@ export default async function AdminProductsPage() {
                     <table className="premium-table w-full">
                         <thead>
                             <tr>
+                                <th className="w-16 text-center">STT</th>
                                 <th className="w-20">Hình ảnh</th>
                                 <th>Tên sản phẩm</th>
                                 <th>Danh mục</th>
@@ -91,7 +92,7 @@ export default async function AdminProductsPage() {
                         <tbody>
                             {products.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-16 text-center">
+                                    <td colSpan={8} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                                 <Package className="w-8 h-8 text-slate-400" />
@@ -106,6 +107,9 @@ export default async function AdminProductsPage() {
                             ) : (
                                 products.map((product, index) => (
                                     <tr key={product.id} className="group">
+                                        <td className="text-center font-semibold text-slate-500 text-sm">
+                                            {index + 1}
+                                        </td>
                                         <td>
                                             <div className="h-14 w-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800 p-1.5 group-hover:border-amber-300 transition-colors">
                                                 <img

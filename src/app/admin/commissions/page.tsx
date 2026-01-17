@@ -50,6 +50,7 @@ export default function AdminCommissionsPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">STT</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTV</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Đơn hàng</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá trị đơn</th>
@@ -60,12 +61,15 @@ export default function AdminCommissionsPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {loading ? (
-                            <tr><td colSpan={6} className="px-6 py-4 text-center">Đang tải...</td></tr>
+                            <tr><td colSpan={7} className="px-6 py-4 text-center">Đang tải...</td></tr>
                         ) : commissions.length === 0 ? (
-                            <tr><td colSpan={6} className="px-6 py-4 text-center">Chưa có hoa hồng nào</td></tr>
+                            <tr><td colSpan={7} className="px-6 py-4 text-center">Chưa có hoa hồng nào</td></tr>
                         ) : (
-                            commissions.map((comm: any) => (
+                            commissions.map((comm: any, index: number) => (
                                 <tr key={comm._id}>
+                                    <td className="px-6 py-4 text-center font-semibold text-gray-500 text-sm">
+                                        {index + 1}
+                                    </td>
                                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                                         {comm.affiliateId?.name || 'Unknown'}<br />
                                         <span className="text-gray-500 text-xs">{comm.affiliateId?.referralCode}</span>

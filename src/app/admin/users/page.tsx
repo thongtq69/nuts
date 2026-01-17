@@ -179,6 +179,7 @@ export default function AdminUsersPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold tracking-wider">
+                                <th className="px-6 py-4 w-16">STT</th>
                                 <th className="px-6 py-4">Tên</th>
                                 <th className="px-6 py-4">Email</th>
                                 <th className="px-6 py-4">SĐT</th>
@@ -191,13 +192,16 @@ export default function AdminUsersPage() {
                         <tbody className="divide-y divide-slate-100">
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500 italic">
+                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-500 italic">
                                         Không tìm thấy người dùng nào.
                                     </td>
                                 </tr>
                             ) : (
-                                filteredUsers.map((user) => (
+                                filteredUsers.map((user, index) => (
                                     <tr key={user._id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
+                                            {index + 1}
+                                        </td>
                                         <td className="px-6 py-4 font-semibold text-slate-700">{user.name}</td>
                                         <td className="px-6 py-4 text-slate-600">{user.email}</td>
                                         <td className="px-6 py-4 text-slate-600 font-mono text-xs">{user.phone || '-'}</td>

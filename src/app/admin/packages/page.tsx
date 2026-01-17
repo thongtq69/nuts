@@ -548,6 +548,7 @@ export default function AdminPackagesPage() {
                     <table className="w-full">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200">
+                                <th className="px-6 py-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider w-16">STT</th>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Tên Gói</th>
                                 <th className="px-6 py-4 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Giá Bán</th>
                                 <th className="px-6 py-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">Voucher</th>
@@ -560,7 +561,7 @@ export default function AdminPackagesPage() {
                         <tbody className="divide-y divide-slate-100">
                             {packages.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-16 text-center">
+                                    <td colSpan={8} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
                                                 <PackageIcon className="text-slate-400" size={32} />
@@ -572,8 +573,11 @@ export default function AdminPackagesPage() {
                                         </div>
                                     </td>
                                 </tr>
-                            ) : packages.map(pkg => (
+                            ) : packages.map((pkg, index) => (
                                 <tr key={pkg._id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
+                                        {index + 1}
+                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">

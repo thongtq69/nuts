@@ -150,7 +150,7 @@ export default function SearchPage() {
             <Navbar />
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Tìm kiếm' }]} />
 
-            <Suspense fallback={<div className="container">Loading...</div>}>
+            <Suspense fallback={<div className="container">Đang tải...</div>}>
                 <SearchResults />
             </Suspense>
 
