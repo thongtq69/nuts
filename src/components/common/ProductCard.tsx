@@ -24,11 +24,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
     const { addToCart } = useCart();
 
     const formattedCurrentPrice = typeof currentPrice === 'number'
-        ? `${currentPrice.toLocaleString()}₫`
+        ? `${currentPrice.toLocaleString('vi-VN')}₫`
         : currentPrice;
 
     const formattedOriginalPrice = typeof originalPrice === 'number'
-        ? `${originalPrice.toLocaleString()}₫`
+        ? `${originalPrice.toLocaleString('vi-VN')}₫`
         : originalPrice;
 
     const handleAddToCart = (e: React.MouseEvent) => {
