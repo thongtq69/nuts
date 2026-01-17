@@ -8,20 +8,20 @@
 
 /* CSS Variables - Design Tokens */
 :root {
-  /* Colors */
+  /* Brand Colors - Only these 4 color groups allowed */
   --color-primary-brown: #9C7044;
   --color-primary-yellow: #E3E846;
-  --color-text-dark: #283B53;
-  --color-success-green: #129212;
-  --color-sale-orange: #E29049;
-  --color-sale-red: #E24949;
-  --color-sale-green: #49E269;
-  --color-sale-pink: #E849C3;
+  --color-text-dark: #333;
+  --color-success-green: #9C7044;
+  --color-sale-orange: #9C7044;
+  --color-sale-red: #9C7044;
+  --color-sale-green: #E3E846;
+  --color-sale-pink: #E3E846;
   --color-white: #FFFFFF;
   --color-gray-light: #CCCCCC;
   --color-gray-border: #E5E5E5;
   --color-black: #000000;
-  --color-dark-blue: #1a3a5c;
+  --color-dark-blue: #333;
 
   /* Typography */
   --font-family: var(--font-titillium-web), sans-serif;
