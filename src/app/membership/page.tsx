@@ -110,11 +110,23 @@ export default function MembershipPage() {
                                         <div className="text-3xl font-bold text-orange-500 mt-2">
                                             {new Intl.NumberFormat('vi-VN').format(pkg.price)}đ
                                         </div>
-                                        <div className="text-sm text-gray-500 mt-1">{pkg.description || pkg.name}</div>
+                                        <div className="text-sm text-gray-500 mt-1">
+                            Tiết kiệm lên đến {pkg.maxDiscount > 0 
+                                ? `${new Intl.NumberFormat('vi-VN').format(pkg.maxDiscount * pkg.voucherQuantity)} VND`
+                                : `${new Intl.NumberFormat('vi-VN').format(Math.floor(pkg.minOrderValue * pkg.discountValue / 100) * pkg.voucherQuantity)} VND`
+                            }
+                        </div>
                                     </div>
 
                                     {/* Thông tin chi tiết */}
                                     <div className="p-6 space-y-4">
+                                        {/* Mô tả gói */}
+                                        {pkg.description && (
+                                            <div className="text-center mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                <p className="text-sm text-blue-700 font-medium">{pkg.description}</p>
+                                            </div>
+                                        )}
+
                                         {/* Số lượng voucher */}
                                         <div className="flex items-center gap-3">
                                             <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
@@ -170,13 +182,10 @@ export default function MembershipPage() {
                                         {/* Tiết kiệm được */}
                                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
                                             <div className="text-center">
-                                                <div className="text-xs text-yellow-600 font-medium">Tiết kiệm tối đa</div>
-                                                <div className="text-lg font-bold text-yellow-700">
-                                                    {pkg.maxDiscount > 0 
-                                                        ? `${(pkg.maxDiscount * pkg.voucherQuantity).toLocaleString()}đ`
-                                                        : `${((pkg.minOrderValue * pkg.discountValue / 100) * pkg.voucherQuantity).toLocaleString()}đ`
-                                                    }
-                                                </div>
+                                                <div className="text-xs text-yellow-600 font-medium">💡 Tiết kiệm tối đa: {new Intl.NumberFormat('vi-VN').format(pkg.maxDiscount > 0 
+                                                    ? (pkg.maxDiscount * pkg.voucherQuantity)
+                                                    : (Math.floor(pkg.minOrderValue * pkg.discountValue / 100) * pkg.voucherQuantity)
+                                                )}đ</div>
                                             </div>
                                         </div>
                                     </div>
