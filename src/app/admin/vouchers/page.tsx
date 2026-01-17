@@ -111,7 +111,15 @@ export default function AdminVouchersPage() {
                                 </tr>
                             ) : (
                                 vouchers.map((v, index) => (
-                                    <tr key={v._id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                                    <tr 
+                                        key={v._id} 
+                                        className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
+                                        onClick={() => {
+                                            // Navigate to voucher detail or edit page if it exists
+                                            // For now, we'll just show an alert with voucher info
+                                            alert(`Voucher: ${v.code}\nGiá trị: ${v.discountValue}${v.discountType === 'percent' ? '%' : 'đ'}\nTrạng thái: ${v.isUsed ? 'Đã sử dụng' : 'Chưa sử dụng'}`);
+                                        }}
+                                    >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
                                             {index + 1}
                                         </td>
@@ -132,7 +140,7 @@ export default function AdminVouchersPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                                             {new Date(v.createdAt).toLocaleDateString('vi-VN')}
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                                             <button
                                                 onClick={() => handleDelete(v._id, v.code)}
                                                 disabled={deleting === v._id}

@@ -61,7 +61,14 @@ export default function AdminAffiliatesPage() {
                                 </tr>
                             ) : (
                                 affiliates.map((aff: any, index: number) => (
-                                    <tr key={aff._id} className="hover:bg-slate-50 transition-colors">
+                                    <tr 
+                                        key={aff._id} 
+                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                        onClick={() => {
+                                            // Navigate to affiliate detail page if it exists, or show info
+                                            alert(`Cộng tác viên: ${aff.name}\nMã Ref: ${aff.referralCode}\nSố dư ví: ${new Intl.NumberFormat('vi-VN').format(aff.walletBalance || 0)}đ\nTổng hoa hồng: ${new Intl.NumberFormat('vi-VN').format(aff.totalCommission || 0)}đ`);
+                                        }}
+                                    >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
                                             {index + 1}
                                         </td>

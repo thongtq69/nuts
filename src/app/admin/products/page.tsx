@@ -106,7 +106,11 @@ export default async function AdminProductsPage() {
                                 </tr>
                             ) : (
                                 products.map((product, index) => (
-                                    <tr key={product.id} className="group">
+                                    <tr 
+                                        key={product.id} 
+                                        className="group cursor-pointer hover:bg-slate-50 transition-colors"
+                                        onClick={() => window.location.href = `/admin/products/${product.id}`}
+                                    >
                                         <td className="text-center font-semibold text-slate-500 text-sm">
                                             {index + 1}
                                         </td>
@@ -152,7 +156,7 @@ export default async function AdminProductsPage() {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="text-right">
+                                        <td className="text-right" onClick={(e) => e.stopPropagation()}>
                                             <ProductListActions productId={product.id} />
                                         </td>
                                     </tr>

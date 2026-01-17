@@ -249,7 +249,14 @@ export default function AdminStaffPage() {
                                 </tr>
                             ) : (
                                 filteredStaff.map((staff, index) => (
-                                    <tr key={staff.id} className="hover:bg-slate-50 transition-colors">
+                                    <tr 
+                                        key={staff.id} 
+                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                        onClick={() => {
+                                            // Navigate to staff detail page if it exists, or show info
+                                            alert(`Nhân viên: ${staff.name}\nMã NV: ${staff.staffCode}\nSố CTV: ${staff.collaboratorCount}\nDoanh thu team: ${staff.teamRevenue.toLocaleString('vi-VN')}đ`);
+                                        }}
+                                    >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
                                             {index + 1}
                                         </td>
@@ -270,7 +277,10 @@ export default function AdminStaffPage() {
                                                     {staff.staffCode}
                                                 </span>
                                                 <button
-                                                    onClick={() => copyCode(staff.staffCode)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        copyCode(staff.staffCode);
+                                                    }}
                                                     className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
                                                     title="Sao chép mã"
                                                 >
@@ -289,7 +299,7 @@ export default function AdminStaffPage() {
                                                 {staff.teamRevenue.toLocaleString('vi-VN')}đ
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-center gap-2">
                                                 <button
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

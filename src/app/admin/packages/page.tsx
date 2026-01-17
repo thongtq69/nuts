@@ -594,7 +594,11 @@ Ví dụ:
                                     </td>
                                 </tr>
                             ) : packages.map((pkg, index) => (
-                                <tr key={pkg._id} className="hover:bg-slate-50 transition-colors">
+                                <tr 
+                                    key={pkg._id} 
+                                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                    onClick={() => handleEdit(pkg)}
+                                >
                                     <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
                                         {index + 1}
                                     </td>
@@ -640,7 +644,7 @@ Ví dụ:
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-center">
+                                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                                         <button
                                             className={`px-4 py-2 inline-flex items-center gap-2 text-sm font-semibold rounded-lg transition-all
                                                 ${pkg.isActive
@@ -664,15 +668,8 @@ Ví dụ:
                                         <div className="text-lg font-bold text-slate-800">{pkg.purchaseCount || 0}</div>
                                         <div className="text-xs text-slate-500">lượt mua</div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center justify-center gap-2">
-                                            <button
-                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Chỉnh sửa"
-                                                onClick={() => handleEdit(pkg)}
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
                                             <button
                                                 className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                                                 title="Nhân bản"

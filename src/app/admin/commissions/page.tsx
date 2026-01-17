@@ -66,7 +66,14 @@ export default function AdminCommissionsPage() {
                             <tr><td colSpan={7} className="px-6 py-4 text-center">Chưa có hoa hồng nào</td></tr>
                         ) : (
                             commissions.map((comm: any, index: number) => (
-                                <tr key={comm._id}>
+                                <tr 
+                                    key={comm._id}
+                                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                    onClick={() => {
+                                        // Show commission details
+                                        alert(`Hoa hồng: ${new Intl.NumberFormat('vi-VN').format(comm.commissionAmount)}đ\nCTV: ${comm.affiliateId?.name || 'Unknown'}\nĐơn hàng: ${comm.orderId?._id ? '...' + comm.orderId._id.slice(-6) : 'N/A'}\nTrạng thái: ${comm.status}`);
+                                    }}
+                                >
                                     <td className="px-6 py-4 text-center font-semibold text-gray-500 text-sm">
                                         {index + 1}
                                     </td>
@@ -95,7 +102,7 @@ export default function AdminCommissionsPage() {
                                             {comm.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-medium">
+                                    <td className="px-6 py-4 text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                                         {comm.status === 'pending' && (
                                             <div className="flex gap-2">
                                                 <button onClick={() => updateStatus(comm._id, 'approved')} className="text-green-600 hover:text-green-900">Duyệt</button>

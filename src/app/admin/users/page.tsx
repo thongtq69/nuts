@@ -198,7 +198,11 @@ export default function AdminUsersPage() {
                                 </tr>
                             ) : (
                                 filteredUsers.map((user, index) => (
-                                    <tr key={user._id} className="hover:bg-slate-50 transition-colors">
+                                    <tr 
+                                        key={user._id} 
+                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                        onClick={() => window.location.href = `/admin/users/${user._id}`}
+                                    >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
                                             {index + 1}
                                         </td>
@@ -225,16 +229,8 @@ export default function AdminUsersPage() {
                                         <td className="px-6 py-4 text-sm text-slate-500">
                                             {new Date(user.createdAt).toLocaleDateString('vi-VN')}
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-2">
-                                                <Link
-                                                    href={`/admin/users/${user._id}`}
-                                                    className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                                                    title="Xem chi tiết"
-                                                >
-                                                    <Eye size={16} />
-                                                </Link>
-                                                
                                                 {user.saleApplicationStatus === 'pending' && (
                                                     <>
                                                         <button

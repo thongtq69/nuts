@@ -275,7 +275,11 @@ export default function AdminOrdersPage() {
                                     const isDropdownOpen = openDropdown === order.id;
 
                                     return (
-                                        <tr key={order.id} className="group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                                        <tr 
+                                            key={order.id} 
+                                            className="group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
+                                            onClick={() => window.location.href = `/admin/orders/${order.id}`}
+                                        >
                                             <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
                                                 {index + 1}
                                             </td>
@@ -321,7 +325,7 @@ export default function AdminOrdersPage() {
                                                     {order.total.toLocaleString()}đ
                                                 </span>
                                             </td>
-                                            <td className="text-center px-6 py-4">
+                                            <td className="text-center px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                                 <div className="relative inline-block">
                                                     <button
                                                         onClick={() => setOpenDropdown(isDropdownOpen ? null : order.id)}
@@ -378,15 +382,8 @@ export default function AdminOrdersPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="text-center px-6 py-4">
+                                            <td className="text-center px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex items-center justify-center gap-2">
-                                                    <Link
-                                                        href={`/admin/orders/${order.id}`}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm font-medium transition-colors"
-                                                    >
-                                                        <Eye size={14} />
-                                                        Chi tiết
-                                                    </Link>
                                                     <button
                                                         onClick={() => handleDelete(order.id)}
                                                         disabled={deleting === order.id}
