@@ -19,7 +19,9 @@ import {
     Gift,
     Tag,
     Home,
-    Cloud
+    Cloud,
+    Sparkles,
+    Star
 } from 'lucide-react';
 
 const menuItems = [
@@ -34,6 +36,9 @@ const menuItems = [
         items: [
             { href: '/admin/orders', icon: ShoppingBag, label: 'Đơn hàng', badge: 'orders' },
             { href: '/admin/products', icon: Package, label: 'Sản phẩm' },
+            { href: '/admin/products/featured', icon: Star, label: 'Sản phẩm Nổi bật' },
+            { href: '/admin/products/best-sellers', icon: TrendingUp, label: 'Sản phẩm Bán chạy' },
+            { href: '/admin/products/new-products', icon: Sparkles, label: 'Sản phẩm Mới' },
             { href: '/admin/product-tags', icon: Tag, label: 'Tags Sản phẩm' },
             { href: '/admin/vouchers', icon: Ticket, label: 'Voucher' },
         ],

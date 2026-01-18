@@ -1,14 +1,40 @@
 'use client';
 
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
     const pathname = usePathname();
+    const [currentSort, setCurrentSort] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Get sort parameter from URL on client side
+        const urlParams = new URLSearchParams(window.location.search);
+        setCurrentSort(urlParams.get('sort'));
+    }, [pathname]);
 
     const isActive = (path: string) => {
         if (path === '/') return pathname === '/';
+        
+        // Handle query parameters for product filtering
+        if (path.includes('?')) {
+            const [basePath, queryString] = path.split('?');
+            if (pathname === basePath) {
+                // Parse expected query params
+                const expectedParams = new URLSearchParams(queryString);
+                const expectedSort = expectedParams.get('sort');
+                
+                return currentSort === expectedSort;
+            }
+            return false;
+        }
+        
+        // For /products without query params, only match when no sort parameter
+        if (path === '/products') {
+            return pathname === '/products' && !currentSort;
+        }
+        
         return pathname.startsWith(path);
     };
 
