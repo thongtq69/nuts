@@ -216,7 +216,7 @@ export default function AdminPackagesPage() {
                     }}
                     className={`flex items-center gap-2 px-6 py-3 font-bold rounded-lg shadow-lg transition-all hover:shadow-xl hover:scale-105 ${showForm && !editingId
                         ? 'bg-slate-600 hover:bg-slate-700 text-white'
-                        : 'bg-blue-600 hover:bg-blue-700 text-black'
+                        : 'bg-brand hover:bg-brand-dark text-white'
                         }`}
                 >
                     {showForm && !editingId ? (
@@ -235,10 +235,10 @@ export default function AdminPackagesPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-blue-200 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-brand/30 transition-all hover:shadow-lg hover:-translate-y-1">
                     <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-blue-50">
-                            <PackageIcon className="w-6 h-6 text-blue-600" strokeWidth={2} />
+                        <div className="p-3 rounded-xl bg-brand/10">
+                            <PackageIcon className="w-6 h-6 text-brand" strokeWidth={2} />
                         </div>
                     </div>
                     <div>
@@ -269,10 +269,10 @@ export default function AdminPackagesPage() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-purple-200 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-brand/30 transition-all hover:shadow-lg hover:-translate-y-1">
                     <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-purple-50">
-                            <Users className="w-6 h-6 text-purple-600" strokeWidth={2} />
+                        <div className="p-3 rounded-xl bg-brand/10">
+                            <Users className="w-6 h-6 text-brand" strokeWidth={2} />
                         </div>
                         <div className="flex items-center gap-1 text-emerald-600 text-xs font-semibold bg-emerald-50 px-2 py-1 rounded-full">
                             <TrendingUp size={12} />
@@ -288,10 +288,10 @@ export default function AdminPackagesPage() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-amber-200 transition-all hover:shadow-lg hover:-translate-y-1">
+                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-brand-light/50 transition-all hover:shadow-lg hover:-translate-y-1">
                     <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-amber-50">
-                            <TrendingUp className="w-6 h-6 text-amber-600" strokeWidth={2} />
+                        <div className="p-3 rounded-xl bg-brand-light/30">
+                            <TrendingUp className="w-6 h-6 text-brand-dark" strokeWidth={2} />
                         </div>
                     </div>
                     <div>
@@ -307,7 +307,7 @@ export default function AdminPackagesPage() {
             {/* Create/Edit Form - Collapsible */}
             {showForm && (
                 <div id="create-form" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-fade-in">
-                    <div className={`px-6 py-4 ${editingId ? 'bg-amber-600' : 'bg-blue-600'}`}>
+                    <div className={`px-6 py-4 ${editingId ? 'bg-brand' : 'bg-brand'}`}>
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
                             {editingId ? <Edit2 className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
                             {editingId ? 'Chỉnh sửa Gói Hội Viên' : 'Tạo Gói Hội Viên Mới'}
@@ -321,12 +321,12 @@ export default function AdminPackagesPage() {
                             {/* Basic Info */}
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                    <Tag size={16} className="text-amber-600" />
+                                    <Tag size={16} className="text-brand" />
                                     Tên gói
                                 </label>
                                 <input
                                     type="text"
-                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     required
@@ -341,7 +341,7 @@ export default function AdminPackagesPage() {
                                 </label>
                                 <input
                                     type="number"
-                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
                                     value={formData.price}
                                     onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
                                     required
@@ -352,12 +352,12 @@ export default function AdminPackagesPage() {
 
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                    <Calendar size={16} className="text-blue-600" />
+                                    <Calendar size={16} className="text-brand" />
                                     Thời hạn gói (ngày)
                                 </label>
                                 <input
                                     type="number"
-                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
                                     value={formData.validityDays}
                                     onChange={e => setFormData({ ...formData, validityDays: Number(e.target.value) })}
                                     required
@@ -368,11 +368,11 @@ export default function AdminPackagesPage() {
 
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                    <ShoppingBag size={16} className="text-purple-600" />
+                                    <ShoppingBag size={16} className="text-brand" />
                                     Mô tả gói
                                 </label>
                                 <textarea
-                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all resize-none"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all resize-none"
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                     rows={3}
@@ -388,7 +388,7 @@ export default function AdminPackagesPage() {
                                 <div
                                     contentEditable
                                     suppressContentEditableWarning
-                                    className="w-full min-h-[200px] max-h-[400px] overflow-y-auto px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-white prose prose-sm prose-slate"
+                                    className="w-full min-h-[200px] max-h-[400px] overflow-y-auto px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all bg-white prose prose-sm prose-slate"
                                     onBlur={(e) => {
                                         setFormData({ ...formData, terms: e.currentTarget.innerHTML });
                                     }}
@@ -439,13 +439,13 @@ export default function AdminPackagesPage() {
                         <div className="mt-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                    <Percent className="text-blue-600" size={20} />
+                                    <Percent className="text-brand" size={20} />
                                     Cấu hình Voucher ({isUnlimitedVoucher ? '∞' : vouchers.length} loại)
                                 </h3>
                                 <button
                                     type="button"
                                     onClick={addVoucher}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg transition-all"
+                                    className="flex items-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand font-semibold rounded-lg transition-all"
                                 >
                                     <Plus size={18} />
                                     Thêm loại voucher
@@ -454,7 +454,7 @@ export default function AdminPackagesPage() {
 
                             <div className="space-y-4">
                                 {vouchers.map((voucher, index) => (
-                                    <div key={index} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-5 border-2 border-blue-100 relative">
+                                    <div key={index} className="bg-gradient-to-r from-brand/10 to-brand-light/20 rounded-lg p-5 border-2 border-brand/20 relative">
                                         <div className="flex items-center justify-between mb-4">
                                             <span className="text-sm font-bold text-slate-700 bg-white px-3 py-1 rounded-full">
                                                 Voucher #{index + 1}
@@ -475,7 +475,7 @@ export default function AdminPackagesPage() {
                                                 <label className="block text-xs font-semibold text-slate-600">Số lượng</label>
                                                 <input
                                                     type="number"
-                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all bg-white text-sm"
                                                     value={voucher.quantity}
                                                     onChange={e => updateVoucher(index, 'quantity', Number(e.target.value))}
                                                     required
@@ -486,7 +486,7 @@ export default function AdminPackagesPage() {
                                             <div className="space-y-2">
                                                 <label className="block text-xs font-semibold text-slate-600">Loại giảm</label>
                                                 <select
-                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all bg-white text-sm"
                                                     value={voucher.discountType}
                                                     onChange={e => updateVoucher(index, 'discountType', e.target.value)}
                                                 >
@@ -501,7 +501,7 @@ export default function AdminPackagesPage() {
                                                 </label>
                                                 <input
                                                     type="number"
-                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all bg-white text-sm"
                                                     value={voucher.discountValue}
                                                     onChange={e => updateVoucher(index, 'discountValue', Number(e.target.value))}
                                                     required
@@ -512,7 +512,7 @@ export default function AdminPackagesPage() {
                                                 <label className="block text-xs font-semibold text-slate-600">Giảm tối đa (VND)</label>
                                                 <input
                                                     type="number"
-                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all bg-white text-sm"
                                                     value={voucher.maxDiscount}
                                                     onChange={e => updateVoucher(index, 'maxDiscount', Number(e.target.value))}
                                                     placeholder="0 = không giới hạn"
@@ -523,7 +523,7 @@ export default function AdminPackagesPage() {
                                                 <label className="block text-xs font-semibold text-slate-600">Đơn tối thiểu (VND)</label>
                                                 <input
                                                     type="number"
-                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-sm"
+                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all bg-white text-sm"
                                                     value={voucher.minOrderValue}
                                                     onChange={e => updateVoucher(index, 'minOrderValue', Number(e.target.value))}
                                                 />
@@ -547,8 +547,8 @@ export default function AdminPackagesPage() {
                             <button
                                 type="submit"
                                 className={`px-8 py-3 font-bold rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2 ${editingId
-                                    ? 'bg-amber-500 hover:bg-amber-600 text-black'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-black'
+                                    ? 'bg-brand hover:bg-brand-dark text-white'
+                                    : 'bg-brand hover:bg-brand-dark text-white'
                                     }`}
                                 disabled={loading}
                             >
@@ -620,7 +620,7 @@ export default function AdminPackagesPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-brand to-brand-dark rounded-lg flex items-center justify-center">
                                                 <Tag className="text-white" size={20} />
                                             </div>
                                             <div>
@@ -639,7 +639,7 @@ export default function AdminPackagesPage() {
                                                 UNLIMITED
                                             </div>
                                         ) : (
-                                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
+                                            <div className="inline-flex items-center gap-1 px-3 py-1 bg-brand/10 text-brand rounded-full text-sm font-semibold">
                                                 <Tag size={14} />
                                                 {pkg.voucherQuantity}
                                             </div>
@@ -648,7 +648,7 @@ export default function AdminPackagesPage() {
                                     <td className="px-6 py-4">
                                         <div className="space-y-1 text-sm">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-purple-600">
+                                                <span className="font-semibold text-brand-light">
                                                     {pkg.discountValue}{pkg.discountType === 'percent' ? '%' : 'đ'}
                                                 </span>
                                                 {pkg.maxDiscount > 0 && (
@@ -687,7 +687,7 @@ export default function AdminPackagesPage() {
                                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center justify-center gap-2">
                                             <button
-                                                className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                                className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
                                                 title="Nhân bản"
                                                 onClick={() => {
                                                     setFormData({

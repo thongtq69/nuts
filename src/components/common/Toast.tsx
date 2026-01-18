@@ -33,9 +33,9 @@ const toastColors = {
         border: '#dc2626',
     },
     warning: {
-        bg: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+        bg: 'linear-gradient(135deg, #9C7043 0%, #7d5a36 100%)',
         icon: '#fff',
-        border: '#d97706',
+        border: '#7d5a36',
     },
     info: {
         bg: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',

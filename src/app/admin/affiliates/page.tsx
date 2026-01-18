@@ -48,7 +48,7 @@ export default function AdminAffiliatesPage() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                                         <div className="flex justify-center items-center gap-2">
-                                            <div className="w-4 h-4 border-2 border-slate-300 border-t-amber-500 rounded-full animate-spin"></div>
+                                            <div className="w-4 h-4 border-2 border-slate-300 border-t-brand rounded-full animate-spin"></div>
                                             Đang tải dữ liệu...
                                         </div>
                                     </td>
@@ -74,7 +74,7 @@ export default function AdminAffiliatesPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-xs">
+                                                <div className="w-8 h-8 rounded-full bg-brand-light/30 text-brand-dark flex items-center justify-center font-bold text-xs">
                                                     {aff.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="font-medium text-slate-900">{aff.name}</div>
@@ -95,7 +95,7 @@ export default function AdminAffiliatesPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand/10 text-brand border border-brand/20">
                                                 <Tag size={12} />
                                                 {aff.referralCode}
                                             </span>

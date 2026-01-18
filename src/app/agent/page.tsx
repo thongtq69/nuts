@@ -69,24 +69,24 @@ export default function AgentDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                     <h3 className="text-gray-500 text-sm font-medium">Số dư ví</h3>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-2xl font-bold text-brand">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats?.walletBalance || 0)}
                     </p>
-                    <button className="mt-4 text-sm text-green-700 font-medium hover:underline">
+                    <button className="mt-4 text-sm text-brand font-medium hover:underline">
                         Yêu cầu rút tiền
                     </button>
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                     <h3 className="text-gray-500 text-sm font-medium">Tổng thu nhập</h3>
-                    <p className="text-2xl font-bold text-blue-600">
+                    <p className="text-2xl font-bold text-brand">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats?.totalCommission || 0)}
                     </p>
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                     <h3 className="text-gray-500 text-sm font-medium">Đơn hàng giới thiệu</h3>
-                    <p className="text-2xl font-bold text-orange-600">{stats?.totalReferrals || 0}</p>
+                    <p className="text-2xl font-bold text-brand-light">{stats?.totalReferrals || 0}</p>
                 </div>
             </div>
 
@@ -109,7 +109,7 @@ export default function AgentDashboard() {
                             />
                             <button
                                 onClick={copyLink}
-                                className="bg-blue-600 text-white px-4 py-2 text-sm rounded-r-md hover:bg-blue-700 transition-colors"
+                                className="bg-brand text-white px-4 py-2 text-sm rounded-r-md hover:bg-brand/90 transition-colors"
                             >
                                 Sao chép
                             </button>
@@ -141,13 +141,13 @@ export default function AgentDashboard() {
                                         <td className="px-6 py-4 font-medium">#{order._id.slice(-6).toUpperCase()}</td>
                                         <td className="px-6 py-4">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
                                         <td className="px-6 py-4">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount)}</td>
-                                        <td className="px-6 py-4 font-bold text-green-600">
+                                        <td className="px-6 py-4 font-bold text-brand">
                                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.commissionAmount)}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${order.commissionStatus === 'approved' ? 'bg-green-100 text-green-800' :
                                                     order.commissionStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                        'bg-yellow-100 text-yellow-800'
+                                                        'bg-brand-light/30 text-gray-700'
                                                 }`}>
                                                 {order.commissionStatus === 'approved' ? 'Đã nhận' :
                                                     order.commissionStatus === 'cancelled' ? 'Đã hủy' : 'Chờ duyệt'}

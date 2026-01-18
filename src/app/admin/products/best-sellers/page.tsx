@@ -110,7 +110,7 @@ export default function BestSellersPage() {
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
                 </div>
             </div>
         );
@@ -122,7 +122,7 @@ export default function BestSellersPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <TrendingUp className="h-5 w-5" />
                         </div>
                         Sản phẩm Bán chạy
@@ -133,7 +133,7 @@ export default function BestSellersPage() {
                 </div>
                 <Link
                     href="/admin/products/new"
-                    className="inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                    className="inline-flex items-center gap-2 bg-brand/10 hover:bg-brand/20 text-brand px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                 >
                     <Plus size={18} />
                     Thêm Sản phẩm
@@ -149,7 +149,7 @@ export default function BestSellersPage() {
                         placeholder="Tìm kiếm sản phẩm..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-slate-800 dark:text-slate-200"
+                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-slate-800 dark:text-slate-200"
                     />
                 </div>
             </div>
@@ -158,7 +158,7 @@ export default function BestSellersPage() {
             <div className="glass-card">
                 <div className="p-6 border-b border-slate-200">
                     <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                        <Crown className="h-5 w-5 text-blue-600" />
+                        <Crown className="h-5 w-5 text-brand" />
                         Sản phẩm Bán chạy hiện tại ({filteredProducts.length})
                     </h3>
                     <p className="text-sm text-slate-600 mt-1">Những sản phẩm đang hiển thị trong section "Sản phẩm bán chạy" trên trang chủ</p>
@@ -181,8 +181,8 @@ export default function BestSellersPage() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center">
-                                                <TrendingUp className="w-8 h-8 text-blue-500" />
+                                            <div className="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center">
+                                                <TrendingUp className="w-8 h-8 text-brand" />
                                             </div>
                                             <p className="text-slate-500">Chưa có sản phẩm bán chạy nào</p>
                                         </div>
@@ -193,7 +193,7 @@ export default function BestSellersPage() {
                                     <tr key={product._id} className="hover:bg-slate-50 transition-colors">
                                         <td className="text-center font-semibold text-slate-500 text-sm">
                                             <div className="flex items-center justify-center gap-1">
-                                                <Crown className="w-4 h-4 text-blue-500" />
+                                                <Crown className="w-4 h-4 text-brand" />
                                                 {index + 1}
                                             </div>
                                         </td>
@@ -204,7 +204,7 @@ export default function BestSellersPage() {
                                                     alt={product.name}
                                                     className="w-full h-full object-contain"
                                                 />
-                                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-brand rounded-full flex items-center justify-center">
                                                     <Star className="w-3 h-3 text-white" />
                                                 </div>
                                             </div>
@@ -223,7 +223,7 @@ export default function BestSellersPage() {
                                             </span>
                                         </td>
                                         <td className="text-right">
-                                            <span className="font-bold text-lg text-blue-600">
+                                            <span className="font-bold text-lg text-brand">
                                                 {product.currentPrice.toLocaleString()}đ
                                             </span>
                                         </td>
@@ -315,7 +315,7 @@ export default function BestSellersPage() {
                                             </span>
                                         </td>
                                         <td className="text-right">
-                                            <span className="font-bold text-lg text-amber-600">
+                                            <span className="font-bold text-lg text-brand">
                                                 {product.currentPrice.toLocaleString()}đ
                                             </span>
                                         </td>
@@ -326,10 +326,10 @@ export default function BestSellersPage() {
                                             <button
                                                 onClick={() => handleAddToBestSeller(product._id)}
                                                 disabled={updating === product._id}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-brand/10 hover:bg-brand/20 text-brand rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                                             >
                                                 {updating === product._id ? (
-                                                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                                    <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
                                                 ) : (
                                                     <Eye size={14} />
                                                 )}

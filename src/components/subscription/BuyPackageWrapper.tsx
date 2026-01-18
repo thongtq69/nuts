@@ -80,7 +80,7 @@ export default function BuyPackageWrapper({ packages }: Props) {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-4 border-brand/30 border-t-brand rounded-full animate-spin"></div>
                 <span className="ml-3 text-slate-600">Đang xử lý...</span>
             </div>
         );

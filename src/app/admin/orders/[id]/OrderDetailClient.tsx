@@ -65,9 +65,9 @@ interface OrderDetailProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
-    pending: { label: 'Chờ xử lý', color: 'text-amber-700', bgColor: 'bg-amber-100', icon: Clock },
-    confirmed: { label: 'Đã xác nhận', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: CheckCircle },
-    shipping: { label: 'Đang giao', color: 'text-purple-700', bgColor: 'bg-purple-100', icon: Truck },
+    pending: { label: 'Chờ xử lý', color: 'text-brand-dark', bgColor: 'bg-brand-light/30', icon: Clock },
+    confirmed: { label: 'Đã xác nhận', color: 'text-brand', bgColor: 'bg-brand/10', icon: CheckCircle },
+    shipping: { label: 'Đang giao', color: 'text-brand-light', bgColor: 'bg-brand-light/50', icon: Truck },
     completed: { label: 'Hoàn thành', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle },
     paid: { label: 'Đã thanh toán', color: 'text-emerald-700', bgColor: 'bg-emerald-100', icon: CheckCircle },
     cancelled: { label: 'Đã hủy', color: 'text-red-700', bgColor: 'bg-red-100', icon: XCircle },
@@ -335,7 +335,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                                     <button
                                         onClick={() => handleStatusChange('confirmed')}
                                         disabled={isUpdating}
-                                        className="flex items-center gap-2 px-4 py-2 bg-blue-200 hover:bg-blue-300 text-blue-900 font-medium rounded-lg transition-colors disabled:opacity-50"
+                                        className="flex items-center gap-2 px-4 py-2 bg-brand/20 hover:bg-brand/30 text-brand-dark font-medium rounded-lg transition-colors disabled:opacity-50"
                                     >
                                         <CheckCircle size={18} />
                                         Xác nhận đơn
@@ -354,7 +354,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                                 <button
                                     onClick={() => handleStatusChange('shipping')}
                                     disabled={isUpdating}
-                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                                    className="flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-dark text-white font-medium rounded-lg transition-colors disabled:opacity-50"
                                 >
                                     <Truck size={18} />
                                     Bắt đầu giao hàng
@@ -443,7 +443,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                                 )}
                                 <div className="flex justify-between text-xl font-bold text-slate-800 pt-3 border-t border-slate-200">
                                     <span>Tổng cộng</span>
-                                    <span className="text-amber-600">{order.totalAmount.toLocaleString('vi-VN')}đ</span>
+                                    <span className="text-brand">{order.totalAmount.toLocaleString('vi-VN')}đ</span>
                                 </div>
                             </div>
                         </div>
@@ -451,7 +451,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
 
                     {/* Note */}
                     {order.note && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
+                        <div className="bg-brand-light/20 border border-brand-light/40 rounded-xl p-6">
                             <div className="flex items-start gap-3">
                                 <MessageSquare className="text-amber-600 mt-1" size={20} />
                                 <div>

@@ -110,7 +110,7 @@ export default function NewProductsPage() {
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
                 </div>
             </div>
         );
@@ -122,7 +122,7 @@ export default function NewProductsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-green-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
                             <Sparkles className="h-5 w-5" />
                         </div>
                         Sản phẩm Mới
@@ -133,7 +133,7 @@ export default function NewProductsPage() {
                 </div>
                 <Link
                     href="/admin/products/new"
-                    className="inline-flex items-center gap-2 bg-green-100 hover:bg-green-200 text-green-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                    className="inline-flex items-center gap-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                 >
                     <Plus size={18} />
                     Thêm Sản phẩm
@@ -149,7 +149,7 @@ export default function NewProductsPage() {
                         placeholder="Tìm kiếm sản phẩm..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all text-slate-800 dark:text-slate-200"
+                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-slate-800 dark:text-slate-200"
                     />
                 </div>
             </div>
@@ -158,7 +158,7 @@ export default function NewProductsPage() {
             <div className="glass-card">
                 <div className="p-6 border-b border-slate-200">
                     <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                        <Star className="h-5 w-5 text-green-600" />
+                        <Star className="h-5 w-5 text-emerald-600" />
                         Sản phẩm Mới hiện tại ({filteredProducts.length})
                     </h3>
                     <p className="text-sm text-slate-600 mt-1">Những sản phẩm đang hiển thị trong section "Sản phẩm mới" trên trang chủ</p>
@@ -181,8 +181,8 @@ export default function NewProductsPage() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center">
-                                                <Sparkles className="w-8 h-8 text-green-500" />
+                                            <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center">
+                                                <Sparkles className="w-8 h-8 text-emerald-500" />
                                             </div>
                                             <p className="text-slate-500">Chưa có sản phẩm mới nào</p>
                                         </div>
@@ -217,7 +217,7 @@ export default function NewProductsPage() {
                                             </span>
                                         </td>
                                         <td className="text-right">
-                                            <span className="font-bold text-lg text-green-600">
+                                            <span className="font-bold text-lg text-emerald-600">
                                                 {product.currentPrice.toLocaleString()}đ
                                             </span>
                                         </td>
@@ -309,7 +309,7 @@ export default function NewProductsPage() {
                                             </span>
                                         </td>
                                         <td className="text-right">
-                                            <span className="font-bold text-lg text-amber-600">
+                                            <span className="font-bold text-lg text-brand">
                                                 {product.currentPrice.toLocaleString()}đ
                                             </span>
                                         </td>
@@ -320,10 +320,10 @@ export default function NewProductsPage() {
                                             <button
                                                 onClick={() => handleAddToNew(product._id)}
                                                 disabled={updating === product._id}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                                             >
                                                 {updating === product._id ? (
-                                                    <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                                                    <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
                                                 ) : (
                                                     <Eye size={14} />
                                                 )}

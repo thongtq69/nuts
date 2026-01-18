@@ -200,7 +200,7 @@ export default function AdminBannersPage() {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
                     <div className="text-slate-600 font-medium">Đang tải...</div>
                 </div>
             </div>
@@ -217,7 +217,7 @@ export default function AdminBannersPage() {
                 </div>
                 <button
                     onClick={() => openModal()}
-                    className="flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-black font-bold rounded-lg shadow-lg hover:!bg-blue-700 transition-all hover:shadow-xl hover:scale-105"
+                    className="flex items-center gap-2 px-6 py-3 !bg-brand !text-white font-bold rounded-lg shadow-lg hover:!bg-brand-dark transition-all hover:shadow-xl hover:scale-105"
                 >
                     <Plus size={22} strokeWidth={2.5} />
                     <span className="text-base">Thêm Banner</span>
@@ -226,10 +226,10 @@ export default function AdminBannersPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-blue-200 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-brand/30 hover:shadow-lg hover:-translate-y-1 transition-all">
                     <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-blue-50">
-                            <ImageIcon className="w-6 h-6 text-blue-600" strokeWidth={2} />
+                        <div className="p-3 rounded-xl bg-brand/10">
+                            <ImageIcon className="w-6 h-6 text-brand" strokeWidth={2} />
                         </div>
                     </div>
                     <div>
@@ -250,10 +250,10 @@ export default function AdminBannersPage() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-amber-200 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-brand-light/50 hover:shadow-lg hover:-translate-y-1 transition-all">
                     <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-amber-50">
-                            <EyeOff className="w-6 h-6 text-amber-600" strokeWidth={2} />
+                        <div className="p-3 rounded-xl bg-brand-light/30">
+                            <EyeOff className="w-6 h-6 text-brand-dark" strokeWidth={2} />
                         </div>
                     </div>
                     <div>
@@ -262,10 +262,10 @@ export default function AdminBannersPage() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-purple-200 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-brand/30 hover:shadow-lg hover:-translate-y-1 transition-all">
                     <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-purple-50">
-                            <TrendingUp className="w-6 h-6 text-purple-600" strokeWidth={2} />
+                        <div className="p-3 rounded-xl bg-brand/10">
+                            <TrendingUp className="w-6 h-6 text-brand" strokeWidth={2} />
                         </div>
                     </div>
                     <div>
@@ -314,7 +314,7 @@ export default function AdminBannersPage() {
 
                         {/* Content */}
                         <div className="p-5">
-                            <h3 className="font-bold text-slate-800 text-lg mb-2 line-clamp-1 group-hover:text-amber-600 transition-colors">
+                            <h3 className="font-bold text-slate-800 text-lg mb-2 line-clamp-1 group-hover:text-brand transition-colors">
                                 {banner.title}
                             </h3>
 
@@ -338,7 +338,7 @@ export default function AdminBannersPage() {
                                 </button>
                                 <button
                                     onClick={() => openModal(banner)}
-                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
                                     title="Chỉnh sửa"
                                 >
                                     <Edit2 size={18} />
@@ -368,7 +368,7 @@ export default function AdminBannersPage() {
                             <p className="text-slate-500 mb-6">Thêm banner đầu tiên để hiển thị trên trang chủ</p>
                             <button
                                 onClick={() => openModal()}
-                                className="inline-flex items-center gap-2 px-6 py-3 !bg-blue-600 !text-black font-bold rounded-lg hover:!bg-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                                className="inline-flex items-center gap-2 px-6 py-3 !bg-brand !text-white font-bold rounded-lg hover:!bg-brand-dark transition-all shadow-lg hover:shadow-xl hover:scale-105"
                             >
                                 <Plus size={22} strokeWidth={2.5} />
                                 <span className="text-base">Tạo banner đầu tiên</span>
@@ -383,7 +383,7 @@ export default function AdminBannersPage() {
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeModal}>
                     <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
                         {/* Modal Header */}
-                        <div className="!bg-blue-600 px-6 py-4 flex items-center justify-between">
+                        <div className="!bg-brand px-6 py-4 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                 <ImageIcon size={24} />
                                 {editingBanner ? 'Chỉnh sửa Banner' : 'Thêm Banner mới'}
@@ -398,7 +398,7 @@ export default function AdminBannersPage() {
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                        <ImageIcon size={16} className="text-amber-600" />
+                                        <ImageIcon size={16} className="text-brand" />
                                         Tiêu đề Banner
                                     </label>
                                     <input
@@ -406,22 +406,22 @@ export default function AdminBannersPage() {
                                         value={formData.title}
                                         onChange={e => setFormData({ ...formData, title: e.target.value })}
                                         required
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
                                         placeholder="Nhập tiêu đề banner..."
                                     />
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                        <ImageIcon size={16} className="text-blue-600" />
+                                        <ImageIcon size={16} className="text-brand" />
                                         Hình ảnh Banner
                                     </label>
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                                        <div className="flex items-center gap-2 text-blue-700 text-sm">
+                                    <div className="bg-brand/10 border border-brand/20 rounded-lg p-3 mb-3">
+                                        <div className="flex items-center gap-2 text-brand-dark text-sm">
                                             <span className="font-medium">💡 Khuyến nghị:</span>
                                             <span>Tỉ lệ 3:1 (VD: 2000x667px) để hiển thị tốt nhất</span>
                                         </div>
-                                        <div className="text-blue-600 text-xs mt-1">
+                                        <div className="text-brand text-xs mt-1">
                                             Ảnh sẽ được tự động cắt và điều chỉnh về đúng tỉ lệ
                                         </div>
                                     </div>
@@ -429,7 +429,7 @@ export default function AdminBannersPage() {
                                     {/* Upload Button */}
                                     <div className="flex gap-3">
                                         <label className="flex-1 cursor-pointer">
-                                            <div className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg border-2 border-blue-200 transition-all">
+                                                <div className="flex items-center justify-center gap-2 px-4 py-3 bg-brand/10 hover:bg-brand/20 text-brand font-medium rounded-lg border-2 border-brand/20 transition-all">
                                                 <ImageIcon size={18} />
                                                 <span>Chọn ảnh từ thiết bị</span>
                                             </div>
@@ -448,7 +448,7 @@ export default function AdminBannersPage() {
                                                     setCropperImageUrl(formData.imageUrl);
                                                     setShowCropper(true);
                                                 }}
-                                                className="px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium rounded-lg border-2 border-orange-200 transition-all flex items-center gap-2"
+                                                className="px-4 py-3 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark font-medium rounded-lg border-2 border-brand-light/50 transition-all flex items-center gap-2"
                                             >
                                                 <Crop size={18} />
                                                 <span>Chỉnh sửa</span>
@@ -463,7 +463,7 @@ export default function AdminBannersPage() {
                                             type="url"
                                             value={formData.imageUrl}
                                             onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
                                             placeholder="https://example.com/banner.jpg"
                                         />
                                     </div>
@@ -490,14 +490,14 @@ export default function AdminBannersPage() {
 
                                 <div className="space-y-2">
                                     <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                        <LinkIcon size={16} className="text-purple-600" />
+                                        <LinkIcon size={16} className="text-brand" />
                                         Link đích (tùy chọn)
                                     </label>
                                     <input
                                         type="url"
                                         value={formData.link}
                                         onChange={e => setFormData({ ...formData, link: e.target.value })}
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
                                         placeholder="https://example.com/promotion"
                                     />
                                     <p className="text-xs text-slate-500">Link khi người dùng click vào banner</p>
@@ -514,7 +514,7 @@ export default function AdminBannersPage() {
                                             value={formData.order}
                                             onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) })}
                                             min="0"
-                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
                                         />
                                     </div>
 
@@ -526,7 +526,7 @@ export default function AdminBannersPage() {
                                         <select
                                             value={formData.isActive ? 'active' : 'inactive'}
                                             onChange={e => setFormData({ ...formData, isActive: e.target.value === 'active' })}
-                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
                                         >
                                             <option value="active">Hiển thị</option>
                                             <option value="inactive">Ẩn</option>
@@ -546,7 +546,7 @@ export default function AdminBannersPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-6 py-3 !bg-blue-600 !text-black hover:!bg-blue-700 font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
+                                    className="flex-1 px-6 py-3 !bg-brand !text-white hover:!bg-brand-dark font-semibold rounded-lg shadow-md transition-all hover:shadow-lg"
                                 >
                                     {editingBanner ? 'Cập nhật' : 'Thêm Banner'}
                                 </button>
@@ -558,7 +558,7 @@ export default function AdminBannersPage() {
 
             {/* Auto-cropper notification */}
             {showCropperMessage && (
-                <div className="fixed top-4 right-4 z-40 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in">
+                <div className="fixed top-4 right-4 z-40 bg-brand text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in">
                     <Crop className="w-5 h-5" />
                     <span className="font-medium">Ảnh sẽ được tự động cắt về tỉ lệ 3:1</span>
                 </div>

@@ -50,25 +50,50 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Người dùng không tồn tại' }, { status: 404 });
         }
 
-        // Affiliate Tracking
+        // Affiliate Tracking - 2-level system
         const refCode = cookieStore.get('gonuts_ref')?.value;
         let referrerId: any = user?.referrer;
+        let staffId: any = undefined;
 
         if (refCode && !referrerId) {
             const refUser = await User.findOne({ referralCode: refCode });
             if (refUser && refUser._id.toString() !== userId) {
                 referrerId = refUser._id;
+
+                // If referrer is collaborator, get their parent staff
+                if (refUser.affiliateLevel === 'collaborator' && refUser.parentStaff) {
+                    staffId = refUser.parentStaff;
+                }
             }
         }
 
-        // Commission Calculation
+        // Commission Calculation - 2-level system
         let commissionAmount = 0;
         let commissionStatus: any = undefined;
 
         if (referrerId) {
             const settings = await AffiliateSettings.findOne();
-            const rate = user?.commissionRateOverride ?? settings?.defaultCommissionRate ?? 10;
-            commissionAmount = Math.round(pkg.price * (rate / 100));
+            const defaultRate = settings?.defaultCommissionRate ?? 10;
+
+            const referrerUser = await User.findById(referrerId);
+            let referrerRate = referrerUser?.commissionRateOverride ?? defaultRate;
+            let staffRate = 0;
+
+            // If referrer is collaborator, get staff commission rate
+            if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
+                const staffUser = await User.findById(staffId);
+                staffRate = staffUser?.staffCommissionRate ?? 2;
+            }
+
+            if (referrerUser?.affiliateLevel === 'collaborator') {
+                // Collaborator gets commission + Staff gets override commission
+                const collabCommission = Math.round(pkg.price * (referrerRate / 100));
+                const staffCommission = Math.round(pkg.price * (staffRate / 100));
+                commissionAmount = collabCommission + staffCommission;
+            } else {
+                // Staff or regular referrer gets full commission
+                commissionAmount = Math.round(pkg.price * (referrerRate / 100));
+            }
             commissionStatus = 'pending';
         }
 
@@ -129,19 +154,77 @@ export async function POST(req: Request) {
 
         await UserVoucher.insertMany(vouchersToCreate);
 
-        // Create Commission Record if applicable
+        // Create Commission Records - Support 2-level system
+        const commissionRecords = [];
         if (commissionAmount > 0 && referrerId) {
-            const comm = await AffiliateCommission.create({
-                affiliateId: referrerId,
-                orderId: order._id,
-                orderValue: pkg.price,
-                commissionRate: user?.commissionRateOverride ?? 10,
-                commissionAmount,
-                status: 'pending',
-                note: 'Hoa hồng mua gói hội viên'
-            });
+            const referrerUser = await User.findById(referrerId);
+            const settings = await AffiliateSettings.findOne();
+            const defaultRate = settings?.defaultCommissionRate ?? 10;
 
-            await Order.findByIdAndUpdate(order._id, { commissionId: comm._id });
+            if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
+                // Create commission for collaborator
+                const collabRate = referrerUser?.commissionRateOverride ?? defaultRate;
+                const collabCommission = Math.round(pkg.price * (collabRate / 100));
+
+                const collabComm = await AffiliateCommission.create({
+                    affiliateId: referrerId,
+                    orderId: order._id,
+                    orderValue: pkg.price,
+                    commissionRate: collabRate,
+                    commissionAmount: collabCommission,
+                    status: 'pending',
+                    note: 'Collaborator commission - Membership package'
+                });
+                commissionRecords.push(collabComm);
+
+                // Create commission for staff (override from collaborator)
+                const staffUser = await User.findById(staffId);
+                const staffRate = staffUser?.staffCommissionRate ?? 2;
+                const staffCommission = Math.round(pkg.price * (staffRate / 100));
+
+                const staffComm = await AffiliateCommission.create({
+                    affiliateId: staffId,
+                    orderId: order._id,
+                    orderValue: pkg.price,
+                    commissionRate: staffRate,
+                    commissionAmount: staffCommission,
+                    status: 'pending',
+                    note: 'Staff override commission from collaborator - Membership package'
+                });
+                commissionRecords.push(staffComm);
+            } else {
+                // Single level commission (staff or regular referrer)
+                const rate = referrerUser?.commissionRateOverride ?? defaultRate;
+
+                const comm = await AffiliateCommission.create({
+                    affiliateId: referrerId,
+                    orderId: order._id,
+                    orderValue: pkg.price,
+                    commissionRate: rate,
+                    commissionAmount: commissionAmount,
+                    status: 'pending',
+                    note: 'Hoa hồng mua gói hội viên'
+                });
+                commissionRecords.push(comm);
+            }
+
+            // Update order with first commission ID
+            if (commissionRecords.length > 0) {
+                await Order.findByIdAndUpdate(order._id, { commissionId: commissionRecords[0]._id });
+            }
+
+            // Auto-approve commissions for membership orders
+            for (const comm of commissionRecords) {
+                comm.status = 'approved';
+                await comm.save();
+
+                const affiliate = await User.findById(comm.affiliateId);
+                if (affiliate) {
+                    affiliate.walletBalance = (affiliate.walletBalance || 0) + comm.commissionAmount;
+                    affiliate.totalCommission = (affiliate.totalCommission || 0) + comm.commissionAmount;
+                    await affiliate.save();
+                }
+            }
         }
 
         return NextResponse.json({

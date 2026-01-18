@@ -25,9 +25,9 @@ interface Commission {
 }
 
 const statusConfig = {
-    pending: { label: 'Chờ duyệt', class: 'bg-amber-100 text-amber-700', icon: Clock },
-    approved: { label: 'Đã duyệt', class: 'bg-blue-100 text-blue-700', icon: CheckCircle },
-    paid: { label: 'Đã thanh toán', class: 'bg-emerald-100 text-emerald-700', icon: CheckCircle },
+    pending: { label: 'Chờ duyệt', class: 'bg-brand-light/30 text-gray-700', icon: Clock },
+    approved: { label: 'Đã duyệt', class: 'bg-brand/10 text-brand', icon: CheckCircle },
+    paid: { label: 'Đã thanh toán', class: 'bg-green-100 text-green-700', icon: CheckCircle },
     rejected: { label: 'Từ chối', class: 'bg-red-100 text-red-700', icon: XCircle },
 };
 
@@ -104,11 +104,11 @@ export default function CommissionsPage() {
 
                 <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-amber-600" />
+                        <div className="w-10 h-10 rounded-lg bg-brand-light/30 flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-gray-700" />
                         </div>
                     </div>
-                    <div className="text-2xl font-bold text-amber-600 mb-1">
+                    <div className="text-2xl font-bold text-brand mb-1">
                         {totalPending.toLocaleString('vi-VN')}đ
                     </div>
                     <div className="text-sm text-slate-500">Chờ duyệt</div>
@@ -116,11 +116,11 @@ export default function CommissionsPage() {
 
                 <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                            <Calendar className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center">
+                            <Calendar className="w-5 h-5 text-brand" />
                         </div>
                     </div>
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                    <div className="text-2xl font-bold text-brand mb-1">
                         {commissions.length}
                     </div>
                     <div className="text-sm text-slate-500">Tổng giao dịch</div>
@@ -140,14 +140,14 @@ export default function CommissionsPage() {
                         { value: 'approved', label: 'Đã duyệt' },
                         { value: 'paid', label: 'Đã thanh toán' },
                     ].map((option) => (
-                        <button
-                            key={option.value}
-                            onClick={() => setFilterStatus(option.value)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterStatus === option.value
-                                    ? 'bg-blue-600 text-white'
+                            <button
+                                key={option.value}
+                                onClick={() => setFilterStatus(option.value)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterStatus === option.value
+                                    ? 'bg-brand text-white'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
-                        >
+                            >
                             {option.label}
                         </button>
                     ))}
@@ -172,7 +172,7 @@ export default function CommissionsPage() {
                             {loading ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center">
-                                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
+                                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand" />
                                     </td>
                                 </tr>
                             ) : filteredCommissions.length === 0 ? (
@@ -204,7 +204,7 @@ export default function CommissionsPage() {
                                                 {commission.orderValue.toLocaleString('vi-VN')}đ
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm font-medium">
+                                                <span className="bg-brand/10 text-brand px-2 py-1 rounded text-sm font-medium">
                                                     {commission.commissionRate}%
                                                 </span>
                                             </td>

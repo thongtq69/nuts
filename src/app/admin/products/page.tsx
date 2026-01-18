@@ -56,7 +56,7 @@ export default function AdminProductsPage() {
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
                 </div>
             </div>
         );
@@ -69,7 +69,7 @@ export default function AdminProductsPage() {
                     <p className="text-red-500">Error: {error}</p>
                     <button 
                         onClick={fetchProducts}
-                        className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+                        className="mt-4 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark"
                     >
                         Retry
                     </button>
@@ -84,7 +84,7 @@ export default function AdminProductsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <Package className="h-5 w-5" />
                         </div>
                         Quản lý Sản phẩm
@@ -95,7 +95,7 @@ export default function AdminProductsPage() {
                 </div>
                 <Link
                     href="/admin/products/new"
-                    className="inline-flex items-center gap-2 bg-amber-200 hover:bg-amber-300 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                    className="inline-flex items-center gap-2 bg-brand-light hover:bg-brand-light/80 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                 >
                     <PlusCircle size={18} />
                     Thêm Sản phẩm Mới
@@ -109,7 +109,7 @@ export default function AdminProductsPage() {
                     <input
                         type="text"
                         placeholder="Tìm kiếm sản phẩm..."
-                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-slate-800 dark:text-slate-200"
+                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-slate-800 dark:text-slate-200"
                     />
                 </div>
                 <div className="flex gap-2">
@@ -118,7 +118,7 @@ export default function AdminProductsPage() {
                         Lọc
                     </button>
                     <div className="flex border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                        <button className="px-3 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-r border-slate-200 dark:border-slate-700">
+                        <button className="px-3 py-2.5 bg-brand-light/20 dark:bg-brand-light/10 text-brand border-r border-slate-200 dark:border-slate-700">
                             <List size={18} />
                         </button>
                         <button className="px-3 py-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
@@ -153,7 +153,7 @@ export default function AdminProductsPage() {
                                                 <Package className="w-8 h-8 text-slate-400" />
                                             </div>
                                             <p className="text-slate-500 dark:text-slate-400">Chưa có sản phẩm nào</p>
-                                            <Link href="/admin/products/new" className="text-amber-600 hover:text-amber-700 font-medium text-sm">
+                                            <Link href="/admin/products/new" className="text-brand hover:text-brand-dark font-medium text-sm">
                                                 + Thêm sản phẩm đầu tiên
                                             </Link>
                                         </div>
@@ -170,7 +170,7 @@ export default function AdminProductsPage() {
                                             {index + 1}
                                         </td>
                                         <td>
-                                            <div className="h-14 w-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800 p-1.5 group-hover:border-amber-300 transition-colors">
+                                            <div className="h-14 w-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800 p-1.5 group-hover:border-brand transition-colors">
                                                 <img
                                                     src={product.image}
                                                     alt={product.name}
@@ -179,7 +179,7 @@ export default function AdminProductsPage() {
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="font-semibold text-slate-800 dark:text-white group-hover:text-amber-600 transition-colors">
+                                            <div className="font-semibold text-slate-800 dark:text-white group-hover:text-brand transition-colors">
                                                 {product.name}
                                             </div>
                                             <div className="text-xs text-slate-400 font-mono">
@@ -195,7 +195,7 @@ export default function AdminProductsPage() {
                                             {product.originalPrice?.toLocaleString()}đ
                                         </td>
                                         <td className="text-right">
-                                            <span className="font-bold text-lg text-amber-600">
+                                            <span className="font-bold text-lg text-brand">
                                                 {product.currentPrice.toLocaleString()}đ
                                             </span>
                                         </td>

@@ -81,7 +81,7 @@ export default function CloudinaryManagementPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <Cloud className="h-5 w-5" />
                         </div>
                         Quản lý Cloudinary
@@ -92,7 +92,7 @@ export default function CloudinaryManagementPage() {
                 </div>
                 <button
                     onClick={testCloudinaryConnection}
-                    className="inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2.5 rounded-xl font-medium transition-all"
+                    className="inline-flex items-center gap-2 bg-brand/10 hover:bg-brand/20 text-brand px-4 py-2.5 rounded-xl font-medium transition-all"
                 >
                     <RefreshCw className="h-4 w-4" />
                     Test Kết Nối
@@ -185,7 +185,7 @@ export default function CloudinaryManagementPage() {
                                         href={uploadResult.url} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="text-blue-600 hover:underline max-w-xs truncate"
+                                        className="text-brand hover:underline max-w-xs truncate"
                                     >
                                         {uploadResult.url}
                                     </a>

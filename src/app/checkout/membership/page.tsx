@@ -159,7 +159,7 @@ function MembershipCheckoutContent() {
                             ></textarea>
                         </div>
 
-                        <div className="bg-blue-50 p-4 rounded mb-6 text-sm text-blue-800">
+                        <div className="bg-brand-light/20 p-4 rounded mb-6 text-sm text-gray-800">
                             <strong>Phương thức thanh toán:</strong> COD / Chuyển khoản.<br />
                             Nhân viên sẽ liên hệ xác nhận và hướng dẫn thanh toán. Tài khoản sẽ được kích hoạt sau khi thanh toán thành công.
                         </div>
@@ -167,7 +167,7 @@ function MembershipCheckoutContent() {
                         <button
                             type="submit"
                             disabled={isProcessing}
-                            className="w-full bg-amber-600 text-black font-bold py-3 rounded hover:bg-amber-700 transition disabled:bg-gray-400"
+                            className="w-full bg-brand text-white font-bold py-3 rounded hover:bg-brand/90 transition disabled:bg-gray-400"
                         >
                             {isProcessing ? 'Đang xử lý...' : `Xác nhận đăng ký - ${new Intl.NumberFormat('vi-VN').format(pkg.price)}đ`}
                         </button>
@@ -182,7 +182,7 @@ function MembershipCheckoutContent() {
                             <div className="font-bold text-lg">{pkg.name}</div>
                             <div className="text-sm text-gray-600">Thời hạn: {pkg.validityDays} ngày</div>
                         </div>
-                        <div className="font-bold text-amber-600 text-xl">
+                        <div className="font-bold text-brand text-xl">
                             {new Intl.NumberFormat('vi-VN').format(pkg.price)}đ
                         </div>
                     </div>

@@ -89,7 +89,7 @@ async function getStats() {
 
     const statusData = [
         { name: 'Hoàn thành', value: completedOrders, color: '#10b981' },
-        { name: 'Chờ xử lý', value: pendingOrders, color: '#f59e0b' },
+        { name: 'Chờ xử lý', value: pendingOrders, color: '#9C7043' },
         { name: 'Hủy', value: cancelledOrders, color: '#ef4444' },
     ];
 
@@ -159,8 +159,8 @@ export default async function AdminDashboard() {
             <div className="welcome-banner animate-fade-in">
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-5 h-5 text-amber-400" />
-                        <span className="text-amber-400 font-semibold text-sm">Xin chào!</span>
+                        <Sparkles className="w-5 h-5 text-brand-light" />
+                        <span className="text-brand-light font-semibold text-sm">Xin chào!</span>
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-bold mb-2">
                         Chào mừng trở lại, Admin 👋
@@ -172,7 +172,7 @@ export default async function AdminDashboard() {
                 </div>
                 <div className="flex items-center gap-3 mt-6 relative z-10">
                     <Link href="/admin/orders">
-                        <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black shadow-lg shadow-amber-500/25">
+                        <Button size="sm" className="bg-brand hover:bg-brand-dark text-white shadow-lg shadow-brand/25">
                             Xem đơn hàng mới
                             <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
@@ -224,7 +224,7 @@ export default async function AdminDashboard() {
                 <div className="lg:col-span-2 glass-card p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white">Đơn hàng gần đây</h3>
-                        <Link href="/admin/orders" className="text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1">
+                        <Link href="/admin/orders" className="text-sm text-brand hover:text-brand-dark font-medium flex items-center gap-1">
                             Xem tất cả <ArrowRight size={14} />
                         </Link>
                     </div>

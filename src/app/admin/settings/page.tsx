@@ -102,7 +102,7 @@ export default function AdminSettingsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
             </div>
         );
     }
@@ -113,7 +113,7 @@ export default function AdminSettingsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                        <Settings className="text-amber-600" />
+                        <Settings className="text-brand" />
                         Cài đặt Website
                     </h1>
                     <p className="text-slate-500 mt-1">Quản lý thông tin liên hệ, mạng xã hội và các cài đặt khác</p>
@@ -121,7 +121,7 @@ export default function AdminSettingsPage() {
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand to-brand-dark hover:from-brand-dark hover:to-brand-dark text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
                 >
                     {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                     Lưu cài đặt
@@ -132,7 +132,7 @@ export default function AdminSettingsPage() {
                 {/* Contact Info */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <Phone className="text-amber-600" size={20} />
+                        <Phone className="text-brand" size={20} />
                         Thông tin liên hệ
                     </h2>
                     <div className="space-y-4">
@@ -142,7 +142,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.hotline}
                                 onChange={e => setSettings({ ...settings, hotline: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="090xxxxxxx"
                             />
                         </div>
@@ -152,7 +152,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.zaloLink}
                                 onChange={e => setSettings({ ...settings, zaloLink: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://zalo.me/..."
                             />
                         </div>
@@ -162,7 +162,7 @@ export default function AdminSettingsPage() {
                                 type="email"
                                 value={settings.email}
                                 onChange={e => setSettings({ ...settings, email: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="contact@gonuts.vn"
                             />
                         </div>
@@ -171,7 +171,7 @@ export default function AdminSettingsPage() {
                             <textarea
                                 value={settings.address}
                                 onChange={e => setSettings({ ...settings, address: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 rows={2}
                                 placeholder="Địa chỉ cửa hàng..."
                             />
@@ -182,7 +182,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.businessLicense}
                                 onChange={e => setSettings({ ...settings, businessLicense: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="0123xxxxxx"
                             />
                         </div>
@@ -192,7 +192,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.workingHours}
                                 onChange={e => setSettings({ ...settings, workingHours: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="Thứ 2 - Thứ 7: 8:00 - 17:30"
                             />
                         </div>
@@ -202,19 +202,19 @@ export default function AdminSettingsPage() {
                 {/* Social Links */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <Globe className="text-amber-600" size={20} />
+                        <Globe className="text-brand" size={20} />
                         Mạng xã hội
                     </h2>
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
-                                <Facebook size={16} className="text-blue-600" /> Facebook
+                                <Facebook size={16} className="text-brand" /> Facebook
                             </label>
                             <input
                                 type="text"
                                 value={settings.facebookUrl}
                                 onChange={e => setSettings({ ...settings, facebookUrl: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://facebook.com/..."
                             />
                         </div>
@@ -226,7 +226,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.instagramUrl}
                                 onChange={e => setSettings({ ...settings, instagramUrl: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://instagram.com/..."
                             />
                         </div>
@@ -238,7 +238,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.youtubeUrl}
                                 onChange={e => setSettings({ ...settings, youtubeUrl: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://youtube.com/..."
                             />
                         </div>
@@ -248,7 +248,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.tiktokUrl}
                                 onChange={e => setSettings({ ...settings, tiktokUrl: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://tiktok.com/..."
                             />
                         </div>
@@ -258,7 +258,7 @@ export default function AdminSettingsPage() {
                 {/* Promo Banner */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <Megaphone className="text-amber-600" size={20} />
+                        <Megaphone className="text-brand" size={20} />
                         Banner khuyến mãi
                     </h2>
                     <div className="space-y-4">
@@ -268,7 +268,7 @@ export default function AdminSettingsPage() {
                                 id="promoEnabled"
                                 checked={settings.promoEnabled}
                                 onChange={e => setSettings({ ...settings, promoEnabled: e.target.checked })}
-                                className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
+                                className="w-5 h-5 text-brand rounded focus:ring-brand"
                             />
                             <label htmlFor="promoEnabled" className="text-sm font-medium text-slate-700">
                                 Hiển thị banner khuyến mãi
@@ -280,7 +280,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.promoText}
                                 onChange={e => setSettings({ ...settings, promoText: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="Giảm giá 8% khi mua hàng từ 899 trở lên..."
                             />
                         </div>
@@ -290,7 +290,7 @@ export default function AdminSettingsPage() {
                 {/* Agent/CTV */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <Users className="text-amber-600" size={20} />
+                        <Users className="text-brand" size={20} />
                         Đại lý / Cộng tác viên
                     </h2>
                     <div className="space-y-4">
@@ -300,7 +300,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.agentRegistrationUrl}
                                 onChange={e => setSettings({ ...settings, agentRegistrationUrl: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="/agent/register"
                             />
                         </div>
@@ -310,7 +310,7 @@ export default function AdminSettingsPage() {
                                 type="text"
                                 value={settings.ctvRegistrationUrl}
                                 onChange={e => setSettings({ ...settings, ctvRegistrationUrl: e.target.value })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="/agent/register"
                             />
                         </div>
@@ -320,7 +320,7 @@ export default function AdminSettingsPage() {
                 {/* Shipping */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <Truck className="text-amber-600" size={20} />
+                        <Truck className="text-brand" size={20} />
                         Vận chuyển
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -332,7 +332,7 @@ export default function AdminSettingsPage() {
                                 type="number"
                                 value={settings.freeShippingThreshold}
                                 onChange={e => setSettings({ ...settings, freeShippingThreshold: parseInt(e.target.value) || 0 })}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="500000"
                             />
                             <p className="text-xs text-slate-500 mt-1">

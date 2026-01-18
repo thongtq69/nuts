@@ -130,7 +130,7 @@ export default function AdminUsersPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <Users className="h-6 w-6 text-indigo-600" />
+                        <Users className="h-6 w-6 text-brand" />
                         Quản lý Người dùng
                     </h1>
                     <p className="text-slate-500 mt-1">Quản lý danh sách khách hàng, đại lý và quản trị viên.</p>
@@ -140,32 +140,32 @@ export default function AdminUsersPage() {
             <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
                 <div className="flex gap-2 min-w-max">
                     <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'all' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                         onClick={() => setFilter('all')}
                     >
                         Tất cả ({users.length})
                     </button>
                     <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'user' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'user' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                         onClick={() => setFilter('user')}
                     >
                         Khách hàng ({users.filter(u => u.role === 'user').length})
                     </button>
                     <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'sale' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'sale' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                         onClick={() => setFilter('sale')}
                     >
                         Đại lý ({users.filter(u => u.role === 'sale').length})
                     </button>
                     <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'admin' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                         onClick={() => setFilter('admin')}
                     >
                         Quản trị viên ({users.filter(u => u.role === 'admin').length})
                     </button>
                     {pendingCount > 0 && (
                         <button
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'pending' ? 'bg-amber-500 text-black shadow-md' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'pending' ? 'bg-brand text-black shadow-md' : 'bg-brand-light/30 text-brand-dark hover:bg-brand-light/50'}`}
                             onClick={() => setFilter('pending')}
                         >
                             Chờ duyệt ({pendingCount})
@@ -211,8 +211,8 @@ export default function AdminUsersPage() {
                                         <td className="px-6 py-4 text-slate-600 font-mono text-xs">{user.phone || '-'}</td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-                                                ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                                                    user.role === 'sale' ? 'bg-amber-100 text-amber-700' :
+                                                ${user.role === 'admin' ? 'bg-brand/10 text-brand' :
+                                                    user.role === 'sale' ? 'bg-brand-light/30 text-brand-dark' :
                                                         'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {user.role === 'user' ? 'Khách hàng' :
@@ -221,7 +221,7 @@ export default function AdminUsersPage() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             {user.saleApplicationStatus === 'pending' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-200">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-light/30 text-brand-dark border border-brand-light/50">
                                                     Đang chờ duyệt
                                                 </span>
                                             )}
@@ -251,7 +251,7 @@ export default function AdminUsersPage() {
                                                 )}
                                                 {user.role === 'user' && !user.saleApplicationStatus && (
                                                     <button
-                                                        className="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-semibold rounded-lg hover:bg-indigo-100 transition-colors"
+                                                        className="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg hover:bg-brand/20 transition-colors"
                                                         onClick={() => handleChangeRole(user._id, 'sale')}
                                                     >
                                                         Nâng cấp Đại lý

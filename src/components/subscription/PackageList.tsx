@@ -86,7 +86,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                             </h3>
 
                             {/* Price */}
-                            <div className="text-lg font-extrabold text-amber-600 mb-2">
+                            <div className="text-lg font-extrabold text-brand mb-2">
                                 {formatPrice(pkg.price)}
                             </div>
 
@@ -100,12 +100,12 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                             </div>
 
                             {/* Savings Badge */}
-                            <div className="bg-amber-500/10 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full text-center mb-2">
+                            <div className="bg-brand-light/10 text-brand-light-dark text-[10px] font-bold px-2 py-1 rounded-full text-center mb-2">
                                 Tiết kiệm: {maxSavings}
                             </div>
 
                             {/* View Details Link */}
-                            <div className="flex items-center justify-center gap-1 text-xs text-amber-600 font-semibold group-hover:text-amber-700">
+                            <div className="flex items-center justify-center gap-1 text-xs text-brand font-semibold group-hover:text-brand/80">
                                 Xem chi tiết
                                 <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                             </div>

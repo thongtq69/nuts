@@ -57,7 +57,7 @@ export default function HeroSlider() {
                         <div className="slide active">
                             <div className="w-full h-full bg-gradient-to-r from-slate-200 to-slate-300 flex items-center justify-center">
                                 <div className="text-center">
-                                    <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                    <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                                     <div className="text-slate-600 font-medium">Đang tải banner...</div>
                                 </div>
                             </div>
@@ -75,7 +75,7 @@ export default function HeroSlider() {
                 <div className="slider-container">
                     <div className="slides">
                         <div className="slide active">
-                            <div className="w-full h-full bg-gradient-to-r from-amber-50 to-orange-50 flex items-center justify-center">
+                            <div className="w-full h-full bg-gradient-to-r from-brand-light/10 to-brand/5 flex items-center justify-center">
                                 <div className="text-center">
                                     <div className="text-6xl mb-4">🖼️</div>
                                     <div className="text-slate-600 font-medium text-lg">Chưa có banner nào được hiển thị</div>

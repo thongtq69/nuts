@@ -82,7 +82,7 @@ export default function ProductTagsPage() {
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
                 </div>
             </div>
         );
@@ -94,7 +94,7 @@ export default function ProductTagsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <Tag className="h-5 w-5" />
                         </div>
                         Quản lý Tags Sản phẩm
@@ -115,7 +115,7 @@ export default function ProductTagsPage() {
                     <button
                         onClick={updateProductTags}
                         disabled={updating}
-                        className="inline-flex items-center gap-2 bg-amber-200 hover:bg-amber-300 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                        className="inline-flex items-center gap-2 bg-brand-light/30 hover:bg-brand-light/50 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                     >
                         {updating ? (
                             <RefreshCw className="h-4 w-4 animate-spin" />
@@ -146,7 +146,7 @@ export default function ProductTagsPage() {
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="glass-card p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">{tagStats['best-seller']}</div>
+                    <div className="text-2xl font-bold text-brand">{tagStats['best-seller']}</div>
                     <div className="text-sm text-slate-600">Bán chạy</div>
                 </div>
                 <div className="glass-card p-4 text-center">
@@ -158,7 +158,7 @@ export default function ProductTagsPage() {
                     <div className="text-sm text-slate-600">Khuyến mãi</div>
                 </div>
                 <div className="glass-card p-4 text-center">
-                    <div className="text-2xl font-bold text-purple-600">{tagStats['featured']}</div>
+                    <div className="text-2xl font-bold text-brand-light">{tagStats['featured']}</div>
                     <div className="text-sm text-slate-600">Nổi bật</div>
                 </div>
                 <div className="glass-card p-4 text-center">
@@ -214,10 +214,10 @@ export default function ProductTagsPage() {
                                                         <span
                                                             key={tagIndex}
                                                             className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                tag === 'best-seller' ? 'bg-blue-100 text-blue-800' :
-                                                                tag === 'new' ? 'bg-green-100 text-green-800' :
-                                                                tag === 'promo' ? 'bg-orange-100 text-orange-800' :
-                                                                tag === 'featured' ? 'bg-purple-100 text-purple-800' :
+                                                                 tag === 'best-seller' ? 'bg-brand/10 text-brand' :
+                                                                 tag === 'new' ? 'bg-emerald-100 text-emerald-800' :
+                                                                 tag === 'promo' ? 'bg-brand-light/30 text-brand-dark' :
+                                                                 tag === 'featured' ? 'bg-brand-light/50 text-brand-dark' :
                                                                 'bg-gray-100 text-gray-800'
                                                             }`}
                                                         >

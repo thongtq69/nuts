@@ -110,7 +110,7 @@ export default function MainHeader() {
                     position: absolute;
                     top: -5px;
                     right: -5px;
-                    background: #d4e157;
+                    background: #E3E846;
                     color: #333;
                     font-size: 10px;
                     font-weight: bold;

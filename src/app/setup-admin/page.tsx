@@ -34,7 +34,7 @@ export default function SetupAdminPage() {
                     disabled={loading}
                     style={{
                         padding: '12px 24px',
-                        background: '#8B6F47',
+                        background: '#9C7043',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -122,8 +122,8 @@ export default function SetupAdminPage() {
                     <li>Click "Create Admin Account" to create a new admin account</li>
                     <li>If admin already exists, click "Reset Admin Password" to reset</li>
                     <li>Use the credentials shown above to login</li>
-                    <li>Login at: <a href="/login" style={{ color: '#8B6F47' }}>/login</a></li>
-                    <li>Access admin panel at: <a href="/admin" style={{ color: '#8B6F47' }}>/admin</a></li>
+                    <li>Login at: <a href="/login" style={{ color: '#9C7043' }}>/login</a></li>
+                    <li>Access admin panel at: <a href="/admin" style={{ color: '#9C7043' }}>/admin</a></li>
                 </ol>
             </div>
         </div>

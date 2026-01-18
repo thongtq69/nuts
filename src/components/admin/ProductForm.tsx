@@ -225,7 +225,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 }
                 input:focus, select:focus, textarea:focus {
                     outline: none;
-                    border-color: #3498db;
+                    border-color: #9C7043;
                 }
                 .form-actions { 
                     margin-top: 30px; 
@@ -236,22 +236,22 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                     align-items: center;
                     gap: 8px;
                     padding: 12px 32px;
-                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                    color: #000;
+                    background: linear-gradient(135deg, #9C7043 0%, #7d5a36 100%);
+                    color: #fff;
                     border: none;
                     border-radius: 12px;
                     font-size: 16px;
                     font-weight: 600;
                     cursor: pointer;
                     transition: all 0.3s ease;
-                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+                    box-shadow: 0 4px 12px rgba(156, 112, 68, 0.3);
                     min-width: 200px;
                     justify-content: center;
                 }
                 .create-product-btn:hover:not(:disabled) {
                     transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-                    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+                    box-shadow: 0 6px 20px rgba(156, 112, 68, 0.4);
+                    background: linear-gradient(135deg, #7d5a36 0%, #5d4329 100%);
                 }
                 .create-product-btn:active:not(:disabled) {
                     transform: translateY(0);

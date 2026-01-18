@@ -135,7 +135,7 @@ export default function AdminStaffPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <UserCheck className="w-5 h-5" />
                         </div>
                         Quản lý Nhân viên
@@ -146,7 +146,7 @@ export default function AdminStaffPage() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-200 hover:bg-indigo-300 text-slate-800 font-bold rounded-xl hover:shadow-md transition-all"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-brand-light/30 hover:bg-brand-light/50 text-slate-800 font-bold rounded-xl hover:shadow-md transition-all"
                 >
                     <Plus size={18} />
                     Thêm nhân viên
@@ -157,8 +157,8 @@ export default function AdminStaffPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                            <UserCheck className="w-5 h-5 text-indigo-600" />
+                        <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center">
+                            <UserCheck className="w-5 h-5 text-brand" />
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-slate-800">{totalStaff}</div>
@@ -168,8 +168,8 @@ export default function AdminStaffPage() {
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-purple-600" />
+                        <div className="w-10 h-10 rounded-lg bg-brand-light/30 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-brand-dark" />
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-slate-800">{totalCTV}</div>
@@ -199,7 +199,7 @@ export default function AdminStaffPage() {
                         placeholder="Tìm theo tên, email, mã nhân viên..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                        className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                     />
                 </div>
             </div>
@@ -223,7 +223,7 @@ export default function AdminStaffPage() {
                             {loading ? (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-12 text-center">
-                                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-600" />
+                                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand" />
                                     </td>
                                 </tr>
                             ) : filteredStaff.length === 0 ? (
@@ -239,7 +239,7 @@ export default function AdminStaffPage() {
                                             {!searchTerm && (
                                                 <button
                                                     onClick={() => setShowModal(true)}
-                                                    className="text-sm text-indigo-600 hover:underline font-medium"
+                                                    className="text-sm text-brand hover:underline font-medium"
                                                 >
                                                     Thêm nhân viên đầu tiên
                                                 </button>
@@ -262,7 +262,7 @@ export default function AdminStaffPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                <div className="w-9 h-9 bg-gradient-to-br from-brand to-brand-dark rounded-full flex items-center justify-center text-white font-bold text-sm">
                                                     {staff.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
@@ -273,7 +273,7 @@ export default function AdminStaffPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-mono text-sm bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-bold">
+                                                <span className="font-mono text-sm bg-brand/10 text-brand px-2 py-1 rounded font-bold">
                                                     {staff.staffCode}
                                                 </span>
                                                 <button
@@ -289,7 +289,7 @@ export default function AdminStaffPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className="font-semibold text-purple-600">{staff.collaboratorCount}</span>
+                                            <span className="font-semibold text-brand-light">{staff.collaboratorCount}</span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="font-semibold text-slate-800">{staff.teamOrders}</span>
@@ -302,7 +302,7 @@ export default function AdminStaffPage() {
                                         <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-center gap-2">
                                                 <button
-                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
                                                     title="Chi tiết"
                                                 >
                                                     <ChevronRight size={16} />
@@ -337,7 +337,7 @@ export default function AdminStaffPage() {
                         </button>
 
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white">
+                            <div className="w-12 h-12 bg-gradient-to-br from-brand to-brand-dark rounded-xl flex items-center justify-center text-white">
                                 <Plus size={24} />
                             </div>
                             <div>
@@ -354,7 +354,7 @@ export default function AdminStaffPage() {
                                     required
                                     value={newStaff.staffCode}
                                     onChange={(e) => setNewStaff({ ...newStaff, staffCode: e.target.value.toUpperCase() })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-mono"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none font-mono"
                                     placeholder="VD: NV001"
                                 />
                                 <p className="text-xs text-slate-500 mt-1">CTV của nhân viên sẽ có mã: {newStaff.staffCode || 'NV001'}-CTV1</p>
@@ -367,7 +367,7 @@ export default function AdminStaffPage() {
                                     required
                                     value={newStaff.name}
                                     onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                                     placeholder="Nguyễn Văn A"
                                 />
                             </div>
@@ -379,7 +379,7 @@ export default function AdminStaffPage() {
                                     required
                                     value={newStaff.email}
                                     onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                                     placeholder="email@example.com"
                                 />
                             </div>
@@ -390,7 +390,7 @@ export default function AdminStaffPage() {
                                     type="tel"
                                     value={newStaff.phone}
                                     onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                                     placeholder="0901234567"
                                 />
                             </div>
@@ -403,7 +403,7 @@ export default function AdminStaffPage() {
                                         required
                                         value={newStaff.password}
                                         onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })}
-                                        className="w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                                        className="w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                                         placeholder="••••••••"
                                     />
                                     <button
@@ -427,7 +427,7 @@ export default function AdminStaffPage() {
                                 <button
                                     type="submit"
                                     disabled={creating}
-                                    className="flex-1 px-4 py-2.5 bg-indigo-200 hover:bg-indigo-300 text-slate-800 font-bold rounded-xl hover:shadow-md disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2.5 bg-brand-light/30 hover:bg-brand-light/50 text-slate-800 font-bold rounded-xl hover:shadow-md disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                                 >
                                     {creating ? (
                                         <>

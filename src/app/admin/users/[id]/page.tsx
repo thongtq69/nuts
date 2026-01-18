@@ -151,7 +151,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
             </div>
         );
     }
@@ -160,7 +160,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         return (
             <div className="text-center py-20">
                 <p className="text-slate-500">Không tìm thấy người dùng</p>
-                <Link href="/admin/users" className="text-blue-600 hover:underline mt-4 inline-block">
+                <Link href="/admin/users" className="text-brand hover:underline mt-4 inline-block">
                     ← Quay lại danh sách
                 </Link>
             </div>
@@ -169,8 +169,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
     const getRoleColor = (role: string) => {
         switch (role) {
-            case 'admin': return 'bg-purple-100 text-purple-700 border-purple-200';
-            case 'sale': return 'bg-amber-100 text-amber-700 border-amber-200';
+            case 'admin': return 'bg-brand/10 text-brand border-brand/20';
+            case 'sale': return 'bg-brand-light/30 text-brand-dark border-brand-light/50';
             default: return 'bg-slate-100 text-slate-600 border-slate-200';
         }
     };
@@ -231,14 +231,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 <div className="lg:col-span-2 space-y-6">
                     {/* Profile Card */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+                        <div className="bg-gradient-to-r from-brand to-brand-dark p-6 text-white">
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl font-bold">
                                     {user.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold">{user.name}</h2>
-                                    <p className="text-blue-100">{user.email}</p>
+                                    <p className="text-brand-light">{user.email}</p>
                                     <div className="flex items-center gap-2 mt-2">
                                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${getRoleColor(user.role)}`}>
                                             {getRoleIcon(user.role)}
@@ -307,8 +307,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                     )}
 
                                     {user.saleApplicationStatus === 'pending' && (
-                                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                            <p className="text-amber-700 font-medium text-sm">
+                        <div className="bg-brand-light/30 border border-brand-light/50 rounded-lg p-3">
+                            <p className="text-brand-dark font-medium text-sm">
                                                 🕐 Đang chờ duyệt đăng ký đại lý
                                             </p>
                                         </div>
@@ -321,7 +321,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                     {/* Quản lý Role */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <Shield className="text-blue-600" size={20} />
+                            <Shield className="text-brand" size={20} />
                             Quản lý quyền
                         </h3>
                         
@@ -330,7 +330,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                 <button
                                     onClick={() => handleRoleChange('sale')}
                                     disabled={updating}
-                                    className="px-4 py-2 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg font-medium transition-all"
+                                    className="px-4 py-2 bg-brand-light/30 text-brand-dark hover:bg-brand-light/50 rounded-lg font-medium transition-all"
                                 >
                                     Nâng cấp thành Đại lý
                                 </button>
@@ -391,12 +391,12 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                         </h3>
                         
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                            <div className="flex items-center justify-between p-3 bg-brand/10 rounded-lg">
                                 <div className="flex items-center gap-3">
-                                    <ShoppingBag className="text-blue-600" size={18} />
-                                    <span className="text-sm font-medium">Tổng đơn hàng</span>
+                                    <ShoppingBag className="text-brand" size={18} />
+                                    <span className="text-sm font-medium">Đơn hàng</span>
                                 </div>
-                                <span className="font-bold text-blue-600">{user.totalOrders}</span>
+                                <span className="font-bold text-brand">{user.totalOrders}</span>
                             </div>
                             
                             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">

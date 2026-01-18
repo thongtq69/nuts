@@ -134,7 +134,7 @@ export default function CollaboratorsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-light flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <Users className="w-5 h-5" />
                         </div>
                         Quản lý Cộng tác viên
@@ -145,7 +145,7 @@ export default function CollaboratorsPage() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand to-brand-light text-white font-medium rounded-xl hover:shadow-lg hover:shadow-brand/25 transition-all"
                 >
                     <Plus size={18} />
                     Tạo mã CTV
@@ -156,8 +156,8 @@ export default function CollaboratorsPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-purple-600" />
+                        <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-brand" />
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-slate-800">{collaborators.length}</div>
@@ -167,8 +167,8 @@ export default function CollaboratorsPage() {
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                            <ShoppingBag className="w-5 h-5 text-amber-600" />
+                        <div className="w-10 h-10 rounded-lg bg-brand-light/30 flex items-center justify-center">
+                            <ShoppingBag className="w-5 h-5 text-gray-700" />
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-slate-800">{totalOrders}</div>
@@ -198,7 +198,7 @@ export default function CollaboratorsPage() {
                         placeholder="Tìm theo tên, email, mã CTV..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                        className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                     />
                 </div>
             </div>
@@ -221,7 +221,7 @@ export default function CollaboratorsPage() {
                             {loading ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center">
-                                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
+                                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand" />
                                     </td>
                                 </tr>
                             ) : filteredCollaborators.length === 0 ? (
@@ -235,10 +235,10 @@ export default function CollaboratorsPage() {
                                                 {searchTerm ? 'Không tìm thấy CTV' : 'Chưa có cộng tác viên nào'}
                                             </p>
                                             {!searchTerm && (
-                                                <button
-                                                    onClick={() => setShowModal(true)}
-                                                    className="text-sm text-blue-600 hover:underline font-medium"
-                                                >
+                                            <button
+                                                onClick={() => setShowModal(true)}
+                                                className="text-sm text-brand hover:underline font-medium"
+                                            >
                                                     Tạo CTV đầu tiên
                                                 </button>
                                             )}
@@ -250,7 +250,7 @@ export default function CollaboratorsPage() {
                                     <tr key={collab.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                <div className="w-9 h-9 bg-gradient-to-br from-brand to-brand-light rounded-full flex items-center justify-center text-white font-bold text-sm">
                                                     {collab.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
@@ -266,10 +266,10 @@ export default function CollaboratorsPage() {
                                                 </span>
                                                 <button
                                                     onClick={() => copyCode(collab.code)}
-                                                    className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
+                                                    className="p-1.5 hover:bg-brand/10 rounded-lg transition-colors"
                                                     title="Sao chép link"
                                                 >
-                                                    <Copy size={14} className="text-blue-600" />
+                                                    <Copy size={14} className="text-brand" />
                                                 </button>
                                             </div>
                                         </td>
@@ -282,7 +282,7 @@ export default function CollaboratorsPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <span className="font-semibold text-blue-600">
+                                            <span className="font-semibold text-brand">
                                                 {collab.totalCommission.toLocaleString('vi-VN')}đ
                                             </span>
                                         </td>
@@ -316,7 +316,7 @@ export default function CollaboratorsPage() {
                         </button>
 
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white">
+                            <div className="w-12 h-12 bg-gradient-to-br from-brand to-brand-light rounded-xl flex items-center justify-center text-white">
                                 <Plus size={24} />
                             </div>
                             <div>
@@ -333,7 +333,7 @@ export default function CollaboratorsPage() {
                                     required
                                     value={newCollab.name}
                                     onChange={(e) => setNewCollab({ ...newCollab, name: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                                     placeholder="Nguyễn Văn A"
                                 />
                             </div>
@@ -345,7 +345,7 @@ export default function CollaboratorsPage() {
                                     required
                                     value={newCollab.email}
                                     onChange={(e) => setNewCollab({ ...newCollab, email: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                                     placeholder="email@example.com"
                                 />
                             </div>
@@ -356,7 +356,7 @@ export default function CollaboratorsPage() {
                                     type="tel"
                                     value={newCollab.phone}
                                     onChange={(e) => setNewCollab({ ...newCollab, phone: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                                     placeholder="0901234567"
                                 />
                             </div>
@@ -369,8 +369,8 @@ export default function CollaboratorsPage() {
                                         required
                                         value={newCollab.password}
                                         onChange={(e) => setNewCollab({ ...newCollab, password: e.target.value })}
-                                        className="w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                                        placeholder="••••••••"
+                                        className="w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
+                                        placeholder="•••••••"
                                     />
                                     <button
                                         type="button"
@@ -393,7 +393,7 @@ export default function CollaboratorsPage() {
                                 <button
                                     type="submit"
                                     disabled={creating}
-                                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-brand to-brand-light text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                                 >
                                     {creating ? (
                                         <>

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import User from '@/models/User';
+import AffiliateCommission from '@/models/AffiliateCommission';
+import { sendOrderStatusEmail } from '@/lib/email';
 
 export async function PATCH(
     req: Request,
@@ -23,33 +25,77 @@ export async function PATCH(
         // Update order status
         order.status = status;
 
-        // Handle Affiliate Commission
-        // Trigger only if status changes to 'delivered' | 'completed' 
-        // AND commission is pending AND there is a referrer
-        if (
-            (status === 'delivered' || status === 'completed') &&
-            order.commissionStatus === 'pending' &&
-            order.referrer &&
-            order.commissionAmount &&
-            order.commissionAmount > 0
-        ) {
-            const referrer = await User.findById(order.referrer);
-            if (referrer) {
-                referrer.walletBalance = (referrer.walletBalance || 0) + order.commissionAmount;
-                referrer.totalCommission = (referrer.totalCommission || 0) + order.commissionAmount;
-                await referrer.save();
+        // Handle Affiliate Commission - Support 2-level system
+        // Trigger only if status changes to 'delivered' | 'completed'
+        // AND there are pending commissions for this order
+        if (status === 'delivered' || status === 'completed') {
+            // Find all commission records for this order
+            const commissions = await AffiliateCommission.find({
+                orderId: order._id,
+                status: 'pending'
+            });
 
+            if (commissions.length > 0) {
+                // Approve all pending commissions and credit wallets
+                for (const comm of commissions) {
+                    const affiliate = await User.findById(comm.affiliateId);
+                    if (affiliate) {
+                        affiliate.walletBalance = (affiliate.walletBalance || 0) + comm.commissionAmount;
+                        affiliate.totalCommission = (affiliate.totalCommission || 0) + comm.commissionAmount;
+                        await affiliate.save();
+
+                        // Update commission status
+                        comm.status = 'approved';
+                        await comm.save();
+                    }
+                }
+
+                // Update order commission status
                 order.commissionStatus = 'approved';
             }
         }
 
-        // Handle Order Cancellation (Revert commission if it was approved?)
-        // For now complex logic is skipped, assuming only pending commissions are cancelled.
-        if (status === 'cancelled' && order.commissionStatus === 'pending') {
+        // Handle Order Cancellation
+        if (status === 'cancelled') {
+            // Find all pending commissions for this order and mark as rejected
+            const pendingCommissions = await AffiliateCommission.find({
+                orderId: order._id,
+                status: 'pending'
+            });
+
+            for (const comm of pendingCommissions) {
+                comm.status = 'rejected';
+                await comm.save();
+            }
+
             order.commissionStatus = 'cancelled';
         }
 
         await order.save();
+
+        const statusMessages: Record<string, string> = {
+            'pending': 'đang chờ xử lý',
+            'processing': 'đang được xử lý',
+            'shipped': 'đã được gửi đi',
+            'delivered': 'đã giao thành công',
+            'cancelled': 'đã bị hủy',
+        };
+
+        if (order.user) {
+            try {
+                const user = await User.findById(order.user);
+                if (user && user.email) {
+                    await sendOrderStatusEmail(user.email, {
+                        orderId: order._id.toString().slice(-6).toUpperCase(),
+                        customerName: order.shippingInfo.fullName,
+                        status: status,
+                        statusMessage: statusMessages[status] || `đã chuyển sang trạng thái ${status}`,
+                    });
+                }
+            } catch (emailError) {
+                console.error('Failed to send order status email:', emailError);
+            }
+        }
 
         return NextResponse.json(order);
     } catch (error) {

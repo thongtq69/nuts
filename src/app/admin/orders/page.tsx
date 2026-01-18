@@ -31,9 +31,9 @@ interface Order {
 }
 
 const statusConfig: Record<string, { label: string; class: string; icon: any; bgColor: string }> = {
-    pending: { label: 'Chờ xử lý', class: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock, bgColor: 'bg-amber-500' },
-    confirmed: { label: 'Đã xác nhận', class: 'bg-blue-100 text-blue-700 border-blue-200', icon: CheckCircle, bgColor: 'bg-blue-500' },
-    shipping: { label: 'Đang giao', class: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Truck, bgColor: 'bg-indigo-500' },
+    pending: { label: 'Chờ xử lý', class: 'bg-brand-light/30 text-brand-dark border-brand-light/50', icon: Clock, bgColor: 'bg-brand' },
+    confirmed: { label: 'Đã xác nhận', class: 'bg-brand/10 text-brand border-brand/20', icon: CheckCircle, bgColor: 'bg-brand' },
+    shipping: { label: 'Đang giao', class: 'bg-brand/10 text-brand border-brand/20', icon: Truck, bgColor: 'bg-brand' },
     completed: { label: 'Hoàn thành', class: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle, bgColor: 'bg-emerald-500' },
     paid: { label: 'Đã thanh toán', class: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle, bgColor: 'bg-emerald-500' },
     cancelled: { label: 'Đã hủy', class: 'bg-red-100 text-red-700 border-red-200', icon: XCircle, bgColor: 'bg-red-500' },
@@ -139,7 +139,7 @@ export default function AdminOrdersPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
             </div>
         );
     }
@@ -150,7 +150,7 @@ export default function AdminOrdersPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <ShoppingCart className="h-5 w-5" />
                         </div>
                         Quản lý Đơn hàng
@@ -171,8 +171,8 @@ export default function AdminOrdersPage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-amber-600" />
+                    <div className="w-12 h-12 rounded-xl bg-brand-light/30 dark:bg-brand-light/20 flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-brand-dark" />
                     </div>
                     <div>
                         <div className="text-2xl font-bold text-slate-800 dark:text-white">{pendingCount}</div>
@@ -180,8 +180,8 @@ export default function AdminOrdersPage() {
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                        <Truck className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 rounded-xl bg-brand/10 dark:bg-brand/20 flex items-center justify-center">
+                        <Truck className="w-6 h-6 text-brand" />
                     </div>
                     <div>
                         <div className="text-2xl font-bold text-slate-800 dark:text-white">{shippingCount}</div>
@@ -217,14 +217,14 @@ export default function AdminOrdersPage() {
                         placeholder="Tìm theo mã đơn, tên khách hàng..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-slate-800 dark:text-slate-200"
+                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-slate-800 dark:text-slate-200"
                     />
                 </div>
                 <div className="relative">
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="appearance-none px-4 py-2.5 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium cursor-pointer focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                        className="appearance-none px-4 py-2.5 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium cursor-pointer focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                     >
                         <option value="all">Tất cả trạng thái</option>
                         <option value="pending">Chờ xử lý</option>
@@ -321,7 +321,7 @@ export default function AdminOrdersPage() {
                                                 </span>
                                             </td>
                                             <td className="text-right px-6 py-4">
-                                                <span className="font-bold text-lg text-amber-600">
+                                                <span className="font-bold text-lg text-brand">
                                                     {order.total.toLocaleString()}đ
                                                 </span>
                                             </td>

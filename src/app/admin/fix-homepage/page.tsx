@@ -60,7 +60,7 @@ export default function FixHomepagePage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <Home className="h-5 w-5" />
                         </div>
                         Sửa Trang Chủ
@@ -81,7 +81,7 @@ export default function FixHomepagePage() {
                     <button
                         onClick={fixHomepage}
                         disabled={fixing}
-                        className="inline-flex items-center gap-2 bg-amber-200 hover:bg-amber-300 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                        className="inline-flex items-center gap-2 bg-brand-light/30 hover:bg-brand-light/50 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                     >
                         {fixing ? (
                             <RefreshCw className="h-4 w-4 animate-spin" />
@@ -125,7 +125,7 @@ export default function FixHomepagePage() {
                             <div className="text-sm text-slate-600">Tổng sản phẩm</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">{status.tagCounts['best-seller']}</div>
+                            <div className="text-2xl font-bold text-brand">{status.tagCounts['best-seller']}</div>
                             <div className="text-sm text-slate-600">Bán chạy</div>
                         </div>
                         <div className="text-center">

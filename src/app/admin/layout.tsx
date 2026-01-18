@@ -41,7 +41,7 @@ export default function AdminLayout({
         return (
             <div className="flex items-center justify-center min-h-screen bg-white">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
                     <div className="text-slate-500 font-medium">Đang kiểm tra quyền truy cập...</div>
                 </div>
             </div>

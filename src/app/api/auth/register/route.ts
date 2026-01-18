@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import UserVoucher from '@/models/UserVoucher';
 import bcrypt from 'bcryptjs';
+import { sendWelcomeEmail } from '@/lib/email';
 
 // Generate unique voucher code
 function generateVoucherCode(): string {
@@ -66,9 +67,11 @@ export async function POST(req: Request) {
             const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + 30); // 30 days validity
 
+            const voucherCode = generateVoucherCode();
+
             await UserVoucher.create({
                 userId: user._id,
-                code: generateVoucherCode(),
+                code: voucherCode,
                 discountType: 'fixed',
                 discountValue: 50000, // 50,000 VND
                 maxDiscount: 50000,
@@ -79,6 +82,13 @@ export async function POST(req: Request) {
 
             // Mark welcome voucher as issued
             await User.findByIdAndUpdate(user._id, { welcomeVoucherIssued: true });
+
+            // Send welcome email
+            try {
+                await sendWelcomeEmail(user.email, user.name, voucherCode);
+            } catch (emailError) {
+                console.error('Failed to send welcome email:', emailError);
+            }
 
             return NextResponse.json({
                 _id: user._id,

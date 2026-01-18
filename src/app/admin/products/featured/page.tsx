@@ -75,7 +75,7 @@ export default function FeaturedProductsPage() {
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
                 </div>
             </div>
         );
@@ -87,7 +87,7 @@ export default function FeaturedProductsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <Star className="h-5 w-5" />
                         </div>
                         Sản phẩm Nổi bật
@@ -98,7 +98,7 @@ export default function FeaturedProductsPage() {
                 </div>
                 <Link
                     href="/admin/products/new"
-                    className="inline-flex items-center gap-2 bg-purple-100 hover:bg-purple-200 text-purple-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                    className="inline-flex items-center gap-2 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                 >
                     <Plus size={18} />
                     Thêm Sản phẩm
@@ -109,7 +109,7 @@ export default function FeaturedProductsPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <Link href="/admin/products/best-sellers" className="glass-card p-6 hover:shadow-lg transition-all group">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25 group-hover:scale-110 transition-transform">
                             <TrendingUp className="h-6 w-6" />
                         </div>
                         <div>
@@ -117,7 +117,7 @@ export default function FeaturedProductsPage() {
                             <div className="text-sm text-slate-600">Sản phẩm Bán chạy</div>
                         </div>
                     </div>
-                    <div className="mt-4 text-xs text-blue-600 font-medium">
+                    <div className="mt-4 text-xs text-brand font-medium">
                         Quản lý →
                     </div>
                 </Link>
@@ -171,18 +171,18 @@ export default function FeaturedProductsPage() {
             {/* Quick Actions */}
             <div className="glass-card p-6">
                 <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                    <Star className="h-5 w-5 text-purple-600" />
+                    <Star className="h-5 w-5 text-brand" />
                     Thao tác nhanh
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Link
                         href="/admin/products/best-sellers"
-                        className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors group"
+                        className="flex items-center gap-3 p-4 bg-brand/10 hover:bg-brand/20 rounded-xl transition-colors group"
                     >
-                        <TrendingUp className="h-8 w-8 text-blue-600 group-hover:scale-110 transition-transform" />
+                        <TrendingUp className="h-8 w-8 text-brand group-hover:scale-110 transition-transform" />
                         <div>
-                            <div className="font-medium text-blue-800">Quản lý Bán chạy</div>
-                            <div className="text-sm text-blue-600">Thêm/xóa sản phẩm bán chạy</div>
+                            <div className="font-medium text-brand-dark">Quản lý Bán chạy</div>
+                            <div className="text-sm text-brand">Thêm/xóa sản phẩm bán chạy</div>
                         </div>
                     </Link>
 
@@ -241,7 +241,7 @@ export default function FeaturedProductsPage() {
                                     <h4 className="font-medium text-slate-800 text-sm mb-2 line-clamp-2">
                                         {product.name}
                                     </h4>
-                                    <div className="text-lg font-bold text-amber-600 mb-2">
+                                    <div className="text-lg font-bold text-brand mb-2">
                                         {product.currentPrice.toLocaleString()}đ
                                     </div>
                                     <div className="flex flex-wrap gap-1 mb-2">
@@ -249,9 +249,9 @@ export default function FeaturedProductsPage() {
                                             <span
                                                 key={tag}
                                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    tag === 'best-seller' ? 'bg-blue-100 text-blue-700' :
-                                                    tag === 'new' ? 'bg-green-100 text-green-700' :
-                                                    tag === 'promo' ? 'bg-orange-100 text-orange-700' :
+                                                    tag === 'best-seller' ? 'bg-brand/10 text-brand' :
+                                                    tag === 'new' ? 'bg-emerald-100 text-emerald-700' :
+                                                    tag === 'promo' ? 'bg-brand-light/30 text-brand-dark' :
                                                     'bg-gray-100 text-gray-700'
                                                 }`}
                                             >

@@ -96,7 +96,7 @@ export default function AdminCommissionsPage() {
                                     <td className="px-6 py-4 text-sm">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                             ${comm.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                comm.status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                                                comm.status === 'paid' ? 'bg-brand/10 text-brand-dark' :
                                                     comm.status === 'rejected' ? 'bg-red-100 text-red-800' :
                                                         'bg-yellow-100 text-yellow-800'}`}>
                                             {comm.status}
@@ -110,7 +110,7 @@ export default function AdminCommissionsPage() {
                                             </div>
                                         )}
                                         {comm.status === 'approved' && (
-                                            <button onClick={() => updateStatus(comm._id, 'paid')} className="text-blue-600 hover:text-blue-900">Đã TT</button>
+                                            <button onClick={() => updateStatus(comm._id, 'paid')} className="text-brand hover:text-brand-dark">Đã TT</button>
                                         )}
                                     </td>
                                 </tr>

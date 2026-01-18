@@ -83,11 +83,11 @@ export default function AdminSidebar() {
                     <img
                         src="/assets/logo.png"
                         alt="Go Nuts Logo"
-                        className="w-10 h-10 rounded-xl object-contain shadow-lg shadow-amber-500/25 group-hover:shadow-amber-500/40 transition-shadow"
+                        className="w-10 h-10 rounded-xl object-contain shadow-lg shadow-brand/25 group-hover:shadow-brand/40 transition-shadow"
                     />
                     <div className="flex flex-col">
                         <span className="text-white font-bold text-lg tracking-tight">Go Nuts</span>
-                        <span className="text-[10px] text-amber-500/80 font-medium uppercase tracking-wider">Admin Panel</span>
+                        <span className="text-[10px] text-brand-light/80 font-medium uppercase tracking-wider">Admin Panel</span>
                     </div>
                 </Link>
             </div>
@@ -109,7 +109,7 @@ export default function AdminSidebar() {
                                         className={`
                                             sidebar-item-glow relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
                                             ${isActive
-                                                ? 'active bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-400'
+                                                ? 'active bg-gradient-to-r from-brand/15 to-brand-light/10 text-brand-light'
                                                 : 'hover:bg-slate-800/50 hover:text-white'
                                             }
                                         `}
@@ -117,15 +117,15 @@ export default function AdminSidebar() {
                                         <div className={`
                                             w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200
                                             ${isActive
-                                                ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20'
+                                                ? 'bg-gradient-to-br from-brand/20 to-brand-light/20'
                                                 : 'bg-slate-800/50 group-hover:bg-slate-700/50'
                                             }
                                         `}>
-                                            <item.icon size={16} className={isActive ? 'text-amber-400' : 'text-slate-400'} />
+                                            <item.icon size={16} className={isActive ? 'text-brand-light' : 'text-slate-400'} />
                                         </div>
                                         <span className="flex-1">{item.label}</span>
                                         {isActive && (
-                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                                            <div className="w-1.5 h-1.5 rounded-full bg-brand-light animate-pulse" />
                                         )}
                                     </Link>
                                 );

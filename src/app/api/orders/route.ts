@@ -75,9 +75,10 @@ export async function POST(req: Request) {
 
         const finalTotal = Math.max(0, itemsTotal + shippingFee - discountAmount);
 
-        // 3. Affiliate Logic
+        // 3. Affiliate Logic - 2-level commission system
         const refCode = cookieStore.get('gonuts_ref')?.value;
         let referrerId: any = undefined;
+        let staffId: any = undefined;
         let commissionAmount = 0;
         let commissionStatus: any = undefined;
 
@@ -86,25 +87,52 @@ export async function POST(req: Request) {
             const referrerUser = await User.findOne({ referralCode: refCode });
             if (referrerUser && referrerUser._id.toString() !== userId) {
                 referrerId = referrerUser._id;
+
+                // If referrer is collaborator, get their parent staff
+                if (referrerUser.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
+                    staffId = referrerUser.parentStaff;
+                }
             }
         }
         if (!referrerId && userId) {
             const u = await User.findById(userId);
-            if (u && u.referrer) referrerId = u.referrer;
+            if (u && u.referrer) {
+                referrerId = u.referrer;
+                const referrerUser = await User.findById(u.referrer);
+                if (referrerUser?.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
+                    staffId = referrerUser.parentStaff;
+                }
+            }
         }
 
-        // Calculate Commission
+        // Calculate Commission - 2-level system
         if (referrerId) {
             const settings = await AffiliateSettings.findOne();
             const referrerUser = await User.findById(referrerId);
-            const rate = referrerUser?.commissionRateOverride ?? settings?.defaultCommissionRate ?? 10;
+            const defaultRate = settings?.defaultCommissionRate ?? 10;
 
-            // Commission on Net Revenue (Items Total - Discount) ?? Or just Items Total?
-            // Usually Net. Let's do (ItemsTotal - Discount).
+            let referrerRate = referrerUser?.commissionRateOverride ?? defaultRate;
+            let staffRate = 0;
+
+            // If referrer is collaborator, get staff commission rate
+            if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
+                const staffUser = await User.findById(staffId);
+                staffRate = staffUser?.staffCommissionRate ?? 2;
+            }
+
+            // Commission on Net Revenue (Items Total - Discount)
             const revenueBase = Math.max(0, itemsTotal - discountAmount);
 
             if (revenueBase > 0) {
-                commissionAmount = Math.round(revenueBase * (rate / 100));
+                if (referrerUser?.affiliateLevel === 'collaborator') {
+                    // Collaborator gets commission + Staff gets override commission
+                    const collabCommission = Math.round(revenueBase * (referrerRate / 100));
+                    const staffCommission = Math.round(revenueBase * (staffRate / 100));
+                    commissionAmount = collabCommission + staffCommission;
+                } else {
+                    // Staff or regular referrer gets full commission
+                    commissionAmount = Math.round(revenueBase * (referrerRate / 100));
+                }
                 commissionStatus = 'pending';
             }
         }
@@ -132,18 +160,66 @@ export async function POST(req: Request) {
             });
         }
 
-        // 6. Create Commission Record
+        // 6. Create Commission Records - Support 2-level system
+        const commissionRecords = [];
         if (commissionAmount > 0 && referrerId) {
-            const comm = await AffiliateCommission.create({
-                affiliateId: referrerId,
-                orderId: order._id,
-                orderValue: Math.max(0, itemsTotal - discountAmount),
-                commissionRate: 10, // Should be fetched rate, simplifying for now
-                commissionAmount,
-                status: 'pending',
-                note: voucherCode ? `Order with voucher ${voucherCode}` : ''
-            });
-            await Order.findByIdAndUpdate(order._id, { commissionId: comm._id });
+            const referrerUser = await User.findById(referrerId);
+            const settings = await AffiliateSettings.findOne();
+            const defaultRate = settings?.defaultCommissionRate ?? 10;
+
+            const revenueBase = Math.max(0, itemsTotal - discountAmount);
+
+            if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
+                // Create commission for collaborator
+                const collabRate = referrerUser?.commissionRateOverride ?? defaultRate;
+                const collabCommission = Math.round(revenueBase * (collabRate / 100));
+
+                const collabComm = await AffiliateCommission.create({
+                    affiliateId: referrerId,
+                    orderId: order._id,
+                    orderValue: revenueBase,
+                    commissionRate: collabRate,
+                    commissionAmount: collabCommission,
+                    status: 'pending',
+                    note: voucherCode ? `Collaborator commission - Order with voucher ${voucherCode}` : 'Collaborator commission'
+                });
+                commissionRecords.push(collabComm);
+
+                // Create commission for staff (override from collaborator)
+                const staffUser = await User.findById(staffId);
+                const staffRate = staffUser?.staffCommissionRate ?? 2;
+                const staffCommission = Math.round(revenueBase * (staffRate / 100));
+
+                const staffComm = await AffiliateCommission.create({
+                    affiliateId: staffId,
+                    orderId: order._id,
+                    orderValue: revenueBase,
+                    commissionRate: staffRate,
+                    commissionAmount: staffCommission,
+                    status: 'pending',
+                    note: voucherCode ? `Staff override from collaborator - Order with voucher ${voucherCode}` : 'Staff override from collaborator'
+                });
+                commissionRecords.push(staffComm);
+            } else {
+                // Single level commission (staff or regular referrer)
+                const rate = referrerUser?.commissionRateOverride ?? defaultRate;
+
+                const comm = await AffiliateCommission.create({
+                    affiliateId: referrerId,
+                    orderId: order._id,
+                    orderValue: revenueBase,
+                    commissionRate: rate,
+                    commissionAmount: commissionAmount,
+                    status: 'pending',
+                    note: voucherCode ? `Order with voucher ${voucherCode}` : ''
+                });
+                commissionRecords.push(comm);
+            }
+
+            // Update order with first commission ID
+            if (commissionRecords.length > 0) {
+                await Order.findByIdAndUpdate(order._id, { commissionId: commissionRecords[0]._id });
+            }
         }
 
         // 7. Send Order Confirmation Email

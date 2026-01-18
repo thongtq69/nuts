@@ -80,7 +80,7 @@ export default function AdminAffiliateSettingsPage() {
                 <button
                     type="submit"
                     disabled={saving}
-                    className="bg-blue-600 text-black px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                    className="bg-brand text-white px-4 py-2 rounded hover:bg-brand-dark disabled:bg-gray-400"
                 >
                     {saving ? 'Đang lưu...' : 'Lưu cài đặt'}
                 </button>

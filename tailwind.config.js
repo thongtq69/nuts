@@ -11,6 +11,22 @@ module.exports = {
             colors: {
                 background: "var(--background)",
                 foreground: "var(--foreground)",
+                brand: {
+                    light: '#E3E846',
+                    DEFAULT: '#9C7043',
+                    dark: '#7d5a36',
+                    50: '#E3E846',
+                    100: '#D9E035',
+                    200: '#CFD824',
+                    300: '#C4D014',
+                    400: '#B9C804',
+                    500: '#9C7043',
+                    600: '#8C6139',
+                    700: '#7d5a36',
+                    800: '#6D5333',
+                    900: '#5D4C30',
+                    950: '#4D452D',
+                },
                 amber: {
                     50: '#fffbeb',
                     100: '#fef3c7',

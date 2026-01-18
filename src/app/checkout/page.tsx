@@ -671,7 +671,7 @@ export default function CheckoutPage() {
                 transition: all 0.2s;
             }
             .payment-option.active {
-                border-color: var(--color-primary-brown);
+                border-color: #9C7043;
                 background: #fffdf9;
             }
             
@@ -715,18 +715,18 @@ export default function CheckoutPage() {
                 border-top: 1px solid #ddd;
                 font-weight: 700;
                 font-size: 18px;
-                color: var(--color-text-dark);
+                color: #1f2937;
                 align-items: center;
             }
             .total-amount {
-                color: var(--color-primary-brown);
+                color: #9C7043;
                 font-size: 24px;
             }
 
             .place-order-btn {
                 width: 100%;
                 padding: 15px;
-                background: var(--color-primary-brown);
+                background: #9C7043;
                 color: white;
                 border: none;
                 border-radius: 4px;
@@ -796,8 +796,8 @@ export default function CheckoutPage() {
                 justify-content: space-between;
                 align-items: center;
                 padding: 12px 16px;
-                background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-                border: 1px solid #10b981;
+                background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+                border: 1px solid #E3E846;
                 border-radius: 8px;
             }
             .voucher-applied-info {
@@ -807,12 +807,12 @@ export default function CheckoutPage() {
             }
             .voucher-applied-code {
                 font-weight: 700;
-                color: #059669;
+                color: #854d0e;
                 font-size: 14px;
             }
             .voucher-applied-discount {
-                background: #059669;
-                color: white;
+                background: #E3E846;
+                color: #333;
                 padding: 4px 10px;
                 border-radius: 4px;
                 font-size: 13px;
@@ -909,7 +909,7 @@ export default function CheckoutPage() {
             }
             .voucher-input:focus {
                 outline: none;
-                border-color: #9C7044;
+                border-color: #9C7043;
             }
             .voucher-input::placeholder {
                 text-transform: none;
@@ -919,7 +919,7 @@ export default function CheckoutPage() {
             }
             .voucher-apply-btn {
                 padding: 12px 24px;
-                background: #9C7044;
+                background: #9C7043;
                 color: white;
                 border: none;
                 border-radius: 8px;
@@ -976,7 +976,7 @@ export default function CheckoutPage() {
                 background: white;
             }
             .voucher-card:hover:not(.disabled) {
-                border-color: #9C7044;
+                border-color: #9C7043;
                 box-shadow: 0 4px 12px rgba(156, 112, 68, 0.15);
             }
             .voucher-card.disabled {
@@ -986,7 +986,7 @@ export default function CheckoutPage() {
             }
             .voucher-card-left {
                 width: 80px;
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                background: linear-gradient(135deg, #9C7043 0%, #7d5a36 100%);
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -1040,7 +1040,7 @@ export default function CheckoutPage() {
                 display: flex;
                 align-items: center;
                 padding: 0 16px;
-                color: #9C7044;
+                color: #9C7043;
                 font-weight: 600;
                 font-size: 13px;
             }

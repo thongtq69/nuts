@@ -107,24 +107,23 @@ export default function StaffDashboard() {
     return (
         <div className="space-y-6">
             {/* Welcome Banner */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-6 lg:p-8 text-white">
+            <div className="relative overflow-hidden bg-gradient-to-r from-brand via-brand/80 to-brand-light rounded-2xl p-6 lg:p-8 text-white">
                 <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
                 <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-5 h-5 text-yellow-300" />
-                        <span className="text-blue-100 font-medium text-sm">Xin chào!</span>
+                        <Sparkles className="w-5 h-5 text-yellow-200" />
+                        <span className="text-white/90 font-medium text-sm">Xin chào!</span>
                     </div>
                     <h1 className="text-2xl lg:text-3xl font-bold mb-2">
                         Chào mừng trở lại, {user?.name} 👋
                     </h1>
-                    <p className="text-blue-100/80 text-sm lg:text-base max-w-xl mb-4">
+                    <p className="text-white/80 text-sm lg:text-base max-w-xl mb-4">
                         Đây là tổng quan hoạt động của bạn và đội ngũ cộng tác viên.
                     </p>
 
-                    {/* Referral Link Card */}
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-lg">
-                        <div className="flex items-center gap-2 text-sm text-blue-100 mb-2">
+                        <div className="flex items-center gap-2 text-sm text-white/90 mb-2">
                             <LinkIcon size={14} />
                             <span>Link giới thiệu của bạn</span>
                         </div>
@@ -138,8 +137,8 @@ export default function StaffDashboard() {
                             <button
                                 onClick={copyReferralLink}
                                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${copied
-                                    ? 'bg-emerald-500 text-white'
-                                    : 'bg-white text-blue-600 hover:bg-blue-50'
+                                    ? 'bg-brand-light text-gray-800'
+                                    : 'bg-white text-brand hover:bg-brand-light/10'
                                     }`}
                             >
                                 {copied ? 'Đã sao chép!' : 'Sao chép'}
@@ -169,8 +168,8 @@ export default function StaffDashboard() {
 
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                            <TrendingUp className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                            <TrendingUp className="w-5 h-5 text-brand" />
                         </div>
                     </div>
                     <div className="text-2xl font-bold text-slate-800 mb-1">
@@ -181,8 +180,8 @@ export default function StaffDashboard() {
 
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-purple-600" />
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-brand" />
                         </div>
                     </div>
                     <div className="text-2xl font-bold text-slate-800 mb-1">
@@ -193,8 +192,8 @@ export default function StaffDashboard() {
 
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                            <ShoppingBag className="w-5 h-5 text-amber-600" />
+                        <div className="w-10 h-10 rounded-xl bg-brand-light/30 flex items-center justify-center">
+                            <ShoppingBag className="w-5 h-5 text-gray-700" />
                         </div>
                     </div>
                     <div className="text-2xl font-bold text-slate-800 mb-1">
@@ -222,8 +221,8 @@ export default function StaffDashboard() {
                             <AreaChart data={displayStats.commissionData}>
                                 <defs>
                                     <linearGradient id="colorCommission" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                <stop offset="5%" stopColor="#9C7043" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="#9C7043" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -245,7 +244,7 @@ export default function StaffDashboard() {
                                 <Area
                                     type="monotone"
                                     dataKey="commission"
-                                    stroke="#3b82f6"
+                                    stroke="#9C7043"
                                     strokeWidth={2}
                                     fillOpacity={1}
                                     fill="url(#colorCommission)"
@@ -261,14 +260,14 @@ export default function StaffDashboard() {
                     <div className="space-y-3">
                         <Link
                             href="/staff/collaborators?action=create"
-                            className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all"
+                            className="flex items-center gap-3 p-4 bg-gradient-to-r from-brand to-brand-light text-white rounded-xl hover:shadow-lg hover:shadow-brand/25 transition-all"
                         >
                             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                                 <Plus className="w-5 h-5" />
                             </div>
                             <div>
                                 <div className="font-semibold">Tạo mã CTV mới</div>
-                                <div className="text-blue-100 text-xs">Thêm cộng tác viên</div>
+                                <div className="text-white/90 text-xs">Thêm cộng tác viên</div>
                             </div>
                         </Link>
 
@@ -290,8 +289,8 @@ export default function StaffDashboard() {
                             href="/staff/collaborators"
                             className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors group"
                         >
-                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <Users className="w-5 h-5 text-purple-600" />
+                            <div className="w-10 h-10 bg-brand/10 rounded-lg flex items-center justify-center">
+                                <Users className="w-5 h-5 text-brand" />
                             </div>
                             <div className="flex-1">
                                 <div className="font-semibold text-slate-800">Quản lý CTV</div>
@@ -307,12 +306,12 @@ export default function StaffDashboard() {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-slate-800">Cộng tác viên của bạn</h3>
-                    <Link
-                        href="/staff/collaborators"
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                    >
-                        Xem tất cả <ChevronRight size={14} />
-                    </Link>
+                        <Link
+                            href="/staff/collaborators"
+                            className="text-sm text-brand hover:text-brand/80 font-medium flex items-center gap-1"
+                        >
+                            Xem tất cả <ChevronRight size={14} />
+                        </Link>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -335,7 +334,7 @@ export default function StaffDashboard() {
                                             <p className="text-slate-500">Chưa có cộng tác viên nào</p>
                                             <Link
                                                 href="/staff/collaborators?action=create"
-                                                className="text-sm text-blue-600 hover:underline font-medium"
+                                                className="text-sm text-brand hover:underline font-medium"
                                             >
                                                 Tạo mã CTV đầu tiên
                                             </Link>
@@ -347,7 +346,7 @@ export default function StaffDashboard() {
                                     <tr key={collab.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                                <div className="w-8 h-8 bg-gradient-to-br from-brand to-brand-light rounded-full flex items-center justify-center text-white text-sm font-bold">
                                                     {collab.name.charAt(0)}
                                                 </div>
                                                 <span className="font-medium text-slate-800">{collab.name}</span>

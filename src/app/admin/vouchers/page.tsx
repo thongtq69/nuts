@@ -134,7 +134,7 @@ export default function AdminVouchersPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
             </div>
         );
     }
@@ -145,7 +145,7 @@ export default function AdminVouchersPage() {
             <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-green-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
                             <Ticket className="h-5 w-5" />
                         </div>
                         Quản lý Voucher Đã Phát Hành
@@ -316,7 +316,7 @@ export default function AdminVouchersPage() {
                                                 v.userId || 'Không xác định'
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-amber-600">
+                                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-brand">
                                             {v.discountValue.toLocaleString()}{v.discountType === 'percent' ? '%' : 'đ'}
                                         </td>
                                         <td className="px-6 py-4 text-center whitespace-nowrap">

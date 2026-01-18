@@ -54,19 +54,19 @@ function formatPrice(price: number) {
 function getVoucherIcon(value: number) {
     if (value >= 100000) {
         return (
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-light/50 to-brand-light/30 flex items-center justify-center">
                 <span className="text-3xl">🎁</span>
             </div>
         );
     } else if (value >= 50000) {
         return (
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center">
                 <span className="text-3xl">🎫</span>
             </div>
         );
     } else {
         return (
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand/10 to-brand/20 flex items-center justify-center">
                 <span className="text-3xl">🏷️</span>
             </div>
         );
@@ -200,7 +200,7 @@ export default function AdminVoucherRewardsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
             </div>
         );
     }
@@ -244,7 +244,7 @@ export default function AdminVoucherRewardsPage() {
                         <h4 className="font-bold text-slate-800 mb-4">📋 Điều khoản sử dụng</h4>
                         <div className="bg-slate-50 rounded-xl p-4 space-y-3 text-sm text-slate-600">
                             <div className="flex items-start gap-3">
-                                <ShoppingCart size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                                <ShoppingCart size={16} className="text-brand mt-0.5 flex-shrink-0" />
                                 <p><strong>Đơn tối thiểu:</strong> Khách hàng mua đơn từ <strong>{formatPrice(selectedRule.minOrderValue)}đ</strong> sẽ được tặng voucher này.</p>
                             </div>
                             <div className="flex items-start gap-3">
@@ -253,12 +253,12 @@ export default function AdminVoucherRewardsPage() {
                             </div>
                             {selectedRule.minOrderForVoucher > 0 && (
                                 <div className="flex items-start gap-3">
-                                    <Wallet size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                                    <Wallet size={16} className="text-brand mt-0.5 flex-shrink-0" />
                                     <p><strong>Điều kiện dùng:</strong> Áp dụng cho đơn từ <strong>{formatPrice(selectedRule.minOrderForVoucher)}đ</strong>.</p>
                                 </div>
                             )}
                             <div className="flex items-start gap-3">
-                                <Clock size={16} className="text-purple-600 mt-0.5 flex-shrink-0" />
+                                <Clock size={16} className="text-brand-light mt-0.5 flex-shrink-0" />
                                 <p><strong>Thời hạn:</strong> Voucher có hiệu lực trong <strong>{selectedRule.validityDays} ngày</strong> (~{Math.round(selectedRule.validityDays / 30)} tháng) kể từ ngày nhận.</p>
                             </div>
                         </div>
@@ -267,17 +267,17 @@ export default function AdminVoucherRewardsPage() {
                     {/* Gia hạn */}
                     <div>
                         <h4 className="font-bold text-slate-800 mb-4">⏰ Chính sách gia hạn</h4>
-                        <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-3 text-sm text-amber-900">
+                        <div className="bg-brand-light/20 border border-brand-light/40 rounded-xl p-4 space-y-3 text-sm text-brand-dark">
                             <div className="flex items-start gap-3">
-                                <RefreshCw size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                                <RefreshCw size={16} className="text-brand mt-0.5 flex-shrink-0" />
                                 <p><strong>Phí gia hạn:</strong> Khách hàng trả <strong>{formatPrice(selectedRule.extensionFee)}đ</strong> để gia hạn voucher hết hạn.</p>
                             </div>
                             <div className="flex items-start gap-3">
-                                <Clock size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                                <Clock size={16} className="text-brand mt-0.5 flex-shrink-0" />
                                 <p><strong>Thời gian gia hạn:</strong> Mỗi lần gia hạn thêm <strong>{selectedRule.extensionDays} ngày</strong>.</p>
                             </div>
                             <div className="flex items-start gap-3">
-                                <Gift size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                                <Gift size={16} className="text-brand mt-0.5 flex-shrink-0" />
                                 <p><strong>Số lần tối đa:</strong> Cho phép gia hạn tối đa <strong>{selectedRule.maxExtensions} lần</strong>.</p>
                             </div>
                         </div>
@@ -336,7 +336,7 @@ export default function AdminVoucherRewardsPage() {
                             </button>
                             <button
                                 onClick={() => handleEdit(selectedRule)}
-                                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-semibold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all flex items-center gap-2"
+                                className="px-6 py-2.5 bg-gradient-to-r from-brand to-brand-dark text-white font-semibold rounded-xl hover:from-brand-dark hover:to-brand-dark transition-all flex items-center gap-2"
                             >
                                 <Edit3 size={18} />
                                 Sửa quy tắc
@@ -355,7 +355,7 @@ export default function AdminVoucherRewardsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/25">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <Gift className="h-5 w-5" />
                         </div>
                         Chính sách tặng Voucher
@@ -366,7 +366,7 @@ export default function AdminVoucherRewardsPage() {
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-semibold rounded-xl shadow-lg transition-all"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand to-brand-dark hover:from-brand-dark hover:to-brand-dark text-white font-semibold rounded-xl shadow-lg transition-all"
                 >
                     <Plus size={18} />
                     Thêm quy tắc
@@ -374,9 +374,9 @@ export default function AdminVoucherRewardsPage() {
             </div>
 
             {/* Info Card */}
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-4">
-                <h3 className="font-semibold text-blue-800 mb-2">📌 Cách hoạt động:</h3>
-                <p className="text-sm text-blue-700">
+            <div className="bg-gradient-to-r from-brand/10 to-brand-light/20 border border-brand/20 rounded-2xl p-4">
+                <h3 className="font-semibold text-brand-dark mb-2">📌 Cách hoạt động:</h3>
+                <p className="text-sm text-brand">
                     Khi khách mua hàng đạt giá trị đơn tối thiểu, hệ thống tự động tặng voucher.
                     Voucher hết hạn có thể gia hạn bằng phí nhỏ.
                 </p>
@@ -393,7 +393,7 @@ export default function AdminVoucherRewardsPage() {
                             <p className="text-slate-500 font-medium">Chưa có quy tắc nào</p>
                             <button
                                 onClick={() => setShowForm(true)}
-                                className="text-amber-600 hover:text-amber-700 font-semibold"
+                                className="text-brand hover:text-brand-dark font-semibold"
                             >
                                 + Thêm quy tắc đầu tiên
                             </button>
@@ -411,7 +411,7 @@ export default function AdminVoucherRewardsPage() {
 
                             {/* Content */}
                             <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-slate-800 group-hover:text-amber-600 transition-colors">
+                                <h3 className="font-semibold text-slate-800 group-hover:text-brand transition-colors">
                                     {rule.name}
                                 </h3>
                                 <p className="text-sm text-slate-500 mt-0.5 truncate">
@@ -427,7 +427,7 @@ export default function AdminVoucherRewardsPage() {
                                     }`}>
                                     {formatPrice(rule.voucherValue)}đ
                                 </span>
-                                <ChevronRight size={18} className="text-slate-400 group-hover:text-amber-500 transition-colors" />
+                                <ChevronRight size={18} className="text-slate-400 group-hover:text-brand transition-colors" />
                             </div>
                         </div>
                     ))
@@ -459,7 +459,7 @@ export default function AdminVoucherRewardsPage() {
                                     type="text"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand"
                                     placeholder="VD: Tặng 50k cho đơn từ 500k"
                                     required
                                 />
@@ -474,7 +474,7 @@ export default function AdminVoucherRewardsPage() {
                                         type="number"
                                         value={formData.minOrderValue}
                                         onChange={e => setFormData({ ...formData, minOrderValue: parseInt(e.target.value) || 0 })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand"
                                         required
                                     />
                                     <p className="text-xs text-slate-500 mt-1">
@@ -489,7 +489,7 @@ export default function AdminVoucherRewardsPage() {
                                         type="number"
                                         value={formData.voucherValue}
                                         onChange={e => setFormData({ ...formData, voucherValue: parseInt(e.target.value) || 0 })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand"
                                         required
                                     />
                                 </div>
@@ -504,7 +504,7 @@ export default function AdminVoucherRewardsPage() {
                                         type="number"
                                         value={formData.validityDays}
                                         onChange={e => setFormData({ ...formData, validityDays: parseInt(e.target.value) || 90 })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand"
                                     />
                                 </div>
                                 <div>
@@ -515,13 +515,13 @@ export default function AdminVoucherRewardsPage() {
                                         type="number"
                                         value={formData.minOrderForVoucher}
                                         onChange={e => setFormData({ ...formData, minOrderForVoucher: parseInt(e.target.value) || 0 })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand"
                                     />
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-amber-50 rounded-xl space-y-4 border border-amber-100">
-                                <h3 className="font-semibold text-amber-800">⏰ Cấu hình gia hạn</h3>
+                            <div className="p-4 bg-brand-light/20 rounded-xl space-y-4 border border-brand-light/40">
+                                <h3 className="font-semibold text-brand-dark">⏰ Cấu hình gia hạn</h3>
                                 <div className="grid grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -531,7 +531,7 @@ export default function AdminVoucherRewardsPage() {
                                             type="number"
                                             value={formData.extensionFee}
                                             onChange={e => setFormData({ ...formData, extensionFee: parseInt(e.target.value) || 0 })}
-                                            className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                            className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand"
                                         />
                                     </div>
                                     <div>
@@ -542,7 +542,7 @@ export default function AdminVoucherRewardsPage() {
                                             type="number"
                                             value={formData.extensionDays}
                                             onChange={e => setFormData({ ...formData, extensionDays: parseInt(e.target.value) || 90 })}
-                                            className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                            className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand"
                                         />
                                     </div>
                                     <div>
@@ -553,7 +553,7 @@ export default function AdminVoucherRewardsPage() {
                                             type="number"
                                             value={formData.maxExtensions}
                                             onChange={e => setFormData({ ...formData, maxExtensions: parseInt(e.target.value) || 1 })}
-                                            className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                            className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand"
                                         />
                                     </div>
                                 </div>
@@ -565,7 +565,7 @@ export default function AdminVoucherRewardsPage() {
                                     id="isActive"
                                     checked={formData.isActive}
                                     onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
-                                    className="w-5 h-5 text-amber-600 rounded-lg focus:ring-amber-500 border-slate-300"
+                                    className="w-5 h-5 text-brand rounded-lg focus:ring-brand border-slate-300"
                                 />
                                 <label htmlFor="isActive" className="text-sm font-medium text-slate-700">
                                     Kích hoạt quy tắc này
@@ -583,7 +583,7 @@ export default function AdminVoucherRewardsPage() {
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-brand to-brand-dark hover:from-brand-dark hover:to-brand-dark text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
                                 >
                                     {saving ? (
                                         <Loader2 size={18} className="animate-spin" />
