@@ -3,9 +3,12 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await dbConnect();
+        
+        const { searchParams } = new URL(request.url);
+        const force = searchParams.get('force') === 'true';
 
         const email = 'admin@gonuts.com';
         const password = 'Admin123!';
@@ -13,6 +16,19 @@ export async function GET() {
         let user = await User.findOne({ email });
 
         if (user) {
+            if (force) {
+                // Force reset password
+                const hashedPassword = await bcrypt.hash(password, 10);
+                user.password = hashedPassword;
+                user.role = 'admin';
+                await user.save();
+                return NextResponse.json({
+                    message: 'Admin password reset successfully',
+                    email,
+                    password: password
+                });
+            }
+            
             // Update to admin role if not already
             if (user.role !== 'admin') {
                 user.role = 'admin';
@@ -39,7 +55,7 @@ export async function GET() {
         return NextResponse.json({
             message: 'Admin user created successfully',
             email,
-            password: 'Admin123!'
+            password: password
         });
 
     } catch (error: any) {

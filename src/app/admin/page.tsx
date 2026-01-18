@@ -31,11 +31,11 @@ async function getStats() {
     const productCount = await Product.countDocuments();
     const userCount = await User.countDocuments();
 
-    const orders = await Order.find({ status: { $in: ['completed', 'paid'] } });
+    const orders = await Order.find({ status: 'delivered' });
     const totalRevenue = orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
 
     const pendingOrders = await Order.countDocuments({ status: 'pending' });
-    const completedOrders = await Order.countDocuments({ status: { $in: ['completed', 'paid'] } });
+    const completedOrders = await Order.countDocuments({ status: 'delivered' });
     const cancelledOrders = await Order.countDocuments({ status: 'cancelled' });
 
     const recentOrders = await Order.find()
@@ -51,7 +51,7 @@ async function getStats() {
     const revenueAggregation = await Order.aggregate([
         {
             $match: {
-                status: { $in: ['completed', 'paid'] },
+                status: { $in: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] },
                 createdAt: { $gte: sevenDaysAgo }
             }
         },

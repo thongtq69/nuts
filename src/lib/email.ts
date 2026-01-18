@@ -58,6 +58,7 @@ async function createTransporter() {
 // Base URL for assets
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 const LOGO_URL = `${BASE_URL}/assets/logo.png`;
+const HOTLINE_PHONE = process.env.HOTLINE_PHONE || '09xxxxxxxx';
 
 // Email Templates
 const emailStyles = `
@@ -224,7 +225,7 @@ export async function sendOrderConfirmationEmail(
                 </div>
                 <div class="footer">
                     <img src="${LOGO_URL}" alt="Go Nuts" class="logo-footer" />
-                    <p>Nếu có thắc mắc, vui lòng liên hệ hotline: <strong>09xxxxxxxx</strong></p>
+                    <p>Nếu có thắc mắc, vui lòng liên hệ hotline: <strong>${HOTLINE_PHONE}</strong></p>
                     <p>© 2026 Go Nuts - Thực phẩm sạch, dinh dưỡng</p>
                 </div>
             </div>

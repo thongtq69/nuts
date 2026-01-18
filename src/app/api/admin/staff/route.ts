@@ -4,6 +4,7 @@ import User from '@/models/User';
 import Order from '@/models/Order';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import bcrypt from 'bcryptjs';
 
 // Helper to check if user is admin
 async function isAdmin() {
@@ -102,7 +103,6 @@ export async function POST(req: Request) {
         }
 
         // Hash password
-        const bcrypt = require('bcryptjs');
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create staff user

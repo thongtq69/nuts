@@ -49,6 +49,7 @@ export default function CheckoutPage() {
     const [selectedProvince, setSelectedProvince] = useState('');
     const [selectedDistrict, setSelectedDistrict] = useState('');
     const [selectedWard, setSelectedWard] = useState('');
+    const [addressError, setAddressError] = useState('');
 
     // Fetch vouchers
     useEffect(() => {
@@ -69,13 +70,19 @@ export default function CheckoutPage() {
     // Fetch provinces on mount
     useEffect(() => {
         fetch('https://provinces.open-api.vn/api/p/')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch provinces');
+                return res.json();
+            })
             .then(data => {
                 if (Array.isArray(data)) {
                     setProvinces(data);
                 }
             })
-            .catch(err => console.error('Error fetching provinces:', err));
+            .catch(err => {
+                console.error('Error fetching provinces:', err);
+                setAddressError('Không thể tải danh sách tỉnh/thành. Vui lòng tải lại trang.');
+            });
     }, []);
 
     // Fetch districts when province changes
@@ -87,13 +94,19 @@ export default function CheckoutPage() {
             setSelectedWard('');
             
             fetch(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`)
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to fetch districts');
+                    return res.json();
+                })
                 .then(data => {
                     if (data.districts) {
                         setDistricts(data.districts);
                     }
                 })
-                .catch(err => console.error('Error fetching districts:', err));
+                .catch(err => {
+                    console.error('Error fetching districts:', err);
+                    alert('Không thể tải danh sách quận/huyện. Vui lòng thử lại.');
+                });
         }
     }, [selectedProvince]);
 
@@ -104,13 +117,19 @@ export default function CheckoutPage() {
             setSelectedWard('');
             
             fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`)
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to fetch wards');
+                    return res.json();
+                })
                 .then(data => {
                     if (data.wards) {
                         setWards(data.wards);
                     }
                 })
-                .catch(err => console.error('Error fetching wards:', err));
+                .catch(err => {
+                    console.error('Error fetching wards:', err);
+                    alert('Không thể tải danh sách phường/xã. Vui lòng thử lại.');
+                });
         }
     }, [selectedDistrict]);
 
@@ -302,22 +321,44 @@ export default function CheckoutPage() {
                             <div className="form-group-row">
                                 <div className="form-group">
                                     <label>Tỉnh / Thành phố <span className="text-red-500">*</span></label>
-                                    <select 
-                                        value={selectedProvince} 
-                                        onChange={e => {
-                                            setSelectedProvince(e.target.value);
-                                            const provinceName = provinces.find(p => p.code.toString() === e.target.value)?.name || '';
-                                            setFormData({ ...formData, city: provinceName });
-                                        }}
-                                        required
-                                    >
-                                        <option value="">-- Chọn Tỉnh/Thành phố --</option>
-                                        {provinces.map(province => (
-                                            <option key={province.code} value={province.code}>
-                                                {province.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    {addressError ? (
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder={addressError}
+                                                disabled
+                                                className="border border-red-300 bg-red-50 text-red-600 text-sm p-3 w-full rounded"
+                                            />
+                                            <button
+                                                onClick={() => window.location.reload()}
+                                                className="px-4 py-3 bg-brand text-white rounded hover:bg-brand-dark"
+                                                title="Tải lại trang"
+                                            >
+                                                ↻
+                                            </button>
+                                        </div>
+                                    ) : provinces.length > 0 ? (
+                                        <select 
+                                            value={selectedProvince} 
+                                            onChange={e => {
+                                                setSelectedProvince(e.target.value);
+                                                const provinceName = provinces.find(p => p.code.toString() === e.target.value)?.name || '';
+                                                setFormData({ ...formData, city: provinceName });
+                                            }}
+                                            required
+                                        >
+                                            <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                            {provinces.map(province => (
+                                                <option key={province.code} value={province.code}>
+                                                    {province.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <div className="text-gray-500 p-3 text-center border border-dashed border-gray-300 rounded">
+                                            Đang tải...
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>Quận / Huyện <span className="text-red-500">*</span></label>

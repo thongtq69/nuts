@@ -3615,3 +3615,110 @@ a[class*="from-orange"] {
     transform: scale(1);
   }
 }
+
+/* ========================================
+   Quill Editor Styles
+   ======================================== */
+
+.ql-toolbar.ql-snow {
+  border: 2px solid #e5e7eb !important;
+  border-radius: 16px 16px 0 0 !important;
+  background: #f9fafb !important;
+  padding: 12px !important;
+}
+
+.ql-container.ql-snow {
+  border: 2px solid #e5e7eb !important;
+  border-top: none !important;
+  border-radius: 0 0 16px 16px !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+  min-height: 200px !important;
+}
+
+.ql-editor {
+  min-height: 200px !important;
+  max-height: 400px !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+}
+
+.ql-editor.ql-blank::before {
+  font-style: normal !important;
+  color: #9ca3af !important;
+}
+
+.ql-snow .ql-stroke {
+  stroke: #6b7280 !important;
+}
+
+.ql-snow .ql-fill {
+  fill: #6b7280 !important;
+}
+
+.ql-snow .ql-picker {
+  color: #6b7280 !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow .ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button:focus .ql-stroke,
+.ql-snow .ql-toolbar button:focus .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.ql-snow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: #9C7044 !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow .ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button:focus .ql-fill,
+.ql-snow .ql-toolbar button:focus .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill,
+.ql-snow .ql-toolbar button.ql-active .ql-fill {
+  fill: #9C7044 !important;
+}
+
+.ql-snow.ql-toolbar .ql-picker-options {
+  border: 2px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+  padding: 8px !important;
+}
+
+.ql-snow .ql-picker-item.ql-selected {
+  color: #9C7044 !important;
+}
+
+/* ========================================
+   Modal Backdrop Blur
+   ======================================== */
+
+.modal-overlay {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ========================================
+   Line Clamp Utilities
+   ======================================== */
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
