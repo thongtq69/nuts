@@ -133,12 +133,12 @@ export default function AdminBannersPage() {
     };
 
     // Handle file upload
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             // Kiểm tra tỉ lệ ảnh
             const img = new Image();
-            img.onload = () => {
+            img.onload = async () => {
                 const aspectRatio = img.naturalWidth / img.naturalHeight;
                 const targetRatio = 3; // 3:1
 
@@ -149,12 +149,31 @@ export default function AdminBannersPage() {
                     setShowCropperMessage(true);
                     setTimeout(() => setShowCropperMessage(false), 3000);
                 } else {
-                    // Tỉ lệ đúng, sử dụng trực tiếp
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        setFormData({ ...formData, imageUrl: reader.result as string });
-                    };
-                    reader.readAsDataURL(file);
+                    // Tỉ lệ đúng, upload trực tiếp lên Cloudinary
+                    try {
+                        const uploadFormData = new FormData();
+                        uploadFormData.append('file', file);
+                        uploadFormData.append('folder', 'gonuts/banners');
+                        uploadFormData.append('type', 'banner');
+
+                        const response = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: uploadFormData,
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            console.log('✅ Banner uploaded to Cloudinary:', result.data.url);
+                            setFormData({ ...formData, imageUrl: result.data.url });
+                        } else {
+                            console.error('❌ Upload failed:', result.message);
+                            alert('Upload thất bại: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('❌ Error uploading banner:', error);
+                        alert('Lỗi khi upload banner');
+                    }
                 }
             };
             img.onerror = () => {

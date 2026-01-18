@@ -264,13 +264,50 @@ export default function ImageCropper({
             xOnOutput, yOnOutput, scaledWidthOnOutput, scaledHeightOnOutput // Dest: vị trí và kích thước trên output
         );
 
-        // Convert sang blob với chất lượng tối đa (PNG để giữ chất lượng cao nhất)
-        finalCanvas.toBlob((blob) => {
+        // Convert sang base64 và upload lên Cloudinary
+        finalCanvas.toBlob(async (blob) => {
             if (blob) {
-                const croppedUrl = URL.createObjectURL(blob);
-                onCrop(croppedUrl);
+                try {
+                    // Convert blob to base64
+                    const reader = new FileReader();
+                    reader.onload = async () => {
+                        const base64Data = reader.result as string;
+                        
+                        // Upload to Cloudinary
+                        const response = await fetch('/api/upload', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                imageData: base64Data,
+                                folder: 'gonuts/banners',
+                                type: 'banner',
+                                filename: `cropped_${Date.now()}`
+                            })
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            console.log('✅ Image uploaded to Cloudinary:', result.data.url);
+                            onCrop(result.data.url);
+                        } else {
+                            console.error('❌ Upload failed:', result.message);
+                            // Fallback to blob URL
+                            const croppedUrl = URL.createObjectURL(blob);
+                            onCrop(croppedUrl);
+                        }
+                    };
+                    reader.readAsDataURL(blob);
+                } catch (error) {
+                    console.error('❌ Error uploading to Cloudinary:', error);
+                    // Fallback to blob URL
+                    const croppedUrl = URL.createObjectURL(blob);
+                    onCrop(croppedUrl);
+                }
             }
-        }, 'image/png');
+        }, 'image/jpeg', 0.9);
     }, [aspectRatio, cropArea, onCrop, scale, position, imageDimensions, imageLoaded]);
 
     // Keyboard support

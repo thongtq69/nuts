@@ -120,6 +120,8 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
 
                                 const uploadData = new FormData();
                                 uploadData.append('file', file);
+                                uploadData.append('folder', 'gonuts/products');
+                                uploadData.append('type', 'product');
 
                                 try {
                                     setLoading(true);
@@ -131,8 +133,10 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     if (res.ok) {
                                         const data = await res.json();
                                         setFormData(prev => ({ ...prev, image: data.url }));
+                                        console.log('✅ Product image uploaded to Cloudinary:', data.url);
                                     } else {
-                                        alert('Tải lên thất bại');
+                                        const errorData = await res.json();
+                                        alert('Tải lên thất bại: ' + (errorData.message || 'Unknown error'));
                                     }
                                 } catch (err) {
                                     console.error(err);

@@ -18,7 +18,8 @@ import {
     ExternalLink,
     Gift,
     Tag,
-    Home
+    Home,
+    Cloud
 } from 'lucide-react';
 
 const menuItems = [
@@ -59,6 +60,7 @@ const menuItems = [
         items: [
             { href: '/admin/voucher-rewards', icon: Gift, label: 'Tặng Voucher' },
             { href: '/admin/fix-homepage', icon: Home, label: 'Sửa Trang Chủ' },
+            { href: '/admin/cloudinary', icon: Cloud, label: 'Quản lý Cloudinary' },
             { href: '/admin/settings', icon: Settings, label: 'Cài đặt Website' },
             { href: '/admin/affiliate-settings', icon: TrendingUp, label: 'Cấu hình Affiliate' },
         ],
