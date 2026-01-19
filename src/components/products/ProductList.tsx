@@ -23,10 +23,10 @@ export default function ProductList({ products }: ProductListProps) {
     const urlSort = searchParams.get('sort');
     
     useEffect(() => {
-        if (urlSort) {
+        if (urlSort && urlSort !== sortOption) {
             setSortOption(urlSort);
         }
-    }, [urlSort]);
+    }, [urlSort, sortOption]);
 
     // Filter and sort products based on URL parameters and sort option
     const filteredAndSortedProducts = useMemo(() => {

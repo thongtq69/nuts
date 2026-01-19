@@ -89,37 +89,41 @@ body {
   line-height: 1.5;
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
-  transition: color 0.2s ease;
-}
+@layer base {
+  a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s ease;
+  }
 
-a:hover {
-  color: var(--color-primary-brown);
-}
+  a:hover {
+    color: var(--color-primary-brown);
+  }
 
-ul {
-  list-style: none;
-}
+  ul {
+    list-style: none;
+  }
 
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border-width: 0;
+    border-style: solid;
+    background: none;
+  }
 
-input {
-  font-family: inherit;
-  border: none;
-  outline: none;
+  input {
+    font-family: inherit;
+    border-width: 0;
+    border-style: solid;
+    outline: none;
+  }
 }
 
 /* Container */

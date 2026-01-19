@@ -60,7 +60,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             { new: true, runValidators: true }
         );
 
-        console.log(`✅ Product ${action === 'add_tag' ? 'added to' : 'removed from'} ${tag}:`, updatedProduct.name);
+        console.log(`✅ Product ${action === 'add_tag' ? 'added to' : 'removed from'} ${tag}:`, updatedProduct?.name || 'Unknown');
         
         return NextResponse.json(updatedProduct);
     } catch (error: any) {

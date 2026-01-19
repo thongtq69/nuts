@@ -155,9 +155,9 @@ export default function StaffDashboard() {
     ];
 
     return (
-        <div className="space-y-8">
+            <div className="space-y-8 w-full max-w-[1200px]">
             {/* Welcome Banner */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-brand via-brand-light to-amber-400 rounded-3xl p-6 sm:p-8 text-gray-800 shadow-2xl shadow-brand/20">
+            <div className="relative overflow-hidden bg-gradient-to-r from-brand via-brand-light to-amber-400 rounded-3xl p-6 sm:p-8 text-gray-800 shadow-2xl shadow-brand/20 max-w-[1200px]">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
                 <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-amber-300/20 rounded-full blur-3xl" />
@@ -212,18 +212,18 @@ export default function StaffDashboard() {
                         </div>
 
                         {/* Full Affiliate Link */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
                             <input
                                 type="text"
                                 readOnly
                                 value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${((user as any)?.referralCode || (user as any)?.staffCode || '')}`}
                                 onClick={copyReferralLink}
-                                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 font-mono placeholder-gray-400 focus:outline-none cursor-pointer hover:bg-gray-100 transition-colors"
+                                className="w-full lg:flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 font-mono placeholder-gray-400 focus:outline-none cursor-pointer hover:bg-gray-100 transition-colors"
                                 title="Click để sao chép link tiếp thị đầy đủ"
                             />
                             <button
                                 onClick={copyReferralLink}
-                                className={`px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg border-2 ${
+                                className={`w-full lg:w-auto px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg border-2 ${
                                     copied
                                         ? 'bg-emerald-500 text-gray-900 border-black hover:bg-emerald-600 shadow-emerald-500/25'
                                         : 'bg-brand text-gray-900 border-black hover:bg-brand-dark shadow-brand/30'
@@ -310,7 +310,7 @@ export default function StaffDashboard() {
             </div>
 
             {/* Charts & Quick Actions Row */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
                 {/* Commission Chart */}
                 <div className="xl:col-span-2 bg-white rounded-3xl p-6 shadow-lg shadow-gray-100/50 border border-gray-100">
                     <div className="flex items-center justify-between mb-6 flex-wrap gap-4">

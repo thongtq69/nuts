@@ -107,8 +107,8 @@ export default function StaffLayout({
             </aside>
 
             {/* Main Content */}
-            <main className="lg:pl-72 min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20">
-                <div className="p-4 sm:p-6 lg:p-8 max-w-full lg:max-w-7xl mx-auto">
+            <main className="min-h-screen pt-16 lg:pt-0 lg:pl-72 bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20">
+                <div className="p-4 sm:p-6 lg:p-8 w-full max-w-[1200px]">
                     {children}
                 </div>
             </main>

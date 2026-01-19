@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -50,6 +50,11 @@ export default function Toast({ id, type, title, message, duration = 4000, onClo
     const Icon = toastIcons[type];
     const colors = toastColors[type];
 
+    const handleClose = useCallback(() => {
+        setIsExiting(true);
+        setTimeout(() => onClose(id), 300);
+    }, [id, onClose]);
+
     useEffect(() => {
         const startTime = Date.now();
         const interval = setInterval(() => {
@@ -70,12 +75,7 @@ export default function Toast({ id, type, title, message, duration = 4000, onClo
             clearTimeout(timer);
             clearInterval(interval);
         };
-    }, [duration]);
-
-    const handleClose = () => {
-        setIsExiting(true);
-        setTimeout(() => onClose(id), 300);
-    };
+    }, [duration, handleClose]);
 
     return (
         <div

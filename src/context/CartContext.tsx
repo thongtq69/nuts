@@ -28,15 +28,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Load from localStorage on mount
     useEffect(() => {
-        setIsMounted(true);
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-            try {
-                setCartItems(JSON.parse(savedCart));
-            } catch (e) {
-                console.error('Failed to parse cart', e);
+        const timer = setTimeout(() => {
+            setIsMounted(true);
+            const savedCart = localStorage.getItem('cart');
+            if (savedCart) {
+                try {
+                    setCartItems(JSON.parse(savedCart));
+                } catch (e) {
+                    console.error('Failed to parse cart', e);
+                }
             }
-        }
+        }, 0);
+        
+        return () => clearTimeout(timer);
     }, []);
 
     // Save to localStorage whenever cart changes

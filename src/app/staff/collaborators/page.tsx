@@ -135,7 +135,7 @@ export default function CollaboratorsPage() {
     const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 w-full">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

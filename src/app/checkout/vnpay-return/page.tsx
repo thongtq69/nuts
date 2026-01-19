@@ -21,18 +21,19 @@ function VNPayReturnContent() {
         const responseCode = searchParams.get('vnp_ResponseCode');
         const txnRef = searchParams.get('vnp_TxnRef');
         
+        // Use functional updates to avoid setState in effect issues
         if (txnRef) {
-            setOrderId(txnRef);
+            setOrderId(prev => prev || txnRef);
         }
 
         if (responseCode === '00') {
-            setStatus('success');
-            setMessage('Thanh toán thành công!');
+            setStatus(prev => prev === 'pending' ? 'success' : prev);
+            setMessage(prev => prev === 'Đang xử lý...' ? 'Thanh toán thành công!' : prev);
             clearCart();
         } else {
-            setStatus('failed');
+            setStatus(prev => prev === 'pending' ? 'failed' : prev);
             const errorMsg = responseCode ? (VNPayResponseCode as Record<string, string>)[responseCode] || 'Thanh toán thất bại' : 'Thanh toán thất bại';
-            setMessage(errorMsg);
+            setMessage(prev => prev === 'Đang xử lý...' ? errorMsg : prev);
         }
     }, [searchParams, clearCart]);
 

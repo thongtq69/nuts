@@ -29,16 +29,10 @@ export async function POST(req: Request) {
             const mimeType = file.type || 'image/png';
             const dataUrl = `data:${mimeType};base64,${base64}`;
 
-            uploadResult = await uploadToCloudinary(dataUrl, {
-                folder,
-                resourceType: 'image',
-            });
+            uploadResult = await uploadToCloudinary(dataUrl, folder);
         } else if (imageUrl) {
             // Upload from URL or base64
-            uploadResult = await uploadToCloudinary(imageUrl, {
-                folder,
-                resourceType: 'image',
-            });
+            uploadResult = await uploadToCloudinary(imageUrl, folder);
         } else {
             return NextResponse.json(
                 { error: 'No file or imageUrl provided' },
