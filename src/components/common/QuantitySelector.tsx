@@ -70,49 +70,6 @@ export default function QuantitySelector({ value: controlledValue, onChange, min
             >
                 +
             </button>
-
-            <style jsx>{`
-        .quantity-selector {
-            display: flex;
-            align-items: center;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: fit-content;
-        }
-        .qty-btn {
-            width: 36px;
-            height: 40px;
-            background: #f5f5f5;
-            border: none;
-            cursor: pointer;
-            font-size: 18px;
-            color: #333;
-            transition: background 0.2s;
-        }
-        .qty-btn:hover:not(:disabled) {
-            background: #e5e5e5;
-        }
-        .qty-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .qty-input {
-            width: 60px;
-            height: 40px;
-            text-align: center;
-            border: none;
-            border-left: 1px solid #ddd;
-            border-right: 1px solid #ddd;
-            font-size: 16px;
-            color: #333;
-            -moz-appearance: textfield;
-        }
-        .qty-input::-webkit-outer-spin-button,
-        .qty-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-      `}</style>
         </div>
     );
 }

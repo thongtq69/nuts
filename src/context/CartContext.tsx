@@ -39,6 +39,12 @@ function calculatePrice(
     agentSettings?: { agentDiscountEnabled: boolean; agentDiscountPercent: number; bulkDiscountEnabled: boolean },
     bulkPricing?: { minQuantity: number; discountPercent: number }[]
 ): number {
+    // Guard against invalid inputs
+    if (!originalPrice || isNaN(originalPrice) || originalPrice <= 0) {
+        console.warn('Invalid originalPrice:', originalPrice);
+        return 0;
+    }
+    
     let finalPrice = originalPrice;
 
     if (!isAgent || !agentSettings?.agentDiscountEnabled) {
@@ -52,9 +58,10 @@ function calculatePrice(
         return Math.round(finalPrice);
     }
 
-    const agentDiscountPrice = originalPrice * (1 - (agentSettings.agentDiscountPercent || 10) / 100);
+    const agentDiscountPercent = agentSettings?.agentDiscountPercent || 10;
+    const agentDiscountPrice = originalPrice * (1 - agentDiscountPercent / 100);
 
-    if (agentSettings.bulkDiscountEnabled && bulkPricing && bulkPricing.length > 0) {
+    if (agentSettings?.bulkDiscountEnabled && bulkPricing && bulkPricing.length > 0) {
         const sortedTiers = [...bulkPricing].sort((a, b) => b.minQuantity - a.minQuantity);
         const applicableTier = sortedTiers.find(tier => quantity >= tier.minQuantity);
         if (applicableTier) {

@@ -8,6 +8,13 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 
+function formatPrice(value: number): string {
+    if (isNaN(value) || value === undefined || value === null) {
+        return '0';
+    }
+    return Math.round(value).toLocaleString();
+}
+
 export default function CartPage() {
     const { cartItems, updateQuantity, removeFromCart, cartTotal, originalTotal, savingsTotal, getItemPrice } = useCart();
 
@@ -49,11 +56,11 @@ export default function CartPage() {
                                                 <div className="price-display">
                                                     {item.isAgent && item.originalPrice !== getItemPrice(item) ? (
                                                         <>
-                                                            <span className="original-price-strikethrough">{(item.originalPrice ?? getItemPrice(item)).toLocaleString()}₫</span>
-                                                            <span className="agent-price">{getItemPrice(item).toLocaleString()}₫</span>
+                                                            <span className="original-price-strikethrough">{formatPrice(item.originalPrice)}₫</span>
+                                                            <span className="agent-price">{formatPrice(getItemPrice(item))}₫</span>
                                                         </>
                                                     ) : (
-                                                        <span>{(item.originalPrice ?? getItemPrice(item)).toLocaleString()}₫</span>
+                                                        <span>{formatPrice(item.originalPrice)}₫</span>
                                                     )}
                                                 </div>
                                             </td>
@@ -64,7 +71,7 @@ export default function CartPage() {
                                                     <button onClick={() => updateQuantity(item.id, 1)}>+</button>
                                                 </div>
                                             </td>
-                                            <td className="subtotal">{(getItemPrice(item) * item.quantity).toLocaleString()}₫</td>
+                                            <td className="subtotal">{formatPrice(getItemPrice(item) * item.quantity)}₫</td>
                                             <td>
                                                 <button onClick={() => removeFromCart(item.id)} className="remove-btn">×</button>
                                             </td>
@@ -78,17 +85,17 @@ export default function CartPage() {
                             <h3>Tổng giỏ hàng</h3>
                             <div className="summary-row">
                                 <span>Giá gốc</span>
-                                <span className="original-price-strikethrough">{originalTotal.toLocaleString()}₫</span>
+                                <span className="original-price-strikethrough">{formatPrice(originalTotal)}₫</span>
                             </div>
                             {savingsTotal > 0 && (
                                 <div className="summary-row savings">
                                     <span>Tiết kiệm</span>
-                                    <span className="savings-amount">-{savingsTotal.toLocaleString()}₫</span>
+                                    <span className="savings-amount">-{formatPrice(savingsTotal)}₫</span>
                                 </div>
                             )}
                             <div className="summary-row total">
                                 <span>Tổng cộng</span>
-                                <span>{cartTotal.toLocaleString()}₫</span>
+                                <span>{formatPrice(cartTotal)}₫</span>
                             </div>
                             <Link href="/checkout">
                                 <button className="checkout-btn">Thanh toán</button>

@@ -25,20 +25,6 @@ export default function ProductListActions({ productId }: { productId: string })
         <div className="actions">
             <Link href={`/admin/products/${productId}`} className="btn-link">Sửa</Link>
             <button onClick={handleDelete} className="btn-link text-danger">Xóa</button>
-
-            <style jsx>{`
-                .actions { display: flex; gap: 10px; }
-                .btn-link {
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                    color: #3498db;
-                    font-size: 14px;
-                    padding: 0;
-                    text-decoration: underline;
-                }
-                .text-danger { color: #e74c3c; }
-            `}</style>
         </div>
     );
 }

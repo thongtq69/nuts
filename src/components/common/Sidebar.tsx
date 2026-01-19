@@ -22,44 +22,6 @@ export default function Sidebar() {
                     <label><input type="checkbox" /> Trên 500k</label>
                 </div>
             </div>
-
-            <style jsx>{`
-        .sidebar {
-            width: 250px;
-            flex-shrink: 0;
-        }
-        .sidebar-section {
-            margin-bottom: 30px;
-        }
-        .sidebar-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .sidebar-list li {
-            margin-bottom: 10px;
-        }
-        .sidebar-list a {
-            font-size: 14px;
-            color: #666;
-        }
-        .sidebar-list a:hover {
-            color: var(--color-primary-brown);
-            text-decoration: underline;
-        }
-        .price-filter label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: #666;
-            cursor: pointer;
-        }
-        .price-filter input {
-            margin-right: 8px;
-        }
-      `}</style>
         </aside>
     );
 }

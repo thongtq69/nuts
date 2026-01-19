@@ -63,25 +63,6 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
             </div>
 
             <Footer />
-
-            <style jsx>{`
-        .product-detail-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 50px;
-            margin-bottom: 80px;
-        }
-        .related-products {
-            border-top: 1px solid #eee;
-            padding-top: 40px;
-        }
-        @media (max-width: 768px) {
-            .product-detail-layout {
-                grid-template-columns: 1fr;
-                gap: 30px;
-            }
-        }
-      `}</style>
         </main>
     );
 }

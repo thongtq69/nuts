@@ -1,3 +1,7 @@
+'use client';
+
+import { Truck, RotateCcw, ShieldCheck, Users } from 'lucide-react';
+
 export default function FeaturesSection() {
     return (
         <section className="features-section">
@@ -5,27 +9,27 @@ export default function FeaturesSection() {
                 <div className="features-grid">
                     <div className="feature-item">
                         <div className="feature-icon">
-                            <img src="/assets/images/feature1.png" alt="Free Delivery" />
+                            <Truck size={32} strokeWidth={2} className="icon-delivery" />
                         </div>
-                        <p className="feature-text">Free Home Delivery Across India</p>
+                        <p className="feature-text">Giao hàng miễn phí toàn quốc</p>
                     </div>
                     <div className="feature-item">
                         <div className="feature-icon">
-                            <img src="/assets/images/feature2.png" alt="7 Day Return" />
+                            <RotateCcw size={32} strokeWidth={2} className="icon-return" />
                         </div>
-                        <p className="feature-text">7 Day Return If You&apos;re Not Happy</p>
+                        <p className="feature-text">Đổi trả trong 7 ngày nếu không hài lòng</p>
                     </div>
                     <div className="feature-item">
                         <div className="feature-icon">
-                            <img src="/assets/images/feature3.png" alt="100% Clean" />
+                            <ShieldCheck size={32} strokeWidth={2} className="icon-quality" />
                         </div>
-                        <p className="feature-text">100% Clean, Nutritious Products</p>
+                        <p className="feature-text">100% Sạch, Sản phẩm dinh dưỡng</p>
                     </div>
                     <div className="feature-item">
                         <div className="feature-icon">
-                            <img src="/assets/images/feature4.png" alt="5000+ Farmers" />
+                            <Users size={32} strokeWidth={2} className="icon-farmers" />
                         </div>
-                        <p className="feature-text">Enabled by 5000+ Farmers</p>
+                        <p className="feature-text">Cung cấp bởi 5000+ nông dân</p>
                     </div>
                 </div>
             </div>

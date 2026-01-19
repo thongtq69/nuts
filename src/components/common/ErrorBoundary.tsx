@@ -44,43 +44,6 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                             Thử lại
                         </button>
                     </div>
-                    
-                    <style jsx>{`
-                        .error-boundary {
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            min-height: 200px;
-                            padding: 20px;
-                            background: #f8f9fa;
-                            border-radius: 8px;
-                            margin: 20px 0;
-                        }
-                        .error-content {
-                            text-align: center;
-                            max-width: 400px;
-                        }
-                        .error-content h2 {
-                            color: #dc3545;
-                            margin-bottom: 10px;
-                        }
-                        .error-content p {
-                            color: #6c757d;
-                            margin-bottom: 20px;
-                        }
-                        .retry-button {
-                            background: #007bff;
-                            color: white;
-                            border: none;
-                            padding: 10px 20px;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 14px;
-                        }
-                        .retry-button:hover {
-                            background: #0056b3;
-                        }
-                    `}</style>
                 </div>
             );
         }

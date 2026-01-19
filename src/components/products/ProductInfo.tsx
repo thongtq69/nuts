@@ -21,7 +21,15 @@ export default function ProductInfo({ id, image, name, price, originalPrice, des
     const formattedOriginalPrice = typeof originalPrice === 'number' ? `${originalPrice.toLocaleString()}₫` : originalPrice;
 
     const handleAddToCart = () => {
-        const priceValue = typeof price === 'number' ? price : parseFloat(price.replace(/[^\d]/g, ''));
+        const priceValue = typeof price === 'number' ? price : parseFloat(String(price).replace(/[^\d]/g, ''));
+        
+        // Validate price
+        if (!priceValue || isNaN(priceValue) || priceValue <= 0) {
+            alert('Lỗi: Giá sản phẩm không hợp lệ');
+            console.error('Invalid price:', { price, priceValue });
+            return;
+        }
+        
         addToCart({
             id,
             name,
@@ -53,69 +61,6 @@ export default function ProductInfo({ id, image, name, price, originalPrice, des
                 <div className="extra-item">✓ Giao hàng toàn quốc</div>
                 <div className="extra-item">✓ Đổi trả trong 7 ngày</div>
             </div>
-
-            <style jsx>{`
-        .product-info-detail {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .product-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--color-text-dark);
-        }
-        .product-meta {
-            display: flex;
-            align-items: baseline;
-            gap: 15px;
-        }
-        .current-price {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--color-success-green);
-        }
-        .original-price {
-            font-size: 16px;
-            text-decoration: line-through;
-            color: #999;
-        }
-        .product-description {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #555;
-            border-top: 1px solid #eee;
-            border-bottom: 1px solid #eee;
-            padding: 20px 0;
-        }
-        .product-actions {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
-        .add-to-cart-btn {
-            background: var(--color-primary-brown);
-            color: white;
-            border: none;
-            padding: 0 40px;
-            height: 44px; /* Match quantity selector height roughly */
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .add-to-cart-btn:hover {
-            background: #7a5a36;
-        }
-        .product-extras {
-            font-size: 14px;
-            color: #666;
-            margin-top: 10px;
-        }
-        .extra-item {
-            margin-bottom: 5px;
-        }
-      `}</style>
         </div>
     );
 }

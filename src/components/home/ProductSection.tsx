@@ -1,7 +1,8 @@
 'use client';
 
-import ProductCard from '../common/ProductCard';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import ProductCard from '../common/ProductCard';
 
 interface Product {
     id: string | number;
@@ -20,22 +21,77 @@ interface ProductSectionProps {
     products: Product[];
 }
 
+function getPageSize(width: number) {
+    if (width >= 1400) return 6;
+    if (width >= 1200) return 5;
+    if (width >= 1024) return 4;
+    if (width >= 768) return 3;
+    return 2;
+}
+
 export default function ProductSection({ title, products }: ProductSectionProps) {
-    console.log(`📦 ProductSection "${title}": Rendering ${products.length} products`);
-    
+    const [pageSize, setPageSize] = useState(6);
+    const [page, setPage] = useState(0);
+
+    useEffect(() => {
+        const update = () => setPageSize(getPageSize(window.innerWidth));
+        update();
+        window.addEventListener('resize', update);
+        return () => window.removeEventListener('resize', update);
+    }, []);
+
+    const totalPages = Math.max(1, Math.ceil(products.length / pageSize));
+
+    useEffect(() => {
+        setPage(0);
+    }, [pageSize, products.length]);
+
+    const visibleProducts = useMemo(() => {
+        const start = page * pageSize;
+        return products.slice(start, start + pageSize);
+    }, [products, page, pageSize]);
+
+    const canPrev = page > 0;
+    const canNext = page < totalPages - 1;
+
     return (
         <section className="products-section">
             <div className="container">
                 <div className="section-header">
                     <h2 className="section-title">{title}</h2>
-                    <Link href="/products" className="view-more">
-                        Xem thêm
-                    </Link>
+                    <div className="section-actions">
+                        {products.length > pageSize && (
+                            <div className="section-pager" aria-label="Product section pagination">
+                                <button
+                                    type="button"
+                                    className="pager-btn"
+                                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                    disabled={!canPrev}
+                                    aria-label="Previous"
+                                >
+                                    {'<'}
+                                </button>
+                                <span className="pager-count">{page + 1}/{totalPages}</span>
+                                <button
+                                    type="button"
+                                    className="pager-btn"
+                                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                                    disabled={!canNext}
+                                    aria-label="Next"
+                                >
+                                    {'>'}
+                                </button>
+                            </div>
+                        )}
+                        <Link href="/products" className="view-more">
+                            Xem thêm
+                        </Link>
+                    </div>
                 </div>
-                
+
                 {products.length > 0 ? (
                     <div className="products-grid-6">
-                        {products.map((product) => (
+                        {visibleProducts.map((product) => (
                             <ProductCard
                                 key={product.id}
                                 id={product.id}
@@ -57,34 +113,6 @@ export default function ProductSection({ title, products }: ProductSectionProps)
                             <h3>Đang cập nhật sản phẩm</h3>
                             <p>Chúng tôi đang cập nhật các sản phẩm mới. Vui lòng quay lại sau!</p>
                         </div>
-                        
-                        <style jsx>{`
-                            .no-products {
-                                padding: 60px 20px;
-                                text-align: center;
-                                background: #f8f9fa;
-                                border-radius: 12px;
-                                margin: 20px 0;
-                            }
-                            .no-products-content {
-                                max-width: 400px;
-                                margin: 0 auto;
-                            }
-                            .no-products-icon {
-                                font-size: 48px;
-                                margin-bottom: 16px;
-                            }
-                            .no-products h3 {
-                                color: #333;
-                                margin-bottom: 8px;
-                                font-size: 20px;
-                            }
-                            .no-products p {
-                                color: #666;
-                                font-size: 14px;
-                                line-height: 1.5;
-                            }
-                        `}</style>
                     </div>
                 )}
             </div>

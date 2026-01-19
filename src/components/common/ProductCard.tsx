@@ -54,7 +54,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     return (
         <div className="product-card">
             {badgeText && (
-                <div className={`badge ${badgeColor}`}>
+                <div className={`product-badge ${badgeColor}`}>
                     {badgeText}
                 </div>
             )}

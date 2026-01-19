@@ -105,23 +105,6 @@ export default function MainHeader() {
                     </div>
                 </div>
             </div>
-            <style jsx>{`
-                .cart-badge {
-                    position: absolute;
-                    top: -5px;
-                    right: -5px;
-                    background: #E3E846;
-                    color: #333;
-                    font-size: 10px;
-                    font-weight: bold;
-                    width: 16px;
-                    height: 16px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-            `}</style>
         </header>
     );
 }

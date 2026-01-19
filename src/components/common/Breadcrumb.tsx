@@ -23,33 +23,6 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
           ))}
         </ul>
       </div>
-      <style jsx>{`
-        .breadcrumb {
-          padding: 10px 0;
-          background: #f5f5f5;
-          font-size: 13px;
-          margin-bottom: 30px;
-        }
-        .breadcrumb-list {
-          display: flex;
-          list-style: none;
-        }
-        .breadcrumb-item {
-          color: #666;
-          display: flex;
-          align-items: center;
-        }
-        .breadcrumb-item a:hover {
-          color: var(--color-primary-brown);
-        }
-        .separator {
-          margin: 0 8px;
-          color: #999;
-        }
-        .breadcrumb-item span {
-            color: #333;
-        }
-      `}</style>
     </div>
   );
 }

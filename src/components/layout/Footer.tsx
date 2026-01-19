@@ -66,18 +66,18 @@ export default function Footer() {
             <div className="container">
                 <div className="footer-grid">
                     {/* Company Info */}
-                    <div className="footer-col company-info">
+                    <div className="footer-col company-info footer-company">
                         <img src={currentSettings.logoUrl} alt="Go Nuts" className="footer-logo" />
                         <p className="company-name">{currentSettings.siteName}</p>
-                        <p>Địa chỉ: {currentSettings.address}</p>
-                        <p>Số điện thoại: {currentSettings.hotline}</p>
-                        <p>Email: {currentSettings.email}</p>
-                        <p className="license">Số giấy phép kinh doanh: {currentSettings.businessLicense || '0123xxxxxx'}</p>
+                        <p className="footer-address">Địa chỉ: {currentSettings.address}</p>
+                        <p className="footer-contact">Số điện thoại: {currentSettings.hotline}</p>
+                        <p className="footer-contact">Email: {currentSettings.email}</p>
+                        <p className="license footer-license">Số giấy phép kinh doanh: {currentSettings.businessLicense || '0123xxxxxx'}</p>
                         <img src="/assets/images/bct.png" alt="Bộ Công Thương" className="bct-logo" />
                     </div>
 
                     {/* Menu */}
-                    <div className="footer-col">
+                    <div className="footer-col footer-menu">
                         <h4 className="footer-title">Menu</h4>
                         <ul className="footer-links">
                             <li>
@@ -99,7 +99,7 @@ export default function Footer() {
                     </div>
 
                     {/* Products */}
-                    <div className="footer-col">
+                    <div className="footer-col footer-products">
                         <h4 className="footer-title">Sản phẩm</h4>
                         <ul className="footer-links">
                             <li>
@@ -124,7 +124,7 @@ export default function Footer() {
                     </div>
 
                     {/* Newsletter */}
-                    <div className="footer-col newsletter-col">
+                    <div className="footer-col newsletter-col footer-newsletter">
                         <h4 className="footer-title">Đăng ký nhận khuyến mãi</h4>
                         <form className="newsletter-form" onSubmit={(e) => { e.preventDefault(); alert('Cảm ơn bạn đã đăng ký!'); }}>
                             <input type="email" placeholder="Nhập email của bạn" required />

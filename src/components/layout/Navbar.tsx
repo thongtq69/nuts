@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 export default function Navbar() {
     const pathname = usePathname();
     const [forceUpdate, setForceUpdate] = useState(0);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         let lastUrl = window.location.href;
@@ -19,17 +20,14 @@ export default function Navbar() {
             }
         };
 
-        // Check URL changes periodically (more efficient than 100ms)
         const interval = setInterval(checkUrlChange, 500);
 
-        // Listen for popstate events (browser back/forward)
         const handlePopState = () => {
             setForceUpdate(prev => prev + 1);
         };
-        
+
         window.addEventListener('popstate', handlePopState);
 
-        // Override pushState and replaceState to catch programmatic navigation
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
 
@@ -64,11 +62,9 @@ export default function Navbar() {
         
         const currentSort = getCurrentSort();
         
-        // Handle query parameters for product filtering
         if (path.includes('?')) {
             const [basePath, queryString] = path.split('?');
             if (pathname === basePath) {
-                // Parse expected query params
                 const expectedParams = new URLSearchParams(queryString);
                 const expectedSort = expectedParams.get('sort');
                 
@@ -77,7 +73,6 @@ export default function Navbar() {
             return false;
         }
         
-        // For /products without query params, only match when no sort parameter
         if (path === '/products') {
             return pathname === '/products' && !currentSort;
         }
@@ -99,12 +94,36 @@ export default function Navbar() {
     return (
         <nav className="main-nav">
             <div className="container">
-                <ul className="nav-menu">
+                <button
+                    className="mobile-menu-button"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    aria-label="Toggle menu"
+                >
+                    <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                    >
+                        {isMobileMenuOpen ? (
+                            <path d="M6 18L18 6M6 6l12 12" />
+                        ) : (
+                            <>
+                                <path d="M3 12h18M3 6h18M3 18h18" />
+                            </>
+                        )}
+                    </svg>
+                </button>
+
+                <ul className={`nav-menu ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
                     {navItems.map((item) => (
                         <li key={item.href}>
                             <Link
                                 href={item.href}
                                 className={`nav-link ${isActive(item.href) ? 'active' : ''}`}
+                                onClick={() => setIsMobileMenuOpen(false)}
                             >
                                 {item.label}
                             </Link>
