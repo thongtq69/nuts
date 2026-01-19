@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: #9C7043;
+  --color-brand-light: #E3C88D;
+  --color-brand-dark: #7d5a36;
+  --color-brand-50: #E3C88D;
+  --color-brand-100: #D9B87A;
+  --color-brand-500: #9C7043;
+  --color-brand-600: #8C6139;
+  --color-brand-700: #7d5a36;
+  --color-brand-800: #6D5333;
+  --color-brand-900: #5D4C30;
+}
 
 /* ========================================
    Go Nuts - E-commerce Website Styles

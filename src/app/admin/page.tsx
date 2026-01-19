@@ -159,26 +159,26 @@ export default async function AdminDashboard() {
             <div className="welcome-banner animate-fade-in">
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-5 h-5 text-brand-light" />
-                        <span className="text-brand-light font-semibold text-sm">Xin chào!</span>
+                        <Sparkles className="w-5 h-5 text-amber-400" />
+                        <span className="text-amber-400 font-semibold text-sm">Xin chào!</span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-white">
                         Chào mừng trở lại, Admin 👋
                     </h1>
-                    <p className="text-slate-300 text-sm sm:text-base max-w-xl">
+                    <p className="text-gray-300 text-sm sm:text-base max-w-xl">
                         Đây là tổng quan về tình hình kinh doanh của bạn hôm nay.
                         Tiếp tục phát triển nhé!
                     </p>
                 </div>
                 <div className="flex items-center gap-3 mt-6 relative z-10">
                     <Link href="/admin/orders">
-                        <Button size="sm" className="bg-brand hover:bg-brand-dark text-white shadow-lg shadow-brand/25">
+                        <Button size="sm" className="bg-[#9C7043] hover:bg-[#7d5a36] text-white shadow-lg shadow-amber-900/20 font-semibold">
                             Xem đơn hàng mới
                             <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                     </Link>
                     <Link href="/" target="_blank">
-                        <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 hover:bg-slate-800">
+                        <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10 bg-transparent">
                             Xem website
                         </Button>
                     </Link>
