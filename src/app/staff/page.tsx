@@ -191,19 +191,24 @@ export default function StaffDashboard() {
                                 type="text"
                                 readOnly
                                 value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${((user as any)?.referralCode || (user as any)?.staffCode || '')}`}
-                                className="flex-1 bg-gray-800/10 border border-gray-700/30 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-500 focus:outline-none backdrop-blur-sm"
+                                onClick={copyReferralLink}
+                                className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none cursor-pointer hover:bg-gray-50 transition-colors"
+                                title="Click để sao chép"
                             />
                             <button
                                 onClick={copyReferralLink}
                                 className={`px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg ${
                                     copied
-                                        ? 'bg-gray-200 text-gray-800'
-                                        : 'bg-gray-800 text-white hover:bg-gray-700'
+                                        ? 'bg-emerald-500 text-white'
+                                        : 'bg-brand text-white hover:bg-brand/90'
                                 }`}
                             >
                                 {copied ? '✓ Đã sao!' : 'Sao chép'}
                             </button>
                         </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            Chia sẻ link này để nhận hoa hồng khi có đơn hàng mới
+                        </p>
                     </div>
                 </div>
             </div>
