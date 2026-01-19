@@ -35,6 +35,8 @@ interface Package {
     price: number;
     description: string;
     terms: string;
+    imageUrl?: string;
+    imagePublicId?: string;
     voucherQuantity: number;
     discountValue: number;
     discountType: 'percent' | 'fixed';
@@ -60,6 +62,8 @@ const defaultPackage: Partial<Package> = {
     price: 0,
     description: '',
     terms: '',
+    imageUrl: '',
+    imagePublicId: '',
     voucherQuantity: 1,
     discountType: 'percent',
     discountValue: 0,
@@ -76,6 +80,7 @@ export default function AdminPackagesPage() {
     const [vouchers, setVouchers] = useState<VoucherConfig[]>([{ ...defaultVoucher }]);
     const [isUnlimitedVoucher, setIsUnlimitedVoucher] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         fetchPackages();
@@ -106,8 +111,7 @@ export default function AdminPackagesPage() {
             // For backward compatibility, use first voucher's config as main config
             const mainVoucher = vouchers[0];
 
-            const payload = {
-                ...formData,
+            const payload: any = {
                 voucherQuantity: totalVoucherQty,
                 isUnlimitedVoucher: isUnlimitedVoucher,
                 discountType: mainVoucher.discountType,
@@ -116,6 +120,24 @@ export default function AdminPackagesPage() {
                 minOrderValue: mainVoucher.minOrderValue,
                 vouchers: vouchers
             };
+
+            // Only include basic fields (non-image)
+            payload.name = formData.name;
+            payload.price = formData.price;
+            payload.description = formData.description;
+            payload.terms = formData.terms;
+            payload.validityDays = formData.validityDays;
+
+            // Only include image fields if new image was uploaded (non-empty string)
+            const hasImageUrl = formData.imageUrl && formData.imageUrl.length > 0;
+            const hasImagePublicId = formData.imagePublicId && formData.imagePublicId.length > 0;
+            
+            if (hasImageUrl) {
+                payload.imageUrl = formData.imageUrl;
+            }
+            if (hasImagePublicId) {
+                payload.imagePublicId = formData.imagePublicId;
+            }
 
             const method = editingId ? 'PUT' : 'POST';
             const body = editingId ? { ...payload, id: editingId } : payload;
@@ -127,7 +149,7 @@ export default function AdminPackagesPage() {
             });
 
             if (res.ok) {
-                fetchPackages();
+                await fetchPackages();
                 resetForm();
                 alert(editingId ? 'Cập nhật gói thành công' : 'Tạo gói thành công');
             } else {
@@ -147,6 +169,8 @@ export default function AdminPackagesPage() {
             price: pkg.price,
             description: pkg.description,
             terms: pkg.terms || '',
+            imageUrl: pkg.imageUrl || '',
+            imagePublicId: pkg.imagePublicId || '',
             validityDays: pkg.validityDays,
         });
 
@@ -382,6 +406,72 @@ export default function AdminPackagesPage() {
 
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                    🖼️ Ảnh gói hội viên
+                                </label>
+                                <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 bg-slate-50">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className={`block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand/10 file:px-4 file:py-2 file:text-brand file:font-semibold hover:file:bg-brand/20 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={isUploading}
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+
+                                                const formPayload = new FormData();
+                                                formPayload.append('file', file);
+                                                formPayload.append('folder', 'packages');
+
+                                                try {
+                                                    setIsUploading(true);
+                                                    const uploadRes = await fetch('/api/upload/cloudinary', {
+                                                        method: 'POST',
+                                                        body: formPayload,
+                                                    });
+                                                    const uploadData = await uploadRes.json();
+                                                    if (uploadRes.ok) {
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            imageUrl: uploadData.url,
+                                                            imagePublicId: uploadData.publicId,
+                                                        }));
+                                                    } else {
+                                                        alert(uploadData.error || 'Tải ảnh thất bại');
+                                                    }
+                                                } catch (err) {
+                                                    alert('Tải ảnh thất bại');
+                                                } finally {
+                                                    setIsUploading(false);
+                                                }
+                                            }}
+                                        />
+                                        {formData.imageUrl && (
+                                            <img
+                                                src={formData.imageUrl}
+                                                alt="Ảnh gói"
+                                                className="w-24 h-24 rounded-xl object-cover border border-slate-200"
+                                            />
+                                        )}
+                                    </div>
+                                    {formData.imageUrl && (
+                                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                            <span className="px-2 py-1 rounded-full bg-white border border-slate-200">Đang dùng ảnh mới</span>
+                                            <button
+                                                type="button"
+                                                className="text-red-500 hover:text-red-600 font-semibold"
+                                                onClick={() => setFormData({ ...formData, imageUrl: '', imagePublicId: '' })}
+                                            >
+                                                Xóa ảnh
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-xs text-slate-500">Ảnh sẽ lưu trên Cloudinary (folder: packages).</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                                     📋 Thể lệ gói hội viên
                                     <span className="text-xs text-slate-400 font-normal">(Có thể copy từ Google Docs)</span>
                                 </label>
@@ -393,11 +483,9 @@ export default function AdminPackagesPage() {
                                         setFormData({ ...formData, terms: e.currentTarget.innerHTML });
                                     }}
                                     onPaste={(e) => {
-                                        // Allow rich paste from Google Docs
                                         const html = e.clipboardData.getData('text/html');
                                         if (html) {
                                             e.preventDefault();
-                                            // Clean up the HTML a bit but keep formatting
                                             const cleanHtml = html
                                                 .replace(/<meta[^>]*>/gi, '')
                                                 .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -549,13 +637,13 @@ export default function AdminPackagesPage() {
                                 className={`px-8 py-3 font-bold rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2 ${editingId
                                     ? 'bg-brand hover:bg-brand-dark text-white'
                                     : 'bg-brand hover:bg-brand-dark text-white'
-                                    }`}
-                                disabled={loading}
+                                    } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={loading || isUploading}
                             >
-                                {loading ? (
+                                {loading || isUploading ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        <span>Đang lưu...</span>
+                                        <span>{isUploading ? 'Đang tải ảnh...' : 'Đang lưu...'}</span>
                                     </>
                                 ) : (
                                     <>
@@ -690,12 +778,14 @@ export default function AdminPackagesPage() {
                                                 className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
                                                 title="Nhân bản"
                                                 onClick={() => {
-                                                    setFormData({
-                                                        name: pkg.name + ' (Copy)',
-                                                        price: pkg.price,
-                                                        description: pkg.description,
-                                                        validityDays: pkg.validityDays,
-                                                    });
+        setFormData({
+            name: pkg.name + ' (Copy)',
+            price: pkg.price,
+            description: pkg.description,
+            imageUrl: pkg.imageUrl || '',
+            imagePublicId: pkg.imagePublicId || '',
+            validityDays: pkg.validityDays,
+        });
                                                     setVouchers([{
                                                         discountType: pkg.discountType,
                                                         discountValue: pkg.discountValue,

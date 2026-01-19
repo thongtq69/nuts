@@ -49,11 +49,11 @@ export default function CartPage() {
                                                 <div className="price-display">
                                                     {item.isAgent && item.originalPrice !== getItemPrice(item) ? (
                                                         <>
-                                                            <span className="original-price-strikethrough">{item.originalPrice.toLocaleString()}₫</span>
+                                                            <span className="original-price-strikethrough">{(item.originalPrice ?? getItemPrice(item)).toLocaleString()}₫</span>
                                                             <span className="agent-price">{getItemPrice(item).toLocaleString()}₫</span>
                                                         </>
                                                     ) : (
-                                                        <span>{item.originalPrice.toLocaleString()}₫</span>
+                                                        <span>{(item.originalPrice ?? getItemPrice(item)).toLocaleString()}₫</span>
                                                     )}
                                                 </div>
                                             </td>

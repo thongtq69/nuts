@@ -8,7 +8,7 @@ import { getServerSession } from '@/lib/auth'; // Assuming we have auth helper, 
 export async function GET() {
     try {
         await dbConnect();
-        const packages = await SubscriptionPackage.find({}).sort({ price: 1 });
+        const packages = await SubscriptionPackage.find({}).sort({ price: 1 }).lean();
         return NextResponse.json(packages);
     } catch (error) {
         return NextResponse.json({ message: 'Error fetching packages' }, { status: 500 });
@@ -18,12 +18,12 @@ export async function GET() {
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        // TODO: meaningful auth check here. For now allowing creation for demo/seeding.
         const body = await req.json();
         const pkg = await SubscriptionPackage.create(body);
-        return NextResponse.json(pkg, { status: 201 });
+        return NextResponse.json(pkg.toObject(), { status: 201 });
     } catch (error) {
-        return NextResponse.json({ message: 'Error creating package' }, { status: 500 });
+        console.error('Error creating package:', error);
+        return NextResponse.json({ message: 'Error creating package', error: String(error) }, { status: 500 });
     }
 }
 
@@ -37,7 +37,11 @@ export async function PUT(req: Request) {
             return NextResponse.json({ message: 'Package ID is required' }, { status: 400 });
         }
 
-        const pkg = await SubscriptionPackage.findByIdAndUpdate(id, updateData, { new: true });
+        const pkg = await SubscriptionPackage.findByIdAndUpdate(
+            id,
+            { $set: updateData },
+            { new: true }
+        ).lean();
 
         if (!pkg) {
             return NextResponse.json({ message: 'Package not found' }, { status: 404 });
@@ -60,7 +64,7 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ message: 'Package ID is required' }, { status: 400 });
         }
 
-        const pkg = await SubscriptionPackage.findByIdAndDelete(id);
+        const pkg = await SubscriptionPackage.findByIdAndDelete(id).lean();
 
         if (!pkg) {
             return NextResponse.json({ message: 'Package not found' }, { status: 404 });

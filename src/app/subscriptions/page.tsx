@@ -17,6 +17,8 @@ async function getPackages() {
         _id: pkg._id.toString(),
         name: pkg.name,
         price: pkg.price,
+        imageUrl: pkg.imageUrl || '',
+        imagePublicId: pkg.imagePublicId || '',
         description: pkg.description,
         voucherQuantity: pkg.voucherQuantity,
         discountType: pkg.discountType,

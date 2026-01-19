@@ -10,6 +10,8 @@ interface Package {
     name: string;
     price: number;
     description?: string;
+    imageUrl?: string;
+    imagePublicId?: string;
     voucherQuantity: number;
     discountType: 'percent' | 'fixed';
     discountValue: number;

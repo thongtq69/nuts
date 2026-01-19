@@ -26,7 +26,7 @@ export default function ProductInfo({ id, image, name, price, originalPrice, des
             id,
             name,
             image,
-            price: priceValue,
+            originalPrice: priceValue,
             quantity
         });
         alert('Đã thêm sản phẩm vào giỏ hàng');

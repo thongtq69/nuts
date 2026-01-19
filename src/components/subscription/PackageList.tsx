@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Tag } from 'lucide-react';
 
 interface Package {
@@ -8,6 +9,8 @@ interface Package {
     price: number;
     description?: string;
     terms?: string;
+    imageUrl?: string;
+    imagePublicId?: string;
     voucherQuantity: number;
     discountType: 'percent' | 'fixed';
     discountValue: number;
@@ -28,34 +31,71 @@ function formatPrice(price: number) {
 
 const cardThemes = [
     {
-        top: 'from-lime-200 via-lime-200 to-yellow-100',
-        border: 'border-lime-200',
-        badge: 'bg-lime-500 text-white',
-        button: 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300',
+        surface: 'bg-[#E3E846]',
+        border: 'border-[#D7DD3E]',
+        badge: 'bg-[#7B8A12] text-white',
+        text: 'text-[#4A3B1E]',
+        subtext: 'text-[#6B5A2E]',
+        accent: 'text-[#2E7D32]',
+        divider: 'border-black/10',
+        button: 'bg-white/90 text-[#4A3B1E] hover:bg-white',
     },
     {
-        top: 'from-orange-400 via-orange-400 to-amber-300',
-        border: 'border-orange-300',
-        badge: 'bg-orange-500 text-white',
-        button: 'bg-orange-500 text-white hover:bg-orange-600',
+        surface: 'bg-[#E29049]',
+        border: 'border-[#D68035]',
+        badge: 'bg-[#C86A1D] text-white',
+        text: 'text-[#4A2A12]',
+        subtext: 'text-[#5A3A1E]',
+        accent: 'text-[#2E7D32]',
+        divider: 'border-black/10',
+        button: 'bg-white/90 text-[#4A2A12] hover:bg-white',
     },
     {
-        top: 'from-orange-500 via-orange-500 to-orange-400',
-        border: 'border-orange-400',
-        badge: 'bg-orange-600 text-white',
-        button: 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300',
+        surface: 'bg-[#E14A4F]',
+        border: 'border-[#C93E43]',
+        badge: 'bg-[#A93136] text-white',
+        text: 'text-white',
+        subtext: 'text-white/80',
+        accent: 'text-white',
+        divider: 'border-white/30',
+        button: 'bg-white/95 text-[#6B1F24] hover:bg-white',
     },
     {
-        top: 'from-amber-900 via-amber-800 to-amber-700',
-        border: 'border-amber-800',
-        badge: 'bg-amber-600 text-white',
-        button: 'bg-orange-400 text-white hover:bg-orange-500',
+        surface: 'bg-[#4A2A1D]',
+        border: 'border-[#3A2016]',
+        badge: 'bg-[#E29049] text-white',
+        text: 'text-[#F6E7C6]',
+        subtext: 'text-[#EED9A7]',
+        accent: 'text-[#F6C575]',
+        divider: 'border-white/20',
+        button: 'bg-[#E29049] text-white hover:bg-[#D77E33]',
     },
 ];
 
+const imageMap: Record<string, string> = {
+    'goi nut master': '/assets/images/goi-nut-master.png',
+    'goi nutty pro': '/assets/images/goi-nutty-pro.png',
+    'goi nghien hat': '/assets/images/goi-nghien-hat.png',
+    'goi luc lac': '/assets/images/goi-luc-lac.png',
+};
+
+const fallbackImages = [
+    '/assets/images/goi-luc-lac.png',
+    '/assets/images/goi-nghien-hat.png',
+    '/assets/images/goi-nutty-pro.png',
+    '/assets/images/goi-nut-master.png',
+];
+
+const normalizeName = (name: string) => name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 export default function PackageList({ packages, onBuyPackage }: Props) {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="flex flex-wrap justify-center gap-6">
             {packages.map((pkg, index) => {
                 const theme = cardThemes[index % cardThemes.length];
                 const discountLabel = pkg.discountType === 'percent'
@@ -66,56 +106,70 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                     ? `Áp dụng đơn từ ${formatPrice(pkg.minOrderValue)}`
                     : 'Áp dụng cho mọi đơn hàng';
 
+                const normalizedName = normalizeName(pkg.name);
+                const imageSrc = pkg.imageUrl || imageMap[normalizedName] || fallbackImages[index % fallbackImages.length];
+
                 return (
                     <div
                         key={pkg._id}
-                        className={`bg-white rounded-[28px] border ${theme.border} shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col`}
+                        className={`w-full max-w-[320px] ${theme.surface} rounded-[26px] border ${theme.border} shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col`}
                     >
-                        <div className={`relative h-32 bg-gradient-to-br ${theme.top}`}>
+                        <div className="relative h-52">
+                            <Image
+                                src={imageSrc}
+                                alt={pkg.name}
+                                fill
+                                className="object-contain"
+                                sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+                                priority={index < 2}
+                            />
                             {index === packages.length - 1 && (
-                                <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold ${theme.badge}`}>
+                                <span className={`absolute top-3 right-3 px-3 py-1 rounded-full text-[10px] font-bold ${theme.badge}`}>
                                     Premium
                                 </span>
                             )}
                         </div>
-                        <div className="flex-1 px-6 pt-6 pb-5 text-center">
-                            <h3 className="text-xl font-bold text-slate-900">{pkg.name}</h3>
-                            <p className="text-sm text-slate-500 mt-2 min-h-[40px]">
+                        <div className="flex-1 px-6 pt-4 pb-4 text-center">
+                            <h3 className={`text-xl font-bold ${theme.text}`}>{pkg.name}</h3>
+                            <p className={`text-sm mt-1 ${theme.subtext}`}>
                                 {pkg.description || 'Gói ưu đãi dành riêng cho thành viên Go Nuts.'}
                             </p>
-                            <div className="my-5 border-t border-slate-200" />
-                            <div className="text-3xl font-black text-slate-900">
+                            <div className={`text-xs mt-1 ${theme.subtext}`}>
+                                Tiết kiệm lên đến {pkg.isUnlimitedVoucher ? 'không giới hạn' : formatPrice(pkg.voucherQuantity * pkg.maxDiscount)}
+                            </div>
+                            <div className={`my-4 border-t ${theme.divider}`} />
+                            <div className={`text-3xl font-black ${theme.text}`}>
                                 {formatPrice(pkg.price)}
                             </div>
-                            <div className="text-xs text-slate-500 mt-1">mỗi tháng</div>
-                            <div className="my-5 border-t border-slate-200" />
-                            <ul className="space-y-3 text-left text-sm text-slate-700">
+                            <div className={`text-xs mt-1 ${theme.subtext}`}>mỗi tháng</div>
+                            <div className={`my-4 border-t ${theme.divider}`} />
+                            <ul className={`space-y-2.5 text-left text-sm ${theme.text}`}>
                                 <li className="flex items-start gap-2">
-                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
                                     <span>{discountLabel}</span>
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
                                     <span>Tối đa {formatPrice(pkg.maxDiscount)}/đơn</span>
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
                                     <span>{maxVoucher} mỗi tháng</span>
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
                                     <span>Hiệu lực {pkg.validityDays} ngày</span>
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
                                     <span>{minOrder}</span>
                                 </li>
                             </ul>
                         </div>
-                        <div className="px-6 pb-6">
+                        <div className="px-6 pb-5">
                             <button
                                 onClick={() => onBuyPackage(pkg._id)}
-                                className={`w-full py-3 rounded-xl font-semibold transition-colors ${theme.button}`}
+                                className={`w-full py-2.5 rounded-xl font-semibold transition-colors ${theme.button}`}
                             >
                                 {index === packages.length - 1 ? 'Đăng ký ngay' : 'Bắt đầu'}
                             </button>

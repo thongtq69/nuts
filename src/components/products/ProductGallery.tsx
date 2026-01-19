@@ -48,18 +48,19 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
             gap: 15px;
         }
         .main-image {
-            background: #f9f9f9;
-            border: 1px solid #eee;
+            background: #E3E846;
             border-radius: 8px;
-            padding: 20px;
+            padding: 40px;
             display: flex;
             justify-content: center;
             align-items: center;
+            width: 100%;
+            box-sizing: border-box;
         }
         .main-image img {
             max-width: 100%;
             height: auto;
-            max-height: 400px;
+            max-height: 450px;
             object-fit: contain;
         }
         .thumbnail-list {

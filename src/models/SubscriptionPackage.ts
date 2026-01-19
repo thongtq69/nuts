@@ -14,6 +14,8 @@ export interface ISubscriptionPackage {
     price: number;
     description: string;
     terms: string; // Thể lệ gói hội viên
+    imageUrl?: string;
+    imagePublicId?: string;
     discountType: 'percent' | 'fixed';
     discountValue: number;
     maxDiscount: number;
@@ -41,6 +43,8 @@ const SubscriptionPackageSchema: Schema<ISubscriptionPackage> = new Schema(
         price: { type: Number, required: true },
         description: { type: String },
         terms: { type: String, default: '' }, // Thể lệ gói hội viên
+        imageUrl: { type: String, default: '' },
+        imagePublicId: { type: String, default: '' },
         discountType: { type: String, enum: ['percent', 'fixed'], required: true },
         discountValue: { type: Number, required: true },
         maxDiscount: { type: Number, default: 0 },
