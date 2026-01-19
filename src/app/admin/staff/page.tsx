@@ -1,22 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Users,
     Plus,
-    Search,
     Edit2,
-    Trash2,
     Copy,
     TrendingUp,
-    ShoppingBag,
     X,
     Loader2,
-    Eye,
-    EyeOff,
-    UserCheck,
-    ChevronRight
+    ChevronRight,
+    UserCheck
 } from 'lucide-react';
+import { Pagination } from '@/components/admin/ui/Pagination';
+import { SearchInput } from '@/components/admin/ui/SearchInput';
+import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
+import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
+import { Button } from '@/components/admin/ui/Button';
 
 interface Staff {
     id: string;
@@ -38,6 +38,14 @@ export default function AdminStaffPage() {
     const [creating, setCreating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; staffId: string | null; staffName: string }>({
+        isOpen: false,
+        staffId: null,
+        staffName: ''
+    });
+    const [deleting, setDeleting] = useState<string | null>(null);
 
     const [newStaff, setNewStaff] = useState({
         name: '',
@@ -47,11 +55,7 @@ export default function AdminStaffPage() {
         staffCode: ''
     });
 
-    useEffect(() => {
-        fetchStaff();
-    }, []);
-
-    const fetchStaff = async () => {
+    const fetchStaff = useCallback(async () => {
         try {
             setLoading(true);
             const res = await fetch('/api/admin/staff');
@@ -64,7 +68,11 @@ export default function AdminStaffPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchStaff();
+    }, [fetchStaff]);
 
     const createStaff = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -93,24 +101,31 @@ export default function AdminStaffPage() {
         }
     };
 
-    const deleteStaff = async (id: string, name: string) => {
-        if (!confirm(`Xác nhận xóa nhân viên "${name}" và tất cả CTV của họ?`)) return;
+    const openDeleteModal = (id: string, name: string) => {
+        setDeleteModal({ isOpen: true, staffId: id, staffName: name });
+    };
 
+    const handleDelete = async () => {
+        if (!deleteModal.staffId) return;
         try {
+            setDeleting(deleteModal.staffId);
             const res = await fetch('/api/admin/staff', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ staffId: id })
+                body: JSON.stringify({ staffId: deleteModal.staffId })
             });
 
             if (res.ok) {
-                fetchStaff();
+                setStaffList(prev => prev.filter(s => s.id !== deleteModal.staffId));
+                setDeleteModal({ isOpen: false, staffId: null, staffName: '' });
             } else {
                 const data = await res.json();
                 alert(data.message || 'Lỗi xóa nhân viên');
             }
         } catch (error) {
             console.error('Error deleting staff:', error);
+        } finally {
+            setDeleting(null);
         }
     };
 
@@ -125,13 +140,44 @@ export default function AdminStaffPage() {
         s.staffCode.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const totalPages = Math.ceil(filteredStaff.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedStaff = filteredStaff.slice(startIndex, startIndex + pageSize);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(1);
+        }
+    }, [totalPages, currentPage]);
+
     const totalStaff = staffList.length;
     const totalCTV = staffList.reduce((sum, s) => sum + s.collaboratorCount, 0);
     const totalRevenue = staffList.reduce((sum, s) => sum + s.teamRevenue, 0);
 
+    const exportColumns: ExportColumn<Staff>[] = [
+        { key: 'staffCode', label: 'Mã nhân viên' },
+        { key: 'name', label: 'Họ tên' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Số điện thoại', format: (v) => v || '-' },
+        { key: 'collaboratorCount', label: 'Số CTV' },
+        { key: 'teamOrders', label: 'Đơn hàng' },
+        { key: 'teamRevenue', label: 'Doanh thu team', format: (v) => `${v.toLocaleString('vi-VN')}đ` },
+        { key: 'createdAt', label: 'Ngày tạo', format: (v) => v ? new Date(v).toLocaleDateString('vi-VN') : '-' }
+    ];
+
     return (
         <div className="space-y-6">
-            {/* Header */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+                onConfirm={handleDelete}
+                title="Xóa nhân viên"
+                message={`Bạn có chắc chắn muốn xóa nhân viên "${deleteModal.staffName}" và tất cả CTV của họ? Hành động này không thể hoàn tác.`}
+                confirmText="Xóa"
+                variant="danger"
+                isLoading={deleting !== null}
+            />
+
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
@@ -141,19 +187,26 @@ export default function AdminStaffPage() {
                         Quản lý Nhân viên
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        {totalStaff} nhân viên • {totalCTV} CTV • {totalRevenue.toLocaleString('vi-VN')}đ doanh thu team
+                        {filteredStaff.length} nhân viên • {totalCTV} CTV • {totalRevenue.toLocaleString('vi-VN')}đ doanh thu team
                     </p>
                 </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-brand-light/30 hover:bg-brand-light/50 text-slate-800 font-bold rounded-xl hover:shadow-md transition-all"
-                >
-                    <Plus size={18} />
-                    Thêm nhân viên
-                </button>
+                <div className="flex gap-2">
+                    <ExportButton
+                        data={filteredStaff}
+                        columns={exportColumns}
+                        filename="nhan-vien"
+                        disabled={filteredStaff.length === 0}
+                    />
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-brand-light/30 hover:bg-brand-light/50 text-slate-800 font-bold rounded-xl hover:shadow-md transition-all"
+                    >
+                        <Plus size={18} />
+                        Thêm nhân viên
+                    </button>
+                </div>
             </div>
 
-            {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
                     <div className="flex items-center gap-3">
@@ -190,21 +243,15 @@ export default function AdminStaffPage() {
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Tìm theo tên, email, mã nhân viên..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
-                    />
-                </div>
+            <div className="glass-card p-4">
+                <SearchInput
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder="Tìm theo tên, email, mã nhân viên..."
+                    isLoading={loading}
+                />
             </div>
 
-            {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -226,7 +273,7 @@ export default function AdminStaffPage() {
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand" />
                                     </td>
                                 </tr>
-                            ) : filteredStaff.length === 0 ? (
+                            ) : paginatedStaff.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center gap-3">
@@ -248,17 +295,16 @@ export default function AdminStaffPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredStaff.map((staff, index) => (
-                                    <tr 
-                                        key={staff.id} 
+                                paginatedStaff.map((staff, index) => (
+                                    <tr
+                                        key={staff.id}
                                         className="hover:bg-slate-50 transition-colors cursor-pointer"
                                         onClick={() => {
-                                            // Navigate to staff detail page if it exists, or show info
                                             alert(`Nhân viên: ${staff.name}\nMã NV: ${staff.staffCode}\nSố CTV: ${staff.collaboratorCount}\nDoanh thu team: ${staff.teamRevenue.toLocaleString('vi-VN')}đ`);
                                         }}
                                     >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
-                                            {index + 1}
+                                            {startIndex + index + 1}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -289,7 +335,7 @@ export default function AdminStaffPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className="font-semibold text-brand-light">{staff.collaboratorCount}</span>
+                                            <span className="font-semibold text-brand">{staff.collaboratorCount}</span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="font-semibold text-slate-800">{staff.teamOrders}</span>
@@ -308,11 +354,16 @@ export default function AdminStaffPage() {
                                                     <ChevronRight size={16} />
                                                 </button>
                                                 <button
-                                                    onClick={() => deleteStaff(staff.id, staff.name)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    onClick={() => openDeleteModal(staff.id, staff.name)}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                                    disabled={deleting === staff.id}
                                                     title="Xóa"
                                                 >
-                                                    <Trash2 size={16} />
+                                                    {deleting === staff.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Edit2 size={16} />
+                                                    )}
                                                 </button>
                                             </div>
                                         </td>
@@ -322,9 +373,18 @@ export default function AdminStaffPage() {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalRecords={filteredStaff.length}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                    isLoading={loading}
+                />
             </div>
 
-            {/* Create Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowModal(false)} />
@@ -411,7 +471,11 @@ export default function AdminStaffPage() {
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                                     >
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        {showPassword ? (
+                                            <span className="text-xs">Ẩn</span>
+                                        ) : (
+                                            <span className="text-xs">Hiện</span>
+                                        )}
                                     </button>
                                 </div>
                             </div>

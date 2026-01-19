@@ -363,8 +363,8 @@ export default function AdminOrdersPage() {
                                                                             onClick={() => updateOrderStatus(order.id, action.value)}
                                                                             disabled={isCurrentStatus}
                                                                             className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors
-                                                                                ${isCurrentStatus
-                                                                                    ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                                                                                 ${isCurrentStatus
+                                                                                     ? 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                                                                                     : 'hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
                                                                                 }`}
                                                                         >

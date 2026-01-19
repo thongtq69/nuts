@@ -158,7 +158,7 @@ export default function ProductTagsPage() {
                     <div className="text-sm text-slate-600">Khuyến mãi</div>
                 </div>
                 <div className="glass-card p-4 text-center">
-                    <div className="text-2xl font-bold text-brand-light">{tagStats['featured']}</div>
+                    <div className="text-2xl font-bold text-brand">{tagStats['featured']}</div>
                     <div className="text-sm text-slate-600">Nổi bật</div>
                 </div>
                 <div className="glass-card p-4 text-center">

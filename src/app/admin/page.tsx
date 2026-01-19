@@ -165,7 +165,7 @@ export default async function AdminDashboard() {
                     <h1 className="text-2xl sm:text-3xl font-bold mb-2">
                         Chào mừng trở lại, Admin 👋
                     </h1>
-                    <p className="text-slate-400 text-sm sm:text-base max-w-xl">
+                    <p className="text-slate-300 text-sm sm:text-base max-w-xl">
                         Đây là tổng quan về tình hình kinh doanh của bạn hôm nay.
                         Tiếp tục phát triển nhé!
                     </p>

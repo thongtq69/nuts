@@ -648,7 +648,7 @@ export default function AdminPackagesPage() {
                                     <td className="px-6 py-4">
                                         <div className="space-y-1 text-sm">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-brand-light">
+                                                <span className="font-semibold text-brand">
                                                     {pkg.discountValue}{pkg.discountType === 'percent' ? '%' : 'đ'}
                                                 </span>
                                                 {pkg.maxDiscount > 0 && (

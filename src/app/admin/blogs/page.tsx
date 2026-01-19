@@ -392,7 +392,7 @@ export default function AdminBlogsPage() {
 
                                 <div className="space-y-2">
                                     <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                        <ImageIcon size={16} className="text-brand-light" />
+                                        <ImageIcon size={16} className="text-brand" />
                                         Ảnh bìa
                                     </label>
 

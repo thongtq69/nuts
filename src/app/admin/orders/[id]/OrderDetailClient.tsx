@@ -67,7 +67,7 @@ interface OrderDetailProps {
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
     pending: { label: 'Chờ xử lý', color: 'text-brand-dark', bgColor: 'bg-brand-light/30', icon: Clock },
     confirmed: { label: 'Đã xác nhận', color: 'text-brand', bgColor: 'bg-brand/10', icon: CheckCircle },
-    shipping: { label: 'Đang giao', color: 'text-brand-light', bgColor: 'bg-brand-light/50', icon: Truck },
+    shipping: { label: 'Đang giao', color: 'text-brand', bgColor: 'bg-brand/20', icon: Truck },
     completed: { label: 'Hoàn thành', color: 'text-green-700', bgColor: 'bg-green-100', icon: CheckCircle },
     paid: { label: 'Đã thanh toán', color: 'text-emerald-700', bgColor: 'bg-emerald-100', icon: CheckCircle },
     cancelled: { label: 'Đã hủy', color: 'text-red-700', bgColor: 'bg-red-100', icon: XCircle },

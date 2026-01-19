@@ -238,7 +238,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold">{user.name}</h2>
-                                    <p className="text-brand-light">{user.email}</p>
+                                    <p className="text-white/80">{user.email}</p>
                                     <div className="flex items-center gap-2 mt-2">
                                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${getRoleColor(user.role)}`}>
                                             {getRoleIcon(user.role)}

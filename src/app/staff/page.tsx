@@ -136,7 +136,8 @@ export default function StaffDashboard() {
             bgColor: 'bg-violet-50',
             textColor: 'text-violet-600',
             change: '+2',
-            trend: 'up'
+            trend: 'up',
+            href: '/staff/collaborators'
         },
         {
             label: 'Đơn hàng team',
@@ -235,6 +236,15 @@ export default function StaffDashboard() {
                                 {stat.value}
                             </div>
                             <div className="text-gray-500 font-medium">{stat.label}</div>
+                            {stat.href && (
+                                <Link
+                                    href={stat.href}
+                                    className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-gray-50 hover:bg-violet-50 text-gray-600 hover:text-violet-600 font-semibold rounded-xl transition-all text-sm"
+                                >
+                                    <span>Quản lý</span>
+                                    <ChevronRight size={16} />
+                                </Link>
+                            )}
                         </div>
                     );
                 })}

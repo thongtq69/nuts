@@ -1,8 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Users, CheckCircle, XCircle, MoreHorizontal, Trash2, Loader2, Eye } from 'lucide-react';
+import { Users, CheckCircle, XCircle, MoreHorizontal, Loader2 } from 'lucide-react';
+import { Pagination } from '@/components/admin/ui/Pagination';
+import { SearchInput } from '@/components/admin/ui/SearchInput';
+import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
+import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
+import { Button } from '@/components/admin/ui/Button';
 
 interface User {
     _id: string;
@@ -17,14 +22,18 @@ interface User {
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [deleting, setDeleting] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | 'user' | 'sale' | 'admin' | 'pending'>('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; userId: string | null; userName: string }>({
+        isOpen: false,
+        userId: null,
+        userName: ''
+    });
+    const [deleting, setDeleting] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             const res = await fetch('/api/admin/users');
             const data = await res.json();
@@ -34,7 +43,11 @@ export default function AdminUsersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
 
     const handleApproveSale = async (userId: string) => {
         if (!confirm('Xác nhận duyệt đại lý này?')) return;
@@ -86,21 +99,24 @@ export default function AdminUsersPage() {
         }
     };
 
-    const handleDelete = async (userId: string, userName: string, userRole: string) => {
+    const openDeleteModal = (userId: string, userName: string, userRole: string) => {
         if (userRole === 'admin') {
             alert('Không thể xóa tài khoản Admin!');
             return;
         }
-        if (!confirm(`Bạn có chắc muốn xóa người dùng "${userName}"? Hành động này không thể hoàn tác.`)) {
-            return;
-        }
+        setDeleteModal({ isOpen: true, userId, userName });
+    };
+
+    const handleDelete = async () => {
+        if (!deleteModal.userId) return;
         try {
-            setDeleting(userId);
-            const res = await fetch(`/api/admin/users/${userId}`, {
+            setDeleting(deleteModal.userId);
+            const res = await fetch(`/api/admin/users/${deleteModal.userId}`, {
                 method: 'DELETE',
             });
             if (res.ok) {
-                setUsers(prev => prev.filter(user => user._id !== userId));
+                setUsers(prev => prev.filter(user => user._id !== deleteModal.userId));
+                setDeleteModal({ isOpen: false, userId: null, userName: '' });
             } else {
                 const data = await res.json();
                 alert(data.error || 'Lỗi xóa người dùng');
@@ -114,63 +130,126 @@ export default function AdminUsersPage() {
     };
 
     const filteredUsers = users.filter(user => {
-        if (filter === 'all') return true;
-        if (filter === 'pending') return user.saleApplicationStatus === 'pending';
-        return user.role === filter;
+        const matchesFilter = filter === 'all' ||
+            (filter === 'pending' && user.saleApplicationStatus === 'pending') ||
+            user.role === filter;
+        const matchesSearch = searchTerm === '' ||
+            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.phone?.includes(searchTerm);
+        return matchesFilter && matchesSearch;
     });
+
+    const totalPages = Math.ceil(filteredUsers.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(1);
+        }
+    }, [totalPages, currentPage]);
 
     const pendingCount = users.filter(u => u.saleApplicationStatus === 'pending').length;
 
-    if (loading) {
-        return <div>Đang tải...</div>;
+    const exportColumns: ExportColumn<User>[] = [
+        { key: '_id', label: 'ID', format: (v) => v || '' },
+        { key: 'name', label: 'Tên' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Số điện thoại', format: (v) => v || '-' },
+        {
+            key: 'role', label: 'Vai trò', format: (v) =>
+                v === 'admin' ? 'Admin' : v === 'sale' ? 'Đại lý' : 'Khách hàng'
+        },
+        {
+            key: 'saleApplicationStatus', label: 'Trạng thái', format: (v) =>
+                v === 'pending' ? 'Đang chờ duyệt' : v === 'approved' ? 'Đã duyệt' : v === 'rejected' ? 'Từ chối' : '-'
+        },
+        { key: 'createdAt', label: 'Ngày tham gia', format: (v) => v ? new Date(v).toLocaleDateString('vi-VN') : '-' }
+    ];
+
+    if (loading && users.length === 0) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-brand" />
+            </div>
+        );
     }
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+                onConfirm={handleDelete}
+                title="Xóa người dùng"
+                message={`Bạn có chắc chắn muốn xóa người dùng "${deleteModal.userName}"? Hành động này không thể hoàn tác.`}
+                confirmText="Xóa"
+                variant="danger"
+                isLoading={deleting !== null}
+            />
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                         <Users className="h-6 w-6 text-brand" />
                         Quản lý Người dùng
                     </h1>
-                    <p className="text-slate-500 mt-1">Quản lý danh sách khách hàng, đại lý và quản trị viên.</p>
+                    <p className="text-slate-500 mt-1">{filteredUsers.length} người dùng</p>
                 </div>
+                <ExportButton
+                    data={filteredUsers}
+                    columns={exportColumns}
+                    filename="nguoi-dung"
+                    disabled={filteredUsers.length === 0}
+                />
             </div>
 
-            <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-                <div className="flex gap-2 min-w-max">
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'all' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
-                        onClick={() => setFilter('all')}
-                    >
-                        Tất cả ({users.length})
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'user' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
-                        onClick={() => setFilter('user')}
-                    >
-                        Khách hàng ({users.filter(u => u.role === 'user').length})
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'sale' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
-                        onClick={() => setFilter('sale')}
-                    >
-                        Đại lý ({users.filter(u => u.role === 'sale').length})
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'admin' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
-                        onClick={() => setFilter('admin')}
-                    >
-                        Quản trị viên ({users.filter(u => u.role === 'admin').length})
-                    </button>
-                    {pendingCount > 0 && (
+            <div className="flex flex-col lg:flex-row gap-4">
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+                    <div className="flex gap-2 min-w-max">
                         <button
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'pending' ? 'bg-brand text-black shadow-md' : 'bg-brand-light/30 text-brand-dark hover:bg-brand-light/50'}`}
-                            onClick={() => setFilter('pending')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'all' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                            onClick={() => setFilter('all')}
                         >
-                            Chờ duyệt ({pendingCount})
+                            Tất cả ({users.length})
                         </button>
-                    )}
+                        <button
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'user' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                            onClick={() => setFilter('user')}
+                        >
+                            Khách hàng ({users.filter(u => u.role === 'user').length})
+                        </button>
+                        <button
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'sale' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                            onClick={() => setFilter('sale')}
+                        >
+                            Đại lý ({users.filter(u => u.role === 'sale').length})
+                        </button>
+                        <button
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'admin' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                            onClick={() => setFilter('admin')}
+                        >
+                            Quản trị viên ({users.filter(u => u.role === 'admin').length})
+                        </button>
+                        {pendingCount > 0 && (
+                            <button
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${filter === 'pending' ? 'bg-brand text-black shadow-md' : 'bg-brand-light/30 text-brand-dark hover:bg-brand-light/50'}`}
+                                onClick={() => setFilter('pending')}
+                            >
+                                Chờ duyệt ({pendingCount})
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex-1 min-w-[200px]">
+                    <SearchInput
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                        placeholder="Tìm theo tên, email, SĐT..."
+                        isLoading={loading}
+                    />
                 </div>
             </div>
 
@@ -190,21 +269,21 @@ export default function AdminUsersPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredUsers.length === 0 ? (
+                            {paginatedUsers.length === 0 ? (
                                 <tr>
                                     <td colSpan={8} className="px-6 py-12 text-center text-slate-500 italic">
                                         Không tìm thấy người dùng nào.
                                     </td>
                                 </tr>
                             ) : (
-                                filteredUsers.map((user, index) => (
-                                    <tr 
-                                        key={user._id} 
+                                paginatedUsers.map((user, index) => (
+                                    <tr
+                                        key={user._id}
                                         className="hover:bg-slate-50 transition-colors cursor-pointer"
                                         onClick={() => window.location.href = `/admin/users/${user._id}`}
                                     >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
-                                            {index + 1}
+                                            {startIndex + index + 1}
                                         </td>
                                         <td className="px-6 py-4 font-semibold text-slate-700">{user.name}</td>
                                         <td className="px-6 py-4 text-slate-600">{user.email}</td>
@@ -268,14 +347,14 @@ export default function AdminUsersPage() {
                                                 {user.role !== 'admin' && (
                                                     <button
                                                         className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
-                                                        onClick={() => handleDelete(user._id, user.name, user.role)}
+                                                        onClick={() => openDeleteModal(user._id, user.name, user.role)}
                                                         disabled={deleting === user._id}
                                                         title="Xóa người dùng"
                                                     >
                                                         {deleting === user._id ? (
                                                             <Loader2 size={16} className="animate-spin" />
                                                         ) : (
-                                                            <Trash2 size={16} />
+                                                            <MoreHorizontal size={16} />
                                                         )}
                                                     </button>
                                                 )}
@@ -290,6 +369,16 @@ export default function AdminUsersPage() {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalRecords={filteredUsers.length}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                    isLoading={loading}
+                />
             </div>
         </div>
     );

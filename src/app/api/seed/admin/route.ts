@@ -11,7 +11,7 @@ export async function GET(request: Request) {
         const force = searchParams.get('force') === 'true';
 
         const email = 'admin@gonuts.com';
-        const password = 'Admin123!';
+        const password = 'admin123';
 
         let user = await User.findOne({ email });
 

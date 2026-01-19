@@ -231,7 +231,7 @@ export default function AdminVoucherRewardsPage() {
                                 Voucher {formatPrice(selectedRule.voucherValue)}đ cho đơn từ {formatPrice(selectedRule.minOrderValue)}đ
                             </p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${selectedRule.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${selectedRule.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
                             {selectedRule.isActive ? 'Đang hoạt động' : 'Tắt'}
                         </span>
                     </div>
@@ -258,7 +258,7 @@ export default function AdminVoucherRewardsPage() {
                                 </div>
                             )}
                             <div className="flex items-start gap-3">
-                                <Clock size={16} className="text-brand-light mt-0.5 flex-shrink-0" />
+                                <Clock size={16} className="text-brand mt-0.5 flex-shrink-0" />
                                 <p><strong>Thời hạn:</strong> Voucher có hiệu lực trong <strong>{selectedRule.validityDays} ngày</strong> (~{Math.round(selectedRule.validityDays / 30)} tháng) kể từ ngày nhận.</p>
                             </div>
                         </div>
@@ -423,7 +423,7 @@ export default function AdminVoucherRewardsPage() {
                             <div className="flex items-center gap-2">
                                 <span className={`px-3 py-1.5 rounded-xl text-sm font-bold ${rule.isActive
                                         ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700'
-                                        : 'bg-slate-100 text-slate-400'
+                                        : 'bg-slate-100 text-slate-600'
                                     }`}>
                                     {formatPrice(rule.voucherValue)}đ
                                 </span>
