@@ -1,13 +1,13 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IProduct {
-    id?: string; // Optional because MongoDB uses _id
+    id?: string;
     name: string;
     image: string;
     currentPrice: number;
     originalPrice?: number;
     badgeText?: string;
-    badgeColor?: string; // 'sale' | 'new' | 'best'
+    badgeColor?: string;
     rating?: number;
     reviewsCount?: number;
     description?: string;
@@ -16,14 +16,28 @@ export interface IProduct {
     tags?: string[];
     buttonColor?: string;
     priceColor?: string;
+    agentPrice?: number;
+    bulkPricing?: IBulkPricingTier[];
     createdAt?: Date;
     updatedAt?: Date;
 }
 
+export interface IBulkPricingTier {
+    minQuantity: number;
+    discountPercent: number;
+    discountedPrice?: number;
+}
+
+const BulkPricingTierSchema = new Schema<IBulkPricingTier>({
+    minQuantity: { type: Number, required: true, min: 1 },
+    discountPercent: { type: Number, required: true, min: 0, max: 100 },
+    discountedPrice: { type: Number }
+}, { _id: false });
+
 const ProductSchema: Schema<IProduct> = new Schema(
     {
         name: { type: String, required: true },
-        image: { type: String, required: true }, // Main image
+        image: { type: String, required: true },
         currentPrice: { type: Number, required: true },
         originalPrice: { type: Number },
         badgeText: { type: String },
@@ -31,11 +45,13 @@ const ProductSchema: Schema<IProduct> = new Schema(
         rating: { type: Number, default: 5 },
         reviewsCount: { type: Number, default: 0 },
         description: { type: String },
-        images: { type: [String] }, // Gallery images
+        images: { type: [String] },
         category: { type: String },
-        tags: { type: [String] }, // 'best-seller', 'new', 'promo'
+        tags: { type: [String] },
         buttonColor: { type: String },
         priceColor: { type: String },
+        agentPrice: { type: Number },
+        bulkPricing: { type: [BulkPricingTierSchema], default: [] }
     },
     {
         timestamps: true,
@@ -50,7 +66,6 @@ const ProductSchema: Schema<IProduct> = new Schema(
     }
 );
 
-// Prevent overwriting the model if it's already compiled
 const Product: Model<IProduct> = mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema);
 
 export default Product;

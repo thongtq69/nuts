@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import User from '@/models/User';
+import Product from '@/models/Product';
 import UserVoucher from '@/models/UserVoucher';
 import VoucherRewardRule from '@/models/VoucherRewardRule';
 import AffiliateSettings from '@/models/AffiliateSettings';
@@ -10,7 +11,6 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 
-// Helper to get user ID if logged in
 async function getUserId() {
     try {
         const cookieStore = await cookies();
@@ -24,6 +24,53 @@ async function getUserId() {
     }
 }
 
+interface OrderItem {
+    productId: string;
+    name: string;
+    quantity: number;
+    price: number;
+    originalPrice?: number;
+    image?: string;
+    isAgent?: boolean;
+}
+
+function calculateFinalPrice(
+    product: any,
+    quantity: number,
+    isAgent: boolean,
+    settings: any
+): { finalPrice: number; discountAmount: number; discountType: string } {
+    const originalPrice = product.currentPrice;
+    let finalPrice = originalPrice;
+    let totalDiscount = 0;
+    let discountType = 'none';
+
+    if (isAgent && settings.agentDiscountEnabled) {
+        const agentDiscount = originalPrice * (settings.agentDiscountPercent / 100);
+        finalPrice = originalPrice - agentDiscount;
+        totalDiscount = agentDiscount;
+        discountType = 'agent';
+    }
+
+    if (settings.bulkDiscountEnabled && product.bulkPricing && product.bulkPricing.length > 0) {
+        const sortedTiers = [...product.bulkPricing].sort((a: any, b: any) => b.minQuantity - a.minQuantity);
+        const applicableTier = sortedTiers.find((tier: any) => quantity >= tier.minQuantity);
+        
+        if (applicableTier) {
+            const bulkDiscount = finalPrice * (applicableTier.discountPercent / 100);
+            finalPrice = finalPrice - bulkDiscount;
+            totalDiscount = (originalPrice - finalPrice);
+            discountType = discountType === 'agent' ? 'agent+bulk' : 'bulk';
+        }
+    }
+
+    return {
+        finalPrice: Math.round(finalPrice),
+        discountAmount: Math.round(totalDiscount),
+        discountType
+    };
+}
+
 export async function POST(req: Request) {
     try {
         await dbConnect();
@@ -33,115 +80,129 @@ export async function POST(req: Request) {
         const userId = await getUserId();
         const cookieStore = await cookies();
 
-        // 1. Calculate Items Total
-        const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+        const user = userId ? await User.findById(userId) : null;
+        const isAgent = user?.role === 'sale';
+        const affiliateSettings = await AffiliateSettings.findOne();
+        const settings = affiliateSettings || {
+            agentDiscountEnabled: true,
+            agentDiscountPercent: 10,
+            bulkDiscountEnabled: true,
+            defaultCommissionRate: 10
+        };
 
-        // 2. Validate & Apply Voucher
         let discountAmount = 0;
         let appliedVoucherId = undefined;
 
         if (voucherCode) {
             const voucher = await UserVoucher.findOne({ code: voucherCode, isUsed: false });
-
             if (!voucher) {
                 return NextResponse.json({ message: 'Voucher không hợp lệ hoặc đã sử dụng' }, { status: 400 });
             }
-
             if (new Date(voucher.expiresAt) < new Date()) {
                 return NextResponse.json({ message: 'Voucher đã hết hạn' }, { status: 400 });
             }
-
-            if (itemsTotal < voucher.minOrderValue) {
-                return NextResponse.json({ message: `Đơn hàng tối thiểu ${voucher.minOrderValue.toLocaleString()}đ` }, { status: 400 });
-            }
-
-            // Check ownership if assigned
             if (voucher.userId && voucher.userId.toString() !== userId) {
                 return NextResponse.json({ message: 'Voucher không thuộc về bạn' }, { status: 400 });
             }
+            appliedVoucherId = voucher._id;
+        }
 
-            // Calculate discount
-            if (voucher.discountType === 'percent') {
-                discountAmount = Math.round(itemsTotal * (voucher.discountValue / 100));
-                if (voucher.maxDiscount > 0 && discountAmount > voucher.maxDiscount) {
-                    discountAmount = voucher.maxDiscount;
-                }
-            } else {
-                discountAmount = voucher.discountValue;
+        const processedItems: OrderItem[] = [];
+        let itemsTotal = 0;
+        let totalOriginalAmount = 0;
+        let totalAgentSavings = 0;
+
+        for (const item of items as OrderItem[]) {
+            const product = await Product.findById(item.productId);
+            if (!product) {
+                return NextResponse.json({ message: `Sản phẩm ${item.name} không tồn tại` }, { status: 400 });
             }
 
-            appliedVoucherId = voucher._id;
+            const { finalPrice, discountAmount: itemDiscount, discountType } = calculateFinalPrice(
+                product,
+                item.quantity,
+                isAgent,
+                settings
+            );
+
+            processedItems.push({
+                ...item,
+                price: finalPrice,
+                originalPrice: product.currentPrice,
+                isAgent
+            });
+
+            itemsTotal += finalPrice * item.quantity;
+            totalOriginalAmount += product.currentPrice * item.quantity;
+            totalAgentSavings += itemDiscount * item.quantity;
+        }
+
+        if (voucherCode) {
+            const voucher = await UserVoucher.findById(appliedVoucherId);
+            if (voucher) {
+                const voucherValue = voucher.discountType === 'percent' 
+                    ? Math.round(itemsTotal * (voucher.discountValue / 100))
+                    : voucher.discountValue;
+                
+                const maxDiscount = voucher.maxDiscount > 0 ? voucher.maxDiscount : voucherValue;
+                discountAmount = Math.min(voucherValue, maxDiscount);
+            }
         }
 
         const finalTotal = Math.max(0, itemsTotal + shippingFee - discountAmount);
 
-        // 3. Affiliate Logic - 2-level commission system
         const refCode = cookieStore.get('gonuts_ref')?.value;
         let referrerId: any = undefined;
         let staffId: any = undefined;
         let commissionAmount = 0;
         let commissionStatus: any = undefined;
 
-        // Determine Referrer
         if (refCode) {
             const referrerUser = await User.findOne({ referralCode: refCode });
             if (referrerUser && referrerUser._id.toString() !== userId) {
                 referrerId = referrerUser._id;
-
-                // If referrer is collaborator, get their parent staff
                 if (referrerUser.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
                     staffId = referrerUser.parentStaff;
                 }
             }
         }
-        if (!referrerId && userId) {
-            const u = await User.findById(userId);
-            if (u && u.referrer) {
-                referrerId = u.referrer;
-                const referrerUser = await User.findById(u.referrer);
-                if (referrerUser?.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
-                    staffId = referrerUser.parentStaff;
-                }
+        if (!referrerId && userId && user?.referrer) {
+            referrerId = user.referrer;
+            const referrerUser = await User.findById(user.referrer);
+            if (referrerUser?.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
+                staffId = referrerUser.parentStaff;
             }
         }
 
-        // Calculate Commission - 2-level system
         if (referrerId) {
-            const settings = await AffiliateSettings.findOne();
             const referrerUser = await User.findById(referrerId);
-            const defaultRate = settings?.defaultCommissionRate ?? 10;
-
+            const defaultRate = settings.defaultCommissionRate ?? 10;
             let referrerRate = referrerUser?.commissionRateOverride ?? defaultRate;
             let staffRate = 0;
 
-            // If referrer is collaborator, get staff commission rate
             if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
                 const staffUser = await User.findById(staffId);
                 staffRate = staffUser?.staffCommissionRate ?? 2;
             }
 
-            // Commission on Net Revenue (Items Total - Discount)
             const revenueBase = Math.max(0, itemsTotal - discountAmount);
 
             if (revenueBase > 0) {
                 if (referrerUser?.affiliateLevel === 'collaborator') {
-                    // Collaborator gets commission + Staff gets override commission
                     const collabCommission = Math.round(revenueBase * (referrerRate / 100));
                     const staffCommission = Math.round(revenueBase * (staffRate / 100));
                     commissionAmount = collabCommission + staffCommission;
                 } else {
-                    // Staff or regular referrer gets full commission
                     commissionAmount = Math.round(revenueBase * (referrerRate / 100));
                 }
                 commissionStatus = 'pending';
             }
         }
 
-        // 4. Create Order
         const order = await Order.create({
             user: userId || undefined,
             shippingInfo,
-            items,
+            items: processedItems,
             paymentMethod,
             shippingFee,
             totalAmount: finalTotal,
@@ -149,9 +210,11 @@ export async function POST(req: Request) {
             referrer: referrerId,
             commissionAmount,
             commissionStatus,
+            originalTotalAmount: totalOriginalAmount,
+            agentSavings: totalAgentSavings,
+            isAgentOrder: isAgent
         });
 
-        // 5. Mark Voucher Used
         if (appliedVoucherId) {
             await UserVoucher.findByIdAndUpdate(appliedVoucherId, {
                 isUsed: true,
@@ -160,17 +223,13 @@ export async function POST(req: Request) {
             });
         }
 
-        // 6. Create Commission Records - Support 2-level system
         const commissionRecords = [];
         if (commissionAmount > 0 && referrerId) {
             const referrerUser = await User.findById(referrerId);
-            const settings = await AffiliateSettings.findOne();
-            const defaultRate = settings?.defaultCommissionRate ?? 10;
-
+            const defaultRate = settings.defaultCommissionRate ?? 10;
             const revenueBase = Math.max(0, itemsTotal - discountAmount);
 
             if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
-                // Create commission for collaborator
                 const collabRate = referrerUser?.commissionRateOverride ?? defaultRate;
                 const collabCommission = Math.round(revenueBase * (collabRate / 100));
 
@@ -185,7 +244,6 @@ export async function POST(req: Request) {
                 });
                 commissionRecords.push(collabComm);
 
-                // Create commission for staff (override from collaborator)
                 const staffUser = await User.findById(staffId);
                 const staffRate = staffUser?.staffCommissionRate ?? 2;
                 const staffCommission = Math.round(revenueBase * (staffRate / 100));
@@ -201,9 +259,7 @@ export async function POST(req: Request) {
                 });
                 commissionRecords.push(staffComm);
             } else {
-                // Single level commission (staff or regular referrer)
                 const rate = referrerUser?.commissionRateOverride ?? defaultRate;
-
                 const comm = await AffiliateCommission.create({
                     affiliateId: referrerId,
                     orderId: order._id,
@@ -216,23 +272,19 @@ export async function POST(req: Request) {
                 commissionRecords.push(comm);
             }
 
-            // Update order with first commission ID
             if (commissionRecords.length > 0) {
                 await Order.findByIdAndUpdate(order._id, { commissionId: commissionRecords[0]._id });
             }
         }
 
-        // 7. Send Order Confirmation Email
-        if (shippingInfo.email || (userId && await User.findById(userId))) {
+        if (shippingInfo.email || (userId && user)) {
             try {
-                const user = userId ? await User.findById(userId) : null;
                 const email = shippingInfo.email || user?.email;
-
                 if (email) {
                     await sendOrderConfirmationEmail(email, {
                         orderId: order._id.toString().slice(-6).toUpperCase(),
                         customerName: shippingInfo.fullName,
-                        items: items.map((item: any) => ({
+                        items: processedItems.map((item: any) => ({
                             name: item.name,
                             quantity: item.quantity,
                             price: item.price
@@ -246,14 +298,11 @@ export async function POST(req: Request) {
                 }
             } catch (emailError) {
                 console.error('Failed to send order confirmation email:', emailError);
-                // Don't fail the order if email fails
             }
         }
 
-        // 8. Generate Reward Voucher if eligible
         if (userId && finalTotal > 0) {
             try {
-                // Find matching reward rule (highest minOrderValue that qualifies)
                 const rewardRules = await VoucherRewardRule.find({ isActive: true })
                     .sort({ minOrderValue: -1 })
                     .lean();
@@ -261,16 +310,13 @@ export async function POST(req: Request) {
                 const matchingRule = rewardRules.find(rule => finalTotal >= rule.minOrderValue);
 
                 if (matchingRule) {
-                    // Generate unique voucher code
                     const timestamp = Date.now().toString(36).toUpperCase();
                     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
                     const voucherCode = `REWARD${timestamp}${random}`;
 
-                    // Calculate expiry date
                     const expiresAt = new Date();
                     expiresAt.setDate(expiresAt.getDate() + (matchingRule.validityDays || 90));
 
-                    // Create reward voucher
                     await UserVoucher.create({
                         userId,
                         code: voucherCode,
@@ -287,12 +333,9 @@ export async function POST(req: Request) {
                         maxExtensions: matchingRule.maxExtensions || 1,
                         extensionCount: 0,
                     });
-
-                    console.log(`Created reward voucher ${voucherCode} (${matchingRule.voucherValue}đ) for user ${userId}`);
                 }
             } catch (voucherError) {
                 console.error('Failed to create reward voucher:', voucherError);
-                // Don't fail the order if voucher creation fails
             }
         }
 

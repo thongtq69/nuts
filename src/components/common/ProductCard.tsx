@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useCart, CartItem } from '@/context/CartContext';
 
 interface ProductCardProps {
     id: string | number;
@@ -12,13 +13,14 @@ interface ProductCardProps {
     badgeColor?: string;
     buttonColor?: string;
     priceColor?: string;
+    agentPrice?: string | number;
+    bulkPricing?: { minQuantity: number; discountPercent: number }[];
 }
-
-import { useCart } from '@/context/CartContext';
 
 const ProductCard: React.FC<ProductCardProps> = ({
     id, image, name, currentPrice, originalPrice,
-    badgeText, badgeColor, buttonColor, priceColor
+    badgeText, badgeColor, buttonColor, priceColor,
+    agentPrice, bulkPricing
 }) => {
     const { addToCart } = useCart();
 
@@ -31,15 +33,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
         : originalPrice;
 
     const handleAddToCart = (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent navigation if wrapped in Link
+        e.preventDefault();
         const price = typeof currentPrice === 'number' ? currentPrice : parseFloat(currentPrice.replace(/[^\d]/g, ''));
-        addToCart({
+        const agentP = typeof agentPrice === 'number' ? agentPrice : agentPrice ? parseFloat(String(agentPrice).replace(/[^\d]/g, '')) : undefined;
+        
+        const item: Omit<CartItem, 'price' | 'isAgent'> = {
             id: String(id),
             name,
             image,
-            price,
-            quantity: 1
-        });
+            originalPrice: price,
+            quantity: 1,
+            agentPrice: agentP,
+            bulkPricing
+        };
+        
+        addToCart(item);
         alert('Đã thêm vào giỏ hàng');
     };
 

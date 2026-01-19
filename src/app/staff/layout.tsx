@@ -70,7 +70,7 @@ export default function StaffLayout({
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-white to-orange-50/30">
+        <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-white to-orange-50/30 lg:flex">
             {/* Mobile Header */}
             <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-amber-100/50 h-16 flex items-center justify-between px-4 shadow-sm">
                 <button
@@ -102,12 +102,12 @@ export default function StaffLayout({
             )}
 
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:block fixed inset-y-0 left-0 w-72 bg-white border-r border-amber-100/50 z-30 shadow-xl">
+            <aside className="hidden lg:block w-72 shrink-0 bg-white border-r border-amber-100/50 z-30 shadow-xl">
                 <SidebarContent pathname={pathname} user={user} />
             </aside>
 
             {/* Main Content */}
-            <main className="min-h-screen pt-16 lg:pt-0 lg:pl-72 bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20">
+            <main className="flex-1 min-h-screen pt-16 lg:pt-0 bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20 overflow-x-hidden">
                 <div className="p-4 sm:p-6 lg:p-8 w-full max-w-[1200px]">
                     {children}
                 </div>

@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 
 export default function CartPage() {
-    const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
+    const { cartItems, updateQuantity, removeFromCart, cartTotal, originalTotal, savingsTotal, getItemPrice } = useCart();
 
     return (
         <main>
@@ -45,7 +45,18 @@ export default function CartPage() {
                                                 <img src={item.image} alt={item.name} />
                                                 <span>{item.name}</span>
                                             </td>
-                                            <td>{item.price.toLocaleString()}₫</td>
+                                            <td>
+                                                <div className="price-display">
+                                                    {item.isAgent && item.originalPrice !== getItemPrice(item) ? (
+                                                        <>
+                                                            <span className="original-price-strikethrough">{item.originalPrice.toLocaleString()}₫</span>
+                                                            <span className="agent-price">{getItemPrice(item).toLocaleString()}₫</span>
+                                                        </>
+                                                    ) : (
+                                                        <span>{item.originalPrice.toLocaleString()}₫</span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td>
                                                 <div className="qty-control">
                                                     <button onClick={() => updateQuantity(item.id, -1)}>-</button>
@@ -53,7 +64,7 @@ export default function CartPage() {
                                                     <button onClick={() => updateQuantity(item.id, 1)}>+</button>
                                                 </div>
                                             </td>
-                                            <td className="subtotal">{(item.price * item.quantity).toLocaleString()}₫</td>
+                                            <td className="subtotal">{(getItemPrice(item) * item.quantity).toLocaleString()}₫</td>
                                             <td>
                                                 <button onClick={() => removeFromCart(item.id)} className="remove-btn">×</button>
                                             </td>
@@ -66,9 +77,15 @@ export default function CartPage() {
                         <div className="cart-summary">
                             <h3>Tổng giỏ hàng</h3>
                             <div className="summary-row">
-                                <span>Tạm tính</span>
-                                <span>{cartTotal.toLocaleString()}₫</span>
+                                <span>Giá gốc</span>
+                                <span className="original-price-strikethrough">{originalTotal.toLocaleString()}₫</span>
                             </div>
+                            {savingsTotal > 0 && (
+                                <div className="summary-row savings">
+                                    <span>Tiết kiệm</span>
+                                    <span className="savings-amount">-{savingsTotal.toLocaleString()}₫</span>
+                                </div>
+                            )}
                             <div className="summary-row total">
                                 <span>Tổng cộng</span>
                                 <span>{cartTotal.toLocaleString()}₫</span>
@@ -81,6 +98,30 @@ export default function CartPage() {
                 )}
             </div>
             <Footer />
+
+            <style jsx>{`
+                .price-display {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .original-price-strikethrough {
+                    text-decoration: line-through;
+                    color: #999;
+                    font-size: 12px;
+                }
+                .agent-price {
+                    color: #16a34a;
+                    font-weight: 600;
+                }
+                .savings {
+                    color: #16a34a;
+                }
+                .savings-amount {
+                    font-weight: 600;
+                    color: #16a34a;
+                }
+            `}</style>
         </main>
     );
 }

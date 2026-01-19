@@ -26,7 +26,7 @@ interface Ward {
 
 export default function CheckoutPage() {
     const router = useRouter();
-    const { cartItems, cartTotal, clearCart } = useCart();
+    const { cartItems, cartTotal, originalTotal, savingsTotal, clearCart, getItemPrice } = useCart();
     const { user } = useAuth();
     const [voucherCode, setVoucherCode] = useState('');
     const [voucherError, setVoucherError] = useState('');
@@ -36,13 +36,11 @@ export default function CheckoutPage() {
     const [paymentMethod, setPaymentMethod] = useState('cod');
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // Voucher State
     const [vouchers, setVouchers] = useState<any[]>([]);
     const [loadingVouchers, setLoadingVouchers] = useState(false);
     const [showVoucherModal, setShowVoucherModal] = useState(false);
     const [manualVoucherCode, setManualVoucherCode] = useState('');
 
-    // Province/District/Ward State
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [districts, setDistricts] = useState<District[]>([]);
     const [wards, setWards] = useState<Ward[]>([]);
@@ -51,7 +49,6 @@ export default function CheckoutPage() {
     const [selectedWard, setSelectedWard] = useState('');
     const [addressError, setAddressError] = useState('');
 
-    // Fetch vouchers
     useEffect(() => {
         if (user) {
             setLoadingVouchers(true);
@@ -67,7 +64,6 @@ export default function CheckoutPage() {
         }
     }, [user]);
 
-    // Fetch provinces on mount
     useEffect(() => {
         fetch('https://provinces.open-api.vn/api/p/')
             .then(res => {
@@ -85,7 +81,6 @@ export default function CheckoutPage() {
             });
     }, []);
 
-    // Fetch districts when province changes
     useEffect(() => {
         if (selectedProvince) {
             setDistricts([]);
@@ -110,7 +105,6 @@ export default function CheckoutPage() {
         }
     }, [selectedProvince]);
 
-    // Fetch wards when district changes
     useEffect(() => {
         if (selectedDistrict) {
             setWards([]);
@@ -133,14 +127,14 @@ export default function CheckoutPage() {
         }
     }, [selectedDistrict]);
 
-    // Redirect if cart is empty
     useEffect(() => {
         if (cartItems.length === 0) {
-            // router.push('/cart'); // Optional: enforce non-empty cart
         }
     }, [cartItems, router]);
 
     const subtotal = cartTotal;
+    const originalSubtotal = originalTotal;
+    const savings = savingsTotal;
     const shippingFee = subtotal > 500000 ? 0 : 30000;
     const total = subtotal + shippingFee - appliedDiscount;
 
@@ -155,7 +149,6 @@ export default function CheckoutPage() {
         note: ''
     });
 
-    // Update form data if user loads
     useEffect(() => {
         if (user) {
             setFormData(prev => ({
@@ -195,7 +188,6 @@ export default function CheckoutPage() {
     const handlePlaceOrder = async () => {
         if (isProcessing) return;
 
-        // Strict Validation
         if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
             alert('Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.');
             return;
@@ -212,7 +204,6 @@ export default function CheckoutPage() {
         try {
             setIsProcessing(true);
 
-            // Get names from selected codes
             const provinceName = provinces.find(p => p.code.toString() === selectedProvince)?.name || '';
             const districtName = districts.find(d => d.code.toString() === selectedDistrict)?.name || '';
             const wardName = wards.find(w => w.code.toString() === selectedWard)?.name || '';
@@ -222,8 +213,10 @@ export default function CheckoutPage() {
                     productId: item.id,
                     name: item.name,
                     quantity: item.quantity,
-                    price: item.price,
-                    image: item.image
+                    price: getItemPrice(item),
+                    originalPrice: item.originalPrice,
+                    image: item.image,
+                    isAgent: item.isAgent
                 })),
                 shippingInfo: {
                     fullName: formData.name,
@@ -237,10 +230,9 @@ export default function CheckoutPage() {
                 shippingFee,
                 totalAmount: total,
                 note: formData.note,
-                voucherCode: isVoucherApplied ? voucherCode : undefined // Send voucher to backend
+                voucherCode: isVoucherApplied ? voucherCode : undefined
             };
 
-            // Only COD/Banking supported now
             const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -449,9 +441,30 @@ export default function CheckoutPage() {
                                             <span className="item-name">{item.name}</span>
                                             <span className="item-qty">x {item.quantity}</span>
                                         </div>
-                                        <span className="item-price">{(item.price * item.quantity).toLocaleString()}₫</span>
+                                        <span className="item-price">
+                                            {item.isAgent && item.originalPrice !== getItemPrice(item) ? (
+                                                <span className="agent-price-display">
+                                                    <span className="original-strikethrough">{(item.originalPrice * item.quantity).toLocaleString()}₫</span>
+                                                    <span className="discounted-price">{(getItemPrice(item) * item.quantity).toLocaleString()}₫</span>
+                                                </span>
+                                            ) : (
+                                                (getItemPrice(item) * item.quantity).toLocaleString() + '₫'
+                                            )}
+                                        </span>
                                     </div>
                                 ))}
+                            </div>
+
+                            {savings > 0 && (
+                                <div className="savings-row">
+                                    <span>💰 Tiết kiệm từ giá Đại lý/Bulk</span>
+                                    <span className="savings-value">-{savings.toLocaleString()}₫</span>
+                                </div>
+                            )}
+
+                            <div className="summary-row">
+                                <span>Giá gốc</span>
+                                <span className="original-price-display">{originalSubtotal.toLocaleString()}₫</span>
                             </div>
 
                             {/* Voucher Selection */}
@@ -1101,6 +1114,35 @@ export default function CheckoutPage() {
                     left: 0;
                     right: 0;
                     max-width: 100%;
+                }
+                .savings-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 12px 0;
+                    border-bottom: 1px solid #eee;
+                    color: #16a34a;
+                    font-weight: 600;
+                }
+                .savings-value {
+                    color: #16a34a;
+                }
+                .agent-price-display {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end;
+                }
+                .original-strikethrough {
+                    text-decoration: line-through;
+                    color: #999;
+                    font-size: 12px;
+                }
+                .discounted-price {
+                    color: #16a34a;
+                    font-weight: 600;
+                }
+                .original-price-display {
+                    text-decoration: line-through;
+                    color: #999;
                 }
             }
           `}</style>

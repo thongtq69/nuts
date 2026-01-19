@@ -1,32 +1,111 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 
 export interface CartItem {
-    id: string; // Product ID
+    id: string;
     name: string;
     image: string;
+    originalPrice: number;
     price: number;
     quantity: number;
+    agentPrice?: number;
+    bulkPricing?: { minQuantity: number; discountPercent: number }[];
+    isAgent: boolean;
 }
 
 interface CartContextType {
     cartItems: CartItem[];
-    addToCart: (item: CartItem) => void;
+    addToCart: (item: Omit<CartItem, 'price' | 'isAgent'>) => void;
+    addToCartWithAgentPrice: (item: Omit<CartItem, 'price' | 'isAgent'>, isAgent: boolean, agentSettings?: { agentDiscountEnabled: boolean; agentDiscountPercent: number; bulkDiscountEnabled: boolean }) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, delta: number) => void;
+    setQuantity: (id: string, quantity: number) => void;
     clearCart: () => void;
     cartCount: number;
     cartTotal: number;
+    originalTotal: number;
+    savingsTotal: number;
+    getItemPrice: (item: CartItem) => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+function calculatePrice(
+    originalPrice: number,
+    quantity: number,
+    isAgent: boolean,
+    agentSettings?: { agentDiscountEnabled: boolean; agentDiscountPercent: number; bulkDiscountEnabled: boolean },
+    bulkPricing?: { minQuantity: number; discountPercent: number }[]
+): number {
+    let finalPrice = originalPrice;
+
+    if (!isAgent || !agentSettings?.agentDiscountEnabled) {
+        if (agentSettings?.bulkDiscountEnabled && bulkPricing && bulkPricing.length > 0) {
+            const sortedTiers = [...bulkPricing].sort((a, b) => b.minQuantity - a.minQuantity);
+            const applicableTier = sortedTiers.find(tier => quantity >= tier.minQuantity);
+            if (applicableTier) {
+                finalPrice = originalPrice * (1 - applicableTier.discountPercent / 100);
+            }
+        }
+        return Math.round(finalPrice);
+    }
+
+    const agentDiscountPrice = originalPrice * (1 - (agentSettings.agentDiscountPercent || 10) / 100);
+
+    if (agentSettings.bulkDiscountEnabled && bulkPricing && bulkPricing.length > 0) {
+        const sortedTiers = [...bulkPricing].sort((a, b) => b.minQuantity - a.minQuantity);
+        const applicableTier = sortedTiers.find(tier => quantity >= tier.minQuantity);
+        if (applicableTier) {
+            finalPrice = agentDiscountPrice * (1 - applicableTier.discountPercent / 100);
+        } else {
+            finalPrice = agentDiscountPrice;
+        }
+    } else {
+        finalPrice = agentDiscountPrice;
+    }
+
+    return Math.round(finalPrice);
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isMounted, setIsMounted] = useState(false);
+    const [agentSettings, setAgentSettings] = useState<{
+        agentDiscountEnabled: boolean;
+        agentDiscountPercent: number;
+        bulkDiscountEnabled: boolean;
+    } | null>(null);
+    const { user, loading: authLoading } = useAuth();
 
-    // Load from localStorage on mount
+    useEffect(() => {
+        fetch('/api/admin/affiliate-settings')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.agentDiscountEnabled !== undefined) {
+                    setAgentSettings({
+                        agentDiscountEnabled: data.agentDiscountEnabled,
+                        agentDiscountPercent: data.agentDiscountPercent || 10,
+                        bulkDiscountEnabled: data.bulkDiscountEnabled !== false
+                    });
+                } else {
+                    setAgentSettings({
+                        agentDiscountEnabled: true,
+                        agentDiscountPercent: 10,
+                        bulkDiscountEnabled: true
+                    });
+                }
+            })
+            .catch(() => {
+                setAgentSettings({
+                    agentDiscountEnabled: true,
+                    agentDiscountPercent: 10,
+                    bulkDiscountEnabled: true
+                });
+            });
+    }, []);
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsMounted(true);
@@ -43,48 +122,139 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return () => clearTimeout(timer);
     }, []);
 
-    // Save to localStorage whenever cart changes
     useEffect(() => {
         if (isMounted) {
             localStorage.setItem('cart', JSON.stringify(cartItems));
         }
     }, [cartItems, isMounted]);
 
-    const addToCart = (item: CartItem) => {
+    const getItemPrice = useCallback((item: CartItem): number => {
+        return calculatePrice(
+            item.originalPrice,
+            item.quantity,
+            item.isAgent,
+            agentSettings || undefined,
+            item.bulkPricing
+        );
+    }, [agentSettings]);
+
+    const addToCart = useCallback((item: Omit<CartItem, 'price' | 'isAgent'>) => {
+        const isAgent = user?.role === 'sale';
         setCartItems(prev => {
             const existing = prev.find(i => i.id === item.id);
             if (existing) {
+                const newQuantity = existing.quantity + item.quantity;
                 return prev.map(i =>
-                    i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+                    i.id === item.id 
+                        ? { 
+                            ...i, 
+                            quantity: newQuantity,
+                            price: calculatePrice(i.originalPrice, newQuantity, i.isAgent, agentSettings || undefined, i.bulkPricing)
+                        } 
+                        : i
                 );
             }
-            return [...prev, item];
+            const newItem: CartItem = {
+                ...item,
+                isAgent,
+                price: calculatePrice(item.originalPrice, item.quantity, isAgent, agentSettings || undefined, item.bulkPricing)
+            };
+            return [...prev, newItem];
         });
-    };
+    }, [user, agentSettings]);
 
-    const removeFromCart = (id: string) => {
+    const addToCartWithAgentPrice = useCallback((
+        item: Omit<CartItem, 'price' | 'isAgent'>,
+        isAgent: boolean,
+        settings?: { agentDiscountEnabled: boolean; agentDiscountPercent: number; bulkDiscountEnabled: boolean }
+    ) => {
+        const finalSettings = settings || agentSettings;
+        setCartItems(prev => {
+            const existing = prev.find(i => i.id === item.id);
+            if (existing) {
+                const newQuantity = existing.quantity + item.quantity;
+                return prev.map(i =>
+                    i.id === item.id 
+                        ? { 
+                            ...i, 
+                            quantity: newQuantity,
+                            price: calculatePrice(i.originalPrice, newQuantity, i.isAgent, finalSettings || undefined, i.bulkPricing)
+                        } 
+                        : i
+                );
+            }
+            const newItem: CartItem = {
+                ...item,
+                isAgent,
+                price: calculatePrice(item.originalPrice, item.quantity, isAgent, finalSettings || undefined, item.bulkPricing)
+            };
+            return [...prev, newItem];
+        });
+    }, [agentSettings]);
+
+    const removeFromCart = useCallback((id: string) => {
         setCartItems(prev => prev.filter(item => item.id !== id));
-    };
+    }, []);
 
-    const updateQuantity = (id: string, delta: number) => {
+    const updateQuantity = useCallback((id: string, delta: number) => {
         setCartItems(prev => prev.map(item => {
             if (item.id === id) {
                 const newQty = Math.max(1, item.quantity + delta);
-                return { ...item, quantity: newQty };
+                return { 
+                    ...item, 
+                    quantity: newQty,
+                    price: calculatePrice(item.originalPrice, newQty, item.isAgent, agentSettings || undefined, item.bulkPricing)
+                };
             }
             return item;
         }));
-    };
+    }, [agentSettings]);
 
-    const clearCart = () => {
+    const setQuantity = useCallback((id: string, quantity: number) => {
+        if (quantity < 1) return;
+        setCartItems(prev => prev.map(item => {
+            if (item.id === id) {
+                return { 
+                    ...item, 
+                    quantity,
+                    price: calculatePrice(item.originalPrice, quantity, item.isAgent, agentSettings || undefined, item.bulkPricing)
+                };
+            }
+            return item;
+        }));
+    }, [agentSettings]);
+
+    const clearCart = useCallback(() => {
         setCartItems([]);
-    };
+    }, []);
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    const cartTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    const cartTotal = cartItems.reduce((sum, item) => {
+        return sum + (getItemPrice(item) * item.quantity);
+    }, 0);
+    
+    const originalTotal = cartItems.reduce((sum, item) => {
+        return sum + (item.originalPrice * item.quantity);
+    }, 0);
+    
+    const savingsTotal = Math.max(0, originalTotal - cartTotal);
 
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>
+        <CartContext.Provider value={{ 
+            cartItems, 
+            addToCart, 
+            addToCartWithAgentPrice,
+            removeFromCart, 
+            updateQuantity,
+            setQuantity,
+            clearCart, 
+            cartCount, 
+            cartTotal,
+            originalTotal,
+            savingsTotal,
+            getItemPrice
+        }}>
             {children}
         </CartContext.Provider>
     );

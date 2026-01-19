@@ -2,7 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IOrder {
     user?: mongoose.Types.ObjectId;
-    orderType?: 'product' | 'membership'; // Type of order
+    orderType?: 'product' | 'membership';
     shippingInfo: {
         fullName: string;
         phone: string;
@@ -15,29 +15,30 @@ export interface IOrder {
         name: string;
         quantity: number;
         price: number;
-        image: string;
+        originalPrice?: number;
+        image?: string;
+        isAgent?: boolean;
     }[];
-    // Package info for membership orders
     packageInfo?: {
         packageId: mongoose.Types.ObjectId;
         name: string;
         voucherQuantity: number;
         expiresAt: Date;
     };
-    paymentMethod: string; // 'cod' | 'banking' | 'vnpay'
-    paymentStatus?: string; // 'pending' | 'completed' | 'failed'
+    paymentMethod: string;
+    paymentStatus?: string;
     vnpayTransactionNo?: string;
     shippingFee: number;
     totalAmount: number;
-    status: string; // 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+    status: string;
     note?: string;
-
-    // Affiliate Marketing Fields
     referrer?: mongoose.Types.ObjectId;
     commissionId?: mongoose.Types.ObjectId;
     commissionAmount?: number;
     commissionStatus?: 'pending' | 'approved' | 'cancelled';
-
+    originalTotalAmount?: number;
+    agentSavings?: number;
+    isAgentOrder?: boolean;
     createdAt?: Date;
 }
 
@@ -58,10 +59,11 @@ const OrderSchema: Schema<IOrder> = new Schema(
                 name: { type: String, required: true },
                 quantity: { type: Number, required: true },
                 price: { type: Number, required: true },
+                originalPrice: { type: Number },
                 image: { type: String },
+                isAgent: { type: Boolean, default: false }
             },
         ],
-        // Package info for membership orders
         packageInfo: {
             packageId: { type: Schema.Types.ObjectId, ref: 'SubscriptionPackage' },
             name: { type: String },
@@ -75,8 +77,6 @@ const OrderSchema: Schema<IOrder> = new Schema(
         totalAmount: { type: Number, required: true },
         status: { type: String, default: 'pending' },
         note: { type: String },
-
-        // Affiliate Marketing Fields
         referrer: { type: Schema.Types.ObjectId, ref: 'User' },
         commissionId: { type: Schema.Types.ObjectId, ref: 'AffiliateCommission' },
         commissionAmount: { type: Number, default: 0 },
@@ -85,6 +85,9 @@ const OrderSchema: Schema<IOrder> = new Schema(
             enum: ['pending', 'approved', 'cancelled'],
             default: 'pending'
         },
+        originalTotalAmount: { type: Number, default: 0 },
+        agentSavings: { type: Number, default: 0 },
+        isAgentOrder: { type: Boolean, default: false }
     },
     {
         timestamps: true,
