@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Permission, RoleType } from '@/constants/permissions';
 
 interface User {
     _id: string;
@@ -11,6 +12,8 @@ interface User {
     phone?: string;
     address?: string;
     saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
+    roleType?: RoleType;
+    customPermissions?: Permission[];
 }
 
 interface AuthContextType {
@@ -22,6 +25,7 @@ interface AuthContextType {
     isAdmin: boolean;
     isSale: boolean;
     isStaff: boolean;
+    hasPermission: (permission: Permission) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,8 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isSale = user?.role === 'sale';
     const isStaff = user?.role === 'staff';
 
+    const hasPermission = (permission: Permission): boolean => {
+        if (!user) return false;
+        if (user.role === 'admin') return true;
+        const permissions = user.customPermissions || [];
+        return permissions.includes(permission);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, checkUser, isAdmin, isSale, isStaff }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, checkUser, isAdmin, isSale, isStaff, hasPermission }}>
             {children}
         </AuthContext.Provider>
     );

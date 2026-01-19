@@ -2,21 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-    Users,
-    Plus,
-    Edit2,
-    Copy,
-    TrendingUp,
-    X,
-    Loader2,
-    ChevronRight,
-    UserCheck
+    Users, Plus, Edit2, Copy, Trash2, X, Loader2, ChevronRight,
+    UserCheck, Shield, Settings, Check, AlertCircle, TrendingUp
 } from 'lucide-react';
 import { Pagination } from '@/components/admin/ui/Pagination';
 import { SearchInput } from '@/components/admin/ui/SearchInput';
 import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
 import { Button } from '@/components/admin/ui/Button';
+import { ROLE_DEFINITIONS, PERMISSION_GROUPS, type Permission } from '@/constants/permissions';
 
 interface Staff {
     id: string;
@@ -24,6 +18,8 @@ interface Staff {
     email: string;
     phone: string;
     staffCode: string;
+    roleType: string;
+    customPermissions: Permission[];
     collaboratorCount: number;
     totalCommission: number;
     teamRevenue: number;
@@ -31,11 +27,21 @@ interface Staff {
     createdAt: string;
 }
 
+const ROLE_OPTIONS = Object.entries(ROLE_DEFINITIONS).map(([value, def]) => ({
+    value,
+    label: def.name,
+    description: def.description,
+    color: def.color
+}));
+
 export default function AdminStaffPage() {
     const [staffList, setStaffList] = useState<Staff[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showPermissionModal, setShowPermissionModal] = useState(false);
+    const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
     const [creating, setCreating] = useState(false);
+    const [savingPermissions, setSavingPermissions] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -46,13 +52,16 @@ export default function AdminStaffPage() {
         staffName: ''
     });
     const [deleting, setDeleting] = useState<string | null>(null);
+    const [expandedGroups, setExpandedGroups] = useState<string[]>(Object.keys(PERMISSION_GROUPS));
+    const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>([]);
 
     const [newStaff, setNewStaff] = useState({
         name: '',
         email: '',
         phone: '',
         password: '',
-        staffCode: ''
+        staffCode: '',
+        roleType: 'sales' as 'admin' | 'manager' | 'sales' | 'support' | 'warehouse' | 'accountant' | 'collaborator' | 'viewer'
     });
 
     const fetchStaff = useCallback(async () => {
@@ -88,7 +97,7 @@ export default function AdminStaffPage() {
             if (res.ok) {
                 alert(`Tạo nhân viên thành công!\nMã: ${data.staff.staffCode}`);
                 setShowModal(false);
-                setNewStaff({ name: '', email: '', phone: '', password: '', staffCode: '' });
+                setNewStaff({ name: '', email: '', phone: '', password: '', staffCode: '', roleType: 'sales' });
                 fetchStaff();
             } else {
                 alert(data.message || 'Lỗi tạo nhân viên');
@@ -129,6 +138,65 @@ export default function AdminStaffPage() {
         }
     };
 
+    const openPermissionModal = (staff: Staff) => {
+        setSelectedStaff(staff);
+        setSelectedPermissions(staff.customPermissions || []);
+        setShowPermissionModal(true);
+    };
+
+    const togglePermissionGroup = (group: string) => {
+        setExpandedGroups(prev =>
+            prev.includes(group)
+                ? prev.filter(g => g !== group)
+                : [...prev, group]
+        );
+    };
+
+    const togglePermission = (permission: Permission) => {
+        setSelectedPermissions(prev =>
+            prev.includes(permission)
+                ? prev.filter(p => p !== permission)
+                : [...prev, permission]
+        );
+    };
+
+    const selectAllInGroup = (group: string) => {
+        const groupPermissions = PERMISSION_GROUPS[group] || [];
+        const missing = groupPermissions.filter(p => !selectedPermissions.includes(p));
+        setSelectedPermissions(prev => [...prev, ...missing]);
+    };
+
+    const deselectAllInGroup = (group: string) => {
+        const groupPermissions = PERMISSION_GROUPS[group] || [];
+        setSelectedPermissions(prev => prev.filter(p => !groupPermissions.includes(p)));
+    };
+
+    const savePermissions = async () => {
+        if (!selectedStaff) return;
+        try {
+            setSavingPermissions(true);
+            const res = await fetch(`/api/admin/staff/${selectedStaff.id}/permissions`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customPermissions: selectedPermissions })
+            });
+
+            if (res.ok) {
+                alert('Cập nhật quyền thành công');
+                setShowPermissionModal(false);
+                fetchStaff();
+            } else {
+                const data = await res.json();
+                alert(data.message || 'Lỗi cập nhật quyền');
+            }
+        } catch (error) {
+            console.error('Error saving permissions:', error);
+            alert('Lỗi khi cập nhật quyền');
+        } finally {
+            setSavingPermissions(false);
+        }
+    };
+
     const copyCode = (code: string) => {
         navigator.clipboard.writeText(code);
         alert('Đã sao chép mã nhân viên!');
@@ -137,7 +205,8 @@ export default function AdminStaffPage() {
     const filteredStaff = staffList.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.staffCode.toLowerCase().includes(searchTerm.toLowerCase())
+        s.staffCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.roleType && ROLE_DEFINITIONS[s.roleType as keyof typeof ROLE_DEFINITIONS]?.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     const totalPages = Math.ceil(filteredStaff.length / pageSize);
@@ -154,11 +223,20 @@ export default function AdminStaffPage() {
     const totalCTV = staffList.reduce((sum, s) => sum + s.collaboratorCount, 0);
     const totalRevenue = staffList.reduce((sum, s) => sum + s.teamRevenue, 0);
 
+    const getRoleColor = (roleType: string) => {
+        return ROLE_DEFINITIONS[roleType as keyof typeof ROLE_DEFINITIONS]?.color || '#6b7280';
+    };
+
+    const getRoleName = (roleType: string) => {
+        return ROLE_DEFINITIONS[roleType as keyof typeof ROLE_DEFINITIONS]?.name || roleType;
+    };
+
     const exportColumns: ExportColumn<Staff>[] = [
         { key: 'staffCode', label: 'Mã nhân viên' },
         { key: 'name', label: 'Họ tên' },
         { key: 'email', label: 'Email' },
         { key: 'phone', label: 'Số điện thoại', format: (v) => v || '-' },
+        { key: 'roleType', label: 'Vai trò', format: (v) => getRoleName(v) },
         { key: 'collaboratorCount', label: 'Số CTV' },
         { key: 'teamOrders', label: 'Đơn hàng' },
         { key: 'teamRevenue', label: 'Doanh thu team', format: (v) => `${v.toLocaleString('vi-VN')}đ` },
@@ -247,7 +325,7 @@ export default function AdminStaffPage() {
                 <SearchInput
                     value={searchTerm}
                     onChange={setSearchTerm}
-                    placeholder="Tìm theo tên, email, mã nhân viên..."
+                    placeholder="Tìm theo tên, email, mã nhân viên, vai trò..."
                     isLoading={loading}
                 />
             </div>
@@ -260,6 +338,7 @@ export default function AdminStaffPage() {
                                 <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase w-16">STT</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Nhân viên</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Mã NV</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Vai trò</th>
                                 <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase">CTV</th>
                                 <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase">Đơn hàng</th>
                                 <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase">Doanh thu team</th>
@@ -269,13 +348,13 @@ export default function AdminStaffPage() {
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center">
+                                    <td colSpan={8} className="px-6 py-12 text-center">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand" />
                                     </td>
                                 </tr>
                             ) : paginatedStaff.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center">
+                                    <td colSpan={8} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
                                                 <UserCheck className="w-6 h-6 text-slate-400" />
@@ -298,10 +377,7 @@ export default function AdminStaffPage() {
                                 paginatedStaff.map((staff, index) => (
                                     <tr
                                         key={staff.id}
-                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
-                                        onClick={() => {
-                                            alert(`Nhân viên: ${staff.name}\nMã NV: ${staff.staffCode}\nSố CTV: ${staff.collaboratorCount}\nDoanh thu team: ${staff.teamRevenue.toLocaleString('vi-VN')}đ`);
-                                        }}
+                                        className="hover:bg-slate-50 transition-colors"
                                     >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">
                                             {startIndex + index + 1}
@@ -334,6 +410,17 @@ export default function AdminStaffPage() {
                                                 </button>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4">
+                                            <span
+                                                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold"
+                                                style={{
+                                                    backgroundColor: `${getRoleColor(staff.roleType)}20`,
+                                                    color: getRoleColor(staff.roleType)
+                                                }}
+                                            >
+                                                {getRoleName(staff.roleType)}
+                                            </span>
+                                        </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="font-semibold text-brand">{staff.collaboratorCount}</span>
                                         </td>
@@ -345,8 +432,15 @@ export default function AdminStaffPage() {
                                                 {staff.teamRevenue.toLocaleString('vi-VN')}đ
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                        <td className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => openPermissionModal(staff)}
+                                                    className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                    title="Phân quyền"
+                                                >
+                                                    <Shield size={16} />
+                                                </button>
                                                 <button
                                                     className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
                                                     title="Chi tiết"
@@ -362,7 +456,7 @@ export default function AdminStaffPage() {
                                                     {deleting === staff.id ? (
                                                         <Loader2 size={16} className="animate-spin" />
                                                     ) : (
-                                                        <Edit2 size={16} />
+                                                        <Trash2 size={16} />
                                                     )}
                                                 </button>
                                             </div>
@@ -388,7 +482,7 @@ export default function AdminStaffPage() {
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
                         <button
                             onClick={() => setShowModal(false)}
                             className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -402,7 +496,7 @@ export default function AdminStaffPage() {
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-slate-800">Thêm Nhân viên mới</h2>
-                                <p className="text-sm text-slate-500">Cấp mã để nhân viên quản lý CTV</p>
+                                <p className="text-sm text-slate-500">Cấp mã và vai trò cho nhân viên</p>
                             </div>
                         </div>
 
@@ -417,7 +511,6 @@ export default function AdminStaffPage() {
                                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none font-mono"
                                     placeholder="VD: NV001"
                                 />
-                                <p className="text-xs text-slate-500 mt-1">CTV của nhân viên sẽ có mã: {newStaff.staffCode || 'NV001'}-CTV1</p>
                             </div>
 
                             <div>
@@ -456,6 +549,24 @@ export default function AdminStaffPage() {
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Vai trò</label>
+                                <select
+                                    value={newStaff.roleType}
+                                    onChange={(e) => setNewStaff({ ...newStaff, roleType: e.target.value as any })}
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
+                                >
+                                    {ROLE_OPTIONS.map(opt => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    {ROLE_OPTIONS.find(o => o.value === newStaff.roleType)?.description}
+                                </p>
+                            </div>
+
+                            <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu *</label>
                                 <div className="relative">
                                     <input
@@ -471,11 +582,7 @@ export default function AdminStaffPage() {
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                                     >
-                                        {showPassword ? (
-                                            <span className="text-xs">Ẩn</span>
-                                        ) : (
-                                            <span className="text-xs">Hiện</span>
-                                        )}
+                                        {showPassword ? <span className="text-xs">Ẩn</span> : <span className="text-xs">Hiện</span>}
                                     </button>
                                 </div>
                             </div>
@@ -504,6 +611,115 @@ export default function AdminStaffPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {showPermissionModal && selectedStaff && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowPermissionModal(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+                        <button
+                            onClick={() => setShowPermissionModal(false)}
+                            className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                        >
+                            <X size={20} className="text-slate-500" />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center text-white">
+                                <Shield size={24} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-800">Phân quyền nhân viên</h2>
+                                <p className="text-sm text-slate-500">{selectedStaff.name} - {getRoleName(selectedStaff.roleType)}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+                            {Object.entries(PERMISSION_GROUPS).map(([group, permissions]) => (
+                                <div key={group} className="border border-slate-200 rounded-xl overflow-hidden">
+                                    <button
+                                        onClick={() => togglePermissionGroup(group)}
+                                        className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+                                    >
+                                        <span className="font-medium text-slate-700">{group}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-slate-500">
+                                                {permissions.filter(p => selectedPermissions.includes(p)).length}/{permissions.length}
+                                            </span>
+                                            <ChevronRight
+                                                size={16}
+                                                className={`text-slate-400 transition-transform ${expandedGroups.includes(group) ? 'rotate-90' : ''}`}
+                                            />
+                                        </div>
+                                    </button>
+
+                                    {expandedGroups.includes(group) && (
+                                        <div className="p-3 bg-white">
+                                            <div className="flex gap-2 mb-3">
+                                                <button
+                                                    onClick={() => selectAllInGroup(group)}
+                                                    className="text-xs text-brand hover:underline"
+                                                >
+                                                    Chọn tất cả
+                                                </button>
+                                                <span className="text-slate-300">|</span>
+                                                <button
+                                                    onClick={() => deselectAllInGroup(group)}
+                                                    className="text-xs text-slate-500 hover:underline"
+                                                >
+                                                    Bỏ chọn tất cả
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {permissions.map(permission => (
+                                                    <label
+                                                        key={permission}
+                                                        className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                                                            selectedPermissions.includes(permission)
+                                                                ? 'bg-brand/10 border border-brand/20'
+                                                                : 'hover:bg-slate-50'
+                                                        }`}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedPermissions.includes(permission)}
+                                                            onChange={() => togglePermission(permission)}
+                                                            className="w-4 h-4 text-brand rounded border-slate-300 focus:ring-brand"
+                                                        />
+                                                        <span className="text-sm text-slate-700">{permission}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-3 pt-4 mt-4 border-t border-slate-200">
+                            <button
+                                onClick={() => setShowPermissionModal(false)}
+                                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 transition-colors"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={savePermissions}
+                                disabled={savingPermissions}
+                                className="flex-1 px-4 py-2.5 bg-brand-light/30 hover:bg-brand-light/50 text-slate-800 font-bold rounded-xl hover:shadow-md disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                            >
+                                {savingPermissions ? (
+                                    <>
+                                        <Loader2 size={18} className="animate-spin" />
+                                        Đang lưu...
+                                    </>
+                                ) : (
+                                    'Lưu quyền'
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

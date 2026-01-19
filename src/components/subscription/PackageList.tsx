@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Tag, Clock, ShoppingBag, Star, Sparkles, ChevronRight, Percent, Gift } from 'lucide-react';
+import { Tag } from 'lucide-react';
 
 interface Package {
     _id: string;
     name: string;
     price: number;
     description?: string;
-    terms?: string; // HTML content for terms
+    terms?: string;
     voucherQuantity: number;
     discountType: 'percent' | 'fixed';
     discountValue: number;
@@ -27,264 +26,103 @@ function formatPrice(price: number) {
     return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
 }
 
-const packageIcons = ['🥉', '🥈', '🥇', '✨', '💎', '👑'];
-const cardGradients = [
-    'from-stone-100 to-stone-50',
-    'from-stone-100 to-stone-50',
-    'from-stone-100 to-stone-50',
-    'from-stone-100 to-stone-50',
-    'from-stone-100 to-stone-50',
-    'from-stone-100 to-stone-50',
+const cardThemes = [
+    {
+        top: 'from-lime-200 via-lime-200 to-yellow-100',
+        border: 'border-lime-200',
+        badge: 'bg-lime-500 text-white',
+        button: 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300',
+    },
+    {
+        top: 'from-orange-400 via-orange-400 to-amber-300',
+        border: 'border-orange-300',
+        badge: 'bg-orange-500 text-white',
+        button: 'bg-orange-500 text-white hover:bg-orange-600',
+    },
+    {
+        top: 'from-orange-500 via-orange-500 to-orange-400',
+        border: 'border-orange-400',
+        badge: 'bg-orange-600 text-white',
+        button: 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300',
+    },
+    {
+        top: 'from-amber-900 via-amber-800 to-amber-700',
+        border: 'border-amber-800',
+        badge: 'bg-amber-600 text-white',
+        button: 'bg-orange-400 text-white hover:bg-orange-500',
+    },
 ];
 
 export default function PackageList({ packages, onBuyPackage }: Props) {
-    const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-
-    const handleBuy = () => {
-        if (selectedPackage) {
-            onBuyPackage(selectedPackage._id);
-            setSelectedPackage(null);
-        }
-    };
-
     return (
-        <>
-            {/* Compact Package Cards Grid */}
-            <div className="flex flex-wrap justify-center gap-4">
-                {packages.map((pkg, index) => {
-                    const maxSavings = pkg.isUnlimitedVoucher
-                        ? '∞'
-                        : formatPrice(pkg.voucherQuantity * pkg.maxDiscount);
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            {packages.map((pkg, index) => {
+                const theme = cardThemes[index % cardThemes.length];
+                const discountLabel = pkg.discountType === 'percent'
+                    ? `Giảm ${pkg.discountValue}% cho mọi đơn hàng`
+                    : `Giảm ${formatPrice(pkg.discountValue)} cho mọi đơn hàng`;
+                const maxVoucher = pkg.isUnlimitedVoucher ? 'Không giới hạn' : `${pkg.voucherQuantity} voucher`;
+                const minOrder = pkg.minOrderValue > 0
+                    ? `Áp dụng đơn từ ${formatPrice(pkg.minOrderValue)}`
+                    : 'Áp dụng cho mọi đơn hàng';
 
-                    return (
-                        <div
-                            key={pkg._id}
-                            onClick={() => setSelectedPackage(pkg)}
-                            className={`
-                                relative group cursor-pointer
-                                w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-0.7rem)] lg:w-[calc(25%-0.75rem)] xl:w-[calc(20%-0.8rem)]
-                                bg-gradient-to-br ${cardGradients[index % cardGradients.length]}
-                                rounded-2xl p-4 
-                                border-2 border-transparent
-                                hover:border-[#9C7044] hover:shadow-xl hover:scale-[1.02]
-                                transition-all duration-300 ease-out
-                            `}
-                        >
-                            {/* Badge for featured/last package */}
+                return (
+                    <div
+                        key={pkg._id}
+                        className={`bg-white rounded-[28px] border ${theme.border} shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col`}
+                    >
+                        <div className={`relative h-32 bg-gradient-to-br ${theme.top}`}>
                             {index === packages.length - 1 && (
-                                <div className="absolute -top-2 -right-2 bg-[#9C7044] text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
-                                    HOT
-                                </div>
+                                <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold ${theme.badge}`}>
+                                    Premium
+                                </span>
                             )}
-
-                            {/* Icon */}
-                            <div className="text-3xl mb-2">{packageIcons[index] || '✨'}</div>
-
-                            {/* Name */}
-                            <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1 line-clamp-2">
-                                {pkg.name}
-                            </h3>
-
-                            {/* Price */}
-                            <div className="text-lg font-extrabold text-brand mb-2">
+                        </div>
+                        <div className="flex-1 px-6 pt-6 pb-5 text-center">
+                            <h3 className="text-xl font-bold text-slate-900">{pkg.name}</h3>
+                            <p className="text-sm text-slate-500 mt-2 min-h-[40px]">
+                                {pkg.description || 'Gói ưu đãi dành riêng cho thành viên Go Nuts.'}
+                            </p>
+                            <div className="my-5 border-t border-slate-200" />
+                            <div className="text-3xl font-black text-slate-900">
                                 {formatPrice(pkg.price)}
                             </div>
-
-                            {/* Quick Stats */}
-                            <div className="flex items-center gap-1 text-xs text-slate-600 mb-3">
-                                <Tag size={12} className="text-[#9C7044]" />
-                                <span className="font-semibold">
-                                    {pkg.isUnlimitedVoucher ? '∞' : pkg.voucherQuantity}
-                                </span>
-                                <span>mã</span>
-                            </div>
-
-                            {/* Savings Badge */}
-                            <div className="bg-brand-light/10 text-brand-light-dark text-[10px] font-bold px-2 py-1 rounded-full text-center mb-2">
-                                Tiết kiệm: {maxSavings}
-                            </div>
-
-                            {/* View Details Link */}
-                            <div className="flex items-center justify-center gap-1 text-xs text-brand font-semibold group-hover:text-brand/80">
-                                Xem chi tiết
-                                <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                            </div>
+                            <div className="text-xs text-slate-500 mt-1">mỗi tháng</div>
+                            <div className="my-5 border-t border-slate-200" />
+                            <ul className="space-y-3 text-left text-sm text-slate-700">
+                                <li className="flex items-start gap-2">
+                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <span>{discountLabel}</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <span>Tối đa {formatPrice(pkg.maxDiscount)}/đơn</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <span>{maxVoucher} mỗi tháng</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <span>Hiệu lực {pkg.validityDays} ngày</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <Tag className="mt-0.5 text-emerald-500" size={16} />
+                                    <span>{minOrder}</span>
+                                </li>
+                            </ul>
                         </div>
-                    );
-                })}
-            </div>
-
-            {/* Detail Modal */}
-            {selectedPackage && (
-                <div
-                    className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-                    onClick={() => setSelectedPackage(null)}
-                >
-                    {/* Backdrop */}
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-
-                    {/* Modal Content */}
-                    <div
-                        className="relative bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-[scaleIn_0.2s_ease-out]"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Header with gradient */}
-                        <div className="bg-[#9C7044] p-6 text-white relative">
+                        <div className="px-6 pb-6">
                             <button
-                                onClick={() => setSelectedPackage(null)}
-                                className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
+                                onClick={() => onBuyPackage(pkg._id)}
+                                className={`w-full py-3 rounded-xl font-semibold transition-colors ${theme.button}`}
                             >
-                                <X size={20} />
-                            </button>
-
-                            <div className="text-4xl mb-3">
-                                {packageIcons[packages.findIndex(p => p._id === selectedPackage._id)] || '✨'}
-                            </div>
-                            <h2 className="text-2xl font-bold mb-1">{selectedPackage.name}</h2>
-                            <p className="text-white/80 text-sm">{selectedPackage.description || 'Gói ưu đãi đặc biệt'}</p>
-
-                            <div className="mt-4 flex items-baseline gap-2">
-                                <span className="text-4xl font-black">{formatPrice(selectedPackage.price)}</span>
-                            </div>
-                        </div>
-
-                        {/* Features List */}
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                {/* Voucher Count */}
-                                <div className="bg-stone-100 rounded-xl p-3 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-[#9C7044] rounded-lg flex items-center justify-center">
-                                        <Tag className="text-white" size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="text-lg font-bold text-slate-800">
-                                            {selectedPackage.isUnlimitedVoucher ? '∞' : selectedPackage.voucherQuantity}
-                                        </div>
-                                        <div className="text-xs text-slate-500">mã giảm giá</div>
-                                    </div>
-                                </div>
-
-                                {/* Discount */}
-                                <div className="bg-stone-100 rounded-xl p-3 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-[#9C7044] rounded-lg flex items-center justify-center">
-                                        <Percent className="text-white" size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="text-lg font-bold text-slate-800">
-                                            {selectedPackage.discountType === 'percent'
-                                                ? selectedPackage.discountValue + '%'
-                                                : formatPrice(selectedPackage.discountValue)
-                                            }
-                                        </div>
-                                        <div className="text-xs text-slate-500">giảm/mã</div>
-                                    </div>
-                                </div>
-
-                                {/* Max Discount */}
-                                <div className="bg-stone-100 rounded-xl p-3 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-[#9C7044] rounded-lg flex items-center justify-center">
-                                        <Gift className="text-white" size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="text-lg font-bold text-slate-800">
-                                            {formatPrice(selectedPackage.maxDiscount)}
-                                        </div>
-                                        <div className="text-xs text-slate-500">tối đa/đơn</div>
-                                    </div>
-                                </div>
-
-                                {/* Validity */}
-                                <div className="bg-stone-100 rounded-xl p-3 flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-[#9C7044] rounded-lg flex items-center justify-center">
-                                        <Clock className="text-white" size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="text-lg font-bold text-slate-800">
-                                            {selectedPackage.validityDays}
-                                        </div>
-                                        <div className="text-xs text-slate-500">ngày hiệu lực</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Min Order */}
-                            {selectedPackage.minOrderValue > 0 && (
-                                <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-xl px-4 py-3">
-                                    <ShoppingBag size={16} className="text-slate-400" />
-                                    <span>Đơn tối thiểu: <strong>{formatPrice(selectedPackage.minOrderValue)}</strong></span>
-                                </div>
-                            )}
-
-                            {/* Unlimited Badge */}
-                            {selectedPackage.isUnlimitedVoucher && (
-                                <div className="flex items-center gap-2 text-[#9C7044] bg-[#E3E846]/20 rounded-xl px-4 py-3 text-sm font-semibold">
-                                    <Sparkles size={16} />
-                                    Sử dụng không giới hạn trong thời hạn gói
-                                </div>
-                            )}
-
-                            {/* Total Savings */}
-                            <div className="bg-[#E3E846]/20 rounded-xl p-4 text-center">
-                                <div className="text-sm text-[#9C7044] mb-1">💡 Tiết kiệm tối đa lên đến</div>
-                                <div className="text-2xl font-black text-[#9C7044]">
-                                    {selectedPackage.isUnlimitedVoucher
-                                        ? '∞ Không giới hạn'
-                                        : formatPrice(selectedPackage.voucherQuantity * selectedPackage.maxDiscount)
-                                    }
-                                </div>
-                            </div>
-
-                            {/* Terms & Conditions Section */}
-                            <div className="bg-slate-50 rounded-xl p-4 max-h-48 overflow-y-auto">
-                                <h4 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
-                                    📋 Điều khoản sử dụng gói
-                                </h4>
-
-                                {selectedPackage.terms ? (
-                                    // Render HTML terms from database
-                                    <div
-                                        className="text-xs text-slate-600 prose prose-xs prose-slate max-w-none"
-                                        dangerouslySetInnerHTML={{ __html: selectedPackage.terms }}
-                                    />
-                                ) : (
-                                    // Fallback to auto-generated terms
-                                    <div className="text-xs text-slate-600 space-y-2">
-                                        <p className="font-semibold text-slate-700">Quyền lợi chính:</p>
-                                        <ul className="space-y-1.5 ml-1">
-                                            <li>- Giảm {selectedPackage.discountType === 'percent'
-                                                ? selectedPackage.discountValue + '%'
-                                                : formatPrice(selectedPackage.discountValue)
-                                            }: Tối đa {formatPrice(selectedPackage.maxDiscount)}/đơn, áp dụng với {selectedPackage.isUnlimitedVoucher ? '∞' : selectedPackage.voucherQuantity} mã.</li>
-                                            <li>- Thời hạn sử dụng: {selectedPackage.validityDays} ngày kể từ ngày mua.</li>
-                                            {selectedPackage.minOrderValue > 0 && (
-                                                <li>- Áp dụng cho đơn hàng từ {formatPrice(selectedPackage.minOrderValue)} trở lên.</li>
-                                            )}
-                                        </ul>
-
-                                        <p className="font-semibold text-slate-700 pt-2">Lưu ý:</p>
-                                        <ul className="space-y-1.5 ml-1">
-                                            <li>- Ưu đãi chưa sử dụng không được cộng dồn sang tháng tiếp theo.</li>
-                                            <li>- Khuyến mãi không áp dụng đồng thời với các chương trình khác.</li>
-                                            <li>- Khuyến mãi không được hoàn lại và không thể chuyển nhượng.</li>
-                                        </ul>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Buy Button */}
-                            <button
-                                onClick={handleBuy}
-                                className="w-full bg-[#E3E846] hover:bg-[#d4d942] text-black font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
-                            >
-                                <Star size={20} className="text-black" />
-                                Mua ngay - {formatPrice(selectedPackage.price)}
+                                {index === packages.length - 1 ? 'Đăng ký ngay' : 'Bắt đầu'}
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
-
-
-        </>
+                );
+            })}
+        </div>
     );
 }

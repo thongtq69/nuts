@@ -6,59 +6,105 @@ const jwtSecret = new TextEncoder().encode(
     process.env.JWT_SECRET || 'fallback_secret_change_me'
 );
 
+const PUBLIC_ROUTES = ['/', '/login', '/register', '/products', '/products/', '/news', '/contact', '/policy', '/search'];
+const ADMIN_ROUTES = ['/admin', '/admin/'];
+const STAFF_ROUTES = ['/staff', '/agent'];
+
+const ADMIN_SUBROUTE_PERMISSIONS: Record<string, string[]> = {
+    'products': ['products:view'],
+    'orders': ['orders:view'],
+    'users': ['users:view'],
+    'staff': ['staff:view'],
+    'affiliates': ['affiliate:view'],
+    'affiliate-settings': ['affiliate:settings'],
+    'commissions': ['affiliate:commissions'],
+    'vouchers': ['vouchers:view'],
+    'banners': ['banners:view'],
+    'blogs': ['blogs:view'],
+    'reports': ['reports:view'],
+    'settings': ['settings:view']
+};
+
+async function getUserFromToken(token: string) {
+    try {
+        const { payload } = await jwtVerify(token, jwtSecret);
+        const role = (payload.role as string) || 'staff';
+        const roleType = (payload.roleType as string) || 'viewer';
+        const customPermissions = (payload.customPermissions as string[]) || [];
+        return { role, roleType, customPermissions };
+    } catch {
+        return null;
+    }
+}
+
+function hasPermission(user: any, requiredPermission: string): boolean {
+    if (!user) return false;
+    
+    if (user.role === 'admin') return true;
+    
+    const permissions = user.customPermissions || [];
+    const roleType = user.roleType;
+    
+    const rolePermissionMap: Record<string, string[]> = {
+        'manager': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'staff:view', 'collaborators:view', 'affiliate:view', 'vouchers:view', 'banners:view', 'blogs:view', 'reports:view', 'settings:view'],
+        'sales': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'collaborators:view', 'affiliate:view', 'vouchers:view'],
+        'support': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'vouchers:view'],
+        'warehouse': ['dashboard:view', 'products:view', 'orders:view'],
+        'accountant': ['dashboard:view', 'orders:view', 'affiliate:view', 'reports:view', 'settings:payments'],
+        'viewer': ['dashboard:view', 'products:view']
+    };
+    
+    const basePermissions = rolePermissionMap[roleType] || [];
+    
+    return [...basePermissions, ...permissions].includes(requiredPermission) || 
+           [...basePermissions, ...permissions].some(p => p.startsWith(requiredPermission.split(':')[0] + ':'));
+}
+
 export async function middleware(request: NextRequest) {
     const response = NextResponse.next();
     const path = request.nextUrl.pathname;
-    const fullPath = request.nextUrl.href;
-    
-    // Log for debugging
     const token = request.cookies.get('token')?.value;
-    
-    console.log('=== MIDDLEWARE DEBUG ===');
-    console.log('Full URL:', fullPath);
-    console.log('Path:', path);
-    console.log('Has token:', !!token);
-    
-    // Admin routes protection - require admin role
-    if (path.startsWith('/admin') || path === '/admin') {
-        console.log('Admin route detected');
-        
-        if (!token) {
-            console.log('No token - redirecting to /login');
-            return NextResponse.redirect(new URL('/login', request.url));
-        }
-        
-        try {
-            const { payload } = await jwtVerify(token, jwtSecret);
-            const role = payload.role as string;
-            console.log('Token valid, role:', role);
-            
-            if (role !== 'admin') {
-                console.log('Not admin role - redirecting to /');
-                return NextResponse.redirect(new URL('/', request.url));
-            }
-            console.log('Admin access granted');
-        } catch (e: any) {
-            console.log('Token verification failed:', e.message);
-            return NextResponse.redirect(new URL('/login', request.url));
-        }
-    }
 
-    // Check for referral code in URL
     const { searchParams } = new URL(request.url);
     const refCode = searchParams.get('ref');
 
     if (refCode) {
-        // Set referral cookie (valid for 30 days)
         response.cookies.set('gonuts_ref', refCode, {
-            maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+            maxAge: 30 * 24 * 60 * 60,
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
         });
     }
 
-    // Agent/Staff routes protection - require sale, staff, or admin role
+    if (PUBLIC_ROUTES.some(route => path === route || path.startsWith(route + '/'))) {
+        return response;
+    }
+
+    if (path.startsWith('/admin') || path === '/admin') {
+        if (!token) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
+
+        try {
+            const user = await getUserFromToken(token);
+            if (!user) {
+                return NextResponse.redirect(new URL('/login', request.url));
+            }
+
+            if (user.role !== 'admin') {
+                const subroute = path.split('/')[2];
+                const requiredPermission = ADMIN_SUBROUTE_PERMISSIONS[subroute]?.[0];
+                
+                if (requiredPermission && !hasPermission(user, requiredPermission)) {
+                    return NextResponse.redirect(new URL('/admin', request.url));
+                }
+            }
+        } catch (e) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
+    }
+
     if (path.startsWith('/agent') || path.startsWith('/staff')) {
         if (!token) {
             return NextResponse.redirect(new URL('/login', request.url));

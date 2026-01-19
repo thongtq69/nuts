@@ -27,17 +27,18 @@ export async function PATCH(
 
         // Handle Affiliate Commission - Support 2-level system
         // Trigger only if status changes to 'delivered' | 'completed'
-        // AND there are pending commissions for this order
         if (status === 'delivered' || status === 'completed') {
-            // Find all commission records for this order
+            // Find ALL commission records for this order (regardless of status)
             const commissions = await AffiliateCommission.find({
-                orderId: order._id,
-                status: 'pending'
+                orderId: order._id
             });
 
-            if (commissions.length > 0) {
+            // Filter for pending commissions that need to be approved
+            const pendingCommissions = commissions.filter(c => c.status === 'pending');
+
+            if (pendingCommissions.length > 0) {
                 // Approve all pending commissions and credit wallets
-                for (const comm of commissions) {
+                for (const comm of pendingCommissions) {
                     const affiliate = await User.findById(comm.affiliateId);
                     if (affiliate) {
                         affiliate.walletBalance = (affiliate.walletBalance || 0) + comm.commissionAmount;
@@ -49,8 +50,10 @@ export async function PATCH(
                         await comm.save();
                     }
                 }
+            }
 
-                // Update order commission status
+            // Update order commission status to approved if there are any commissions
+            if (commissions.length > 0) {
                 order.commissionStatus = 'approved';
             }
         }

@@ -32,7 +32,7 @@ export async function GET() {
         const staffList = await User.find({
             role: 'staff',
             affiliateLevel: 'staff'
-        }).select('name email phone staffCode collaboratorCount walletBalance totalCommission createdAt').sort({ createdAt: -1 });
+        }).select('name email phone staffCode roleType customPermissions collaboratorCount walletBalance totalCommission createdAt').sort({ createdAt: -1 });
 
         // Get stats for each staff
         const staffWithStats = await Promise.all(
@@ -57,6 +57,8 @@ export async function GET() {
                     email: staff.email,
                     phone: staff.phone || '',
                     staffCode: staff.staffCode || '',
+                    roleType: staff.roleType || 'sales',
+                    customPermissions: staff.customPermissions || [],
                     collaboratorCount: staff.collaboratorCount || collaborators.length,
                     totalCommission: staff.totalCommission || 0,
                     teamRevenue,
@@ -84,7 +86,7 @@ export async function POST(req: Request) {
         }
 
         await dbConnect();
-        const { name, email, phone, password, staffCode } = await req.json();
+        const { name, email, phone, password, staffCode, roleType = 'sales' } = await req.json();
 
         if (!name || !email || !password || !staffCode) {
             return NextResponse.json({ message: 'Thiếu thông tin bắt buộc' }, { status: 400 });
@@ -114,10 +116,11 @@ export async function POST(req: Request) {
             role: 'staff',
             affiliateLevel: 'staff',
             staffCode: staffCode.toUpperCase(),
-            referralCode: staffCode.toUpperCase(), // Staff also has referral code same as staff code
+            referralCode: staffCode.toUpperCase(),
             walletBalance: 0,
             totalCommission: 0,
-            collaboratorCount: 0
+            collaboratorCount: 0,
+            roleType: roleType
         });
 
         return NextResponse.json({

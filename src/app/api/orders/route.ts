@@ -156,6 +156,7 @@ export async function POST(req: Request) {
         let staffId: any = undefined;
         let commissionAmount = 0;
         let commissionStatus: any = undefined;
+        let totalCommissionAmount = 0; // For storing total commission (CTV + Staff)
 
         if (refCode) {
             const referrerUser = await User.findOne({ referralCode: refCode });
@@ -191,9 +192,11 @@ export async function POST(req: Request) {
                 if (referrerUser?.affiliateLevel === 'collaborator') {
                     const collabCommission = Math.round(revenueBase * (referrerRate / 100));
                     const staffCommission = Math.round(revenueBase * (staffRate / 100));
-                    commissionAmount = collabCommission + staffCommission;
+                    commissionAmount = collabCommission; // Only store CTV's commission
+                    totalCommissionAmount = collabCommission + staffCommission; // Store total for reference
                 } else {
                     commissionAmount = Math.round(revenueBase * (referrerRate / 100));
+                    totalCommissionAmount = commissionAmount;
                 }
                 commissionStatus = 'pending';
             }
