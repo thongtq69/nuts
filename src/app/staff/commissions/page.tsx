@@ -205,8 +205,8 @@ export default function CommissionsPage() {
                             onClick={() => setFilterStatus(option.value)}
                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                                 filterStatus === option.value
-                                    ? 'bg-gradient-to-r from-brand to-brand-light text-gray-800 shadow-lg shadow-brand/25'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-brand text-white shadow-lg shadow-brand/30 border-2 border-brand'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-transparent'
                             }`}
                         >
                             {option.label}
@@ -244,11 +244,11 @@ export default function CommissionsPage() {
                                     <td colSpan={6} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center">
-                                                <Wallet className="w-10 h-10 text-amber-300" />
+                                                <Wallet className="w-10 h-10 text-amber-400" />
                                             </div>
                                             <div>
-                                                <p className="text-gray-500 font-medium text-lg">Chưa có giao dịch nào</p>
-                                                <p className="text-gray-400 text-sm mt-1">Hoa hồng sẽ hiển thị khi có đơn hàng từ CTV</p>
+                                                <p className="text-gray-600 font-medium text-lg">Chưa có giao dịch nào</p>
+                                                <p className="text-gray-500 text-sm mt-1">Hoa hồng sẽ hiển thị khi có đơn hàng từ CTV</p>
                                             </div>
                                         </div>
                                     </td>

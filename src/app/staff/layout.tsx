@@ -102,13 +102,13 @@ export default function StaffLayout({
             )}
 
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:block fixed inset-y-0 left-0 w-72 bg-white border-r border-amber-100/50 z-40 shadow-xl">
+            <aside className="hidden lg:block fixed inset-y-0 left-0 w-72 bg-white border-r border-amber-100/50 z-30 shadow-xl">
                 <SidebarContent pathname={pathname} user={user} />
             </aside>
 
             {/* Main Content */}
-            <main className="lg:ml-72 min-h-screen">
-                <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+            <main className="lg:pl-72 min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20">
+                <div className="p-4 sm:p-6 lg:p-8 max-w-full lg:max-w-7xl mx-auto">
                     {children}
                 </div>
             </main>
@@ -200,16 +200,16 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                                 href={item.href}
                                 onClick={onClose}
                                 className={`
-                                    flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200
+                                    flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 border-2
                                     ${isActive
-                                        ? 'bg-gradient-to-r from-brand to-brand-light text-gray-800 shadow-lg shadow-brand/25 transform scale-[1.02]'
-                                        : 'text-slate-600 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 hover:text-brand'
+                                        ? 'bg-brand text-white shadow-lg shadow-brand/30 border-brand transform scale-[1.02]'
+                                        : 'text-slate-600 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 hover:text-brand border-transparent'
                                     }
                                 `}
                             >
-                                <item.icon size={20} className={isActive ? 'text-gray-800' : ''} />
+                                <item.icon size={20} className={isActive ? 'text-white' : ''} />
                                 <span className="flex-1">{item.label}</span>
-                                {isActive && <ChevronRight size={16} className="text-gray-600" />}
+                                {isActive && <ChevronRight size={16} className="text-white/80" />}
                             </Link>
                         );
                     })}

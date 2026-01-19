@@ -253,11 +253,11 @@ export default function StaffBannersPage() {
                 <div className="bg-white rounded-3xl p-12 text-center shadow-lg">
                     <div className="flex flex-col items-center gap-4">
                         <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center">
-                            <ImageIcon className="w-10 h-10 text-orange-300" />
+                            <ImageIcon className="w-10 h-10 text-orange-400" />
                         </div>
                         <div>
-                            <p className="text-gray-500 font-medium text-lg">Chưa có banner nào</p>
-                            <p className="text-gray-400 text-sm mt-1">Hãy tạo banner đầu tiên!</p>
+                            <p className="text-gray-600 font-medium text-lg">Chưa có banner nào</p>
+                            <p className="text-gray-500 text-sm mt-1">Hãy tạo banner đầu tiên!</p>
                         </div>
                         <button
                             onClick={() => openModal()}

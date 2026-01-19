@@ -168,15 +168,15 @@ export default function StaffOrdersPage() {
                         <button
                             key={item.key}
                             onClick={() => setFilterStatus(item.key)}
-                            className={`p-4 rounded-2xl text-center transition-all ${
+                            className={`p-4 rounded-2xl text-center transition-all border-2 ${
                                 filterStatus === item.key
-                                    ? 'bg-gradient-to-br from-brand to-brand-light text-gray-800 shadow-lg shadow-brand/25'
-                                    : 'bg-white hover:bg-amber-50 border border-gray-100'
+                                    ? 'bg-brand text-white shadow-lg shadow-brand/30 border-brand'
+                                    : 'bg-white hover:bg-amber-50 border-gray-200 hover:border-brand/50'
                             }`}
                         >
-                            <div className={`text-2xl font-black ${filterStatus === item.key ? 'text-gray-800' : 'text-gray-800'}`}>
+                            <div className={`text-2xl font-black ${filterStatus === item.key ? 'text-white' : 'text-gray-800'}`}>
                             </div>
-                            <div className={`text-xs mt-1 ${filterStatus === item.key ? 'text-gray-700' : 'text-gray-500'}`}>
+                            <div className={`text-xs mt-1 ${filterStatus === item.key ? 'text-white/90' : 'text-gray-500'}`}>
                                 {item.label}
                             </div>
                         </button>
@@ -209,11 +209,11 @@ export default function StaffOrdersPage() {
                     <div className="bg-white rounded-3xl p-12 text-center shadow-lg">
                         <div className="flex flex-col items-center gap-4">
                             <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center">
-                                <ShoppingCart className="w-10 h-10 text-orange-300" />
+                                <ShoppingCart className="w-10 h-10 text-orange-400" />
                             </div>
                             <div>
-                                <p className="text-gray-500 font-medium text-lg">Không tìm thấy đơn hàng nào</p>
-                                <p className="text-gray-400 text-sm mt-1">
+                                <p className="text-gray-600 font-medium text-lg">Không tìm thấy đơn hàng nào</p>
+                                <p className="text-gray-500 text-sm mt-1">
                                     {searchTerm ? 'Thử từ khóa khác' : 'Chưa có đơn hàng nào'}
                                 </p>
                             </div>

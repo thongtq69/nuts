@@ -17,7 +17,7 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
                     src={activeImage} 
                     alt="Product Detail"
                     onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/assets/images/placeholder.jpg';
+                        (e.target as HTMLImageElement).src = '/assets/images/product1.jpg';
                     }}
                 />
             </div>
@@ -33,7 +33,7 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
                                 src={img} 
                                 alt={`Thumbnail ${index}`}
                                 onError={(e) => {
-                                    (e.target as HTMLImageElement).src = '/assets/images/placeholder.jpg';
+                                    (e.target as HTMLImageElement).src = '/assets/images/product1.jpg';
                                 }}
                             />
                         </div>

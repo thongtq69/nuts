@@ -21,7 +21,12 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
         ? product.images 
         : product.image 
             ? [product.image] 
-            : ['/assets/images/placeholder.jpg'];
+            : ['/assets/images/product1.jpg'];
+
+    // Fallback for single image display
+    const mainImage = (product.images && product.images.length > 0) 
+        ? product.images[0] 
+        : product.image || '/assets/images/product1.jpg';
 
     return (
         <main>
@@ -43,7 +48,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                     <div className="info-section">
                         <ProductInfo
                             id={String(product.id || (product as any)._id)}
-                            image={(product.images && product.images.length > 0) ? product.images[0] : product.image || '/assets/images/placeholder.jpg'}
+                            image={mainImage}
                             name={product.name}
                             price={product.currentPrice}
                             originalPrice={product.originalPrice}

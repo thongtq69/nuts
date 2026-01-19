@@ -159,7 +159,7 @@ export default function CollaboratorsPage() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand to-brand-light text-gray-800 font-bold rounded-2xl hover:shadow-xl hover:shadow-brand/25 transition-all"
+                    className="flex items-center gap-2 px-6 py-3 bg-brand text-white font-bold rounded-2xl hover:bg-brand-dark shadow-xl shadow-brand/30 transition-all border-2 border-brand"
                 >
                     <UserPlus size={20} />
                     Tạo mã CTV mới
@@ -251,24 +251,24 @@ export default function CollaboratorsPage() {
                                     </td>
                                 </tr>
                             ) : filteredCollaborators.length === 0 ? (
-                                <tr>
+                                 <tr>
                                     <td colSpan={6} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center">
-                                                <Users className="w-10 h-10 text-amber-300" />
+                                                <Users className="w-10 h-10 text-amber-400" />
                                             </div>
                                             <div>
-                                                <p className="text-gray-500 font-medium text-lg">
+                                                <p className="text-gray-600 font-medium text-lg">
                                                     {searchTerm ? 'Không tìm thấy CTV' : 'Chưa có cộng tác viên nào'}
                                                 </p>
-                                                <p className="text-gray-400 text-sm mt-1">
+                                                <p className="text-gray-500 text-sm mt-1">
                                                     {searchTerm ? 'Thử từ khóa khác' : 'Hãy tạo CTV đầu tiên để bắt đầu!'}
                                                 </p>
                                             </div>
                                             {!searchTerm && (
                                                 <button
                                                     onClick={() => setShowModal(true)}
-                                                    className="px-6 py-3 bg-gradient-to-r from-brand to-brand-light text-gray-800 font-bold rounded-xl hover:shadow-lg hover:shadow-brand/25 transition-all flex items-center gap-2"
+                                                    className="px-6 py-3 bg-brand text-white font-bold rounded-xl hover:bg-brand-dark shadow-lg hover:shadow-brand/30 transition-all flex items-center gap-2 border-2 border-brand"
                                                 >
                                                     <Plus size={18} />
                                                     Tạo CTV đầu tiên
@@ -431,7 +431,7 @@ export default function CollaboratorsPage() {
                                 <button
                                     type="submit"
                                     disabled={creating}
-                                    className="flex-1 px-4 py-3.5 bg-gradient-to-r from-brand to-brand-light text-gray-800 font-bold rounded-xl hover:shadow-xl hover:shadow-brand/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-3.5 bg-brand text-white font-bold rounded-xl hover:bg-brand-dark shadow-xl hover:shadow-brand/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2 border-2 border-brand"
                                 >
                                     {creating ? (
                                         <>

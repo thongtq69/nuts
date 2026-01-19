@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ProductListActions from '@/components/admin/ProductListActions';
-import { PlusCircle, Package, Grid3X3, List, Loader2 } from 'lucide-react';
+import ProductImageManager from '@/components/admin/ProductImageManager';
+import { PlusCircle, Package, Grid3X3, List, Loader2, Image } from 'lucide-react';
 import { Pagination } from '@/components/admin/ui/Pagination';
 import { SearchInput } from '@/components/admin/ui/SearchInput';
 import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
@@ -17,6 +18,7 @@ interface Product {
     originalPrice?: number;
     category?: string;
     image: string;
+    images?: string[];
     inStock: boolean;
     createdAt?: string;
 }
@@ -35,6 +37,17 @@ export default function AdminProductsPage() {
         productName: ''
     });
     const [deleting, setDeleting] = useState(false);
+    const [imageManager, setImageManager] = useState<{
+        isOpen: boolean;
+        productId: string | null;
+        productName: string;
+        images: string[];
+    }>({
+        isOpen: false,
+        productId: null,
+        productName: '',
+        images: []
+    });
 
     const fetchProducts = useCallback(async () => {
         try {
@@ -51,6 +64,7 @@ export default function AdminProductsPage() {
                 originalPrice: p.originalPrice,
                 category: p.category,
                 image: p.image,
+                images: p.images || [],
                 inStock: true,
                 createdAt: p.createdAt
             }));
@@ -92,6 +106,45 @@ export default function AdminProductsPage() {
 
     const openDeleteModal = (productId: string, productName: string) => {
         setDeleteModal({ isOpen: true, productId, productName });
+    };
+
+    const openImageManager = async (productId: string, productName: string) => {
+        try {
+            const res = await fetch(`/api/admin/products/${productId}/images`);
+            if (res.ok) {
+                const data = await res.json();
+                setImageManager({
+                    isOpen: true,
+                    productId,
+                    productName,
+                    images: data.images || []
+                });
+            } else {
+                // If API doesn't exist yet, use local data
+                const product = products.find(p => p.id === productId);
+                setImageManager({
+                    isOpen: true,
+                    productId,
+                    productName,
+                    images: product?.images || []
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching product images:', error);
+            const product = products.find(p => p.id === productId);
+            setImageManager({
+                isOpen: true,
+                productId,
+                productName,
+                images: product?.images || []
+            });
+        }
+    };
+
+    const handleUpdateImages = (productId: string, newImages: string[]) => {
+        setProducts(prev => prev.map(p => 
+            p.id === productId ? { ...p, images: newImages } : p
+        ));
     };
 
     const filteredProducts = products.filter(p =>
@@ -222,13 +275,13 @@ export default function AdminProductsPage() {
                                 <th className="text-right">Giá gốc</th>
                                 <th className="text-right">Giá bán</th>
                                 <th className="text-center">Trạng thái</th>
-                                <th className="text-right">Hành động</th>
+                                <th className="text-right w-32">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginatedProducts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-16 text-center">
+                                    <td colSpan={9} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                                 <Package className="w-8 h-8 text-slate-400" />
@@ -295,8 +348,29 @@ export default function AdminProductsPage() {
                                                     Hết hàng
                                                 </span>
                                             )}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openImageManager(product.id, product.name);
+                                                }}
+                                                className="mt-2 flex items-center justify-center gap-1 w-full text-xs text-slate-500 hover:text-brand transition-colors"
+                                                title="Quản lý ảnh sản phẩm"
+                                            >
+                                                <Image size={12} />
+                                                <span>{(product.images || []).length} ảnh</span>
+                                            </button>
                                         </td>
-                                        <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                                        <td className="text-right flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openImageManager(product.id, product.name);
+                                                }}
+                                                className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-all"
+                                                title="Quản lý ảnh"
+                                            >
+                                                <Image size={18} />
+                                            </button>
                                             <ProductListActions productId={product.id} />
                                         </td>
                                     </tr>
@@ -315,6 +389,17 @@ export default function AdminProductsPage() {
                     onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
                     isLoading={loading}
                 />
+
+                {/* Image Manager Modal */}
+                {imageManager.isOpen && (
+                    <ProductImageManager
+                        productId={imageManager.productId!}
+                        productName={imageManager.productName}
+                        initialImages={imageManager.images}
+                        onClose={() => setImageManager({ ...imageManager, isOpen: false })}
+                        onUpdate={(newImages) => handleUpdateImages(imageManager.productId!, newImages)}
+                    />
+                )}
             </div>
         </div>
     );

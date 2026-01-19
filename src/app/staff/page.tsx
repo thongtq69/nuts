@@ -19,7 +19,8 @@ import {
     DollarSign,
     Gift,
     Settings,
-    Briefcase
+    Briefcase,
+    Search
 } from 'lucide-react';
 import {
     AreaChart,
@@ -156,7 +157,7 @@ export default function StaffDashboard() {
     return (
         <div className="space-y-8">
             {/* Welcome Banner */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-brand via-brand-light to-amber-400 rounded-3xl p-8 text-gray-800 shadow-2xl shadow-brand/20">
+            <div className="relative overflow-hidden bg-gradient-to-r from-brand via-brand-light to-amber-400 rounded-3xl p-6 sm:p-8 text-gray-800 shadow-2xl shadow-brand/20">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
                 <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-amber-300/20 rounded-full blur-3xl" />
@@ -172,13 +173,13 @@ export default function StaffDashboard() {
                 
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="w-5 h-5 text-amber-200" />
-                        <span className="font-medium text-sm text-gray-800">Xin chào, {user?.name}! 👋</span>
+                        <Sparkles className="w-5 h-5 text-amber-900" />
+                        <span className="font-semibold text-sm text-gray-900">Xin chào, {user?.name}! 👋</span>
                     </div>
-                    <h1 className="text-3xl lg:text-4xl font-black mb-3 text-gray-800">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 text-gray-900">
                         Chào mừng bạn trở lại!
                     </h1>
-                    <p className="text-gray-700 text-lg max-w-2xl mb-6">
+                    <p className="text-gray-900 text-base sm:text-lg max-w-2xl mb-6 leading-relaxed opacity-90">
                         Đây là tổng quan hoạt động của bạn và đội ngũ cộng tác viên.
                     </p>
 
@@ -204,7 +205,7 @@ export default function StaffDashboard() {
                                         className="p-1.5 hover:bg-white rounded-lg transition-colors"
                                         title="Sao chép mã"
                                     >
-                                        <Copy size={14} className="text-gray-400" />
+                                        <Copy size={14} className="text-brand" />
                                     </button>
                                 </div>
                             </div>
@@ -222,10 +223,10 @@ export default function StaffDashboard() {
                             />
                             <button
                                 onClick={copyReferralLink}
-                                className={`px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-md whitespace-nowrap ${
+                                className={`px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg border-2 ${
                                     copied
-                                        ? 'bg-emerald-500 text-white'
-                                        : 'bg-brand text-white hover:bg-brand/90'
+                                        ? 'bg-emerald-500 text-gray-900 border-black hover:bg-emerald-600 shadow-emerald-500/25'
+                                        : 'bg-brand text-gray-900 border-black hover:bg-brand-dark shadow-brand/30'
                                 }`}
                             >
                                 {copied ? '✓ Đã sao link!' : 'Sao chép link'}
@@ -240,7 +241,33 @@ export default function StaffDashboard() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+            <div className="mb-6">
+                {/* Search/Filter Bar */}
+                <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <div className="relative flex-1 min-w-[200px] max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm cộng tác viên, đơn hàng..."
+                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <select className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Tạm dừng</option>
+                        </select>
+                        <select className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer">
+                            <option value="newest">Mới nhất</option>
+                            <option value="oldest">Cũ nhất</option>
+                            <option value="highest">Doanh thu cao nhất</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
                 {statCards.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
@@ -279,13 +306,14 @@ export default function StaffDashboard() {
                         </div>
                     );
                 })}
+                </div>
             </div>
 
             {/* Charts & Quick Actions Row */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* Commission Chart */}
                 <div className="xl:col-span-2 bg-white rounded-3xl p-6 shadow-lg shadow-gray-100/50 border border-gray-100">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                         <div>
                             <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-brand" />
@@ -293,41 +321,53 @@ export default function StaffDashboard() {
                             </h3>
                             <p className="text-gray-500 text-sm mt-1">Tổng quan thu nhập từ đội nhóm</p>
                         </div>
-                        <button
-                            onClick={fetchStats}
-                            className="p-2.5 hover:bg-amber-50 rounded-xl transition-colors"
-                            title="Làm mới"
-                        >
-                            <RefreshCw size={18} className="text-gray-400" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <select className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer">
+                                <option value="7">7 ngày gần nhất</option>
+                                <option value="14">14 ngày gần nhất</option>
+                                <option value="30">30 ngày gần nhất</option>
+                            </select>
+                            <button
+                                onClick={fetchStats}
+                                className="p-2.5 hover:bg-amber-50 rounded-xl transition-colors"
+                                title="Làm mới"
+                            >
+                                <RefreshCw size={18} className="text-gray-400" />
+                            </button>
+                        </div>
                     </div>
-                    <div className="h-72">
+                    <div className="h-[300px] w-full min-h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={displayStats.commissionData}>
+                            <AreaChart data={displayStats.commissionData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                                 <defs>
                                     <linearGradient id="colorCommissionStaff" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#9C7043" stopOpacity={0.3} />
                                         <stop offset="95%" stopColor="#9C7043" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={true} horizontal={true} />
                                 <XAxis 
                                     dataKey="date" 
                                     tick={{ fontSize: 12, fill: '#9ca3af' }} 
-                                    axisLine={false}
+                                    axisLine={{ stroke: '#e5e7eb' }}
                                     tickLine={false}
+                                    dy={10}
+                                    minTickGap={30}
                                 />
                                 <YAxis
                                     tick={{ fontSize: 12, fill: '#9ca3af' }}
-                                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                                    tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
                                     axisLine={false}
                                     tickLine={false}
+                                    dx={-10}
+                                    width={50}
                                 />
                                 <Tooltip
                                     formatter={(value: number | undefined) => [`${(value || 0).toLocaleString('vi-VN')}đ`, 'Hoa hồng']}
+                                    labelStyle={{ color: '#374151', fontWeight: 600 }}
                                     contentStyle={{
                                         backgroundColor: 'white',
-                                        border: 'none',
+                                        border: '1px solid #e5e7eb',
                                         borderRadius: '12px',
                                         boxShadow: '0 10px 40px -10px rgba(0,0,0,0.15)'
                                     }}
@@ -339,6 +379,8 @@ export default function StaffDashboard() {
                                     strokeWidth={3}
                                     fillOpacity={1}
                                     fill="url(#colorCommissionStaff)"
+                                    animationDuration={1000}
+                                    activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -354,21 +396,21 @@ export default function StaffDashboard() {
                     <div className="space-y-3">
                         <Link
                             href="/staff/collaborators?action=create"
-                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-brand to-brand-light rounded-2xl hover:shadow-xl hover:shadow-brand/25 transition-all group"
+                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-brand to-brand-light rounded-2xl hover:shadow-xl hover:shadow-brand/30 transition-all group border-2 border-transparent hover:border-brand/30"
                         >
-                            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <UserPlus className="w-6 h-6 text-gray-800" />
+                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+                                <UserPlus className="w-6 h-6 text-brand" />
                             </div>
                             <div className="flex-1">
-                                <div className="font-bold text-gray-800">Tạo mã CTV mới</div>
-                                <div className="text-gray-700 text-sm">Thêm cộng tác viên</div>
+                                <div className="font-bold text-gray-900">Tạo mã CTV mới</div>
+                                <div className="text-gray-600 text-sm">Thêm cộng tác viên</div>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-gray-700 group-hover:translate-x-1 transition-transform" />
+                            <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-brand group-hover:translate-x-1 transition-all" />
                         </Link>
 
                         <Link
                             href="/staff/commissions"
-                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl hover:shadow-xl hover:shadow-emerald-500/25 transition-all group"
+                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl hover:shadow-xl hover:shadow-emerald-500/25 transition-all group border-2 border-emerald-400"
                         >
                             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <Wallet className="w-6 h-6 text-white" />
@@ -382,21 +424,21 @@ export default function StaffDashboard() {
 
                         <Link
                             href="/staff/collaborators"
-                            className="flex items-center gap-4 p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-brand hover:bg-amber-50/50 transition-all group"
+                            className="flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-gray-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all group"
                         >
-                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Users className="w-6 h-6 text-brand" />
+                            <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Users className="w-6 h-6 text-violet-600" />
                             </div>
                             <div className="flex-1">
-                                <div className="font-bold text-gray-800">Quản lý CTV</div>
+                                <div className="font-bold text-gray-900">Quản lý CTV</div>
                                 <div className="text-gray-500 text-sm">{displayStats.totalCollaborators} cộng tác viên</div>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-brand group-hover:translate-x-1 transition-all" />
+                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-violet-600 group-hover:translate-x-1 transition-all" />
                         </Link>
 
                         <Link
                             href="/admin/staff"
-                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-violet-600 to-purple-500 rounded-2xl hover:shadow-xl hover:shadow-violet-500/25 transition-all group"
+                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-violet-600 to-purple-500 rounded-2xl hover:shadow-xl hover:shadow-violet-500/25 transition-all group border-2 border-violet-400"
                         >
                             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <Briefcase className="w-6 h-6 text-white" />
@@ -412,14 +454,19 @@ export default function StaffDashboard() {
             </div>
 
             {/* Team Revenue Summary */}
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-8 text-white shadow-2xl">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                        <h3 className="text-2xl font-bold mb-2">Tổng doanh thu đội nhóm</h3>
-                        <p className="text-gray-400">Tổng doanh thu từ tất cả cộng tác viên</p>
+            <div className="bg-white rounded-3xl p-6 shadow-lg shadow-gray-100/50 border border-gray-100">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
+                            <DollarSign className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-800">Tổng doanh thu đội nhóm</h3>
+                            <p className="text-gray-500 text-sm mt-1">Tổng doanh thu từ tất cả cộng tác viên</p>
+                        </div>
                     </div>
-                    <div className="text-5xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
-                        {formatPrice(displayStats.teamRevenue)}đ
+                    <div className="text-3xl sm:text-4xl font-black text-gray-800">
+                        {formatPrice(displayStats.teamRevenue)}<span className="text-lg font-bold text-gray-500">đ</span>
                     </div>
                 </div>
             </div>
@@ -458,15 +505,15 @@ export default function StaffDashboard() {
                                     <td colSpan={5} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center">
-                                                <Users className="w-10 h-10 text-amber-300" />
+                                                <Users className="w-10 h-10 text-amber-400" />
                                             </div>
                                             <div>
-                                                <p className="text-gray-500 font-medium text-lg">Chưa có cộng tác viên nào</p>
-                                                <p className="text-gray-400 text-sm mt-1">Hãy tạo CTV đầu tiên để bắt đầu!</p>
+                                                <p className="text-gray-600 font-medium text-lg">Chưa có cộng tác viên nào</p>
+                                                <p className="text-gray-500 text-sm mt-1">Hãy tạo CTV đầu tiên để bắt đầu!</p>
                                             </div>
-                                            <Link
+                                             <Link
                                                 href="/staff/collaborators?action=create"
-                                                className="px-6 py-3 bg-gradient-to-r from-brand to-brand-light text-gray-800 font-bold rounded-xl hover:shadow-lg hover:shadow-brand/25 transition-all flex items-center gap-2"
+                                                className="px-6 py-3 bg-brand text-white font-bold rounded-xl hover:bg-brand-dark shadow-lg hover:shadow-brand/30 transition-all flex items-center gap-2 border-2 border-brand"
                                             >
                                                 <Plus size={18} />
                                                 Tạo CTV đầu tiên
