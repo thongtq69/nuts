@@ -362,7 +362,8 @@ export default function AccountPage() {
                                 <span className="username">{user.name}</span>
                                 {user.role !== 'user' && (
                                     <span className="user-role-badge">
-                                        {user.role === 'admin' ? '👑 Admin' : '🏪 Đại lý'}
+                                        {user.role === 'admin' ? '👑 Admin' : 
+                                         user.role === 'staff' ? '👨‍💼 Nhân viên' : '🏪 Đại lý'}
                                     </span>
                                 )}
                             </div>
@@ -392,6 +393,11 @@ export default function AccountPage() {
                             {user.role === 'sale' && (
                                 <li onClick={() => router.push('/agent')}>
                                     📊 Bảng điều khiển Đại lý
+                                </li>
+                            )}
+                            {user.role === 'staff' && (
+                                <li onClick={() => router.push('/staff')}>
+                                    👨‍💼 Trang quản lý Nhân viên
                                 </li>
                             )}
                             {user.role === 'admin' && (
