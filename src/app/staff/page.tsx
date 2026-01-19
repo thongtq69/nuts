@@ -17,7 +17,9 @@ import {
     RefreshCw,
     UserPlus,
     DollarSign,
-    Gift
+    Gift,
+    Settings,
+    Briefcase
 } from 'lucide-react';
 import {
     AreaChart,
@@ -355,20 +357,6 @@ export default function StaffDashboard() {
                         </Link>
 
                         <Link
-                            href="/staff/commissions"
-                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl hover:shadow-xl hover:shadow-emerald-500/25 transition-all group"
-                        >
-                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Wallet className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex-1">
-                                <div className="font-bold text-white">Xem hoa hồng</div>
-                                <div className="text-white/80 text-sm">Chi tiết thu nhập</div>
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-white/60 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-
-                        <Link
                             href="/staff/collaborators"
                             className="flex items-center gap-4 p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-brand hover:bg-amber-50/50 transition-all group"
                         >
@@ -380,6 +368,20 @@ export default function StaffDashboard() {
                                 <div className="text-gray-500 text-sm">{displayStats.totalCollaborators} cộng tác viên</div>
                             </div>
                             <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-brand group-hover:translate-x-1 transition-all" />
+                        </Link>
+
+                        <Link
+                            href="/admin/staff"
+                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-violet-600 to-purple-500 rounded-2xl hover:shadow-xl hover:shadow-violet-500/25 transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Briefcase className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="font-bold text-white">Quản lý Nhân viên</div>
+                                <div className="text-white/80 text-sm">Trang quản lý Admin</div>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-white/60 group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>
                 </div>

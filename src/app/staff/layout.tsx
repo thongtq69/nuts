@@ -20,7 +20,8 @@ import {
     UserPlus,
     Settings,
     FileText,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Shield
 } from 'lucide-react';
 
 const menuItems = [
@@ -218,15 +219,21 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                 {/* Quick Links */}
                 <div className="mt-8 px-4">
                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Liên kết nhanh</div>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                         <Link href="/products" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-brand hover:bg-amber-50 rounded-xl transition-colors">
                             <Package size={16} />
                             <span>Xem sản phẩm</span>
                         </Link>
-                        <Link href="/admin" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-brand hover:bg-amber-50 rounded-xl transition-colors">
-                            <Settings size={16} />
-                            <span>Quản trị (Admin)</span>
-                        </Link>
+                        <a 
+                            href="/admin" 
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2.5 text-sm bg-gradient-to-r from-brand/10 to-brand-light/10 border border-brand/20 rounded-xl text-brand-dark hover:from-brand/20 hover:to-brand-light/20 hover:border-brand/30 transition-all"
+                        >
+                            <Shield size={18} />
+                            <span className="font-semibold">Trang Quản trị Admin</span>
+                            <ExternalLink size={12} className="ml-auto opacity-60" />
+                        </a>
                     </div>
                 </div>
             </nav>
