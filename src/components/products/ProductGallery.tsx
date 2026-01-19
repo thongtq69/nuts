@@ -7,24 +7,39 @@ interface ProductGalleryProps {
 }
 
 export default function ProductGallery({ images }: ProductGalleryProps) {
-    const [activeImage, setActiveImage] = useState(images[0]);
+    const validImages = images && images.length > 0 ? images : ['/assets/images/product1.jpg'];
+    const [activeImage, setActiveImage] = useState(validImages[0]);
 
     return (
         <div className="product-gallery">
             <div className="main-image">
-                <img src={activeImage} alt="Product Detail" />
+                <img 
+                    src={activeImage} 
+                    alt="Product Detail"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/assets/images/placeholder.jpg';
+                    }}
+                />
             </div>
-            <div className="thumbnail-list">
-                {images.map((img, index) => (
-                    <div
-                        key={index}
-                        className={`thumbnail ${activeImage === img ? 'active' : ''}`}
-                        onClick={() => setActiveImage(img)}
-                    >
-                        <img src={img} alt={`Thumbnail ${index}`} />
-                    </div>
-                ))}
-            </div>
+            {validImages.length > 1 && (
+                <div className="thumbnail-list">
+                    {validImages.map((img, index) => (
+                        <div
+                            key={index}
+                            className={`thumbnail ${activeImage === img ? 'active' : ''}`}
+                            onClick={() => setActiveImage(img)}
+                        >
+                            <img 
+                                src={img} 
+                                alt={`Thumbnail ${index}`}
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = '/assets/images/placeholder.jpg';
+                                }}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
 
             <style jsx>{`
         .product-gallery {
@@ -50,6 +65,7 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
         .thumbnail-list {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
         .thumbnail {
             width: 80px;

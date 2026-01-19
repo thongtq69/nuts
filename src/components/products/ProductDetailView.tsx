@@ -16,6 +16,13 @@ interface ProductDetailViewProps {
 }
 
 export default function ProductDetailView({ product, relatedProducts }: ProductDetailViewProps) {
+    // Handle case where images array is empty - use main image
+    const productImages = (product.images && product.images.length > 0) 
+        ? product.images 
+        : product.image 
+            ? [product.image] 
+            : ['/assets/images/placeholder.jpg'];
+
     return (
         <main>
             <Header />
@@ -31,12 +38,12 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
             <div className="container">
                 <div className="product-detail-layout">
                     <div className="gallery-section">
-                        <ProductGallery images={product.images || []} />
+                        <ProductGallery images={productImages} />
                     </div>
                     <div className="info-section">
                         <ProductInfo
                             id={String(product.id || (product as any)._id)}
-                            image={(product.images && product.images.length > 0) ? product.images[0] : '/assets/images/placeholder.jpg'}
+                            image={(product.images && product.images.length > 0) ? product.images[0] : product.image || '/assets/images/placeholder.jpg'}
                             name={product.name}
                             price={product.currentPrice}
                             originalPrice={product.originalPrice}

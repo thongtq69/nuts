@@ -183,33 +183,57 @@ export default function StaffDashboard() {
                     </p>
 
                     {/* Referral Link */}
-                    <div className="bg-gray-800/10 backdrop-blur-sm rounded-2xl p-4 max-w-xl border border-gray-700/20">
-                        <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
-                            <LinkIcon size={14} />
-                            <span className="font-medium">Link giới thiệu của bạn</span>
+                    <div className="bg-white rounded-2xl p-5 max-w-2xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
+                            <LinkIcon size={16} className="text-brand" />
+                            <span className="font-semibold text-gray-800">Link tiếp thị của bạn</span>
                         </div>
+                        
+                        {/* Staff Code Display */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="flex-1 bg-gradient-to-r from-brand/10 to-amber-100 rounded-xl px-4 py-3 border border-brand/20">
+                                <div className="text-xs text-gray-500 mb-1">Mã nhân viên</div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono font-bold text-lg text-brand">
+                                        {((user as any)?.referralCode || (user as any)?.staffCode || '')}
+                                    </span>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText((user as any)?.referralCode || (user as any)?.staffCode || '');
+                                        }}
+                                        className="p-1.5 hover:bg-white rounded-lg transition-colors"
+                                        title="Sao chép mã"
+                                    >
+                                        <Copy size={14} className="text-gray-400" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Full Affiliate Link */}
                         <div className="flex items-center gap-3">
                             <input
                                 type="text"
                                 readOnly
                                 value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${((user as any)?.referralCode || (user as any)?.staffCode || '')}`}
                                 onClick={copyReferralLink}
-                                className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none cursor-pointer hover:bg-gray-50 transition-colors"
-                                title="Click để sao chép"
+                                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 font-mono placeholder-gray-400 focus:outline-none cursor-pointer hover:bg-gray-100 transition-colors"
+                                title="Click để sao chép link tiếp thị đầy đủ"
                             />
                             <button
                                 onClick={copyReferralLink}
-                                className={`px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg ${
+                                className={`px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-md whitespace-nowrap ${
                                     copied
                                         ? 'bg-emerald-500 text-white'
                                         : 'bg-brand text-white hover:bg-brand/90'
                                 }`}
                             >
-                                {copied ? '✓ Đã sao!' : 'Sao chép'}
+                                {copied ? '✓ Đã sao link!' : 'Sao chép link'}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                            Chia sẻ link này để nhận hoa hồng khi có đơn hàng mới
+                        <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
+                            <span className="text-amber-500">💡</span>
+                            Chia sẻ link tiếp thị để nhận hoa hồng 10% từ đơn hàng của khách
                         </p>
                     </div>
                 </div>
