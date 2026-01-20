@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCart, CartItem } from '@/context/CartContext';
+import { useToast } from '@/context/ToastContext';
 
 interface ProductCardProps {
     id: string | number;
@@ -23,6 +24,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     agentPrice, bulkPricing
 }) => {
     const { addToCart } = useCart();
+    const toast = useToast();
 
     const formattedCurrentPrice = typeof currentPrice === 'number'
         ? `${currentPrice.toLocaleString('vi-VN')}₫`
@@ -34,9 +36,22 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
-        const price = typeof currentPrice === 'number' ? currentPrice : parseFloat(currentPrice.replace(/[^\d]/g, ''));
-        const agentP = typeof agentPrice === 'number' ? agentPrice : agentPrice ? parseFloat(String(agentPrice).replace(/[^\d]/g, '')) : undefined;
-        
+
+        const price = typeof currentPrice === 'number'
+            ? currentPrice
+            : parseFloat(currentPrice.replace(/[^\d]/g, ''));
+
+        if (!price || Number.isNaN(price) || price <= 0) {
+            toast.error('Không thể thêm vào giỏ', 'Giá sản phẩm không hợp lệ');
+            return;
+        }
+
+        const agentP = typeof agentPrice === 'number'
+            ? agentPrice
+            : agentPrice
+                ? parseFloat(String(agentPrice).replace(/[^\d]/g, ''))
+                : undefined;
+
         const item: Omit<CartItem, 'price' | 'isAgent'> = {
             id: String(id),
             name,
@@ -46,9 +61,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
             agentPrice: agentP,
             bulkPricing
         };
-        
+
         addToCart(item);
-        alert('Đã thêm vào giỏ hàng');
+        toast.success('Đã thêm vào giỏ hàng', name);
     };
 
     return (

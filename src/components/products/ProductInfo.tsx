@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useCart } from '@/context/CartContext';
+import { useToast } from '@/context/ToastContext';
 
 interface ProductInfoProps {
     id: string;
@@ -28,8 +29,8 @@ export default function ProductInfo({
 }: ProductInfoProps) {
     const [quantity, setQuantity] = useState(1);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
     const { addToCart } = useCart();
+    const toast = useToast();
 
     // Format price
     const formatPrice = (value: string | number | undefined): string => {
@@ -69,7 +70,7 @@ export default function ProductInfo({
         const priceValue = typeof price === 'number' ? price : parseFloat(String(price).replace(/[^\d]/g, ''));
         
         if (!priceValue || isNaN(priceValue) || priceValue <= 0) {
-            alert('Loi: Gia san pham khong hop le');
+            toast.error('Không thể thêm vào giỏ', 'Giá sản phẩm không hợp lệ');
             return;
         }
 
@@ -83,11 +84,10 @@ export default function ProductInfo({
                 originalPrice: priceValue,
                 quantity
             });
-            
-            setShowSuccess(true);
-            setTimeout(() => setShowSuccess(false), 3000);
+
+            toast.success('Đã thêm vào giỏ hàng', name);
         } catch (error) {
-            alert('Co loi xay ra khi them vao gio hang');
+            toast.error('Không thể thêm vào giỏ', 'Vui lòng thử lại sau');
         } finally {
             setIsAddingToCart(false);
         }
@@ -101,17 +101,6 @@ export default function ProductInfo({
 
     return (
         <div className="product-info-modern">
-            {/* Success Message */}
-            {showSuccess && (
-                <div className="add-to-cart-success">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    <span>Da them san pham vao gio hang!</span>
-                </div>
-            )}
-
             {/* Product Title */}
             <h1 className="product-title-modern">{name}</h1>
 
