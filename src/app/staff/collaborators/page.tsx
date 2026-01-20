@@ -18,6 +18,8 @@ import {
     CheckCircle,
     AlertCircle
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface Collaborator {
     id: string;
@@ -41,6 +43,8 @@ export default function CollaboratorsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
+    const toast = useToast();
+    const confirm = useConfirm();
 
     const [newCollab, setNewCollab] = useState({
         name: '',
@@ -80,23 +84,30 @@ export default function CollaboratorsPage() {
 
             const data = await res.json();
             if (res.ok) {
-                alert(`Tạo CTV thành công!\nMã: ${data.collaborator.code}`);
+                toast.success('Tạo CTV thành công', `Mã: ${data.collaborator.code}`);
                 setShowModal(false);
                 setNewCollab({ name: '', email: '', phone: '', password: '' });
                 fetchCollaborators();
             } else {
-                alert(data.message || 'Lỗi tạo CTV');
+                toast.error('Lỗi tạo CTV', data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error creating collaborator:', error);
-            alert('Lỗi khi tạo cộng tác viên');
+            toast.error('Lỗi khi tạo cộng tác viên', 'Vui lòng thử lại.');
         } finally {
             setCreating(false);
         }
     };
 
     const deleteCollaborator = async (id: string, name: string) => {
-        if (!confirm(`Xác nhận xóa cộng tác viên "${name}"?`)) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa cộng tác viên',
+            description: `Xác nhận xóa cộng tác viên "${name}"?`,
+            confirmText: 'Xóa CTV',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             const res = await fetch('/api/staff/collaborators', {
@@ -109,10 +120,11 @@ export default function CollaboratorsPage() {
                 fetchCollaborators();
             } else {
                 const data = await res.json();
-                alert(data.message || 'Lỗi xóa CTV');
+                toast.error('Lỗi xóa CTV', data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting collaborator:', error);
+            toast.error('Lỗi xóa CTV', 'Vui lòng thử lại.');
         }
     };
 

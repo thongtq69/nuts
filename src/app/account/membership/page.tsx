@@ -88,7 +88,7 @@ export default function AccountMembershipPage() {
                             {orders.length === 0 ? (
                                 <div className="empty-cart">
                                     <p>Bạn chưa đăng ký gói hội viên nào.</p>
-                                    <Link href="/membership" className="continue-btn">
+                                    <Link href="/subscriptions" className="continue-btn">
                                         Xem các gói ưu đãi
                                     </Link>
                                 </div>

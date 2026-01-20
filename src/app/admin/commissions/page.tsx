@@ -6,6 +6,7 @@ import { Pagination } from '@/components/admin/ui/Pagination';
 import { SearchInput } from '@/components/admin/ui/SearchInput';
 import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
+import { useToast } from '@/context/ToastContext';
 
 interface Commission {
     _id: string;
@@ -35,6 +36,7 @@ export default function AdminCommissionsPage() {
         newStatus: ''
     });
     const [updating, setUpdating] = useState<string | null>(null);
+    const toast = useToast();
 
     const fetchCommissions = useCallback(async () => {
         setLoading(true);
@@ -72,10 +74,10 @@ export default function AdminCommissionsPage() {
                 );
                 setUpdateModal({ isOpen: false, id: null, newStatus: '' });
             } else {
-                alert('Lỗi cập nhật');
+                toast.error('Lỗi cập nhật', 'Vui lòng thử lại.');
             }
         } catch (e) {
-            alert('Lỗi cập nhật');
+            toast.error('Lỗi cập nhật', 'Vui lòng thử lại.');
         } finally {
             setUpdating(null);
         }
@@ -285,7 +287,10 @@ export default function AdminCommissionsPage() {
                                         key={comm._id}
                                         className="hover:bg-slate-50 transition-colors cursor-pointer"
                                         onClick={() => {
-                                            alert(`Hoa hồng: ${new Intl.NumberFormat('vi-VN').format(comm.commissionAmount)}đ\nCTV: ${comm.affiliateId?.name || 'Unknown'}\nĐơn hàng: ${comm.orderId?._id ? '...' + comm.orderId._id.slice(-6) : 'N/A'}\nTrạng thái: ${comm.status}`);
+                                            toast.info(
+                                                'Chi tiết hoa hồng',
+                                                `CTV ${comm.affiliateId?.name || 'Unknown'} · Đơn ${comm.orderId?._id ? '...' + comm.orderId._id.slice(-6) : 'N/A'} · ${new Intl.NumberFormat('vi-VN').format(comm.commissionAmount)}đ · ${comm.status}`
+                                            );
                                         }}
                                     >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">

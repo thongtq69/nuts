@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import AdminSidebar from '@/components/admin/Sidebar';
 import AdminHeader from '@/components/admin/Header';
 import { useTheme } from 'next-themes';
+import { useToast } from '@/context/ToastContext';
 
 export default function AdminLayout({
     children,
@@ -18,6 +19,7 @@ export default function AdminLayout({
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const { setTheme } = useTheme();
+    const toast = useToast();
 
     // Force light theme for admin
     useEffect(() => {
@@ -29,13 +31,13 @@ export default function AdminLayout({
             if (!user) {
                 router.push('/login');
             } else if (user.role !== 'admin') {
-                alert('Bạn không có quyền truy cập trang này');
+                toast.error('Không có quyền truy cập', 'Bạn không có quyền truy cập trang này.');
                 router.push('/');
             } else {
                 setIsAuthorized(true);
             }
         }
-    }, [user, loading, router]);
+    }, [user, loading, router, toast]);
 
     if (loading || !isAuthorized) {
         return (

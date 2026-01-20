@@ -5,6 +5,7 @@ import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
+import { useToast } from '@/context/ToastContext';
 
 interface SiteSettings {
     hotline: string;
@@ -19,6 +20,7 @@ interface SiteSettings {
 
 export default function ContactPage() {
     const [settings, setSettings] = useState<SiteSettings | null>(null);
+    const toast = useToast();
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -38,7 +40,7 @@ export default function ContactPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất.');
+        toast.success('Đã gửi liên hệ', 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất.');
     };
 
     // Default values nếu chưa load được settings

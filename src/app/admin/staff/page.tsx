@@ -11,6 +11,7 @@ import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/E
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
 import { Button } from '@/components/admin/ui/Button';
 import { ROLE_DEFINITIONS, PERMISSION_GROUPS, type Permission } from '@/constants/permissions';
+import { useToast } from '@/context/ToastContext';
 
 interface Staff {
     id: string;
@@ -52,6 +53,7 @@ export default function AdminStaffPage() {
         staffName: ''
     });
     const [deleting, setDeleting] = useState<string | null>(null);
+    const toast = useToast();
     const [expandedGroups, setExpandedGroups] = useState<string[]>(Object.keys(PERMISSION_GROUPS));
     const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>([]);
 
@@ -95,16 +97,16 @@ export default function AdminStaffPage() {
 
             const data = await res.json();
             if (res.ok) {
-                alert(`Tạo nhân viên thành công!\nMã: ${data.staff.staffCode}`);
+                toast.success('Tạo nhân viên thành công', `Mã: ${data.staff.staffCode}`);
                 setShowModal(false);
                 setNewStaff({ name: '', email: '', phone: '', password: '', staffCode: '', roleType: 'sales' });
                 fetchStaff();
             } else {
-                alert(data.message || 'Lỗi tạo nhân viên');
+                toast.error('Lỗi tạo nhân viên', data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error creating staff:', error);
-            alert('Lỗi khi tạo nhân viên');
+            toast.error('Lỗi khi tạo nhân viên', 'Vui lòng thử lại.');
         } finally {
             setCreating(false);
         }
@@ -129,10 +131,11 @@ export default function AdminStaffPage() {
                 setDeleteModal({ isOpen: false, staffId: null, staffName: '' });
             } else {
                 const data = await res.json();
-                alert(data.message || 'Lỗi xóa nhân viên');
+                toast.error('Lỗi xóa nhân viên', data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting staff:', error);
+            toast.error('Lỗi xóa nhân viên', 'Vui lòng thử lại.');
         } finally {
             setDeleting(null);
         }
@@ -182,16 +185,16 @@ export default function AdminStaffPage() {
             });
 
             if (res.ok) {
-                alert('Cập nhật quyền thành công');
+                toast.success('Cập nhật quyền thành công');
                 setShowPermissionModal(false);
                 fetchStaff();
             } else {
                 const data = await res.json();
-                alert(data.message || 'Lỗi cập nhật quyền');
+                toast.error('Lỗi cập nhật quyền', data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error saving permissions:', error);
-            alert('Lỗi khi cập nhật quyền');
+            toast.error('Lỗi khi cập nhật quyền', 'Vui lòng thử lại.');
         } finally {
             setSavingPermissions(false);
         }
@@ -199,7 +202,7 @@ export default function AdminStaffPage() {
 
     const copyCode = (code: string) => {
         navigator.clipboard.writeText(code);
-        alert('Đã sao chép mã nhân viên!');
+        toast.success('Đã sao chép mã nhân viên');
     };
 
     const filteredStaff = staffList.filter(s =>

@@ -16,6 +16,7 @@ import {
     Truck,
     Users
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 
 interface SiteSettings {
     hotline: string;
@@ -59,6 +60,7 @@ export default function AdminSettingsPage() {
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const toast = useToast();
 
     useEffect(() => {
         fetchSettings();
@@ -88,12 +90,12 @@ export default function AdminSettingsPage() {
             });
             
             if (res.ok) {
-                alert('Đã lưu cài đặt thành công!');
+                toast.success('Đã lưu cài đặt thành công');
             } else {
-                alert('Lỗi khi lưu cài đặt');
+                toast.error('Lỗi khi lưu cài đặt', 'Vui lòng thử lại.');
             }
         } catch (error) {
-            alert('Lỗi kết nối');
+            toast.error('Lỗi kết nối', 'Vui lòng thử lại.');
         } finally {
             setSaving(false);
         }

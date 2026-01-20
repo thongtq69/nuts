@@ -15,6 +15,8 @@ import {
     Eye, 
     EyeOff 
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
@@ -52,6 +54,8 @@ export default function StaffBlogsPage() {
     const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const toast = useToast();
+    const confirm = useConfirm();
     
     const [formData, setFormData] = useState({
         title: '',
@@ -104,18 +108,25 @@ export default function StaffBlogsPage() {
                 closeModal();
             } else {
                 const data = await res.json();
-                alert(data.error || 'Lỗi khi lưu bài viết');
+                toast.error('Lỗi khi lưu bài viết', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error saving blog:', error);
-            alert('Lỗi khi lưu bài viết');
+            toast.error('Lỗi khi lưu bài viết', 'Vui lòng thử lại.');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa bài viết',
+            description: 'Bạn có chắc chắn muốn xóa bài viết này?',
+            confirmText: 'Xóa bài viết',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             const res = await fetch('/api/staff/blogs', {
@@ -127,11 +138,11 @@ export default function StaffBlogsPage() {
             if (res.ok) {
                 fetchBlogs();
             } else {
-                alert('Lỗi khi xóa bài viết');
+                toast.error('Lỗi khi xóa bài viết', 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting blog:', error);
-            alert('Lỗi khi xóa bài viết');
+            toast.error('Lỗi khi xóa bài viết', 'Vui lòng thử lại.');
         }
     };
 

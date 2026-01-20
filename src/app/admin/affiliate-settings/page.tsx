@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Settings, Percent, Tag, ShoppingBag, Calculator } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 
 export default function AdminAffiliateSettingsPage() {
     const [settings, setSettings] = useState<any>({
@@ -16,6 +17,7 @@ export default function AdminAffiliateSettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'commission' | 'agent' | 'bulk'>('commission');
+    const toast = useToast();
 
     useEffect(() => {
         fetch('/api/admin/affiliate-settings')
@@ -49,12 +51,12 @@ export default function AdminAffiliateSettingsPage() {
                 body: JSON.stringify(settings)
             });
             if (res.ok) {
-                alert('Lưu cài đặt thành công');
+                toast.success('Lưu cài đặt thành công');
             } else {
-                alert('Lỗi lưu cài đặt');
+                toast.error('Lỗi lưu cài đặt', 'Vui lòng thử lại.');
             }
         } catch {
-            alert('Lỗi lưu cài đặt');
+            toast.error('Lỗi lưu cài đặt', 'Vui lòng thử lại.');
         } finally {
             setSaving(false);
         }

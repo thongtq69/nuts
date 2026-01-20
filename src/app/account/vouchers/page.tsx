@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/context/ToastContext';
 
 interface Voucher {
     _id: string;
@@ -53,6 +54,7 @@ function getDaysRemaining(expiresAt: string): number {
 export default function UserVouchersPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const toast = useToast();
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'available' | 'used' | 'expired'>('all');
@@ -198,8 +200,7 @@ export default function UserVouchersPage() {
 
     const copyToClipboard = (code: string) => {
         navigator.clipboard.writeText(code);
-        // Show toast or alert
-        alert('Da sao chep ma: ' + code);
+        toast.success('Da sao chep ma', code);
     };
 
     const toggleReveal = (voucherId: string) => {
@@ -239,16 +240,19 @@ export default function UserVouchersPage() {
 
             if (res.ok) {
                 const data = await res.json();
-                alert(`Gia han thanh cong! Voucher moi co hieu luc den ${new Date(data.newExpiresAt).toLocaleDateString('vi-VN')}`);
+                toast.success(
+                    'Gia han thanh cong',
+                    `Voucher moi co hieu luc den ${new Date(data.newExpiresAt).toLocaleDateString('vi-VN')}.`
+                );
                 setExtendingVoucher(null);
                 fetchVouchers();
             } else {
                 const errData = await res.json();
-                alert(errData.error || 'Loi gia han voucher');
+                toast.error('Loi gia han voucher', errData.error || 'Vui long thu lai.');
             }
         } catch (error) {
             console.error('Error extending voucher:', error);
-            alert('Loi ket noi');
+            toast.error('Loi ket noi', 'Vui long thu lai.');
         } finally {
             setExtending(false);
         }
@@ -516,7 +520,7 @@ export default function UserVouchersPage() {
                         <h3 className="text-xl font-bold text-gray-800 mb-2">Chua co voucher nao</h3>
                         <p className="text-gray-500 mb-6">Mua goi hoi vien de nhan voucher giam gia hap dan!</p>
                         <a
-                            href="/membership"
+                            href="/subscriptions"
                             className="inline-block bg-brand hover:bg-brand/90 text-white font-medium py-3 px-6 rounded-xl transition-all"
                         >
                             Xem cac goi hoi vien

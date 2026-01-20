@@ -51,8 +51,7 @@ const OrderSchema: Schema<IOrder> = new Schema(
             phone: { type: String, required: true },
             address: {
                 type: String,
-                required: true,
-                minlength: [20, 'Địa chỉ giao hàng phải có ít nhất 20 ký tự']
+                required: true
             },
             city: { type: String, required: true },
             district: { type: String },

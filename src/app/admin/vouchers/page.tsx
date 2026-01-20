@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Ticket, Trash2, Loader2, Users, ArrowLeft, Search, Filter } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface VoucherGroup {
     id: string;
@@ -36,6 +38,8 @@ export default function AdminVouchersPage() {
     const [loading, setLoading] = useState(true);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [deleting, setDeleting] = useState<string | null>(null);
+    const toast = useToast();
+    const confirm = useConfirm();
 
     // Filters State
     const [searchTerm, setSearchTerm] = useState('');
@@ -87,9 +91,14 @@ export default function AdminVouchersPage() {
     };
 
     const handleDelete = async (voucherId: string, code: string) => {
-        if (!confirm(`Bạn có chắc muốn xóa voucher "${code}"? Hành động này không thể hoàn tác.`)) {
-            return;
-        }
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa voucher',
+            description: `Bạn có chắc muốn xóa voucher "${code}"? Hành động này không thể hoàn tác.`,
+            confirmText: 'Xóa voucher',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
         try {
             setDeleting(voucherId);
             const res = await fetch(`/api/vouchers/${voucherId}`, {
@@ -107,11 +116,11 @@ export default function AdminVouchersPage() {
                 }
             } else {
                 const data = await res.json();
-                alert(data.error || 'Lỗi xóa voucher');
+                toast.error('Lỗi xóa voucher', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting voucher:', error);
-            alert('Lỗi xóa voucher');
+            toast.error('Lỗi xóa voucher', 'Vui lòng thử lại.');
         } finally {
             setDeleting(null);
         }

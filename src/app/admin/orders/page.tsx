@@ -18,6 +18,8 @@ import {
     Trash2,
     AlertTriangle
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface Order {
     id: string;
@@ -55,6 +57,8 @@ export default function AdminOrdersPage() {
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('all');
+    const toast = useToast();
+    const confirm = useConfirm();
 
     useEffect(() => {
         fetchOrders();
@@ -90,11 +94,11 @@ export default function AdminOrdersPage() {
                 ));
             } else {
                 const data = await res.json();
-                alert(data.message || 'Lỗi cập nhật trạng thái');
+                toast.error('Lỗi cập nhật trạng thái', data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error updating order:', error);
-            alert('Lỗi khi cập nhật trạng thái');
+            toast.error('Lỗi cập nhật trạng thái', 'Vui lòng thử lại.');
         } finally {
             setUpdating(null);
             setOpenDropdown(null);
@@ -102,9 +106,14 @@ export default function AdminOrdersPage() {
     };
 
     const handleDelete = async (orderId: string) => {
-        if (!confirm('Bạn có chắc muốn xóa đơn hàng này? Hành động này không thể hoàn tác.')) {
-            return;
-        }
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa đơn hàng',
+            description: 'Bạn có chắc muốn xóa đơn hàng này? Hành động này không thể hoàn tác.',
+            confirmText: 'Xóa đơn',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
         try {
             setDeleting(orderId);
             const res = await fetch(`/api/admin/orders/${orderId}`, {
@@ -114,11 +123,11 @@ export default function AdminOrdersPage() {
                 setOrders(prev => prev.filter(order => order.id !== orderId));
             } else {
                 const data = await res.json();
-                alert(data.error || 'Lỗi xóa đơn hàng');
+                toast.error('Lỗi xóa đơn hàng', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting order:', error);
-            alert('Lỗi xóa đơn hàng');
+            toast.error('Lỗi xóa đơn hàng', 'Vui lòng thử lại.');
         } finally {
             setDeleting(null);
         }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/context/ToastContext';
 
 interface ProductFormProps {
     initialData?: any;
@@ -11,6 +12,7 @@ interface ProductFormProps {
 export default function ProductForm({ initialData = {}, isEdit = false }: ProductFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
     const [formData, setFormData] = useState({
         name: initialData.name || '',
         image: initialData.image || '',
@@ -54,11 +56,11 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 router.push('/admin/products');
                 router.refresh();
             } else {
-                alert('Lỗi khi lưu sản phẩm');
+                toast.error('Lỗi khi lưu sản phẩm', 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error(error);
-            alert('Lỗi khi lưu sản phẩm');
+            toast.error('Lỗi khi lưu sản phẩm', 'Vui lòng thử lại.');
         } finally {
             setLoading(false);
         }
@@ -136,11 +138,11 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         console.log('✅ Product image uploaded to Cloudinary:', data.url);
                                     } else {
                                         const errorData = await res.json();
-                                        alert('Tải lên thất bại: ' + (errorData.message || 'Unknown error'));
+                                        toast.error('Tải lên thất bại', errorData.message || 'Vui lòng thử lại.');
                                     }
                                 } catch (err) {
                                     console.error(err);
-                                    alert('Lỗi khi tải lên hình ảnh');
+                                    toast.error('Lỗi khi tải lên hình ảnh', 'Vui lòng thử lại.');
                                 } finally {
                                     setLoading(false);
                                 }

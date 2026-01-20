@@ -25,6 +25,9 @@ import {
     Clock,
     Loader2
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
+import { usePrompt } from '@/context/PromptContext';
 
 interface UserDetail {
     _id: string;
@@ -53,6 +56,9 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     const [updating, setUpdating] = useState(false);
     const router = useRouter();
     const [userId, setUserId] = useState<string>('');
+    const toast = useToast();
+    const confirm = useConfirm();
+    const prompt = usePrompt();
 
     useEffect(() => {
         params.then(({ id }) => {
@@ -80,7 +86,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     };
 
     const handleRoleChange = async (newRole: string) => {
-        if (!confirm(`Đổi role thành ${newRole}?`)) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận đổi quyền',
+            description: `Đổi role thành ${newRole}?`,
+            confirmText: 'Xác nhận',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             setUpdating(true);
@@ -122,12 +135,17 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     const handleDelete = async () => {
         if (!user) return;
         if (user.role === 'admin') {
-            alert('Không thể xóa tài khoản Admin!');
+            toast.warning('Không thể xóa tài khoản Admin', 'Hãy chọn tài khoản khác.');
             return;
         }
-        if (!confirm(`Bạn có chắc muốn xóa người dùng "${user.name}"? Hành động này không thể hoàn tác.`)) {
-            return;
-        }
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa người dùng',
+            description: `Bạn có chắc muốn xóa người dùng "${user.name}"? Hành động này không thể hoàn tác.`,
+            confirmText: 'Xóa người dùng',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
         
         try {
             setUpdating(true);
@@ -138,11 +156,11 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 router.push('/admin/users');
             } else {
                 const data = await res.json();
-                alert(data.error || 'Lỗi xóa người dùng');
+                toast.error('Lỗi xóa người dùng', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting user:', error);
-            alert('Lỗi xóa người dùng');
+            toast.error('Lỗi xóa người dùng', 'Vui lòng thử lại.');
         } finally {
             setUpdating(false);
         }
@@ -361,14 +379,21 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const reason = prompt('Lý do từ chối:');
-                                            if (reason !== null) {
-                                                fetch(`/api/admin/users/${userId}/reject-sale`, {
-                                                    method: 'POST',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({ reason })
-                                                }).then(() => fetchUserDetail(userId));
-                                            }
+                                            prompt({
+                                                title: 'Lý do từ chối',
+                                                description: 'Nhập lý do từ chối:',
+                                                placeholder: 'Lý do từ chối...',
+                                                confirmText: 'Gửi',
+                                                cancelText: 'Hủy',
+                                            }).then((reason) => {
+                                                if (reason !== null) {
+                                                    fetch(`/api/admin/users/${userId}/reject-sale`, {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ reason })
+                                                    }).then(() => fetchUserDetail(userId));
+                                                }
+                                            });
                                         }}
                                         className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-medium transition-all"
                                     >

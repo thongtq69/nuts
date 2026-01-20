@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Users, Mail, Phone, Tag, Wallet, DollarSign, Calendar } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
 
 export default function AdminAffiliatesPage() {
     const [affiliates, setAffiliates] = useState([]);
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
 
     useEffect(() => {
         fetch('/api/admin/affiliates')
@@ -66,7 +68,10 @@ export default function AdminAffiliatesPage() {
                                         className="hover:bg-slate-50 transition-colors cursor-pointer"
                                         onClick={() => {
                                             // Navigate to affiliate detail page if it exists, or show info
-                                            alert(`Cộng tác viên: ${aff.name}\nMã Ref: ${aff.referralCode}\nSố dư ví: ${new Intl.NumberFormat('vi-VN').format(aff.walletBalance || 0)}đ\nTổng hoa hồng: ${new Intl.NumberFormat('vi-VN').format(aff.totalCommission || 0)}đ`);
+                                            toast.info(
+                                                'Chi tiết CTV',
+                                                `CTV ${aff.name} · Ref ${aff.referralCode} · Ví ${new Intl.NumberFormat('vi-VN').format(aff.walletBalance || 0)}đ · Hoa hồng ${new Intl.NumberFormat('vi-VN').format(aff.totalCommission || 0)}đ`
+                                            );
                                         }}
                                     >
                                         <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">

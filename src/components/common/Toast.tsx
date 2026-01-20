@@ -23,22 +23,22 @@ const toastIcons = {
 
 const toastColors = {
     success: {
-        bg: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        bg: 'linear-gradient(135deg, #19c58a 0%, #0aa46f 100%)',
         icon: '#fff',
-        border: '#059669',
+        border: '#0aa46f',
     },
     error: {
-        bg: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+        bg: 'linear-gradient(135deg, #f05a5a 0%, #dc2626 100%)',
         icon: '#fff',
         border: '#dc2626',
     },
     warning: {
-        bg: 'linear-gradient(135deg, #9C7043 0%, #7d5a36 100%)',
+        bg: 'linear-gradient(135deg, #c6894f 0%, #9a6b3e 100%)',
         icon: '#fff',
-        border: '#7d5a36',
+        border: '#9a6b3e',
     },
     info: {
-        bg: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+        bg: 'linear-gradient(135deg, #4f9bf7 0%, #2563eb 100%)',
         icon: '#fff',
         border: '#2563eb',
     },
@@ -46,7 +46,6 @@ const toastColors = {
 
 export default function Toast({ id, type, title, message, duration = 4000, onClose }: ToastProps) {
     const [isExiting, setIsExiting] = useState(false);
-    const [progress, setProgress] = useState(100);
     const Icon = toastIcons[type];
     const colors = toastColors[type];
 
@@ -56,24 +55,12 @@ export default function Toast({ id, type, title, message, duration = 4000, onClo
     }, [id, onClose]);
 
     useEffect(() => {
-        const startTime = Date.now();
-        const interval = setInterval(() => {
-            const elapsed = Date.now() - startTime;
-            const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
-            setProgress(remaining);
-
-            if (remaining <= 0) {
-                clearInterval(interval);
-            }
-        }, 50);
-
         const timer = setTimeout(() => {
             handleClose();
         }, duration);
 
         return () => {
             clearTimeout(timer);
-            clearInterval(interval);
         };
     }, [duration, handleClose]);
 
@@ -96,15 +83,6 @@ export default function Toast({ id, type, title, message, duration = 4000, onClo
                 <button className="toast-close" onClick={handleClose}>
                     <X size={18} />
                 </button>
-            </div>
-            <div className="toast-progress-bar">
-                <div
-                    className="toast-progress"
-                    style={{
-                        width: `${progress}%`,
-                        background: 'rgba(255,255,255,0.4)',
-                    }}
-                />
             </div>
         </div>
     );

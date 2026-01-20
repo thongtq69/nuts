@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { X, Upload, Image as ImageIcon, Trash2, Plus } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { usePrompt } from '@/context/PromptContext';
 
 interface ProductImage {
     url: string;
@@ -30,6 +32,8 @@ export default function ProductImageManager({
     const [selectedFileCount, setSelectedFileCount] = useState<number>(0);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const toast = useToast();
+    const prompt = usePrompt();
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -82,13 +86,13 @@ export default function ProductImageManager({
             if (successCount > 0 && errorCount === 0) {
                 // Silent success - images will be visible
             } else if (successCount > 0 && errorCount > 0) {
-                alert(`Đã tải lên ${successCount} ảnh, ${errorCount} ảnh thất bại`);
+                toast.warning('Tải ảnh chưa hoàn tất', `Đã tải lên ${successCount} ảnh, ${errorCount} ảnh thất bại.`);
             } else if (errorCount > 0) {
-                alert('Tất cả ảnh đều thất bại. Vui lòng thử lại.');
+                toast.error('Tải ảnh thất bại', 'Tất cả ảnh đều thất bại. Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Lỗi khi tải ảnh lên');
+            toast.error('Lỗi khi tải ảnh lên', 'Vui lòng thử lại.');
         } finally {
             setUploading(false);
             setUploadProgress(null);
@@ -117,21 +121,26 @@ export default function ProductImageManager({
                 onClose();
             } else {
                 const data = await res.json();
-                alert(data.message || 'Lỗi khi lưu ảnh');
+                toast.error('Lỗi khi lưu ảnh', data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Save error:', error);
-            alert('Lỗi khi lưu ảnh');
+            toast.error('Lỗi khi lưu ảnh', 'Vui lòng thử lại.');
         } finally {
             setLoading(false);
         }
     };
 
     const handleAddByUrl = () => {
-        const url = prompt('Nhập URL ảnh:');
-        if (url) {
-            setImages(prev => [...prev, url]);
-        }
+        prompt({
+            title: 'Thêm ảnh bằng URL',
+            description: 'Nhập URL ảnh:',
+            placeholder: 'https://...'
+        }).then((url) => {
+            if (url) {
+                setImages(prev => [...prev, url]);
+            }
+        });
     };
 
     return (

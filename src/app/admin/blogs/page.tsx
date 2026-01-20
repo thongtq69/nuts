@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FileText, Plus, Edit2, Trash2, Eye, EyeOff, Calendar, Tag, X, Image as ImageIcon, TrendingUp } from 'lucide-react';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface Blog {
     _id: string;
@@ -22,6 +23,7 @@ export default function AdminBlogsPage() {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const confirm = useConfirm();
     const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
     const [formData, setFormData] = useState({
         title: '',
@@ -80,7 +82,14 @@ export default function AdminBlogsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Xác nhận xóa bài viết này?')) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa bài viết',
+            description: 'Xác nhận xóa bài viết này?',
+            confirmText: 'Xóa bài viết',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             const res = await fetch(`/api/blogs/${id}`, { method: 'DELETE' });

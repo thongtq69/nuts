@@ -8,6 +8,9 @@ import { SearchInput } from '@/components/admin/ui/SearchInput';
 import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
 import { Button } from '@/components/admin/ui/Button';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
+import { usePrompt } from '@/context/PromptContext';
 
 interface User {
     _id: string;
@@ -32,6 +35,9 @@ export default function AdminUsersPage() {
         userName: ''
     });
     const [deleting, setDeleting] = useState<string | null>(null);
+    const toast = useToast();
+    const confirm = useConfirm();
+    const prompt = usePrompt();
 
     const fetchUsers = useCallback(async () => {
         try {
@@ -50,7 +56,14 @@ export default function AdminUsersPage() {
     }, [fetchUsers]);
 
     const handleApproveSale = async (userId: string) => {
-        if (!confirm('Xác nhận duyệt đại lý này?')) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận duyệt đại lý',
+            description: 'Xác nhận duyệt đại lý này?',
+            confirmText: 'Duyệt',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             const res = await fetch(`/api/admin/users/${userId}/approve-sale`, {
@@ -65,7 +78,13 @@ export default function AdminUsersPage() {
     };
 
     const handleRejectSale = async (userId: string) => {
-        const reason = prompt('Lý do từ chối (để trống nếu không có):');
+        const reason = await prompt({
+            title: 'Lý do từ chối',
+            description: 'Lý do từ chối (để trống nếu không có):',
+            placeholder: 'Nhập lý do...',
+            confirmText: 'Gửi',
+            cancelText: 'Hủy',
+        });
         if (reason === null) return;
 
         try {
@@ -83,7 +102,14 @@ export default function AdminUsersPage() {
     };
 
     const handleChangeRole = async (userId: string, newRole: string) => {
-        if (!confirm(`Đổi role thành ${newRole}?`)) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận đổi quyền',
+            description: `Đổi role thành ${newRole}?`,
+            confirmText: 'Xác nhận',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             const res = await fetch(`/api/admin/users/${userId}`, {
@@ -101,7 +127,7 @@ export default function AdminUsersPage() {
 
     const openDeleteModal = (userId: string, userName: string, userRole: string) => {
         if (userRole === 'admin') {
-            alert('Không thể xóa tài khoản Admin!');
+            toast.warning('Không thể xóa tài khoản Admin', 'Hãy chọn tài khoản khác.');
             return;
         }
         setDeleteModal({ isOpen: true, userId, userName });
@@ -119,11 +145,11 @@ export default function AdminUsersPage() {
                 setDeleteModal({ isOpen: false, userId: null, userName: '' });
             } else {
                 const data = await res.json();
-                alert(data.error || 'Lỗi xóa người dùng');
+                toast.error('Lỗi xóa người dùng', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting user:', error);
-            alert('Lỗi xóa người dùng');
+            toast.error('Lỗi xóa người dùng', 'Vui lòng thử lại.');
         } finally {
             setDeleting(null);
         }

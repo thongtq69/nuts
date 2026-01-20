@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -42,6 +43,7 @@ export default function AccountPage() {
     const [activeTab, setActiveTab] = useState('orders');
     const { user, logout, loading: authLoading, checkUser } = useAuth();
     const toast = useToast();
+    const confirm = useConfirm();
     const router = useRouter();
 
     // Orders state
@@ -189,9 +191,14 @@ export default function AccountPage() {
     };
 
     const handleApplyAgent = async () => {
-        if (!confirm('Bạn muốn đăng ký trở thành Đại lý? Yêu cầu của bạn sẽ được xem xét bởi Admin.')) {
-            return;
-        }
+        const confirmed = await confirm({
+            title: 'Xác nhận đăng ký đại lý',
+            description: 'Bạn muốn đăng ký trở thành Đại lý? Yêu cầu của bạn sẽ được xem xét bởi Admin.',
+            confirmText: 'Gửi yêu cầu',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         setApplyingAgent(true);
         try {
@@ -534,7 +541,7 @@ export default function AccountPage() {
                                 ) : vouchers.length === 0 ? (
                                     <div className="empty-cart">
                                         <p>Ban chua co voucher nao.</p>
-                                        <Link href="/membership" className="continue-btn">Mua goi VIP de nhan voucher</Link>
+                                        <Link href="/subscriptions" className="continue-btn">Mua goi VIP de nhan voucher</Link>
                                     </div>
                                 ) : (
                                     <>
@@ -854,7 +861,7 @@ export default function AccountPage() {
                                 ) : membershipPackages.length === 0 ? (
                                     <div className="empty-cart">
                                         <p>Bạn chưa mua gói hội viên nào.</p>
-                                        <Link href="/membership" className="continue-btn">Xem các gói VIP</Link>
+                                        <Link href="/subscriptions" className="continue-btn">Xem các gói VIP</Link>
                                     </div>
                                 ) : (
                                     <div className="membership-list">

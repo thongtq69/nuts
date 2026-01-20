@@ -18,6 +18,8 @@ import {
     RefreshCw,
     ShoppingCart
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface VoucherRewardRule {
     _id: string;
@@ -82,6 +84,8 @@ export default function AdminVoucherRewardsPage() {
     const [editingRule, setEditingRule] = useState<VoucherRewardRule | null>(null);
     const [formData, setFormData] = useState<Omit<VoucherRewardRule, '_id'>>(defaultRule);
     const [deleting, setDeleting] = useState<string | null>(null);
+    const toast = useToast();
+    const confirm = useConfirm();
 
     useEffect(() => {
         fetchRules();
@@ -121,14 +125,14 @@ export default function AdminVoucherRewardsPage() {
                 setShowForm(false);
                 setEditingRule(null);
                 setFormData(defaultRule);
-                alert(editingRule ? 'Đã cập nhật quy tắc' : 'Đã tạo quy tắc mới');
+                toast.success(editingRule ? 'Đã cập nhật quy tắc' : 'Đã tạo quy tắc mới');
             } else {
                 const data = await res.json();
-                alert(data.error || 'Lỗi lưu quy tắc');
+                toast.error('Lỗi lưu quy tắc', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error(error);
-            alert('Lỗi kết nối');
+            toast.error('Lỗi kết nối', 'Vui lòng thử lại.');
         } finally {
             setSaving(false);
         }
@@ -153,7 +157,14 @@ export default function AdminVoucherRewardsPage() {
     };
 
     const handleDelete = async (ruleId: string, name: string) => {
-        if (!confirm(`Xóa quy tắc "${name}"?`)) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa quy tắc',
+            description: `Xóa quy tắc "${name}"?`,
+            confirmText: 'Xóa quy tắc',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         setDeleting(ruleId);
         try {
@@ -164,10 +175,10 @@ export default function AdminVoucherRewardsPage() {
                 setRules(rules.filter(r => r._id !== ruleId));
                 setSelectedRule(null);
             } else {
-                alert('Lỗi xóa quy tắc');
+                toast.error('Lỗi xóa quy tắc', 'Vui lòng thử lại.');
             }
         } catch (error) {
-            alert('Lỗi kết nối');
+            toast.error('Lỗi kết nối', 'Vui lòng thử lại.');
         } finally {
             setDeleting(null);
         }

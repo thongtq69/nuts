@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Image as ImageIcon, Plus, Edit2, Trash2, Eye, EyeOff, Link as LinkIcon, X, ArrowUpDown, TrendingUp, Crop } from 'lucide-react';
 import ImageCropper from '@/components/admin/ImageCropper';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface Banner {
     _id: string;
@@ -28,6 +30,8 @@ export default function AdminBannersPage() {
         isActive: true,
         order: 0,
     });
+    const toast = useToast();
+    const confirm = useConfirm();
 
     // Mock stats
     const stats = {
@@ -77,7 +81,14 @@ export default function AdminBannersPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Xác nhận xóa banner này?')) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa banner',
+            description: 'Xác nhận xóa banner này?',
+            confirmText: 'Xóa banner',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             const res = await fetch(`/api/banners/${id}`, { method: 'DELETE' });
@@ -168,16 +179,16 @@ export default function AdminBannersPage() {
                             setFormData({ ...formData, imageUrl: result.data.url });
                         } else {
                             console.error('❌ Upload failed:', result.message);
-                            alert('Upload thất bại: ' + result.message);
+                            toast.error('Upload thất bại', result.message || 'Vui lòng thử lại.');
                         }
                     } catch (error) {
                         console.error('❌ Error uploading banner:', error);
-                        alert('Lỗi khi upload banner');
+                        toast.error('Lỗi khi upload banner', 'Vui lòng thử lại.');
                     }
                 }
             };
             img.onerror = () => {
-                alert('Không thể đọc file ảnh. Vui lòng chọn file ảnh hợp lệ.');
+                toast.error('Không thể đọc file ảnh', 'Vui lòng chọn file ảnh hợp lệ.');
             };
             img.src = URL.createObjectURL(file);
         }

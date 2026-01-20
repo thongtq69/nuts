@@ -70,7 +70,7 @@ function MembershipCheckoutContent() {
 
     useEffect(() => {
         if (!packageId) {
-            router.push('/membership');
+            router.push('/subscriptions');
             return;
         }
         fetch(`/api/packages?id=${packageId}`)
@@ -81,7 +81,7 @@ function MembershipCheckoutContent() {
                     setPkg(found);
                 } else {
                     toast.error('Không tìm thấy gói', 'Gói không tồn tại hoặc đã bị xóa.');
-                    router.push('/membership');
+                    router.push('/subscriptions');
                 }
                 setLoading(false);
             })
@@ -142,8 +142,8 @@ function MembershipCheckoutContent() {
                     <span className="text-4xl">📦</span>
                 </div>
                 <p className="text-gray-500 text-lg">Không tìm thấy gói hội viên</p>
-                <button onClick={() => router.push('/membership')} className="mt-4 text-brand hover:underline">
-                    Quay lại trang membership
+                <button onClick={() => router.push('/subscriptions')} className="mt-4 text-brand hover:underline">
+                    Quay lại trang gói VIP
                 </button>
             </div>
         );
@@ -156,7 +156,7 @@ function MembershipCheckoutContent() {
     return (
         <div className="container mx-auto px-4 py-8">
             <Breadcrumb items={[
-                { label: 'Gói hội viên', href: '/membership' }, 
+                { label: 'Gói hội viên', href: '/subscriptions' }, 
                 { label: 'Thanh toán' }
             ]} />
 

@@ -77,9 +77,9 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { items, shippingInfo, paymentMethod, shippingFee, note, voucherCode } = body;
 
-        if (!shippingInfo?.address || shippingInfo.address.length < 20) {
+        if (!shippingInfo?.address) {
             return NextResponse.json(
-                { message: 'Địa chỉ giao hàng phải có ít nhất 20 ký tự' },
+                { message: 'Địa chỉ giao hàng là bắt buộc' },
                 { status: 400 }
             );
         }

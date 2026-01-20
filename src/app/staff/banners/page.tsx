@@ -12,6 +12,8 @@ import {
     EyeOff,
     Link as LinkIcon
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface Banner {
     _id: string;
@@ -30,6 +32,8 @@ export default function StaffBannersPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const toast = useToast();
+    const confirm = useConfirm();
     
     const [formData, setFormData] = useState({
         title: '',
@@ -84,18 +88,25 @@ export default function StaffBannersPage() {
                 closeModal();
             } else {
                 const data = await res.json();
-                alert(data.error || 'Lỗi khi lưu banner');
+                toast.error('Lỗi khi lưu banner', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error saving banner:', error);
-            alert('Lỗi khi lưu banner');
+            toast.error('Lỗi khi lưu banner', 'Vui lòng thử lại.');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa banner này?')) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa banner',
+            description: 'Bạn có chắc chắn muốn xóa banner này?',
+            confirmText: 'Xóa banner',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             const res = await fetch('/api/staff/banners', {
@@ -107,11 +118,11 @@ export default function StaffBannersPage() {
             if (res.ok) {
                 fetchBanners();
             } else {
-                alert('Lỗi khi xóa banner');
+                toast.error('Lỗi khi xóa banner', 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting banner:', error);
-            alert('Lỗi khi xóa banner');
+            toast.error('Lỗi khi xóa banner', 'Vui lòng thử lại.');
         }
     };
 

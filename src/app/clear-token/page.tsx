@@ -2,9 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/context/ToastContext';
 
 export default function ClearTokenPage() {
     const router = useRouter();
+    const toast = useToast();
 
     useEffect(() => {
         // Clear all cookies by expiring them
@@ -12,9 +14,9 @@ export default function ClearTokenPage() {
             document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
         });
         
-        alert('Đã xóa token! Đang chuyển về login...');
+        toast.info('Đã xóa token', 'Đang chuyển về trang đăng nhập...');
         router.push('/login');
-    }, [router]);
+    }, [router, toast]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">

@@ -20,6 +20,8 @@ import {
     ChevronUp,
     X
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface VoucherConfig {
     discountType: 'percent' | 'fixed';
@@ -81,6 +83,8 @@ export default function AdminPackagesPage() {
     const [isUnlimitedVoucher, setIsUnlimitedVoucher] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const toast = useToast();
+    const confirm = useConfirm();
 
     useEffect(() => {
         fetchPackages();
@@ -151,9 +155,9 @@ export default function AdminPackagesPage() {
             if (res.ok) {
                 await fetchPackages();
                 resetForm();
-                alert(editingId ? 'Cập nhật gói thành công' : 'Tạo gói thành công');
+                toast.success(editingId ? 'Cập nhật gói thành công' : 'Tạo gói thành công');
             } else {
-                alert('Lỗi khi lưu gói');
+                toast.error('Lỗi khi lưu gói', 'Vui lòng thử lại.');
             }
         } catch (err) {
             console.error(err);
@@ -437,10 +441,10 @@ export default function AdminPackagesPage() {
                                                             imagePublicId: uploadData.publicId,
                                                         }));
                                                     } else {
-                                                        alert(uploadData.error || 'Tải ảnh thất bại');
+                                                        toast.error('Tải ảnh thất bại', uploadData.error || 'Vui lòng thử lại.');
                                                     }
                                                 } catch (err) {
-                                                    alert('Tải ảnh thất bại');
+                                                    toast.error('Tải ảnh thất bại', 'Vui lòng thử lại.');
                                                 } finally {
                                                     setIsUploading(false);
                                                 }
@@ -755,7 +759,14 @@ export default function AdminPackagesPage() {
                                                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                             onClick={async () => {
-                                                if (!confirm('Đổi trạng thái gói này?')) return;
+                                                const confirmed = await confirm({
+                                                    title: 'Xác nhận đổi trạng thái',
+                                                    description: 'Đổi trạng thái gói này?',
+                                                    confirmText: 'Xác nhận',
+                                                    cancelText: 'Hủy',
+                                                });
+
+                                                if (!confirmed) return;
                                                 await fetch('/api/packages', {
                                                     method: 'PUT',
                                                     headers: { 'Content-Type': 'application/json' },
@@ -806,7 +817,14 @@ export default function AdminPackagesPage() {
                                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                 title="Xóa"
                                                 onClick={async () => {
-                                                    if (!confirm('Xóa gói này? Hành động không thể hoàn tác!')) return;
+                                                    const confirmed = await confirm({
+                                                        title: 'Xác nhận xóa gói',
+                                                        description: 'Xóa gói này? Hành động không thể hoàn tác!',
+                                                        confirmText: 'Xóa gói',
+                                                        cancelText: 'Hủy',
+                                                    });
+
+                                                    if (!confirmed) return;
                                                     await fetch('/api/packages', {
                                                         method: 'DELETE',
                                                         headers: { 'Content-Type': 'application/json' },

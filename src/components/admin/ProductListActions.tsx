@@ -1,10 +1,22 @@
 'use client';
 
 import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 export default function ProductListActions({ productId }: { productId: string }) {
+    const toast = useToast();
+    const confirm = useConfirm();
+
     const handleDelete = async () => {
-        if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa sản phẩm',
+            description: 'Bạn có chắc chắn muốn xóa sản phẩm này?',
+            confirmText: 'Xóa sản phẩm',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         try {
             const res = await fetch(`/api/products/${productId}`, {
@@ -13,11 +25,11 @@ export default function ProductListActions({ productId }: { productId: string })
             if (res.ok) {
                 window.location.reload();
             } else {
-                alert('Xóa sản phẩm thất bại');
+                toast.error('Xóa sản phẩm thất bại', 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error(error);
-            alert('Lỗi khi xóa sản phẩm');
+            toast.error('Lỗi khi xóa sản phẩm', 'Vui lòng thử lại.');
         }
     };
 

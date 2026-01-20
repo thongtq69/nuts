@@ -10,6 +10,7 @@ import { SearchInput } from '@/components/admin/ui/SearchInput';
 import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
 import { Button } from '@/components/admin/ui/Button';
+import { useToast } from '@/context/ToastContext';
 
 interface Product {
     id: string;
@@ -37,6 +38,7 @@ export default function AdminProductsPage() {
         productName: ''
     });
     const [deleting, setDeleting] = useState(false);
+    const toast = useToast();
     const [imageManager, setImageManager] = useState<{
         isOpen: boolean;
         productId: string | null;
@@ -94,11 +96,11 @@ export default function AdminProductsPage() {
                 setDeleteModal({ isOpen: false, productId: null, productName: '' });
             } else {
                 const data = await res.json();
-                alert(data.error || 'Lỗi xóa sản phẩm');
+                toast.error('Lỗi xóa sản phẩm', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting product:', error);
-            alert('Lỗi xóa sản phẩm');
+            toast.error('Lỗi xóa sản phẩm', 'Vui lòng thử lại.');
         } finally {
             setDeleting(false);
         }

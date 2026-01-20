@@ -10,6 +10,7 @@ import { ExportButton, exportToCSV, exportToExcel } from '@/components/admin/ui/
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
 import { DateRangePicker } from '@/components/admin/ui/DateRangePicker';
 import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
 import {
     ShoppingCart,
     Eye,
@@ -59,6 +60,7 @@ export default function AdminOrdersPage() {
     const [updating, setUpdating] = useState<string | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const toast = useToast();
 
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);
@@ -138,11 +140,11 @@ export default function AdminOrdersPage() {
                 ));
             } else {
                 const data = await res.json();
-                alert(data.message || 'Lỗi cập nhật trạng thái');
+                toast.error('Lỗi cập nhật trạng thái', data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error updating order:', error);
-            alert('Lỗi khi cập nhật trạng thái');
+            toast.error('Lỗi khi cập nhật trạng thái', 'Vui lòng thử lại.');
         } finally {
             setUpdating(null);
             setOpenDropdown(null);
@@ -170,7 +172,7 @@ export default function AdminOrdersPage() {
             fetchOrders();
         } catch (error) {
             console.error('Error deleting orders:', error);
-            alert('Lỗi xóa đơn hàng');
+            toast.error('Lỗi xóa đơn hàng', 'Vui lòng thử lại.');
             setDeleting(null);
         }
     };
@@ -226,7 +228,7 @@ export default function AdminOrdersPage() {
             icon: <FileText size={16} />,
             onClick: () => {
                 console.log('Print orders:', selectedIds);
-                alert('Tính năng in hóa đơn đang phát triển');
+                toast.info('Tính năng đang phát triển', 'Tính năng in hóa đơn đang phát triển.');
             },
         },
     ];

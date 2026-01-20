@@ -4483,13 +4483,13 @@ a[class*="from-orange"] {
    ======================================== */
 .toast-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 24px;
+  right: 24px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 400px;
+  gap: 14px;
+  max-width: 420px;
   width: calc(100% - 40px);
   pointer-events: none;
 }
@@ -4499,8 +4499,8 @@ a[class*="from-orange"] {
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 22px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18), 0 6px 18px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   animation: toastSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -4539,9 +4539,9 @@ a[class*="from-orange"] {
 
 .toast-content {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px 20px;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
 }
 
 .toast-icon {
@@ -4549,7 +4549,12 @@ a[class*="from-orange"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.12));
 }
 
 .toast-text {
@@ -4558,16 +4563,16 @@ a[class*="from-orange"] {
 }
 
 .toast-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: #fff;
   margin: 0;
   line-height: 1.4;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .toast-message {
-  font-size: 13px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.9);
   margin: 4px 0 0 0;
   line-height: 1.4;
@@ -4578,52 +4583,324 @@ a[class*="from-orange"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-  border: none;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .toast-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-}
-
-.toast-progress-bar {
-  height: 4px;
-  background: rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.toast-progress {
-  height: 100%;
-  transition: width 0.05s linear;
+  background: rgba(255, 255, 255, 0.28);
+  transform: scale(1.05);
 }
 
 /* Toast responsive */
 @media (max-width: 480px) {
   .toast-container {
-    top: 10px;
-    right: 10px;
-    left: 10px;
+    top: 12px;
+    right: 12px;
+    left: 12px;
     width: auto;
     max-width: none;
   }
 
   .toast-content {
-    padding: 12px 16px;
+    padding: 14px 16px;
   }
 
   .toast-title {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .toast-message {
-    font-size: 12px;
+    font-size: 13px;
+  }
+}
+
+/* ========================================
+   Confirm Dialog
+   ======================================== */
+.confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.confirm-dialog {
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  animation: scaleIn 0.2s ease-out;
+}
+
+.confirm-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #19c58a 0%, #0aa46f 100%);
+  color: #fff;
+}
+
+.confirm-dialog-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.confirm-dialog-title {
+  font-size: 16px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.confirm-dialog-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.confirm-dialog-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.confirm-dialog-body {
+  padding: 18px 20px 8px;
+  color: #1f2937;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.confirm-dialog-body p {
+  margin: 0;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px 20px;
+}
+
+.confirm-dialog-cancel,
+.confirm-dialog-confirm {
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.confirm-dialog-cancel {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.confirm-dialog-confirm {
+  background: linear-gradient(135deg, #19c58a 0%, #0aa46f 100%);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(10, 164, 111, 0.3);
+}
+
+.confirm-dialog-confirm:disabled,
+.confirm-dialog-cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.confirm-dialog-confirm:hover,
+.confirm-dialog-cancel:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .confirm-dialog-header {
+    padding: 14px 16px;
+  }
+
+  .confirm-dialog-body {
+    padding: 16px 16px 8px;
+    font-size: 14px;
+  }
+
+  .confirm-dialog-actions {
+    padding: 14px 16px 18px;
+  }
+}
+
+/* ========================================
+   Prompt Dialog
+   ======================================== */
+.prompt-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.prompt-dialog {
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  animation: scaleIn 0.2s ease-out;
+}
+
+.prompt-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #19c58a 0%, #0aa46f 100%);
+  color: #fff;
+}
+
+.prompt-dialog-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.prompt-dialog-title {
+  font-size: 16px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.prompt-dialog-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.prompt-dialog-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.prompt-dialog-body {
+  padding: 18px 20px 8px;
+  color: #1f2937;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.prompt-dialog-body p {
+  margin: 0 0 12px 0;
+}
+
+.prompt-dialog-input {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prompt-dialog-input:focus {
+  border-color: #19c58a;
+  box-shadow: 0 0 0 3px rgba(25, 197, 138, 0.2);
+}
+
+.prompt-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px 20px;
+}
+
+.prompt-dialog-cancel,
+.prompt-dialog-confirm {
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.prompt-dialog-cancel {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.prompt-dialog-confirm {
+  background: linear-gradient(135deg, #19c58a 0%, #0aa46f 100%);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(10, 164, 111, 0.3);
+}
+
+.prompt-dialog-confirm:hover,
+.prompt-dialog-cancel:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .prompt-dialog-header {
+    padding: 14px 16px;
+  }
+
+  .prompt-dialog-body {
+    padding: 16px 16px 8px;
+    font-size: 14px;
+  }
+
+  .prompt-dialog-actions {
+    padding: 14px 16px 18px;
   }
 }
 

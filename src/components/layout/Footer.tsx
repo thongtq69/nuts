@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useToast } from '@/context/ToastContext';
 
 interface SiteSettings {
     hotline: string;
@@ -25,6 +26,7 @@ interface SiteSettings {
 
 export default function Footer() {
     const [settings, setSettings] = useState<SiteSettings | null>(null);
+    const toast = useToast();
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -60,6 +62,11 @@ export default function Footer() {
     };
 
     const currentSettings = settings || defaultSettings;
+
+    const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        toast.success('Đăng ký thành công', 'Cảm ơn bạn đã đăng ký!');
+    };
 
     return (
         <footer className="footer">
@@ -126,7 +133,7 @@ export default function Footer() {
                     {/* Newsletter */}
                     <div className="footer-col newsletter-col footer-newsletter">
                         <h4 className="footer-title">Đăng ký nhận khuyến mãi</h4>
-                        <form className="newsletter-form" onSubmit={(e) => { e.preventDefault(); alert('Cảm ơn bạn đã đăng ký!'); }}>
+                        <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
                             <input type="email" placeholder="Nhập email của bạn" required />
                             <button type="submit" className="btn-submit">
                                 Gửi

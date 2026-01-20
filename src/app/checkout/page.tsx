@@ -8,6 +8,7 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 
 interface Province {
     code: number;
@@ -28,6 +29,7 @@ export default function CheckoutPage() {
     const router = useRouter();
     const { cartItems, cartTotal, originalTotal, savingsTotal, clearCart, getItemPrice } = useCart();
     const { user } = useAuth();
+    const toast = useToast();
     const [voucherCode, setVoucherCode] = useState('');
     const [voucherError, setVoucherError] = useState('');
     const [appliedDiscount, setAppliedDiscount] = useState(0);
@@ -100,7 +102,7 @@ export default function CheckoutPage() {
                 })
                 .catch(err => {
                     console.error('Error fetching districts:', err);
-                    alert('Không thể tải danh sách quận/huyện. Vui lòng thử lại.');
+                    toast.error('Lỗi tải quận/huyện', 'Không thể tải danh sách quận/huyện. Vui lòng thử lại.');
                 });
         }
     }, [selectedProvince]);
@@ -122,7 +124,7 @@ export default function CheckoutPage() {
                 })
                 .catch(err => {
                     console.error('Error fetching wards:', err);
-                    alert('Không thể tải danh sách phường/xã. Vui lòng thử lại.');
+                    toast.error('Lỗi tải phường/xã', 'Không thể tải danh sách phường/xã. Vui lòng thử lại.');
                 });
         }
     }, [selectedDistrict]);
@@ -174,7 +176,10 @@ export default function CheckoutPage() {
             if (res.ok && data.valid) {
                 setAppliedDiscount(data.discountAmount);
                 setIsVoucherApplied(true);
-                alert(`Đã áp dụng mã: Giảm ${new Intl.NumberFormat('vi-VN').format(data.discountAmount)}đ`);
+                toast.success(
+                    'Áp dụng voucher thành công',
+                    `Giảm ${new Intl.NumberFormat('vi-VN').format(data.discountAmount)}đ`
+                );
             } else {
                 setVoucherError(data.message || 'Mã không hợp lệ');
                 setAppliedDiscount(0);
@@ -189,15 +194,15 @@ export default function CheckoutPage() {
         if (isProcessing) return;
 
         if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
-            alert('Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.');
+            toast.warning('Thiếu thông tin', 'Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.');
             return;
         }
         if (!selectedProvince || !selectedDistrict || !selectedWard) {
-            alert('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã.');
+            toast.warning('Thiếu thông tin', 'Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã.');
             return;
         }
         if (!/^[0-9]{10,11}$/.test(formData.phone.replace(/\s/g, ''))) {
-            alert('Số điện thoại không hợp lệ.');
+            toast.warning('Số điện thoại không hợp lệ', 'Vui lòng kiểm tra lại số điện thoại.');
             return;
         }
 
@@ -249,7 +254,7 @@ export default function CheckoutPage() {
             router.push('/checkout/success');
         } catch (error: any) {
             console.error(error);
-            alert(error.message || 'Đặt hàng thất bại');
+            toast.error('Đặt hàng thất bại', error.message || 'Vui lòng thử lại.');
         } finally {
             setIsProcessing(false);
         }

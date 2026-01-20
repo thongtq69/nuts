@@ -19,6 +19,8 @@ import {
     Printer,
     MessageSquare
 } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface OrderDetailProps {
     order: {
@@ -79,6 +81,8 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
     const [isUpdating, setIsUpdating] = useState(false);
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [adminNote, setAdminNote] = useState('');
+    const toast = useToast();
+    const confirm = useConfirm();
 
     // Check if this is a membership order
     const isMembershipOrder = order.orderType === 'membership' || 
@@ -88,7 +92,14 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
     const StatusIcon = config.icon;
 
     const handleStatusChange = async (newStatus: string) => {
-        if (!confirm(`Xác nhận đổi trạng thái sang "${statusConfig[newStatus].label}"?`)) return;
+        const confirmed = await confirm({
+            title: 'Xác nhận đổi trạng thái',
+            description: `Xác nhận đổi trạng thái sang "${statusConfig[newStatus].label}"?`,
+            confirmText: 'Xác nhận',
+            cancelText: 'Hủy',
+        });
+
+        if (!confirmed) return;
 
         setIsUpdating(true);
         try {
@@ -100,13 +111,13 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
 
             if (res.ok) {
                 setCurrentStatus(newStatus);
-                alert('Cập nhật trạng thái thành công!');
+                toast.success('Cập nhật trạng thái thành công');
                 router.refresh();
             } else {
-                alert('Lỗi khi cập nhật trạng thái');
+                toast.error('Lỗi khi cập nhật trạng thái', 'Vui lòng thử lại.');
             }
         } catch (error) {
-            alert('Lỗi kết nối');
+            toast.error('Lỗi kết nối', 'Vui lòng thử lại.');
         } finally {
             setIsUpdating(false);
         }
