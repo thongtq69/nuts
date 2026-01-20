@@ -15,7 +15,8 @@ import {
     ChevronDown,
     Loader2,
     RefreshCw,
-    Trash2
+    Trash2,
+    AlertTriangle
 } from 'lucide-react';
 
 interface Order {
@@ -208,6 +209,32 @@ export default function AdminOrdersPage() {
                 </div>
             </div>
 
+            {/* COD Warning Alert */}
+            {(() => {
+                const codPending = orders.filter(o => o.paymentMethod === 'cod' && o.status === 'completed');
+                if (codPending.length === 0) return null;
+                return (
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center flex-shrink-0">
+                            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-amber-800 dark:text-amber-300">Cảnh báo COD chưa thu tiền</h3>
+                            <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                                Có <strong>{codPending.length} đơn hàng</strong> đã hoàn thành nhưng chưa thu tiền COD. 
+                                Vui lòng kiểm tra và cập nhật trạng thái thanh toán.
+                            </p>
+                        </div>
+                        <button 
+                            onClick={() => setFilterStatus('completed')}
+                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                            Xem ngay
+                        </button>
+                    </div>
+                );
+            })()}
+
             {/* Filters */}
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1">
@@ -327,6 +354,15 @@ export default function AdminOrdersPage() {
                                             </td>
                                             <td className="text-center px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                                 <div className="relative inline-block">
+                                                    {/* COD Warning Badge */}
+                                                    {order.paymentMethod === 'cod' && order.status === 'completed' && (
+                                                        <div className="absolute -top-2 -right-2 z-10">
+                                                            <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center" title="Cảnh báo: COD chưa thu tiền">
+                                                                <AlertTriangle size={12} className="text-white" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     <button
                                                         onClick={() => setOpenDropdown(isDropdownOpen ? null : order.id)}
                                                         disabled={isUpdating}

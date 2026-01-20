@@ -77,6 +77,20 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { items, shippingInfo, paymentMethod, shippingFee, note, voucherCode } = body;
 
+        if (!shippingInfo?.address || shippingInfo.address.length < 20) {
+            return NextResponse.json(
+                { message: 'Địa chỉ giao hàng phải có ít nhất 20 ký tự' },
+                { status: 400 }
+            );
+        }
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return NextResponse.json(
+                { message: 'Đơn hàng phải có ít nhất 1 sản phẩm' },
+                { status: 400 }
+            );
+        }
+
         const userId = await getUserId();
         const cookieStore = await cookies();
 
