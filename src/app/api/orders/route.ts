@@ -55,7 +55,7 @@ function calculateFinalPrice(
     if (settings.bulkDiscountEnabled && product.bulkPricing && product.bulkPricing.length > 0) {
         const sortedTiers = [...product.bulkPricing].sort((a: any, b: any) => b.minQuantity - a.minQuantity);
         const applicableTier = sortedTiers.find((tier: any) => quantity >= tier.minQuantity);
-        
+
         if (applicableTier) {
             const bulkDiscount = finalPrice * (applicableTier.discountPercent / 100);
             finalPrice = finalPrice - bulkDiscount;
@@ -154,10 +154,10 @@ export async function POST(req: Request) {
         if (voucherCode) {
             const voucher = await UserVoucher.findById(appliedVoucherId);
             if (voucher) {
-                const voucherValue = voucher.discountType === 'percent' 
+                const voucherValue = voucher.discountType === 'percent'
                     ? Math.round(itemsTotal * (voucher.discountValue / 100))
                     : voucher.discountValue;
-                
+
                 const maxDiscount = voucher.maxDiscount > 0 ? voucher.maxDiscount : voucherValue;
                 discountAmount = Math.min(voucherValue, maxDiscount);
             }

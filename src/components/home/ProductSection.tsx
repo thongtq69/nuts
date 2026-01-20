@@ -19,9 +19,16 @@ interface Product {
 interface ProductSectionProps {
     title: string;
     products: Product[];
+    variant?: 'six' | 'four';
 }
 
-function getPageSize(width: number) {
+function getPageSize(width: number, variant: 'six' | 'four') {
+    if (variant === 'four') {
+        if (width >= 1200) return 4;
+        if (width >= 768) return 3;
+        return 2;
+    }
+
     if (width >= 1400) return 6;
     if (width >= 1200) return 5;
     if (width >= 1024) return 4;
@@ -29,16 +36,16 @@ function getPageSize(width: number) {
     return 2;
 }
 
-export default function ProductSection({ title, products }: ProductSectionProps) {
+export default function ProductSection({ title, products, variant = 'six' }: ProductSectionProps) { 
     const [pageSize, setPageSize] = useState(6);
     const [page, setPage] = useState(0);
 
     useEffect(() => {
-        const update = () => setPageSize(getPageSize(window.innerWidth));
+        const update = () => setPageSize(getPageSize(window.innerWidth, variant));
         update();
         window.addEventListener('resize', update);
         return () => window.removeEventListener('resize', update);
-    }, []);
+    }, [variant]);
 
     const totalPages = Math.max(1, Math.ceil(products.length / pageSize));
 
@@ -90,7 +97,7 @@ export default function ProductSection({ title, products }: ProductSectionProps)
                 </div>
 
                 {products.length > 0 ? (
-                    <div className="products-grid-6">
+                    <div className={variant === 'four' ? 'products-grid' : 'products-grid-6'}>
                         {visibleProducts.map((product) => (
                             <ProductCard
                                 key={product.id}
