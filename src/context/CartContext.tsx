@@ -76,6 +76,42 @@ function calculatePrice(
     return Math.round(finalPrice);
 }
 
+function parseStoredPrice(value: unknown): number {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+        const digits = value.replace(/[^\d]/g, '');
+        const n = digits ? Number(digits) : NaN;
+        return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
+}
+
+function normalizeStoredCartItem(raw: any): CartItem | null {
+    if (!raw || !raw.id) return null;
+
+    const quantity = Math.max(1, Number(raw.quantity) || 1);
+
+    const originalPriceCandidate =
+        parseStoredPrice(raw.originalPrice) ||
+        parseStoredPrice(raw.price) ||
+        parseStoredPrice(raw.agentPrice);
+
+    // If we still can't infer a valid price, drop the item instead of showing 0₫ everywhere.
+    if (!originalPriceCandidate || originalPriceCandidate <= 0) return null;
+
+    return {
+        id: String(raw.id),
+        name: String(raw.name || ''),
+        image: String(raw.image || ''),
+        originalPrice: originalPriceCandidate,
+        price: parseStoredPrice(raw.price) || originalPriceCandidate,
+        quantity,
+        agentPrice: raw.agentPrice !== undefined ? parseStoredPrice(raw.agentPrice) : undefined,
+        bulkPricing: Array.isArray(raw.bulkPricing) ? raw.bulkPricing : undefined,
+        isAgent: Boolean(raw.isAgent)
+    };
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isMounted, setIsMounted] = useState(false);
@@ -119,7 +155,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
             const savedCart = localStorage.getItem('cart');
             if (savedCart) {
                 try {
-                    setCartItems(JSON.parse(savedCart));
+                    const parsed = JSON.parse(savedCart);
+                    if (Array.isArray(parsed)) {
+                        const normalized = parsed
+                            .map(normalizeStoredCartItem)
+                            .filter(Boolean) as CartItem[];
+                        setCartItems(normalized);
+                    }
                 } catch (e) {
                     console.error('Failed to parse cart', e);
                 }
