@@ -203,7 +203,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                         >
                             <div
                                 onClick={() => setSelectedTerms({ name: pkg.name, terms: pkg.terms || pkg.description || 'Đang cập nhật...' })}
-                                className={`relative w-full h-[740px] group ${theme.bg} rounded-[64px] border ${theme.border} shadow-2xl flex flex-col transition-all duration-500 hover:-translate-y-4 overflow-hidden cursor-pointer`}
+                                className={`relative w-full h-[740px] group ${theme.bg} rounded-none border ${theme.border} shadow-2xl flex flex-col transition-all duration-500 hover:-translate-y-4 overflow-hidden cursor-pointer`}
                             >
                                 {/* Header Decorative Section - Balanced height */}
                                 <div className={`relative h-60 w-full ${theme.headerBg} flex items-center justify-center transition-colors duration-500`}>
@@ -222,7 +222,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                     {/* Special Medal Badge */}
                                     {specialLabel && (
                                         <div className="absolute top-8 right-10 z-30">
-                                            <div className="bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full border border-white/20 shadow-2xl">
+                                            <div className="bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-none border border-white/20 shadow-2xl">
                                                 {specialLabel}
                                             </div>
                                         </div>
@@ -265,7 +265,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                                 e.stopPropagation();
                                                 onBuyPackage(pkg._id);
                                             }}
-                                            className={`w-full py-5 rounded-[32px] font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 ${theme.button} shadow-xl active:scale-95 flex items-center justify-center gap-3 border-b-4 border-black/10`}
+                                            className={`w-full py-5 rounded-none font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 ${theme.button} shadow-xl active:scale-95 flex items-center justify-center gap-3 border-b-4 border-black/10`}
                                         >
                                             Đăng ký ngay
                                             <ArrowRight size={22} strokeWidth={3} />
@@ -275,7 +275,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                     {/* Features List - Balanced spacing */}
                                     <div className="space-y-5">
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-2xl ${theme.accent}`}>
+                                            <div className={`p-3 rounded-none ${theme.accent}`}>
                                                 <Tag size={18} strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col">
@@ -285,7 +285,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                         </div>
 
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-2xl ${theme.accent}`}>
+                                            <div className={`p-3 rounded-none ${theme.accent}`}>
                                                 <CheckCircle2 size={18} strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col">
@@ -295,7 +295,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                         </div>
 
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-2xl ${theme.accent}`}>
+                                            <div className={`p-3 rounded-none ${theme.accent}`}>
                                                 <Zap size={18} strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col">
