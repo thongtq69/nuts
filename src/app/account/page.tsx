@@ -10,6 +10,7 @@ import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AffiliateTermsModal from '@/components/affiliate/AffiliateTermsModal';
 
 // Helper functions for vouchers
 function maskVoucherCode(code: string): string {
@@ -74,6 +75,10 @@ export default function AccountPage() {
 
     // Agent application state
     const [applyingAgent, setApplyingAgent] = useState(false);
+
+    // Terms modal state
+    const [showTermsModal, setShowTermsModal] = useState(false);
+    const [affiliateType, setAffiliateType] = useState<'agent' | 'collaborator'>('collaborator');
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -218,6 +223,11 @@ export default function AccountPage() {
         } finally {
             setApplyingAgent(false);
         }
+    };
+
+    const openTermsModal = (type: 'agent' | 'collaborator') => {
+        setAffiliateType(type);
+        setShowTermsModal(true);
     };
 
     // Voucher helper functions
@@ -921,29 +931,123 @@ export default function AccountPage() {
                                 ) : (
                                     <div className="agent-apply-section">
                                         <div className="agent-benefits">
-                                            <h3>Lợi ích khi trở thành Đại lý</h3>
-                                            <ul>
-                                                <li>✓ Hoa hồng 10% cho mỗi đơn hàng giới thiệu</li>
-                                                <li>✓ Nhận mã giới thiệu riêng</li>
-                                                <li>✓ Dashboard theo dõi doanh thu</li>
-                                                <li>✓ Rút tiền hoa hồng dễ dàng</li>
-                                            </ul>
+                                            <h3>Chọn loại tham gia</h3>
+                                            <p className="benefits-desc">Bạn muốn tham gia với tư cách nào?</p>
+                                            
+                                            <div className="affiliate-options">
+                                                <div className="affiliate-option" onClick={() => openTermsModal('collaborator')}>
+                                                    <div className="option-icon">🤝</div>
+                                                    <h4>Cộng tác viên</h4>
+                                                    <ul>
+                                                        <li>✓ Hoa hồng 8%</li>
+                                                        <li>✓ Không yêu cầu doanh thu</li>
+                                                        <li>✓ Dễ dàng tham gia</li>
+                                                    </ul>
+                                                </div>
+                                                
+                                                <div className="affiliate-option featured" onClick={() => openTermsModal('agent')}>
+                                                    <div className="option-badge">PHỔ BIẾN</div>
+                                                    <div className="option-icon">🏆</div>
+                                                    <h4>Đại lý</h4>
+                                                    <ul>
+                                                        <li>✓ Hoa hồng 10%</li>
+                                                        <li>✓ Quản lý đội ngũ CTV</li>
+                                                        <li>✓ Hoa hồng từ CTV: 2%</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <button
-                                            className="apply-agent-btn"
-                                            onClick={handleApplyAgent}
-                                            disabled={applyingAgent}
-                                        >
-                                            {applyingAgent ? 'Đang gửi...' : 'Đăng ký ngay'}
-                                        </button>
                                     </div>
                                 )}
                             </div>
                         )}
                     </div>
+                    
+                    {/* Affiliate Terms Modal */}
+                    <AffiliateTermsModal
+                        isOpen={showTermsModal}
+                        onClose={() => setShowTermsModal(false)}
+                        affiliateType={affiliateType}
+                    />
                 </div>
             </div>
             <Footer />
+
+            <style jsx>{`
+                .benefits-desc {
+                    color: #666;
+                    font-size: 14px;
+                    margin-bottom: 20px;
+                }
+                .affiliate-options {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 16px;
+                    margin-top: 16px;
+                }
+                .affiliate-option {
+                    border: 2px solid #e5e7eb;
+                    border-radius: 12px;
+                    padding: 20px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    position: relative;
+                    background: white;
+                }
+                .affiliate-option:hover {
+                    border-color: #9C7043;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                .affiliate-option.featured {
+                    border-color: #9C7043;
+                    background: linear-gradient(to bottom, #f8f4f0, white);
+                }
+                .affiliate-option.featured:hover {
+                    border-color: #7d5a36;
+                }
+                .option-badge {
+                    position: absolute;
+                    top: -10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #9C7043;
+                    color: white;
+                    font-size: 11px;
+                    font-weight: 700;
+                    padding: 4px 12px;
+                    border-radius: 12px;
+                    white-space: nowrap;
+                }
+                .option-icon {
+                    font-size: 32px;
+                    text-align: center;
+                    margin-bottom: 12px;
+                }
+                .affiliate-option h4 {
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: #333;
+                    text-align: center;
+                    margin: 0 0 12px 0;
+                }
+                .affiliate-option ul {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                .affiliate-option li {
+                    font-size: 13px;
+                    color: #666;
+                    margin-bottom: 6px;
+                    padding-left: 0;
+                }
+                @media (max-width: 640px) {
+                    .affiliate-options {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `}</style>
         </main>
     );
 }

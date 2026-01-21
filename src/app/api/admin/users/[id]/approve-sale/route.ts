@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
+import { sendSaleApprovedEmail } from '@/lib/email';
 
 export async function POST(
     req: Request,
@@ -31,6 +32,13 @@ export async function POST(
         }
 
         await user.save();
+
+        // Send approval email
+        try {
+            await sendSaleApprovedEmail(user.email, user.name, user.referralCode);
+        } catch (emailError) {
+            console.error('Failed to send approval email:', emailError);
+        }
 
         return NextResponse.json({ message: 'Sale application approved', user });
     } catch (error) {

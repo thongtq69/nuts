@@ -385,6 +385,56 @@ export async function sendPasswordResetEmail(to: string, resetToken: string) {
     });
 }
 
+// Send Sale Application Approved Email
+export async function sendSaleApprovedEmail(to: string, name: string, referralCode: string) {
+    const transporter = await createTransporter();
+    
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>${emailStyles}</head>
+        <body>
+            <div class="container">
+                ${emailHeader}
+                <div class="content">
+                    <h2>🎉 Chúc mừng bạn đã trở thành Đại lý/ Cộng tác viên Go Nuts!</h2>
+                    <p>Xin chào <strong>${name}</strong>,</p>
+                    <p>Chúng tôi vui thông báo rằng đơn đăng ký của bạn đã được phê duyệt.</p>
+                    
+                    <div class="otp-box">
+                        <p style="margin: 0; font-size: 14px; color: #666;">Mã giới thiệu của bạn</p>
+                        <p class="otp-code">${referralCode}</p>
+                    </div>
+                    
+                    <p><strong>Bạn đã có thể:</strong></p>
+                    <ul style="text-align: left; line-height: 1.8;">
+                        <li>Đăng nhập vào trang quản lý đại lý tại <a href="${BASE_URL}/agent">${BASE_URL}/agent</a></li>
+                        <li>Tích lũy hoa hồng từ đơn hàng của khách hàng giới thiệu</li>
+                        <li>Theo dõi doanh thu và hoa hồng trực tuyến</li>
+                    </ul>
+                    
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="${BASE_URL}/agent" class="btn">Truy cập trang đại lý</a>
+                    </p>
+                    
+                    <p style="color: #666; font-size: 14px;">
+                        Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ hotline hoặc email hỗ trợ.
+                    </p>
+                </div>
+                ${emailFooter}
+            </div>
+        </body>
+        </html>
+    `;
+    
+    await transporter.sendMail({
+        from: `"Go Nuts" <${GMAIL_USER}>`,
+        to,
+        subject: `[Go Nuts] Đơn đăng ký đại lý đã được phê duyệt! 🎉`,
+        html,
+    });
+}
+
 export default {
     generateOTP,
     sendOTPEmail,
@@ -392,4 +442,5 @@ export default {
     sendOrderStatusEmail,
     sendWelcomeEmail,
     sendPasswordResetEmail,
+    sendSaleApprovedEmail,
 };

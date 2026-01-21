@@ -6,6 +6,7 @@ import PromotionBanner from '@/components/home/PromotionBanner';
 import ProductSection from '@/components/home/ProductSection';
 import LargePromoBanner from '@/components/home/LargePromoBanner';
 import FeaturesSection from '@/components/home/FeaturesSection';
+import AffiliateRegisterSection from '@/components/home/AffiliateRegisterSection';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
@@ -93,6 +94,7 @@ export default async function Home() {
         <ProductSection title="Khuyến mãi" products={promotionProducts as any} />
       </ErrorBoundary>
       <FeaturesSection />
+      <AffiliateRegisterSection />
       <Footer />
     </main>
   );

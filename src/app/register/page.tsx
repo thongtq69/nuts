@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
@@ -10,7 +10,11 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import PasswordInput from '@/components/common/PasswordInput';
 import Link from 'next/link';
 
-export default function RegisterPage() {
+function RegisterForm() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const toast = useToast();
+    
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
@@ -18,11 +22,18 @@ export default function RegisterPage() {
         password: '',
         confirmPassword: ''
     });
+    const [registerAs, setRegisterAs] = useState<'user' | 'agent' | 'collaborator'>('user');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const router = useRouter();
-    const toast = useToast();
+    useEffect(() => {
+        const type = searchParams.get('type');
+        if (type === 'agent') {
+            setRegisterAs('agent');
+        } else if (type === 'collaborator') {
+            setRegisterAs('collaborator');
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,7 +54,8 @@ export default function RegisterPage() {
                     name: formData.name,
                     email: formData.email,
                     password: formData.password,
-                    phone: formData.phone
+                    phone: formData.phone,
+                    registerAs
                 }),
             });
 
@@ -53,7 +65,7 @@ export default function RegisterPage() {
                 throw new Error(data.message || 'Đăng ký thất bại');
             }
 
-            toast.success('Đăng ký thành công!', 'Vui lòng đăng nhập để tiếp tục.');
+            toast.success('Đăng ký thành công!', data.message);
             router.push('/login');
         } catch (err: any) {
             setError(err.message);
@@ -110,6 +122,51 @@ export default function RegisterPage() {
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 />
                             </div>
+                            
+                            <div className="form-group">
+                                <label>Đăng ký với tư cách</label>
+                                <div className="role-selector">
+                                    <label className={`role-option ${registerAs === 'user' ? 'active' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="registerAs"
+                                            value="user"
+                                            checked={registerAs === 'user'}
+                                            onChange={(e) => setRegisterAs(e.target.value as any)}
+                                        />
+                                        <span className="role-label">Khách hàng</span>
+                                        <span className="role-desc">Mua hàng và nhận ưu đãi</span>
+                                    </label>
+                                    <label className={`role-option ${registerAs === 'collaborator' ? 'active' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="registerAs"
+                                            value="collaborator"
+                                            checked={registerAs === 'collaborator'}
+                                            onChange={(e) => setRegisterAs(e.target.value as any)}
+                                        />
+                                        <span className="role-label">Cộng tác viên</span>
+                                        <span className="role-desc">Nhận hoa hồng từ giới thiệu</span>
+                                    </label>
+                                    <label className={`role-option ${registerAs === 'agent' ? 'active' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="registerAs"
+                                            value="agent"
+                                            checked={registerAs === 'agent'}
+                                            onChange={(e) => setRegisterAs(e.target.value as any)}
+                                        />
+                                        <span className="role-label">Đại lý</span>
+                                        <span className="role-desc">Hoa hồng cao + quản lý CTV</span>
+                                    </label>
+                                </div>
+                                {registerAs !== 'user' && (
+                                    <p className="role-notice">
+                                        * Tài khoản sẽ được admin duyệt trong 24-48 giờ. Bạn sẽ nhận email thông báo khi được duyệt.
+                                    </p>
+                                )}
+                            </div>
+
                             <div className="form-group">
                                 <label>Mật khẩu</label>
                                 <PasswordInput
@@ -141,6 +198,91 @@ export default function RegisterPage() {
                 </div>
             </div>
             <Footer />
+
+            <style jsx>{`
+                .role-selector {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 12px;
+                    margin-top: 8px;
+                }
+                .role-option {
+                    position: relative;
+                    padding: 16px;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                }
+                .role-option:hover {
+                    border-color: #9C7043;
+                    background: #faf6f2;
+                }
+                .role-option.active {
+                    border-color: #9C7043;
+                    background: #f8f4f0;
+                }
+                .role-option input {
+                    position: absolute;
+                    opacity: 0;
+                }
+                .role-label {
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 4px;
+                }
+                .role-desc {
+                    font-size: 12px;
+                    color: #666;
+                }
+                .role-option.active .role-label {
+                    color: #9C7043;
+                }
+                .role-notice {
+                    margin-top: 12px;
+                    padding: 12px;
+                    background: #fef3c7;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    color: #92400e;
+                }
+                @media (max-width: 640px) {
+                    .role-selector {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `}</style>
         </main>
+    );
+}
+
+function LoadingFallback() {
+    return (
+        <main>
+            <Header />
+            <Navbar />
+            <div className="container">
+                <div className="auth-wrapper">
+                    <div className="auth-card">
+                        <div className="flex justify-center py-8">
+                            <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <Footer />
+        </main>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <RegisterForm />
+        </Suspense>
     );
 }

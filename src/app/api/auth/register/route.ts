@@ -20,7 +20,7 @@ import { cookies } from 'next/headers';
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const { name, email, password, phone } = await req.json();
+        const { name, email, password, phone, registerAs } = await req.json();
 
         if (!name || !email || !password) {
             return NextResponse.json(
@@ -53,14 +53,27 @@ export async function POST(req: Request) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const user: any = await User.create({
+        // Check if registering as agent/collaborator
+        const isAgentOrCollaborator = registerAs === 'agent' || registerAs === 'collaborator';
+
+        const userData: any = {
             name,
             email,
             password: hashedPassword,
             phone,
             welcomeVoucherIssued: false,
             referrer: referrerId || undefined,
-        });
+        };
+
+        // If registering as agent/collaborator, set pending status
+        if (isAgentOrCollaborator) {
+            userData.role = 'user'; // Still user role initially
+            userData.saleApplicationStatus = 'pending';
+            userData.saleAppliedAt = new Date();
+            userData.saleType = registerAs === 'agent' ? 'agent' : 'collaborator';
+        }
+
+        const user: any = await User.create(userData);
 
         if (user) {
             // Create welcome voucher for new user
@@ -83,11 +96,19 @@ export async function POST(req: Request) {
             // Mark welcome voucher as issued
             await User.findByIdAndUpdate(user._id, { welcomeVoucherIssued: true });
 
-            // Send welcome email
-            try {
-                await sendWelcomeEmail(user.email, user.name, voucherCode);
-            } catch (emailError) {
-                console.error('Failed to send welcome email:', emailError);
+            // Send welcome email for regular users only
+            if (!isAgentOrCollaborator) {
+                try {
+                    await sendWelcomeEmail(user.email, user.name, voucherCode);
+                } catch (emailError) {
+                    console.error('Failed to send welcome email:', emailError);
+                }
+            }
+
+            let message = 'Đăng ký thành công! Bạn đã nhận được voucher 50.000đ cho đơn hàng đầu tiên từ 300.000đ.';
+            
+            if (isAgentOrCollaborator) {
+                message = 'Đăng ký thành công! Tài khoản của bạn đang chờ admin duyệt. Sau khi được duyệt, bạn sẽ nhận được email thông báo và có thể truy cập trang đại lý/CTV.';
             }
 
             return NextResponse.json({
@@ -95,7 +116,8 @@ export async function POST(req: Request) {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                message: 'Đăng ký thành công! Bạn đã nhận được voucher 50.000đ cho đơn hàng đầu tiên từ 300.000đ.'
+                saleApplicationStatus: user.saleApplicationStatus || null,
+                message
             }, { status: 201 });
         } else {
             return NextResponse.json(

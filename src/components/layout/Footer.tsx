@@ -91,7 +91,7 @@ export default function Footer() {
                                 <Link href="/about">Về chúng tôi</Link>
                             </li>
                             <li>
-                                <Link href={currentSettings.agentRegistrationUrl}>Đăng ký Đại lý</Link>
+                                <Link href="/register?type=agent">Đăng ký Đại lý</Link>
                             </li>
                             <li>
                                 <Link href="/subscriptions">Gói VIP</Link>

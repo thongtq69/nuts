@@ -29,7 +29,7 @@ export default function TopBar() {
                     {/* Right: Register & Socials */}
                     <div className="top-bar-right">
                         <div className="register-links">
-                            <Link href="/agent">Đăng ký Đại lý</Link>
+                            <Link href="/register?type=agent">Đăng ký Đại lý</Link>
                             <span style={{ margin: '0 4px' }}>|</span>
                             <Link href="/subscriptions">Gói VIP</Link>
                         </div>

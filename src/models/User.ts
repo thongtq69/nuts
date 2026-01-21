@@ -16,6 +16,7 @@ export interface IUser {
     saleApprovedAt?: Date;
     saleRejectedAt?: Date;
     saleRejectionReason?: string;
+    saleType?: 'agent' | 'collaborator' | null;
     welcomeVoucherIssued?: boolean;
     referralCode?: string;
     walletBalance?: number;
@@ -57,6 +58,7 @@ const UserSchema: Schema<IUser> = new Schema(
         saleApprovedAt: { type: Date },
         saleRejectedAt: { type: Date },
         saleRejectionReason: { type: String },
+        saleType: { type: String, enum: ['agent', 'collaborator', null], default: null },
         welcomeVoucherIssued: { type: Boolean, default: false },
         referralCode: { type: String, unique: true, sparse: true },
         walletBalance: { type: Number, default: 0 },

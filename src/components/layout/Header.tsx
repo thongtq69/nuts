@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import AffiliateTermsModal from '@/components/affiliate/AffiliateTermsModal';
 
 interface SiteSettings {
     hotline: string;
@@ -12,6 +13,7 @@ interface SiteSettings {
     facebookUrl: string;
     instagramUrl: string;
     youtubeUrl: string;
+    tiktokUrl?: string;
     promoText: string;
     promoEnabled: boolean;
     agentRegistrationUrl: string;
@@ -29,11 +31,14 @@ export default function Header() {
         facebookUrl: '',
         instagramUrl: '',
         youtubeUrl: '',
-        promoText: 'Giảm giá 8% khi mua hàng từ 899k trở lên với mã "SAVER8"',
+        tiktokUrl: '',
+        promoText: 'Giảm giá 8% khi mua hàng từ 899 trở lên với mã "SAVE8P"',
         promoEnabled: true,
         agentRegistrationUrl: '/agent/register',
         ctvRegistrationUrl: '/agent/register',
     });
+    const [showTermsModal, setShowTermsModal] = useState(false);
+    const [affiliateType, setAffiliateType] = useState<'agent' | 'collaborator'>('agent');
 
     useEffect(() => {
         // Fetch site settings
@@ -59,131 +64,199 @@ export default function Header() {
         }
     };
 
+    const handleAffiliateClick = (type: 'agent' | 'collaborator') => {
+        if (user && (user.role === 'user' || user.role === 'sale')) {
+            setAffiliateType(type);
+            setShowTermsModal(true);
+        } else {
+            router.push(`/register?type=${type}`);
+        }
+    };
+
     return (
         <>
-            {/* Unified Dark Top Bar - matching Figma */}
-            <div className="unified-top-bar">
-                <div className="container">
-                    <div className="unified-top-content">
-                        {/* Left: Hotline + Zalo */}
-                        <div className="top-left">
-                            <span className="hotline-dark">Hotline: {settings.hotline}</span>
+            {/* Unified Top Bar - Spacious and Premium */}
+            <div className="bg-[#E3E846] border-b border-black/5 relative z-50">
+                <div className="container mx-auto px-4">
+                    {/* Row 1: Hotline & Socials */}
+                    <div className="flex items-center justify-between py-2 md:py-3 text-[11px] md:text-xs font-medium text-[#3C2A1A]">
+                        {/* Left: Hotline & Zalo */}
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <span className="opacity-90 whitespace-nowrap">Hotline: {settings.hotline}</span>
                             {settings.zaloLink && (
-                                <a href={settings.zaloLink} target="_blank" rel="noopener noreferrer" className="zalo-link-dark">
-                                    <img src="/assets/images/Zalo.svg" alt="Zalo" className="zalo-icon" />
+                                <a href={settings.zaloLink} target="_blank" rel="noopener noreferrer" className="w-5 h-5 hover:scale-110 transition-transform flex-shrink-0">
+                                    <img src="/assets/images/Zalo.svg" alt="Zalo" className="w-full h-full" />
                                 </a>
                             )}
                         </div>
 
-                        {/* Center: Yellow Promo Banner */}
-                        {settings.promoEnabled && settings.promoText && (
-                            <div className="promo-banner-inline">
-                                <span>{settings.promoText}</span>
+                        {/* Center: Affiliate Links (Mobile Only) */}
+                        <div className="flex lg:hidden items-center gap-2 font-medium text-[9px] opacity-80">
+                            <button onClick={() => handleAffiliateClick('agent')} className="hover:text-[#9C7044] whitespace-nowrap">Đại lý</button>
+                            <span>|</span>
+                            <button onClick={() => handleAffiliateClick('collaborator')} className="hover:text-[#9C7044] whitespace-nowrap">CTV</button>
+                        </div>
+
+                        {/* Right Side: Links & Social Icons */}
+                        <div className="flex items-center gap-2 md:gap-4">
+                            <div className="hidden lg:flex items-center gap-3 mr-2 font-medium">
+                                <button
+                                    onClick={() => handleAffiliateClick('agent')}
+                                    className="hover:text-[#9C7044] transition-colors whitespace-nowrap bg-transparent border-0 cursor-pointer"
+                                >
+                                    Đăng ký Đại lý
+                                </button>
+                                <span className="opacity-20 font-bold">|</span>
+                                <button
+                                    onClick={() => handleAffiliateClick('collaborator')}
+                                    className="hover:text-[#9C7044] transition-colors whitespace-nowrap bg-transparent border-0 cursor-pointer"
+                                >
+                                    Cộng tác viên
+                                </button>
                             </div>
-                        )}
 
-                        {/* Right: Social Icons + Links */}
-                        <div className="top-right">
-                            <Link href={settings.agentRegistrationUrl || '/agent/register'} className="top-link">Đăng ký Đại lý/</Link>
-                            <Link href={settings.ctvRegistrationUrl || '/agent/register'} className="top-link">Cộng tác viên</Link>
-
-                            <div className="social-icons-group">
+                            {/* Social Icons Group */}
+                            <div className="flex items-center gap-1.5 md:gap-2">
                                 {settings.facebookUrl && (
-                                    <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="social-icon-dark facebook">
-                                        <svg viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                                        </svg>
+                                    <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full bg-[#9C7044] flex items-center justify-center text-white hover:bg-[#855D36] transition-all shadow-sm flex-shrink-0">
+                                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
                                     </a>
                                 )}
                                 {settings.instagramUrl && (
-                                    <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="social-icon-dark instagram">
-                                        <svg viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                                        </svg>
+                                    <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full bg-[#9C7044] flex items-center justify-center text-white hover:bg-[#855D36] transition-all shadow-sm flex-shrink-0">
+                                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.054 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.056.413 2.227.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.054 1.17-.249 1.805-.415 2.227-.217.562-.477.96-.896 1.382-.419.419-.818.679-1.381.896-.422.164-1.056.36-2.227.413-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.054-1.805-.249-2.227-.415-.562-.217-.96-.477-1.382-.896-.419-.42-.679-.819-.896-1.381-.164-.422-.36-1.056-.413-2.227-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.054-1.17.249-1.805.415-2.227.217-.562.477-.96.896-1.382.419-.419.818-.679 1.381-.896.422-.164 1.056-.36 2.227-.413 1.266-.058 1.646-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-1.28.057-2.155.26-2.922.559-.793.308-1.465.72-2.132 1.388s-1.08 1.339-1.388 2.132c-.299.767-.502 1.642-.559 2.922-.058 1.28-.072 1.688-.072 4.947s.014 3.667.072 4.947c.057 1.28.26 2.155.559 2.922.308.793.72 1.465 1.388 2.132s1.339 1.08 2.132 1.388c.767.299 1.642.502 2.922.559 1.28.058 1.688.072 4.947.072s3.667-.014 4.947-.072c1.28-.057 2.155-.26 2.922-.559.793-.308 1.465-.72 2.132-1.388s1.08-1.339 1.388-2.132c.299-.767.502-1.642.559-2.922.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.057-1.28-.26-2.155-.559-2.922-.308-.793-.72-1.465-1.388-2.132s-1.339-1.08-2.132-1.388c-.767-.299-1.642-.502-2.922-.559-1.28-.058-1.688-.072-4.947-.072zM12 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4zm6.406-11.845c0 .796-.646 1.442-1.442 1.442-.795 0-1.442-.646-1.442-1.442 0-.795.647-1.442 1.442-1.442.796 0 1.442.647 1.442 1.442z" /></svg>
                                     </a>
                                 )}
                                 {settings.youtubeUrl && (
-                                    <a href={settings.youtubeUrl} target="_blank" rel="noopener noreferrer" className="social-icon-dark youtube">
-                                        <svg viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                                        </svg>
+                                    <a href={settings.youtubeUrl} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full bg-[#9C7044] flex items-center justify-center text-white hover:bg-[#855D36] transition-all shadow-sm flex-shrink-0">
+                                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" /></svg>
+                                    </a>
+                                )}
+                                {settings.tiktokUrl && (
+                                    <a href={settings.tiktokUrl} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full bg-[#9C7044] flex items-center justify-center text-white hover:bg-[#855D36] transition-all shadow-sm flex-shrink-0">
+                                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg>
                                     </a>
                                 )}
                             </div>
                         </div>
                     </div>
+
+                    {/* Row 2: Promo Banner - Now visible on all screens by default or specifically tuned */}
+                    {settings.promoEnabled && settings.promoText && (
+                        <div className="border-t border-black/5 py-1.5 overflow-hidden">
+                            <div className="flex justify-center items-center">
+                                <span className="uppercase text-[10px] md:text-[11px] font-bold text-[#3C2A1A] tracking-wider animate-pulse text-center whitespace-normal md:whitespace-nowrap px-4">
+                                    {settings.promoText}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Header - White */}
-            <header className="header">
-                <div className="container">
-                    <div className="header-content">
-                        <Link href="/" className="logo">
-                            <img src="/assets/logo.png" alt="Go Nuts Logo" />
-                        </Link>
+            {/* Main Header - White with subtle shadow */}
+            <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">
+                <div className="container mx-auto px-4 py-4 md:py-6">
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-8">
+                        {/* Mobile Row: Logo & Actions */}
+                        <div className="w-full flex items-center justify-between lg:w-auto">
+                            <Link href="/" className="shrink-0">
+                                <img src="/assets/logo.png" alt="Go Nuts Logo" className="h-14 md:h-20 w-auto" />
+                            </Link>
 
-                        <div className="search-container">
-                            <input
-                                type="text"
-                                className="search-input"
-                                placeholder="Tìm kiếm..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                            />
-                            <div className="category-dropdown">
-                                <button className="category-btn">
-                                    Tất cả các danh mục
-                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                        <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" />
+                            {/* Mobile Icons - Right side */}
+                            <div className="flex items-center gap-4 lg:hidden">
+                                <Link href={user ? "/account" : "/login"} className="p-2 text-[#3C2A1A] hover:bg-slate-50 rounded-full transition-colors">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
                                     </svg>
-                                </button>
+                                </Link>
+                                <Link href="/cart" className="p-2 text-[#3C2A1A] hover:bg-slate-50 rounded-full transition-colors relative">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <circle cx="9" cy="21" r="1" />
+                                        <circle cx="20" cy="21" r="1" />
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+                                    </svg>
+                                    {cartCount > 0 && (
+                                        <span className="absolute top-0 right-0 w-4 h-4 bg-[#9C7044] text-[10px] text-white font-bold rounded-full flex items-center justify-center border-2 border-white">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </Link>
                             </div>
-                            <button className="search-btn" onClick={handleSearch}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <path d="M21 21l-4.35-4.35" />
-                                </svg>
-                            </button>
                         </div>
 
-                        <div className="header-actions">
-                            <Link href={user ? "/account" : "/login"} className="action-link account-link">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                                    <circle cx="12" cy="7" r="4" />
-                                </svg>
-                                <div className="account-info">
-                                    <span className="account-label">
-                                        {user ? `Xin chào, ${user.name}` : 'Đăng nhập / Đăng ký'}
-                                    </span>
-                                    <span className="account-title">
-                                        Tài khoản của tôi{' '}
-                                        <svg width="10" height="10" viewBox="0 0 12 12">
-                                            <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" fill="none" />
-                                        </svg>
+                        {/* Search Bar - Full width on mobile/tablet */}
+                        <div className="w-full lg:flex-1 max-w-2xl relative group">
+                            <div className="flex items-center bg-slate-100 rounded-2xl border-2 border-transparent focus-within:border-[#9C7044]/30 focus-within:bg-white transition-all overflow-hidden shadow-inner">
+                                <div className="pl-4 text-slate-400">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <path d="M21 21l-4.35-4.35" />
+                                    </svg>
+                                </div>
+                                <input
+                                    type="text"
+                                    className="w-full py-3 px-4 bg-transparent text-sm md:text-base outline-none font-medium placeholder:text-slate-400 text-slate-800"
+                                    placeholder="Tìm kiếm sản phẩm hạt dinh dưỡng..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                />
+                                <button
+                                    onClick={handleSearch}
+                                    className="bg-[#9C7044] text-white px-6 py-3 font-semibold text-sm transition-colors"
+                                >
+                                    Tìm
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Desktop Actions - Hidden on Mobile */}
+                        <div className="hidden lg:flex items-center gap-8 shrink-0">
+                            <Link href={user ? "/account" : "/login"} className="flex items-center gap-3 group">
+                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-[#9C7044] group-hover:bg-[#9C7044] group-hover:text-white transition-all duration-300">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-slate-500 font-semibold tracking-wide">Tài khoản</span>
+                                    <span className="text-sm font-bold text-slate-800">
+                                        {user ? user.name.split(' ').pop() : 'Đăng nhập'}
                                     </span>
                                 </div>
                             </Link>
-                            <Link href="/cart" className="action-link cart">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="9" cy="21" r="1" />
-                                    <circle cx="20" cy="21" r="1" />
-                                    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-                                </svg>
-                                <div className="cart-info">
-                                    <span className="cart-label">Giỏ hàng</span>
-                                    <div className="cart-detail">
-                                        <span className="cart-count">{cartCount}</span>
-                                        <span className="cart-total">{cartTotal.toLocaleString()}đ</span>
-                                    </div>
+
+                            <Link href="/cart" className="flex items-center gap-3 group">
+                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-[#9C7044] group-hover:bg-[#9C7044] group-hover:text-white transition-all duration-300 relative">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <circle cx="9" cy="21" r="1" />
+                                        <circle cx="20" cy="21" r="1" />
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+                                    </svg>
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#9C7044] text-[10px] text-white font-bold rounded-full flex items-center justify-center border-2 border-white">
+                                        {cartCount}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-slate-500 font-semibold tracking-wide">Giỏ hàng</span>
+                                    <span className="text-sm font-bold text-slate-800">{cartTotal.toLocaleString()}đ</span>
                                 </div>
                             </Link>
                         </div>
                     </div>
                 </div>
             </header>
+
+            {/* Affiliate Terms Modal */}
+            <AffiliateTermsModal
+                isOpen={showTermsModal}
+                onClose={() => setShowTermsModal(false)}
+                affiliateType={affiliateType}
+            />
         </>
     );
 }
