@@ -313,11 +313,10 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                             </button>
                         </div>
                         <div className="p-8 max-h-[60vh] overflow-y-auto">
-                            <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-relaxed">
-                                {selectedTerms.terms.split('\n').map((line, i) => (
-                                    <p key={i} className="mb-4">{line}</p>
-                                ))}
-                            </div>
+                            <div
+                                className="prose prose-slate max-w-none text-slate-600 font-medium leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: selectedTerms.terms }}
+                            />
                         </div>
                         <div className="p-8 pt-0">
                             <button

@@ -37,6 +37,7 @@ interface Package {
     price: number;
     description: string;
     terms: string;
+    badgeText?: string;
     imageUrl?: string;
     imagePublicId?: string;
     voucherQuantity: number;
@@ -66,6 +67,7 @@ const defaultPackage: Partial<Package> = {
     terms: '',
     imageUrl: '',
     imagePublicId: '',
+    badgeText: '',
     voucherQuantity: 1,
     discountType: 'percent',
     discountValue: 0,
@@ -130,12 +132,13 @@ export default function AdminPackagesPage() {
             payload.price = formData.price;
             payload.description = formData.description;
             payload.terms = formData.terms;
+            payload.badgeText = formData.badgeText;
             payload.validityDays = formData.validityDays;
 
             // Only include image fields if new image was uploaded (non-empty string)
             const hasImageUrl = formData.imageUrl && formData.imageUrl.length > 0;
             const hasImagePublicId = formData.imagePublicId && formData.imagePublicId.length > 0;
-            
+
             if (hasImageUrl) {
                 payload.imageUrl = formData.imageUrl;
             }
@@ -173,6 +176,7 @@ export default function AdminPackagesPage() {
             price: pkg.price,
             description: pkg.description,
             terms: pkg.terms || '',
+            badgeText: pkg.badgeText || '',
             imageUrl: pkg.imageUrl || '',
             imagePublicId: pkg.imagePublicId || '',
             validityDays: pkg.validityDays,
@@ -406,6 +410,20 @@ export default function AdminPackagesPage() {
                                     rows={3}
                                     placeholder="Mô tả chi tiết về gói hội viên..."
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                    🏷️ Nhãn đặc biệt (Badge)
+                                </label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all"
+                                    value={formData.badgeText}
+                                    onChange={e => setFormData({ ...formData, badgeText: e.target.value })}
+                                    placeholder="VD: Best Value, Long Term, Giảm sâu..."
+                                />
+                                <p className="text-xs text-slate-500">Để trống nếu không muốn hiển thị nhãn nổi bật.</p>
                             </div>
 
                             <div className="space-y-2">
@@ -789,14 +807,14 @@ export default function AdminPackagesPage() {
                                                 className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
                                                 title="Nhân bản"
                                                 onClick={() => {
-        setFormData({
-            name: pkg.name + ' (Copy)',
-            price: pkg.price,
-            description: pkg.description,
-            imageUrl: pkg.imageUrl || '',
-            imagePublicId: pkg.imagePublicId || '',
-            validityDays: pkg.validityDays,
-        });
+                                                    setFormData({
+                                                        name: pkg.name + ' (Copy)',
+                                                        price: pkg.price,
+                                                        description: pkg.description,
+                                                        imageUrl: pkg.imageUrl || '',
+                                                        imagePublicId: pkg.imagePublicId || '',
+                                                        validityDays: pkg.validityDays,
+                                                    });
                                                     setVouchers([{
                                                         discountType: pkg.discountType,
                                                         discountValue: pkg.discountValue,

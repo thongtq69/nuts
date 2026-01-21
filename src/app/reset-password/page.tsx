@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
@@ -9,7 +9,7 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import { useToast } from '@/context/ToastContext';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
@@ -172,5 +172,32 @@ export default function ResetPasswordPage() {
             </div>
             <Footer />
         </main>
+    );
+}
+
+function LoadingFallback() {
+    return (
+        <main>
+            <Header />
+            <Navbar />
+            <div className="container">
+                <div className="auth-wrapper">
+                    <div className="auth-card">
+                        <div className="flex justify-center py-8">
+                            <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <Footer />
+        </main>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <ResetPasswordForm />
+        </Suspense>
     );
 }

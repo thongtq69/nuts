@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
@@ -9,7 +9,7 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import { useToast } from '@/context/ToastContext';
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
@@ -142,5 +142,32 @@ export default function ForgotPasswordPage() {
                 }
             `}</style>
         </main>
+    );
+}
+
+function LoadingFallback() {
+    return (
+        <main>
+            <Header />
+            <Navbar />
+            <div className="container">
+                <div className="auth-wrapper">
+                    <div className="auth-card">
+                        <div className="flex justify-center py-8">
+                            <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <Footer />
+        </main>
+    );
+}
+
+export default function ForgotPasswordPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <ForgotPasswordForm />
+        </Suspense>
     );
 }
