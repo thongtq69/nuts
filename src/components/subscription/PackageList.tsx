@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Tag, ArrowRight, CheckCircle2, Zap } from 'lucide-react';
+import { Tag, ArrowRight, CheckCircle2, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Package {
     _id: string;
@@ -138,8 +138,36 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
         }
     }, [activeIndex]);
 
+    const scroll = (direction: 'left' | 'right') => {
+        if (!containerRef.current) return;
+        const container = containerRef.current;
+        const scrollAmount = container.offsetWidth * 0.8;
+        container.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth'
+        });
+    };
+
     return (
         <div className="relative group/scroll px-4">
+            {/* Scroll Navigation Buttons - Hidden on Mobile, Visible on Desktop */}
+            <div className="hidden lg:block">
+                <button
+                    onClick={() => scroll('left')}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-40 bg-white shadow-xl rounded-full p-4 border border-slate-100 text-slate-800 hover:bg-brand hover:text-white transition-all duration-300 opacity-0 group-hover/scroll:opacity-100 hover:scale-110"
+                    aria-label="Previous"
+                >
+                    <ChevronLeft size={24} strokeWidth={3} />
+                </button>
+                <button
+                    onClick={() => scroll('right')}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-40 bg-white shadow-xl rounded-full p-4 border border-slate-100 text-slate-800 hover:bg-brand hover:text-white transition-all duration-300 opacity-0 group-hover/scroll:opacity-100 hover:scale-110"
+                    aria-label="Next"
+                >
+                    <ChevronRight size={24} strokeWidth={3} />
+                </button>
+            </div>
+
             {/* Scroll Container */}
             <div
                 ref={containerRef}
