@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { encodeAffiliateId, generateReferralLink } from '@/lib/affiliate';
 import {
     Wallet,
     DollarSign,
@@ -32,6 +33,7 @@ import { DashboardSkeleton } from '@/components/dashboard';
 
 interface AgentStats {
     referralCode: string;
+    encodedAffiliateCode: string;
     walletBalance: number;
     totalCommission: number;
     totalReferrals: number;
@@ -84,6 +86,7 @@ export default function AgentDashboard() {
     // Mock data for demo
     const mockStats: AgentStats = {
         referralCode: (user as any)?.referralCode || 'AGENT001',
+        encodedAffiliateCode: (user as any)?.encodedAffiliateCode || '',
         walletBalance: 1500000,
         totalCommission: 3200000,
         totalReferrals: 28,
@@ -106,11 +109,15 @@ export default function AgentDashboard() {
     };
 
     const displayStats = stats || mockStats;
+    
+    // Generate encoded referral link
+    const referralLink = displayStats.encodedAffiliateCode 
+        ? generateReferralLink(displayStats.encodedAffiliateCode)
+        : `${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${displayStats.referralCode}`;
 
     const copyReferralLink = () => {
-        if (displayStats?.referralCode) {
-            const link = `${window.location.origin}?ref=${displayStats.referralCode}`;
-            navigator.clipboard.writeText(link);
+        if (referralLink) {
+            navigator.clipboard.writeText(referralLink);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         }
@@ -240,7 +247,7 @@ export default function AgentDashboard() {
                             <input
                                 type="text"
                                 readOnly
-                                value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${displayStats.referralCode}`}
+                                value={referralLink}
                                 onClick={copyReferralLink}
                                 className="w-full lg:flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 font-mono placeholder-gray-400 focus:outline-none cursor-pointer hover:bg-gray-100 transition-colors"
                                 title="Click de sao chep link tiep thi day du"

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import { verifyToken } from '@/lib/auth';
+import { encodeAffiliateId } from '@/lib/affiliate';
 
 export async function POST(req: Request) {
     try {
@@ -57,6 +58,12 @@ export async function POST(req: Request) {
 
         user.role = 'sale'; // Upgrade to sale/affiliate
         user.referralCode = refCode;
+        
+        // Generate encoded affiliate code
+        if (user._id && !user.encodedAffiliateCode) {
+            user.encodedAffiliateCode = encodeAffiliateId(user._id.toString());
+        }
+        
         user.walletBalance = 0;
         user.totalCommission = 0;
 
@@ -64,7 +71,8 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
             message: 'Đăng ký CTV thành công',
-            referralCode: refCode
+            referralCode: refCode,
+            encodedAffiliateCode: user.encodedAffiliateCode
         });
 
     } catch (error) {

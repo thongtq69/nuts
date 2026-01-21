@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import { sendSaleApprovedEmail } from '@/lib/email';
+import { encodeAffiliateId } from '@/lib/affiliate';
 
 export async function POST(
     req: Request,
@@ -29,6 +30,11 @@ export async function POST(
             // Generate GN + 6 random alphanumeric characters
             const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             user.referralCode = `GN${randomCode}`;
+        }
+
+        // Generate encoded affiliate code if not exists
+        if (!user.encodedAffiliateCode && user._id) {
+            user.encodedAffiliateCode = encodeAffiliateId(user._id.toString());
         }
 
         await user.save();

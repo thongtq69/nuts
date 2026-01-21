@@ -19,6 +19,7 @@ export interface IUser {
     saleType?: 'agent' | 'collaborator' | null;
     welcomeVoucherIssued?: boolean;
     referralCode?: string;
+    encodedAffiliateCode?: string;
     walletBalance?: number;
     totalCommission?: number;
     referrer?: Schema.Types.ObjectId;
@@ -61,6 +62,7 @@ const UserSchema: Schema<IUser> = new Schema(
         saleType: { type: String, enum: ['agent', 'collaborator', null], default: null },
         welcomeVoucherIssued: { type: Boolean, default: false },
         referralCode: { type: String, unique: true, sparse: true },
+        encodedAffiliateCode: { type: String, unique: true, sparse: true },
         walletBalance: { type: Number, default: 0 },
         totalCommission: { type: Number, default: 0 },
         referrer: { type: Schema.Types.ObjectId, ref: 'User' },
