@@ -18,7 +18,6 @@ import {
     TrendingUp,
     DollarSign,
     UserPlus,
-    Settings,
     FileText,
     Image as ImageIcon
 } from 'lucide-react';
@@ -155,7 +154,7 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                     {/* Decorative elements */}
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-gray-800/10 rounded-full" />
                     <div className="absolute bottom-0 right-0 w-20 h-20 bg-gray-800/10 rounded-full" />
-                    
+
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-2xl bg-gray-800/20 backdrop-blur-sm flex items-center justify-center text-gray-800 font-bold text-lg shadow-lg">
@@ -166,7 +165,7 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                                 <div className="text-gray-600 text-xs">{user?.email}</div>
                             </div>
                         </div>
-                        
+
                         {user?.staffCode && (
                             <div className="bg-gray-800/10 backdrop-blur-sm rounded-xl px-3 py-2.5 flex items-center gap-2">
                                 <div className="flex-1 min-w-0">
@@ -222,10 +221,6 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                         <Link href="/products" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-brand hover:bg-amber-50 rounded-xl transition-colors">
                             <Package size={16} />
                             <span>Xem sản phẩm</span>
-                        </Link>
-                        <Link href="/admin" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-brand hover:bg-amber-50 rounded-xl transition-colors">
-                            <Settings size={16} />
-                            <span>Quản trị (Admin)</span>
                         </Link>
                     </div>
                 </div>

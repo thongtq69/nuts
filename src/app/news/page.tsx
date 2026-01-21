@@ -1,58 +1,53 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
-const newsItems = [
-    {
-        id: 1,
-        title: '5 Lợi ích tuyệt vời của hạt Macca',
-        excerpt: 'Hạt Macca được mệnh danh là hoàng hậu của các loại hạt khô bởi giá trị dinh dưỡng và hương vị thơm ngon...',
-        image: '/assets/images/product1.jpg',
-        date: '12/01/2026'
-    },
-    {
-        id: 2,
-        title: 'Cách làm sữa hạt điều tại nhà đơn giản',
-        excerpt: 'Sữa hạt điều là thức uống dinh dưỡng, dễ làm và phù hợp cho cả gia đình. Cùng xem công thức nhé...',
-        image: '/assets/images/product2.jpg',
-        date: '10/01/2026'
-    },
-    {
-        id: 3,
-        title: 'Chương trình khuyến mãi Tết 2026',
-        excerpt: 'Đón Tết sang - Nhận ngàn quà tặng. Khám phá ngay các combo quà Tết ý nghĩa từ Go Nuts...',
-        image: '/assets/images/promotion.png',
-        date: '05/01/2026'
-    },
-    {
-        id: 4,
-        title: 'Bí quyết bảo quản hạt dinh dưỡng đúng cách',
-        excerpt: 'Để giữ được hương vị và dinh dưỡng của hạt, bạn cần biết cách bảo quản đúng. Hãy cùng tìm hiểu...',
-        image: '/assets/images/product3.jpg',
-        date: '03/01/2026'
-    },
-    {
-        id: 5,
-        title: 'Tại sao nên ăn hạt mỗi ngày?',
-        excerpt: 'Hạt dinh dưỡng chứa nhiều vitamin, khoáng chất và chất chống oxy hóa tốt cho sức khỏe...',
-        image: '/assets/images/product4.jpg',
-        date: '28/12/2025'
-    },
-    {
-        id: 6,
-        title: 'Công thức granola homemade',
-        excerpt: 'Tự làm granola tại nhà vừa ngon vừa sạch với nguyên liệu từ Go Nuts. Xem ngay công thức...',
-        image: '/assets/images/product5.jpg',
-        date: '25/12/2025'
-    }
-];
+interface Blog {
+    _id: string;
+    title: string;
+    slug: string;
+    excerpt: string;
+    content?: string;
+    coverImage?: string;
+    category: string;
+    isPublished: boolean;
+    publishedAt?: string;
+    createdAt: string;
+    views?: number;
+}
 
 export default function NewsPage() {
+    const [blogs, setBlogs] = useState<Blog[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchBlogs();
+    }, []);
+
+    const fetchBlogs = async () => {
+        try {
+            const res = await fetch('/api/blogs?published=true');
+            if (res.ok) {
+                const data = await res.json();
+                setBlogs(data);
+            }
+        } catch (error) {
+            console.error('Error fetching blogs:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
     return (
         <>
             <Header />
@@ -63,23 +58,51 @@ export default function NewsPage() {
                 <div className="container">
                     <h1 className="page-title">Tin tức & Sự kiện</h1>
 
-                    <div className="news-grid">
-                        {newsItems.map((item) => (
-                            <article key={item.id} className="news-card">
-                                <div className="news-image">
-                                    <img src={item.image} alt={item.title} />
-                                </div>
-                                <div className="news-content">
-                                    <div className="news-date">{item.date}</div>
-                                    <Link href="#">
-                                        <h2 className="news-title">{item.title}</h2>
-                                    </Link>
-                                    <p className="news-excerpt">{item.excerpt}</p>
-                                    <Link href="#" className="read-more">Đọc tiếp →</Link>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
+                    {loading ? (
+                        <div className="news-grid">
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                <article key={i} className="news-card">
+                                    <div className="news-image">
+                                        <div className="skeleton h-48 w-full" />
+                                    </div>
+                                    <div className="news-content">
+                                        <div className="skeleton h-4 w-20 mb-2" />
+                                        <div className="skeleton h-6 w-full mb-2" />
+                                        <div className="skeleton h-4 w-full mb-2" />
+                                        <div className="skeleton h-4 w-24" />
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    ) : blogs.length === 0 ? (
+                        <div className="text-center py-20">
+                            <p className="text-gray-500">Chưa có bài viết nào.</p>
+                        </div>
+                    ) : (
+                        <div className="news-grid">
+                            {blogs.map((item) => (
+                                <article key={item._id} className="news-card">
+                                    <div className="news-image">
+                                        {item.coverImage ? (
+                                            <img src={item.coverImage} alt={item.title} />
+                                        ) : (
+                                            <div className="bg-gray-200 h-48 flex items-center justify-center text-gray-400">
+                                                No Image
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="news-content">
+                                        <div className="news-date">{formatDate(item.createdAt)}</div>
+                                        <Link href={`/news/${item.slug}`}>
+                                            <h2 className="news-title">{item.title}</h2>
+                                        </Link>
+                                        <p className="news-excerpt">{item.excerpt}</p>
+                                        <Link href={`/news/${item.slug}`} className="read-more">Đọc tiếp →</Link>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </main>
             <Footer />

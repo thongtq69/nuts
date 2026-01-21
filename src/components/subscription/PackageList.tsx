@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Image from 'next/image';
 import { Tag } from 'lucide-react';
 
@@ -31,44 +32,49 @@ function formatPrice(price: number) {
 
 const cardThemes = [
     {
-        surface: 'bg-gradient-to-br from-[#F3E9D6] via-[#E6D0B0] to-[#D8B487]',
-        border: 'border-[#C9A978]',
-        badge: 'bg-[#6B4A2B] text-[#F6E9D8]',
+        // Starter - Muted Brown/Tan
+        surface: 'bg-gradient-to-br from-[#FDFBF7] via-[#F3E9D6] to-[#E6D0B0]',
+        border: 'border-[#D8B487]/30',
+        badge: 'bg-[#9C7044] text-[#FDFBF7]',
         text: 'text-[#3A2A1B]',
         subtext: 'text-[#5B4630]',
-        accent: 'text-[#8C5A2B]',
-        divider: 'border-black/15',
-        button: 'bg-[#3A2A1B] text-[#F6E9D8] hover:bg-[#2B1F15]',
-    },
-    {
-        surface: 'bg-gradient-to-br from-[#F4E7DA] via-[#E2C6A8] to-[#CFA782]',
-        border: 'border-[#C19A73]',
-        badge: 'bg-[#8B4F2B] text-[#FBEFE3]',
-        text: 'text-[#3E2717]',
-        subtext: 'text-[#5F3F2A]',
         accent: 'text-[#9C7044]',
-        divider: 'border-black/15',
-        button: 'bg-[#3E2717] text-[#FBEFE3] hover:bg-[#2E1C10]',
+        divider: 'border-black/5',
+        button: 'bg-[#9C7044] text-[#FDFBF7] hover:bg-[#855D36]',
     },
     {
+        // Pro - Highlighted Brand Yellow
+        surface: 'bg-gradient-to-br from-[#FEFFD2] via-[#E3E846] to-[#CBD100]',
+        border: 'border-[#A8AD00]',
+        badge: 'bg-[#333] text-white',
+        text: 'text-[#1A1C00]',
+        subtext: 'text-[#4A4E00]',
+        accent: 'text-[#1A1C00]',
+        divider: 'border-black/10',
+        button: 'bg-[#1A1C00] text-white hover:bg-black',
+        highlight: true,
+    },
+    {
+        // Special - Deep Red
         surface: 'bg-gradient-to-br from-[#5B131A] via-[#7E1B28] to-[#9E2B3B]',
         border: 'border-[#6D1A24]',
         badge: 'bg-[#F3D6B3] text-[#5B131A]',
         text: 'text-[#FCE7D1]',
         subtext: 'text-[#F3D6B3]',
         accent: 'text-[#FCE7D1]',
-        divider: 'border-white/30',
+        divider: 'border-white/20',
         button: 'bg-[#F3D6B3] text-[#5B131A] hover:bg-[#E9C6A2]',
     },
     {
-        surface: 'bg-gradient-to-br from-[#2A1A14] via-[#3A251D] to-[#4B2F24]',
-        border: 'border-[#20140F]',
-        badge: 'bg-[#C78C52] text-[#1B0F0A]',
-        text: 'text-[#F6E7C6]',
-        subtext: 'text-[#E8D4B0]',
-        accent: 'text-[#F1C57D]',
-        divider: 'border-white/20',
-        button: 'bg-[#C78C52] text-[#1B0F0A] hover:bg-[#B57C44]',
+        // Premium - Dark Charcoal
+        surface: 'bg-gradient-to-br from-[#1A1A1A] via-[#2A2A2A] to-[#333]',
+        border: 'border-[#444]',
+        badge: 'bg-[#E3E846] text-[#1A1A1A]',
+        text: 'text-white',
+        subtext: 'text-slate-400',
+        accent: 'text-[#E3E846]',
+        divider: 'border-white/10',
+        button: 'bg-[#E3E846] text-[#1A1A1A] hover:bg-[#CBD100]',
     },
 ];
 
@@ -94,94 +100,211 @@ const normalizeName = (name: string) => name
     .trim();
 
 export default function PackageList({ packages, onBuyPackage }: Props) {
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const [activeIndex, setActiveIndex] = React.useState(0);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const card = e.currentTarget;
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+    };
+
+    const handleScroll = () => {
+        if (!containerRef.current) return;
+        const container = containerRef.current;
+        const scrollLeft = container.scrollLeft;
+        const containerWidth = container.offsetWidth;
+        const center = scrollLeft + containerWidth / 2;
+
+        const children = Array.from(container.children) as HTMLElement[];
+        let closestIndex = 0;
+        let minDistance = Infinity;
+
+        children.forEach((child, index) => {
+            const childCenter = child.offsetLeft + child.offsetWidth / 2;
+            const distance = Math.abs(center - childCenter);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = index;
+            }
+        });
+
+        if (closestIndex !== activeIndex) {
+            setActiveIndex(closestIndex);
+        }
+    };
+
+    React.useEffect(() => {
+        const container = containerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll);
+            // Initial check for active index
+            handleScroll();
+            return () => container.removeEventListener('scroll', handleScroll);
+        }
+    }, [activeIndex]);
+
     return (
-        <div className="flex flex-wrap justify-center gap-6">
-            {packages.map((pkg, index) => {
-                const theme = cardThemes[index % cardThemes.length];
-                const discountLabel = pkg.discountType === 'percent'
-                    ? `Giảm ${pkg.discountValue}% cho mọi đơn hàng`
-                    : `Giảm ${formatPrice(pkg.discountValue)} cho mọi đơn hàng`;
-                const maxVoucher = pkg.isUnlimitedVoucher ? 'Không giới hạn' : `${pkg.voucherQuantity} voucher`;
-                const minOrder = pkg.minOrderValue > 0
-                    ? `Áp dụng đơn từ ${formatPrice(pkg.minOrderValue)}`
-                    : 'Áp dụng cho mọi đơn hàng';
+        <div className="relative group/scroll px-4">
+            {/* Scroll Container - Tall & Narrow */}
+            <div
+                ref={containerRef}
+                className="flex overflow-x-auto py-24 gap-12 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth overflow-visible"
+            >
+                {packages.map((pkg, index) => {
+                    const theme = cardThemes[index % cardThemes.length];
+                    const isHighlighted = theme.highlight;
+                    const isActive = activeIndex === index;
 
-                const normalizedName = normalizeName(pkg.name);
-                const imageSrc = pkg.imageUrl || imageMap[normalizedName] || fallbackImages[index % fallbackImages.length];
+                    const discountLabel = pkg.discountType === 'percent'
+                        ? `Giảm ${pkg.discountValue}%`
+                        : `Giảm ${formatPrice(pkg.discountValue)}`;
+                    const maxVoucher = pkg.isUnlimitedVoucher ? '∞' : `${pkg.voucherQuantity}`;
 
-                return (
-                    <div
-                        key={pkg._id}
-                        className={`group w-full max-w-[320px] ${theme.surface} rounded-[28px] border ${theme.border} shadow-[0_16px_40px_rgba(20,14,10,0.18)] overflow-hidden flex flex-col relative transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-[0_28px_60px_rgba(20,14,10,0.28)]`}
-                    >
-                        <div className="absolute inset-0 opacity-30 transition-opacity duration-300 group-hover:opacity-50">
-                            <div className="absolute -top-14 -left-10 h-40 w-40 rounded-full bg-white/25 blur-2xl" />
-                            <div className="absolute -bottom-16 -right-12 h-48 w-48 rounded-full bg-black/15 blur-2xl" />
-                        </div>
-                        <div className="relative h-52 px-6 pt-6">
-                            <div className="absolute inset-x-6 top-6 bottom-2 rounded-[22px] bg-white/15 border border-white/20 backdrop-blur-sm" />
-                            <Image
-                                src={imageSrc}
-                                alt={pkg.name}
-                                fill
-                                className="object-contain drop-shadow-[0_18px_25px_rgba(20,10,5,0.35)] transition-transform duration-300 ease-out group-hover:-translate-y-1 group-hover:scale-[1.03]"
-                                sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
-                                priority={index < 2}
-                            />
-                            {index === packages.length - 1 && (
-                                <span className={`absolute top-7 right-8 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] ${theme.badge}`}>
-                                    Premium
-                                </span>
-                            )}
-                        </div>
-                        <div className="relative flex-1 px-6 pt-4 pb-4 text-center">
-                            <h3 className={`text-xl font-bold tracking-wide ${theme.text}`}>{pkg.name}</h3>
-                            <p className={`text-sm mt-1 ${theme.subtext}`}>
-                                {pkg.description || 'Gói ưu đãi dành riêng cho thành viên Go Nuts.'}
-                            </p>
-                            <div className={`text-[11px] mt-2 uppercase tracking-[0.18em] ${theme.subtext}`}>
-                                Tiết kiệm lên đến {pkg.isUnlimitedVoucher ? 'không giới hạn' : formatPrice(pkg.voucherQuantity * pkg.maxDiscount)}
-                            </div>
-                            <div className={`my-4 border-t ${theme.divider}`} />
-                            <div className={`text-3xl font-black ${theme.text}`}>
-                                {formatPrice(pkg.price)}
-                            </div>
-                            <div className={`text-[11px] mt-1 uppercase tracking-[0.2em] ${theme.subtext}`}>mỗi tháng</div>
-                            <div className={`my-4 border-t ${theme.divider}`} />
-                            <ul className={`space-y-2.5 text-left text-sm ${theme.text}`}>
-                                <li className="flex items-start gap-2">
-                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
-                                    <span>{discountLabel}</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
-                                    <span>Tối đa {formatPrice(pkg.maxDiscount)}/đơn</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
-                                    <span>{maxVoucher} mỗi tháng</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
-                                    <span>Hiệu lực {pkg.validityDays} ngày</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <Tag className={`mt-0.5 ${theme.accent}`} size={16} />
-                                    <span>{minOrder}</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div className="relative px-6 pb-5">
-                            <button
-                                onClick={() => onBuyPackage(pkg._id)}
-                                className={`w-full py-2.5 rounded-xl font-semibold transition-colors ${theme.button} shadow-[0_10px_20px_rgba(0,0,0,0.2)] group-hover:shadow-[0_16px_26px_rgba(0,0,0,0.25)]`}
+                    const normalizedName = normalizeName(pkg.name);
+                    const imageSrc = pkg.imageUrl || imageMap[normalizedName] || fallbackImages[index % fallbackImages.length];
+
+                    return (
+                        <div
+                            key={pkg._id}
+                            className={`snap-center shrink-0 w-[280px] sm:w-[320px] lg:w-[calc(25%-36px)] min-w-[280px] max-w-[360px] flex flex-col items-center transition-all duration-700 ease-out py-10 ${isActive ? 'scale-110 z-30' : 'scale-95 opacity-80 z-10'}`}
+                        >
+                            <div
+                                onMouseMove={handleMouseMove}
+                                className={`relative w-full h-[600px] group ${theme.surface} rounded-[50px] border-2 ${isActive ? (isHighlighted ? 'border-[#A8AD00]' : 'border-white/40') : theme.border} shadow-[0_30px_60px_rgba(0,0,0,0.12)] flex flex-col transition-all duration-500 hover:shadow-[0_45px_100px_rgba(0,0,0,0.25)]`}
                             >
-                                {index === packages.length - 1 ? 'Đăng ký ngay' : 'Bắt đầu'}
-                            </button>
+                                {/* Shimmer Effect for Highlighted Card */}
+                                {isHighlighted && (
+                                    <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-[50px]">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
+                                    </div>
+                                )}
+
+                                {/* "Most Popular" Badge - Floating Higher */}
+                                {isHighlighted && (
+                                    <div className={`absolute -top-6 left-1/2 -translate-x-1/2 z-40 transition-transform duration-500 ${isActive ? 'scale-110' : 'scale-100'}`}>
+                                        <div className="bg-[#1A1C00] text-[#E3E846] text-[11px] font-black uppercase tracking-[0.2em] px-8 py-3 rounded-full shadow-2xl flex items-center gap-2 whitespace-nowrap border-2 border-[#E3E846]/20">
+                                            <span className="w-2 h-2 rounded-full bg-[#E3E846] animate-pulse" />
+                                            Most Popular
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Floating Image - Breaking Borders */}
+                                <div className={`absolute -top-16 -left-10 w-48 h-48 sm:w-56 sm:h-56 z-50 transition-all duration-700 pointer-events-none drop-shadow-[0_35px_45px_rgba(0,0,0,0.4)] ${isActive ? 'translate-x-4 -translate-y-4 rotate-6 scale-110' : 'translate-x-0 translate-y-0 rotate-0 scale-100'}`}>
+                                    <Image
+                                        src={imageSrc}
+                                        alt={pkg.name}
+                                        fill
+                                        className="object-contain transition-transform duration-500"
+                                        sizes="400px"
+                                        priority={index < 4}
+                                    />
+                                </div>
+
+                                {/* Animated Light Effect */}
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-[50px]">
+                                    <div className="absolute -top-[20%] -left-[20%] w-[140%] h-[140%] bg-[radial-gradient(circle_at_var(--mouse-x,50%)_var(--mouse-y,50%),rgba(255,255,255,0.25)_0%,transparent_50%)]" />
+                                </div>
+
+                                {/* Top Section - Vertical Spacing */}
+                                <div className="pt-24 px-8 text-center flex flex-col">
+                                    <h3 className={`text-2xl font-black tracking-tight mb-3 ${theme.text}`}>
+                                        {pkg.name}
+                                    </h3>
+                                    <p className={`text-[12px] leading-relaxed ${theme.subtext} font-bold opacity-60 uppercase tracking-widest`}>
+                                        Membership Plan
+                                    </p>
+                                </div>
+
+                                {/* CENTER SECTION - Price & Main CTA */}
+                                <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6 my-4">
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="flex items-baseline gap-1">
+                                            <span className={`text-5xl font-black ${theme.text} tracking-tighter`}>
+                                                {formatPrice(pkg.price).replace('đ', '')}
+                                            </span>
+                                            <span className={`text-xl font-black ${theme.text}`}>đ</span>
+                                        </div>
+                                        <span className={`text-[10px] uppercase font-bold tracking-[0.2em] ${theme.subtext} opacity-50`}>per 30 days</span>
+                                    </div>
+
+                                    <button
+                                        onClick={() => onBuyPackage(pkg._id)}
+                                        className={`group/btn relative w-[180px] h-[64px] rounded-full overflow-hidden transition-all duration-500 ${theme.button} shadow-[0_15px_35px_rgba(0,0,0,0.15)] hover:w-[200px] active:scale-95`}
+                                    >
+                                        {/* Internal Glassmorphism for Button */}
+                                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                                        <span className="relative z-10 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider">
+                                            {index === packages.length - 1 ? 'Sở hữu' : 'Bắt đầu'}
+                                            <svg className="w-5 h-5 transition-transform group-hover/btn:translate-x-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                            </svg>
+                                        </span>
+                                    </button>
+                                </div>
+
+                                {/* BOTTOM SECTION - Feature Highlights */}
+                                <div className="pb-10 px-8">
+                                    <div className={`space-y-4 p-6 rounded-[32px] ${isHighlighted ? 'bg-black/10' : 'bg-white/10'} backdrop-blur-md border border-white/10`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-2 rounded-xl bg-white/20 ${theme.accent}`}>
+                                                <Tag size={16} strokeWidth={3} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className={`text-[13px] font-black ${theme.text}`}>{discountLabel}</span>
+                                                <span className={`text-[10px] ${theme.subtext} font-bold opacity-60`}>Max {formatPrice(pkg.maxDiscount)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-2 rounded-xl bg-white/20 ${theme.accent}`}>
+                                                <Tag size={16} strokeWidth={3} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className={`text-[13px] font-black ${theme.text}`}>{maxVoucher} per month</span>
+                                                <span className={`text-[10px] ${theme.subtext} font-bold opacity-60`}>Valid {pkg.validityDays} days</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Subtle Abstract Glow at bottom */}
+                                <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-black/5 to-transparent pointer-events-none rounded-b-[50px]" />
+                            </div>
                         </div>
-                    </div>
-                );
-            })}
+                    );
+                })}
+            </div>
+
+            {/* Pagination / Progress */}
+            {packages.length > 0 && (
+                <div className="flex justify-center gap-3 mt-4">
+                    {packages.map((_, i) => (
+                        <div
+                            key={i}
+                            className={`h-2 transition-all duration-500 rounded-full border border-black/5 ${activeIndex === i ? 'w-12 bg-[#9C7044] shadow-lg' : 'w-2 bg-slate-200 opacity-50'}`}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* Custom Styles */}
+            <style jsx global>{`
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                }
+                .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                }
+                .scrollbar-hide {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+            `}</style>
         </div>
     );
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Blog from '@/models/Blog';
+import mongoose from 'mongoose';
 
 export async function GET(
     req: Request,
@@ -9,7 +10,13 @@ export async function GET(
     try {
         await dbConnect();
         const { id } = await params;
-        const blog = await Blog.findById(id);
+
+        let blog;
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            blog = await Blog.findById(id);
+        } else {
+            blog = await Blog.findOne({ slug: id });
+        }
 
         if (!blog) {
             return NextResponse.json({ error: 'Blog not found' }, { status: 404 });

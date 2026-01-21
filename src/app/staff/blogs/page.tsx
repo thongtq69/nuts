@@ -2,18 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { 
-    FileText, 
-    Plus, 
-    Edit2, 
-    Trash2, 
-    Search, 
-    Calendar, 
-    Tag, 
-    X, 
-    Loader2, 
-    Eye, 
-    EyeOff 
+import {
+    FileText,
+    Plus,
+    Edit2,
+    Trash2,
+    Search,
+    Calendar,
+    Tag,
+    X,
+    Loader2,
+    Eye,
+    EyeOff,
+    Upload,
+    Image,
+    XCircle
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
@@ -54,16 +57,17 @@ export default function StaffBlogsPage() {
     const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const toast = useToast();
     const confirm = useConfirm();
-    
+
     const [formData, setFormData] = useState({
         title: '',
         excerpt: '',
         content: '',
         category: 'Tin tức',
         coverImage: '',
-        isPublished: false
+        isPublished: true
     });
 
     useEffect(() => {
@@ -85,6 +89,52 @@ export default function StaffBlogsPage() {
         }
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Lỗi upload', 'Vui lòng chọn file ảnh');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Lỗi upload', 'File ảnh không được vượt quá 5MB');
+            return;
+        }
+
+        setUploadingImage(true);
+        try {
+            const uploadData = new FormData();
+            uploadData.append('file', file);
+            uploadData.append('type', 'blog');
+            uploadData.append('folder', 'gonuts/blogs');
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadData
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setFormData({ ...formData, coverImage: data.url });
+                toast.success('Thành công', 'Upload ảnh thành công');
+            } else {
+                const error = await res.json();
+                toast.error('Lỗi upload', error.message || 'Không thể upload ảnh');
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            toast.error('Lỗi upload', 'Có lỗi xảy ra khi upload ảnh');
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    const removeCoverImage = () => {
+        setFormData({ ...formData, coverImage: '' });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
@@ -92,8 +142,8 @@ export default function StaffBlogsPage() {
         try {
             const url = editingBlog ? `/api/staff/blogs` : '/api/staff/blogs';
             const method = editingBlog ? 'PATCH' : 'POST';
-            
-            const body = editingBlog 
+
+            const body = editingBlog
                 ? { id: editingBlog._id, ...formData }
                 : formData;
 
@@ -151,9 +201,9 @@ export default function StaffBlogsPage() {
             const res = await fetch('/api/staff/blogs', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    id: blog._id, 
-                    isPublished: !blog.isPublished 
+                body: JSON.stringify({
+                    id: blog._id,
+                    isPublished: !blog.isPublished
                 })
             });
 
@@ -184,7 +234,7 @@ export default function StaffBlogsPage() {
                 content: '',
                 category: 'Tin tức',
                 coverImage: '',
-                isPublished: false
+                isPublished: true
             });
         }
         setShowModal(true);
@@ -321,7 +371,7 @@ export default function StaffBlogsPage() {
                                     </td>
                                 </tr>
                             ) : filteredBlogs.length === 0 ? (
-                                 <tr>
+                                <tr>
                                     <td colSpan={5} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center">
@@ -353,8 +403,8 @@ export default function StaffBlogsPage() {
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-4">
                                                 {blog.coverImage && (
-                                                    <img 
-                                                        src={blog.coverImage} 
+                                                    <img
+                                                        src={blog.coverImage}
                                                         alt={blog.title}
                                                         className="w-12 h-12 rounded-xl object-cover"
                                                     />
@@ -374,11 +424,10 @@ export default function StaffBlogsPage() {
                                         <td className="px-6 py-5 text-center">
                                             <button
                                                 onClick={() => handleTogglePublish(blog)}
-                                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                                    blog.isPublished
+                                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${blog.isPublished
                                                         ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                                                         : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                                                }`}
+                                                    }`}
                                             >
                                                 {blog.isPublished ? <Eye size={14} /> : <EyeOff size={14} />}
                                                 {blog.isPublished ? 'Đã đăng' : 'Nháp'}
@@ -466,11 +515,10 @@ export default function StaffBlogsPage() {
                                     <button
                                         type="button"
                                         onClick={() => setFormData({ ...formData, isPublished: !formData.isPublished })}
-                                        className={`w-full px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
-                                            formData.isPublished
+                                        className={`w-full px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${formData.isPublished
                                                 ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-200'
                                                 : 'bg-amber-100 text-amber-700 border-2 border-amber-200'
-                                        }`}
+                                            }`}
                                     >
                                         {formData.isPublished ? <Eye size={18} /> : <EyeOff size={18} />}
                                         {formData.isPublished ? 'Đã đăng' : 'Bản nháp'}
@@ -480,21 +528,64 @@ export default function StaffBlogsPage() {
 
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">Ảnh bìa</label>
-                                <div className="flex gap-3">
+                                {formData.coverImage ? (
+                                    <div className="relative inline-block">
+                                        <img
+                                            src={formData.coverImage}
+                                            alt="Preview"
+                                            className="w-full h-48 object-cover rounded-xl border-2 border-gray-200"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={removeCoverImage}
+                                            className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                                        >
+                                            <XCircle size={18} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-brand transition-colors">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            className="hidden"
+                                            id="cover-image-upload"
+                                            disabled={uploadingImage}
+                                        />
+                                        <label
+                                            htmlFor="cover-image-upload"
+                                            className="cursor-pointer flex flex-col items-center gap-3"
+                                        >
+                                            {uploadingImage ? (
+                                                <>
+                                                    <Loader2 size={48} className="text-brand animate-spin" />
+                                                    <p className="text-gray-500">Đang upload...</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center">
+                                                        <Image size={32} className="text-brand" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-700 font-medium">Nhấp để chọn ảnh</p>
+                                                        <p className="text-gray-500 text-sm">hoặc kéo thả file vào đây</p>
+                                                    </div>
+                                                    <p className="text-gray-400 text-xs">PNG, JPG tối đa 5MB</p>
+                                                </>
+                                            )}
+                                        </label>
+                                    </div>
+                                )}
+                                <div className="mt-3">
+                                    <p className="text-xs text-gray-500 mb-2">Hoặc nhập URL ảnh:</p>
                                     <input
                                         type="text"
                                         value={formData.coverImage}
                                         onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                                        className="flex-1 px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-brand/10 focus:border-brand outline-none transition-all"
-                                        placeholder="Nhập URL ảnh bìa..."
+                                        className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-brand/10 focus:border-brand outline-none transition-all"
+                                        placeholder="https://..."
                                     />
-                                    {formData.coverImage && (
-                                        <img 
-                                            src={formData.coverImage} 
-                                            alt="Preview"
-                                            className="w-16 h-16 rounded-xl object-cover border-2 border-gray-200"
-                                        />
-                                    )}
                                 </div>
                             </div>
 

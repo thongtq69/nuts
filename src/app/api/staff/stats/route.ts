@@ -67,6 +67,28 @@ export async function GET() {
 
         const totalCommission = commissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
 
+        // Get pending commissions
+        const pendingCommissions = await AffiliateCommission.find({
+            affiliateId: user._id,
+            status: 'pending'
+        });
+        const pendingCommission = pendingCommissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
+
+        // Get this month and last month revenue
+        const now = new Date();
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        const thisMonthOrders = orders.filter(o => new Date(o.createdAt!) >= thisMonthStart);
+        const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+        const lastMonthOrders = orders.filter(o => {
+            const createdAt = new Date(o.createdAt!);
+            return createdAt >= lastMonthStart && createdAt <= lastMonthEnd;
+        });
+        const lastMonthRevenue = lastMonthOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
         // Commission data for chart (last 7 days)
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -108,12 +130,15 @@ export async function GET() {
 
         return NextResponse.json({
             totalCommission,
+            pendingCommission,
             walletBalance: user.walletBalance || 0,
             totalCollaborators: collaborators.length,
             totalOrders,
             teamRevenue,
+            thisMonthRevenue,
+            lastMonthRevenue,
             commissionData,
-            collaborators: collaboratorStats.slice(0, 5) // Top 5 for dashboard
+            recentCollaborators: collaboratorStats.slice(0, 5)
         });
     } catch (error) {
         console.error('Get staff stats error:', error);
