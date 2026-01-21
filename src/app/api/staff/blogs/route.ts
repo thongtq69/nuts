@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         }
 
         if (!body.slug && body.title) {
-            body.slug = body.title
+            let baseSlug = body.title
                 .toLowerCase()
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '')
@@ -58,11 +58,25 @@ export async function POST(req: Request) {
                 .replace(/Đ/g, 'D')
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-|-$/g, '');
+
+            // Check if slug exists, add timestamp if needed
+            let slug = baseSlug;
+            let counter = 1;
+            while (await Blog.findOne({ slug })) {
+                slug = `${baseSlug}-${counter}`;
+                counter++;
+            }
+            body.slug = slug;
         }
 
         if (body.isPublished && !body.publishedAt) {
             body.publishedAt = new Date();
         }
+
+        // Add default values for required fields
+        if (!body.author) body.author = 'Admin';
+        if (!body.tags) body.tags = [];
+        if (!body.viewCount) body.viewCount = 0;
 
         const blog = await Blog.create(body);
         
@@ -73,9 +87,12 @@ export async function POST(req: Request) {
             updatedAt: blog.updatedAt?.toString(),
             publishedAt: blog.publishedAt?.toString()
         }, { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating blog:', error);
-        return NextResponse.json({ error: 'Failed to create blog' }, { status: 500 });
+        if (error.code === 11000) {
+            return NextResponse.json({ error: 'Slug already exists', message: 'Bài viết với tiêu đề này đã tồn tại' }, { status: 400 });
+        }
+        return NextResponse.json({ error: 'Failed to create blog', message: error.message }, { status: 500 });
     }
 }
 
