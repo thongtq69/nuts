@@ -27,6 +27,7 @@ async function getPackages() {
         minOrderValue: pkg.minOrderValue,
         validityDays: pkg.validityDays,
         isUnlimitedVoucher: pkg.isUnlimitedVoucher || false,
+        badgeText: pkg.badgeText || '',
         terms: pkg.terms,
     }));
 }
@@ -41,10 +42,14 @@ export default async function SubscriptionsPage() {
             <main>
                 <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Gói VIP' }]} />
 
-                <section className="subscriptions-hero">
-                    <div className="container">
-                        <h1>Gói VIP - Tiết kiệm hơn mỗi đơn hàng</h1>
-                        <p>Mua gói VIP để nhận voucher giảm giá độc quyền, tiết kiệm đến hàng triệu đồng mỗi tháng</p>
+                <section className="subscriptions-hero flex flex-col items-center justify-center text-center">
+                    <div className="max-w-4xl px-6 py-12 md:py-20 animate-in fade-in slide-in-from-top-4 duration-700">
+                        <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-6">
+                            Đặc quyền <span className="text-[#E3E846]">VIP</span>
+                        </h1>
+                        <p className="text-lg md:text-2xl font-medium opacity-70 leading-relaxed max-w-2xl mx-auto">
+                            Tiết kiệm triệu đồng mỗi tháng với các lựa chọn hạt dinh dưỡng cao cấp nhất.
+                        </p>
                     </div>
                 </section>
 

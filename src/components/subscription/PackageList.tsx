@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Tag } from 'lucide-react';
+import { Tag, ArrowRight, CheckCircle2, Zap } from 'lucide-react';
 
 interface Package {
     _id: string;
@@ -19,6 +19,7 @@ interface Package {
     minOrderValue: number;
     validityDays: number;
     isUnlimitedVoucher?: boolean;
+    badgeText?: string;
 }
 
 interface Props {
@@ -32,50 +33,49 @@ function formatPrice(price: number) {
 
 const cardThemes = [
     {
-        // Starter - Muted Brown/Tan
-        surface: 'bg-gradient-to-br from-[#FDFBF7] via-[#F3E9D6] to-[#E6D0B0]',
-        border: 'border-[#D8B487]/30',
-        badge: 'bg-[#9C7044] text-[#FDFBF7]',
-        text: 'text-[#3A2A1B]',
-        subtext: 'text-[#5B4630]',
-        accent: 'text-[#9C7044]',
-        divider: 'border-black/5',
-        button: 'bg-[#9C7044] text-[#FDFBF7] hover:bg-[#855D36]',
+        // Theme 1: Premium Yellow
+        bg: 'bg-[#E3E846]',
+        headerBg: 'bg-[#9C7044]',
+        title: 'text-[#333]',
+        headerTitle: 'text-white',
+        text: 'text-[#4A4E00]',
+        button: 'bg-[#9C7044] text-white hover:bg-[#855D36]',
+        accent: 'bg-[#9C7044]/15 text-[#9C7044]',
+        border: 'border-[#9C7044]/20',
     },
     {
-        // Pro - Highlighted Brand Yellow
-        surface: 'bg-gradient-to-br from-[#FEFFD2] via-[#E3E846] to-[#CBD100]',
-        border: 'border-[#A8AD00]',
-        badge: 'bg-[#333] text-white',
-        text: 'text-[#1A1C00]',
-        subtext: 'text-[#4A4E00]',
-        accent: 'text-[#1A1C00]',
-        divider: 'border-black/10',
-        button: 'bg-[#1A1C00] text-white hover:bg-black',
-        highlight: true,
+        // Theme 2: Premium Brown
+        bg: 'bg-[#9C7044]',
+        headerBg: 'bg-[#E3E846]',
+        title: 'text-white',
+        headerTitle: 'text-[#9C7044]',
+        text: 'text-white/90',
+        button: 'bg-[#E3E846] text-[#9C7044] hover:bg-[#EEF27A]',
+        accent: 'bg-white/20 text-white',
+        border: 'border-white/20',
     },
     {
-        // Special - Deep Red
-        surface: 'bg-gradient-to-br from-[#5B131A] via-[#7E1B28] to-[#9E2B3B]',
-        border: 'border-[#6D1A24]',
-        badge: 'bg-[#F3D6B3] text-[#5B131A]',
-        text: 'text-[#FCE7D1]',
-        subtext: 'text-[#F3D6B3]',
-        accent: 'text-[#FCE7D1]',
-        divider: 'border-white/20',
-        button: 'bg-[#F3D6B3] text-[#5B131A] hover:bg-[#E9C6A2]',
+        // Theme 3: Elegant White
+        bg: 'bg-white',
+        headerBg: 'bg-[#FDFBF7]',
+        title: 'text-[#1A1A1A]',
+        headerTitle: 'text-[#9C7044]',
+        text: 'text-slate-700',
+        button: 'bg-[#9C7044] text-white hover:bg-[#855D36]',
+        accent: 'bg-[#9C7044]/10 text-[#9C7044]',
+        border: 'border-slate-200',
     },
     {
-        // Premium - Dark Charcoal
-        surface: 'bg-gradient-to-br from-[#1A1A1A] via-[#2A2A2A] to-[#333]',
-        border: 'border-[#444]',
-        badge: 'bg-[#E3E846] text-[#1A1A1A]',
-        text: 'text-white',
-        subtext: 'text-slate-400',
-        accent: 'text-[#E3E846]',
-        divider: 'border-white/10',
-        button: 'bg-[#E3E846] text-[#1A1A1A] hover:bg-[#CBD100]',
-    },
+        // Theme 4: Deep Tech
+        bg: 'bg-[#1A1A1A]',
+        headerBg: 'bg-[#000000]',
+        title: 'text-white font-black',
+        headerTitle: 'text-[#E3E846]',
+        text: 'text-white/80',
+        button: 'bg-[#E3E846] text-[#000000] hover:bg-[#EEF27A]',
+        accent: 'bg-white/10 text-[#E3E846]',
+        border: 'border-white/10',
+    }
 ];
 
 const imageMap: Record<string, string> = {
@@ -102,15 +102,7 @@ const normalizeName = (name: string) => name
 export default function PackageList({ packages, onBuyPackage }: Props) {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const [activeIndex, setActiveIndex] = React.useState(0);
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const card = e.currentTarget;
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        card.style.setProperty('--mouse-x', `${x}px`);
-        card.style.setProperty('--mouse-y', `${y}px`);
-    };
+    const [selectedTerms, setSelectedTerms] = React.useState<{ name: string; terms: string } | null>(null);
 
     const handleScroll = () => {
         if (!containerRef.current) return;
@@ -140,8 +132,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
     React.useEffect(() => {
         const container = containerRef.current;
         if (container) {
-            container.addEventListener('scroll', handleScroll);
-            // Initial check for active index
+            container.addEventListener('scroll', handleScroll, { passive: true });
             handleScroll();
             return () => container.removeEventListener('scroll', handleScroll);
         }
@@ -149,154 +140,210 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
 
     return (
         <div className="relative group/scroll px-4">
-            {/* Scroll Container - Tall & Narrow */}
+            {/* Scroll Container */}
             <div
                 ref={containerRef}
-                className="flex overflow-x-auto py-24 gap-12 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth overflow-visible"
+                className="flex overflow-x-auto py-24 gap-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth items-stretch"
             >
                 {packages.map((pkg, index) => {
                     const theme = cardThemes[index % cardThemes.length];
-                    const isHighlighted = theme.highlight;
                     const isActive = activeIndex === index;
 
-                    const discountLabel = pkg.discountType === 'percent'
-                        ? `Giảm ${pkg.discountValue}%`
-                        : `Giảm ${formatPrice(pkg.discountValue)}`;
-                    const maxVoucher = pkg.isUnlimitedVoucher ? '∞' : `${pkg.voucherQuantity}`;
+                    const discountValue = pkg.discountType === 'percent'
+                        ? `${pkg.discountValue}%`
+                        : formatPrice(pkg.discountValue);
+
+                    const maxVoucher = pkg.isUnlimitedVoucher ? 'Không giới hạn' : `${pkg.voucherQuantity} mã`;
 
                     const normalizedName = normalizeName(pkg.name);
                     const imageSrc = pkg.imageUrl || imageMap[normalizedName] || fallbackImages[index % fallbackImages.length];
 
+                    // Logic for custom badge or fallback
+                    let specialLabel = pkg.badgeText;
+                    if (!specialLabel && pkg.price === 99000) {
+                        if (normalizedName.includes('pro')) {
+                            specialLabel = 'Best Value';
+                        } else if (pkg.validityDays >= 60) {
+                            specialLabel = 'Long Term';
+                        }
+                    }
+
                     return (
                         <div
                             key={pkg._id}
-                            className={`snap-center shrink-0 w-[280px] sm:w-[320px] lg:w-[calc(25%-36px)] min-w-[280px] max-w-[360px] flex flex-col items-center transition-all duration-700 ease-out py-10 ${isActive ? 'scale-110 z-30' : 'scale-95 opacity-80 z-10'}`}
+                            className={`snap-center shrink-0 w-[85vw] sm:w-[340px] lg:w-[calc(25%-24px)] min-w-[300px] max-w-[360px] flex flex-col transition-all duration-500`}
                         >
                             <div
-                                onMouseMove={handleMouseMove}
-                                className={`relative w-full h-[600px] group ${theme.surface} rounded-[50px] border-2 ${isActive ? (isHighlighted ? 'border-[#A8AD00]' : 'border-white/40') : theme.border} shadow-[0_30px_60px_rgba(0,0,0,0.12)] flex flex-col transition-all duration-500 hover:shadow-[0_45px_100px_rgba(0,0,0,0.25)]`}
+                                onClick={() => setSelectedTerms({ name: pkg.name, terms: pkg.terms || pkg.description || 'Đang cập nhật...' })}
+                                className={`relative w-full h-[740px] group ${theme.bg} rounded-[64px] border ${theme.border} shadow-2xl flex flex-col transition-all duration-500 hover:-translate-y-4 overflow-hidden cursor-pointer`}
                             >
-                                {/* Shimmer Effect for Highlighted Card */}
-                                {isHighlighted && (
-                                    <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-[50px]">
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
+                                {/* Header Decorative Section - Balanced height */}
+                                <div className={`relative h-60 w-full ${theme.headerBg} flex items-center justify-center transition-colors duration-500`}>
+                                    {/* Mascot - Moved up into the header area */}
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-44 h-44 z-20 drop-shadow-[0_25px_45px_rgba(0,0,0,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:-translate-y-4">
+                                        <Image
+                                            src={imageSrc}
+                                            alt={pkg.name}
+                                            fill
+                                            className="object-contain"
+                                            sizes="400px"
+                                            priority={index < 4}
+                                        />
                                     </div>
-                                )}
 
-                                {/* "Most Popular" Badge - Floating Higher */}
-                                {isHighlighted && (
-                                    <div className={`absolute -top-6 left-1/2 -translate-x-1/2 z-40 transition-transform duration-500 ${isActive ? 'scale-110' : 'scale-100'}`}>
-                                        <div className="bg-[#1A1C00] text-[#E3E846] text-[11px] font-black uppercase tracking-[0.2em] px-8 py-3 rounded-full shadow-2xl flex items-center gap-2 whitespace-nowrap border-2 border-[#E3E846]/20">
-                                            <span className="w-2 h-2 rounded-full bg-[#E3E846] animate-pulse" />
-                                            Most Popular
+                                    {/* Special Medal Badge */}
+                                    {specialLabel && (
+                                        <div className="absolute top-8 right-10 z-30">
+                                            <div className="bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full border border-white/20 shadow-2xl">
+                                                {specialLabel}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Main Body Content - Adjusted spacing for the higher mascot */}
+                                <div className="mt-16 px-8 flex flex-col flex-1 pb-12 justify-between">
+                                    {/* Title Section */}
+                                    <div className="text-center">
+                                        <h3 className={`text-2xl font-black tracking-tight mb-2 uppercase leading-none ${theme.title}`}>
+                                            {pkg.name}
+                                        </h3>
+                                        <div className="flex justify-center items-center gap-3">
+                                            <div className="h-[1px] w-6 bg-current opacity-20"></div>
+                                            <span className={`text-[10px] font-bold uppercase tracking-[0.4em] opacity-40 ${theme.title}`}>
+                                                Đặc quyền VIP
+                                            </span>
+                                            <div className="h-[1px] w-6 bg-current opacity-20"></div>
                                         </div>
                                     </div>
-                                )}
 
-                                {/* Floating Image - Breaking Borders */}
-                                <div className={`absolute -top-16 -left-10 w-48 h-48 sm:w-56 sm:h-56 z-50 transition-all duration-700 pointer-events-none drop-shadow-[0_35px_45px_rgba(0,0,0,0.4)] ${isActive ? 'translate-x-4 -translate-y-4 rotate-6 scale-110' : 'translate-x-0 translate-y-0 rotate-0 scale-100'}`}>
-                                    <Image
-                                        src={imageSrc}
-                                        alt={pkg.name}
-                                        fill
-                                        className="object-contain transition-transform duration-500"
-                                        sizes="400px"
-                                        priority={index < 4}
-                                    />
-                                </div>
-
-                                {/* Animated Light Effect */}
-                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-[50px]">
-                                    <div className="absolute -top-[20%] -left-[20%] w-[140%] h-[140%] bg-[radial-gradient(circle_at_var(--mouse-x,50%)_var(--mouse-y,50%),rgba(255,255,255,0.25)_0%,transparent_50%)]" />
-                                </div>
-
-                                {/* Top Section - Vertical Spacing */}
-                                <div className="pt-24 px-8 text-center flex flex-col">
-                                    <h3 className={`text-2xl font-black tracking-tight mb-3 ${theme.text}`}>
-                                        {pkg.name}
-                                    </h3>
-                                    <p className={`text-[12px] leading-relaxed ${theme.subtext} font-bold opacity-60 uppercase tracking-widest`}>
-                                        Membership Plan
-                                    </p>
-                                </div>
-
-                                {/* CENTER SECTION - Price & Main CTA */}
-                                <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6 my-4">
-                                    <div className="flex flex-col items-center gap-1">
-                                        <div className="flex items-baseline gap-1">
-                                            <span className={`text-5xl font-black ${theme.text} tracking-tighter`}>
+                                    {/* Price Section */}
+                                    <div className="flex flex-col items-center py-4">
+                                        <div className="flex items-baseline gap-1 relative">
+                                            <span className={`text-6xl font-black tracking-tighter ${theme.title}`}>
                                                 {formatPrice(pkg.price).replace('đ', '')}
                                             </span>
-                                            <span className={`text-xl font-black ${theme.text}`}>đ</span>
+                                            <span className={`text-2xl font-black mb-1 ${theme.title}`}>đ</span>
                                         </div>
-                                        <span className={`text-[10px] uppercase font-bold tracking-[0.2em] ${theme.subtext} opacity-50`}>per 30 days</span>
+                                        <p className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1 ${theme.title}`}>
+                                            Trọn gói cho 30 ngày
+                                        </p>
                                     </div>
 
-                                    <button
-                                        onClick={() => onBuyPackage(pkg._id)}
-                                        className={`group/btn relative w-[180px] h-[64px] rounded-full overflow-hidden transition-all duration-500 ${theme.button} shadow-[0_15px_35px_rgba(0,0,0,0.15)] hover:w-[200px] active:scale-95`}
-                                    >
-                                        {/* Internal Glassmorphism for Button */}
-                                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                        <span className="relative z-10 flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider">
-                                            {index === packages.length - 1 ? 'Sở hữu' : 'Bắt đầu'}
-                                            <svg className="w-5 h-5 transition-transform group-hover/btn:translate-x-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                            </svg>
+                                    {/* CTA Section */}
+                                    <div className="w-full">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onBuyPackage(pkg._id);
+                                            }}
+                                            className={`w-full py-5 rounded-[32px] font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 ${theme.button} shadow-xl active:scale-95 flex items-center justify-center gap-3 border-b-4 border-black/10`}
+                                        >
+                                            Đăng ký ngay
+                                            <ArrowRight size={22} strokeWidth={3} />
+                                        </button>
+                                    </div>
+
+                                    {/* Features List - Balanced spacing */}
+                                    <div className="space-y-5">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-2xl ${theme.accent}`}>
+                                                <Tag size={18} strokeWidth={3} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className={`text-[14px] font-black leading-tight ${theme.title}`}>Giảm {discountValue}</span>
+                                                <span className={`text-[11px] font-bold opacity-50 ${theme.text}`}>Tất cả đơn hàng</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-2xl ${theme.accent}`}>
+                                                <CheckCircle2 size={18} strokeWidth={3} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className={`text-[14px] font-black leading-tight ${theme.title}`}>Tối đa {formatPrice(pkg.maxDiscount)}</span>
+                                                <span className={`text-[11px] font-bold opacity-50 ${theme.text}`}>Siêu tiết kiệm bữa ăn</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-2xl ${theme.accent}`}>
+                                                <Zap size={18} strokeWidth={3} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className={`text-[14px] font-black leading-tight ${theme.title}`}>{maxVoucher} / tháng</span>
+                                                <span className={`text-[11px] font-bold opacity-50 ${theme.text}`}>Dùng trong {pkg.validityDays} ngày</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-center pt-2">
+                                        <span className={`text-[9px] font-black uppercase tracking-widest opacity-30 ${theme.title} underline`}>
+                                            Chạm để xem chi tiết thể lệ
                                         </span>
-                                    </button>
-                                </div>
-
-                                {/* BOTTOM SECTION - Feature Highlights */}
-                                <div className="pb-10 px-8">
-                                    <div className={`space-y-4 p-6 rounded-[32px] ${isHighlighted ? 'bg-black/10' : 'bg-white/10'} backdrop-blur-md border border-white/10`}>
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-xl bg-white/20 ${theme.accent}`}>
-                                                <Tag size={16} strokeWidth={3} />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className={`text-[13px] font-black ${theme.text}`}>{discountLabel}</span>
-                                                <span className={`text-[10px] ${theme.subtext} font-bold opacity-60`}>Max {formatPrice(pkg.maxDiscount)}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-xl bg-white/20 ${theme.accent}`}>
-                                                <Tag size={16} strokeWidth={3} />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className={`text-[13px] font-black ${theme.text}`}>{maxVoucher} per month</span>
-                                                <span className={`text-[10px] ${theme.subtext} font-bold opacity-60`}>Valid {pkg.validityDays} days</span>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Subtle Abstract Glow at bottom */}
-                                <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-black/5 to-transparent pointer-events-none rounded-b-[50px]" />
+                                {/* Abstract Branding Element */}
+                                <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-current opacity-[0.05] rounded-full blur-3xl"></div>
                             </div>
                         </div>
                     );
                 })}
             </div>
 
+            {/* Terms Modal */}
+            {selectedTerms && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                    onClick={() => setSelectedTerms(null)}
+                >
+                    <div
+                        className="bg-white rounded-[40px] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="bg-[#9C7044] p-8 text-white relative">
+                            <h3 className="text-2xl font-black uppercase tracking-tight">{selectedTerms.name}</h3>
+                            <p className="text-sm opacity-60 font-bold uppercase tracking-widest">Chi tiết thể lệ hội viên</p>
+                            <button
+                                onClick={() => setSelectedTerms(null)}
+                                className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="p-8 max-h-[60vh] overflow-y-auto">
+                            <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-relaxed">
+                                {selectedTerms.terms.split('\n').map((line, i) => (
+                                    <p key={i} className="mb-4">{line}</p>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="p-8 pt-0">
+                            <button
+                                onClick={() => setSelectedTerms(null)}
+                                className="w-full py-4 rounded-full bg-[#9C7044] text-white font-black uppercase tracking-widest hover:bg-[#855D36] transition-colors"
+                            >
+                                Đã hiểu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Pagination / Progress */}
-            {packages.length > 0 && (
-                <div className="flex justify-center gap-3 mt-4">
+            {packages.length > 1 && (
+                <div className="flex justify-center gap-4 mt-4">
                     {packages.map((_, i) => (
                         <div
                             key={i}
-                            className={`h-2 transition-all duration-500 rounded-full border border-black/5 ${activeIndex === i ? 'w-12 bg-[#9C7044] shadow-lg' : 'w-2 bg-slate-200 opacity-50'}`}
+                            className={`h-1.5 transition-all duration-700 rounded-full ${activeIndex === i ? 'w-10 bg-[#9C7044]' : 'w-2.5 bg-[#9C7044]/20'}`}
                         />
                     ))}
                 </div>
             )}
 
-            {/* Custom Styles */}
             <style jsx global>{`
-                @keyframes shimmer {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
                 .scrollbar-hide::-webkit-scrollbar {
                     display: none;
                 }

@@ -172,6 +172,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, []);
 
     useEffect(() => {
+        if (isMounted && cartItems.length > 0 && user) {
+            const currentUserIsAgent = user?.role === 'sale';
+            const needsRecalculation = cartItems.some(item => item.isAgent !== currentUserIsAgent);
+            
+            if (needsRecalculation) {
+                setCartItems(prev => prev.map(item => ({
+                    ...item,
+                    isAgent: currentUserIsAgent,
+                    price: calculatePrice(
+                        item.originalPrice,
+                        item.quantity,
+                        currentUserIsAgent,
+                        agentSettings || undefined,
+                        item.bulkPricing
+                    )
+                })));
+            }
+        }
+    }, [user, agentSettings, isMounted]);
+
+    useEffect(() => {
         if (isMounted) {
             localStorage.setItem('cart', JSON.stringify(cartItems));
         }

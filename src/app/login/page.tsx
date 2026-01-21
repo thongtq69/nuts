@@ -89,7 +89,7 @@ export default function LoginPage() {
                                 <label className="remember-me">
                                     <input type="checkbox" /> Ghi nhớ đăng nhập
                                 </label>
-                                <a href="#" className="forgot-password" onClick={(e) => { e.preventDefault(); toast.info('Tính năng đang phát triển', 'Vui lòng liên hệ hỗ trợ để được cấp lại mật khẩu.'); }}>Quên mật khẩu?</a>
+                                <a href="/forgot-password" className="forgot-password">Quên mật khẩu?</a>
                             </div>
 
                             <button type="submit" className="auth-btn" disabled={isLoading}>

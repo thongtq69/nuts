@@ -133,13 +133,58 @@ export default function ContactPage() {
                             </div>
                         </div>
 
-                        <div className="map-placeholder">
-                            <p>Bản đồ sẽ hiển thị ở đây</p>
+                        <div className="map-section">
+                            <h4>Bản đồ</h4>
+                            <div className="map-container">
+                                <iframe
+                                    width="100%"
+                                    height="300"
+                                    style={{ border: 0, borderRadius: '12px' }}
+                                    src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&q=${encodeURIComponent(currentSettings.address)}&zoom=15&language=vi`}
+                                    allowFullScreen
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    title="Google Maps"
+                                />
+                            </div>
+                            <a 
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentSettings.address)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="map-directions-link"
+                            >
+                                Xem trên Google Maps →
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
             <Footer />
+
+            <style jsx>{`
+                .map-section {
+                    margin-top: 24px;
+                }
+                .map-section h4 {
+                    margin-bottom: 12px;
+                    color: #333;
+                }
+                .map-container {
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .map-directions-link {
+                    display: inline-block;
+                    margin-top: 12px;
+                    color: #9C7043;
+                    text-decoration: none;
+                    font-weight: 500;
+                }
+                .map-directions-link:hover {
+                    text-decoration: underline;
+                }
+            `}</style>
         </main>
     );
 }
