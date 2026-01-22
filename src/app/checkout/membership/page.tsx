@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Suspense } from 'react';
+import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
 
 interface Package {
     _id: string;
@@ -55,6 +56,8 @@ function MembershipCheckoutContent() {
         address: '',
         note: ''
     });
+
+    const [paymentMethod, setPaymentMethod] = useState('banking');
 
     useEffect(() => {
         if (user) {
@@ -108,7 +111,8 @@ function MembershipCheckoutContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     packageId,
-                    shippingInfo: formData
+                    shippingInfo: formData,
+                    paymentMethod
                 }),
             });
 
@@ -243,26 +247,63 @@ function MembershipCheckoutContent() {
 
                             {/* Payment Info */}
                             <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-100">
-                                <div className="flex items-start gap-3">
+                                <div className="flex items-start gap-3 mb-4">
                                     <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <span className="text-xl">💵</span>
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-800 mb-1">Phương thức thanh toán</h3>
                                         <p className="text-sm text-gray-600">
-                                            COD (Thanh toán khi nhận hàng) hoặc Chuyển khoản ngân hàng.
-                                            Nhân viên sẽ liên hệ xác nhận và hướng dẫn thanh toán.
+                                            Chọn phương thức thanh toán phù hợp với bạn
                                         </p>
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-600">
-                                                <CheckIcon className="w-4 h-4 text-green-500" /> Tiền mặt
-                                            </span>
-                                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-600">
-                                                <CheckIcon className="w-4 h-4 text-green-500" /> Chuyển khoản
-                                            </span>
-                                        </div>
                                     </div>
                                 </div>
+                                
+                                {/* Payment Method Selection */}
+                                <div className="flex gap-3 mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('banking')}
+                                        className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+                                            paymentMethod === 'banking' 
+                                                ? 'border-brand bg-brand text-white' 
+                                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <span>🏦</span>
+                                        <span className="font-medium">Chuyển khoản</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('cod')}
+                                        className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+                                            paymentMethod === 'cod' 
+                                                ? 'border-brand bg-brand text-white' 
+                                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <span>💵</span>
+                                        <span className="font-medium">Thanh toán khi nhận hàng</span>
+                                    </button>
+                                </div>
+                                
+                                {/* Bank Transfer Info */}
+                                {paymentMethod === 'banking' && (
+                                    <div className="mt-4">
+                                        <BankInfoDisplay 
+                                            amount={pkg.price}
+                                            description={`VIP${pkg._id.slice(-6).toUpperCase()}${Date.now().toString().slice(-4)}`}
+                                        />
+                                    </div>
+                                )}
+
+                                {paymentMethod === 'cod' && (
+                                    <div className="mt-4 p-4 bg-amber-100/50 rounded-lg">
+                                        <p className="text-sm text-amber-800">
+                                            💡 <strong>Lưu ý:</strong> Với phương thức COD, gói hội viên sẽ được kích hoạt sau khi bạn thanh toán tiền mặt cho nhân viên giao hàng.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <button
@@ -277,7 +318,7 @@ function MembershipCheckoutContent() {
                                     </>
                                 ) : (
                                     <>
-                                        Xác nhận đăng ký - {formatPrice(pkg.price)}đ
+                                        {paymentMethod === 'banking' ? '✅ Xác nhận đăng ký' : '📦 Xác nhận đăng ký'} - {formatPrice(pkg.price)}đ
                                     </>
                                 )}
                             </button>

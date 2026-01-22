@@ -38,7 +38,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Phiên đăng nhập đã hết hạn' }, { status: 401 });
         }
 
-        const { packageId } = await req.json();
+        const { packageId, shippingInfo, paymentMethod = 'banking' } = await req.json();
         const pkg = await SubscriptionPackage.findById(packageId);
 
         if (!pkg) {
@@ -50,67 +50,70 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Người dùng không tồn tại' }, { status: 404 });
         }
 
-        // Affiliate Tracking - 2-level system
-        const refCode = cookieStore.get('gonuts_ref')?.value;
-        let referrerId: any = user?.referrer;
+        // Calculate expiry date
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + (pkg.validityDays || 30));
+
+        // Affiliate tracking
+        let referrerId: any = undefined;
+        let commissionAmount = 0;
+        let commissionStatus: any = undefined;
         let staffId: any = undefined;
 
-        if (refCode && !referrerId) {
-            const refUser = await User.findOne({ referralCode: refCode });
-            if (refUser && refUser._id.toString() !== userId) {
-                referrerId = refUser._id;
-
-                // If referrer is collaborator, get their parent staff
-                if (refUser.affiliateLevel === 'collaborator' && refUser.parentStaff) {
-                    staffId = refUser.parentStaff;
+        const refCode = cookieStore.get('gonuts_ref')?.value;
+        if (refCode) {
+            const referrerUser = await User.findOne({ referralCode: refCode });
+            if (referrerUser && referrerUser._id.toString() !== userId) {
+                referrerId = referrerUser._id;
+                if (referrerUser.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
+                    staffId = referrerUser.parentStaff;
                 }
             }
         }
-
-        // Commission Calculation - 2-level system
-        let commissionAmount = 0;
-        let commissionStatus: any = undefined;
+        if (!referrerId && user?.referrer) {
+            referrerId = user.referrer;
+            const referrerUser = await User.findById(user.referrer);
+            if (referrerUser?.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
+                staffId = referrerUser.parentStaff;
+            }
+        }
 
         if (referrerId) {
+            const referrerUser = await User.findById(referrerId);
             const settings = await AffiliateSettings.findOne();
             const defaultRate = settings?.defaultCommissionRate ?? 10;
-
-            const referrerUser = await User.findById(referrerId);
             let referrerRate = referrerUser?.commissionRateOverride ?? defaultRate;
             let staffRate = 0;
 
-            // If referrer is collaborator, get staff commission rate
             if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
                 const staffUser = await User.findById(staffId);
                 staffRate = staffUser?.staffCommissionRate ?? 2;
             }
 
             if (referrerUser?.affiliateLevel === 'collaborator') {
-                // Collaborator gets commission + Staff gets override commission
                 const collabCommission = Math.round(pkg.price * (referrerRate / 100));
-                const staffCommission = Math.round(pkg.price * (staffRate / 100));
-                commissionAmount = collabCommission + staffCommission;
+                commissionAmount = collabCommission;
             } else {
-                // Staff or regular referrer gets full commission
                 commissionAmount = Math.round(pkg.price * (referrerRate / 100));
             }
             commissionStatus = 'pending';
         }
 
-        // Calculate expiry date
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + (pkg.validityDays || 30));
+        // Determine payment status
+        const isPaid = paymentMethod === 'banking';
+        const orderStatus = isPaid ? 'completed' : 'pending';
+        const paymentStatus = isPaid ? 'paid' : 'pending';
 
         // Create Order with membership type
         const order = await Order.create({
             user: userId,
             orderType: 'membership',
             shippingInfo: {
-                fullName: user.name || 'Guest',
-                phone: user.phone || '0000',
-                address: 'Membership Purchase',
-                city: 'N/A',
-                district: 'N/A'
+                fullName: shippingInfo.name || user.name || 'Guest',
+                phone: shippingInfo.phone || user.phone || '0000',
+                address: shippingInfo.address || 'Membership Purchase',
+                city: shippingInfo.city || 'N/A',
+                district: shippingInfo.district || 'N/A'
             },
             items: [{
                 productId: pkg._id,
@@ -125,14 +128,14 @@ export async function POST(req: Request) {
                 voucherQuantity: pkg.voucherQuantity,
                 expiresAt: expiresAt
             },
-            paymentMethod: 'cod',
-            paymentStatus: 'paid', // Auto-mark as paid for now
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus,
             totalAmount: pkg.price,
             shippingFee: 0,
-            status: 'completed', // Auto-complete membership orders
+            status: orderStatus,
             referrer: referrerId,
             commissionAmount: commissionAmount,
-            commissionStatus: commissionStatus
+            commissionStatus: isPaid ? commissionStatus : undefined
         });
 
         // Generate vouchers for the user
