@@ -48,13 +48,14 @@ function MembershipCheckoutContent() {
     const [pkg, setPkg] = useState<Package | null>(null);
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+    const [orderPlaced, setOrderPlaced] = useState(false);
+    const [orderInfo, setOrderInfo] = useState<{orderId: string, vouchersCount: number} | null>(null);
 
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        phone: '',
-        address: '',
-        note: ''
+        phone: ''
     });
 
     const [paymentMethod, setPaymentMethod] = useState('banking');
@@ -65,8 +66,7 @@ function MembershipCheckoutContent() {
                 ...prev,
                 name: user.name || '',
                 email: user.email || '',
-                phone: user.phone || '',
-                address: user.address || ''
+                phone: user.phone || ''
             }));
         }
     }, [user]);
@@ -95,12 +95,12 @@ function MembershipCheckoutContent() {
 
     const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price);
 
-    const handlePlaceOrder = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handlePlaceOrder = async () => {
         if (isProcessing) return;
 
-        if (!formData.name || !formData.phone || !formData.address) {
-            toast.warning('Thiếu thông tin', 'Vui lòng điền đầy đủ thông tin');
+        // For banking, require payment confirmation first
+        if (paymentMethod === 'banking' && !paymentConfirmed) {
+            toast.info('Xác nhận thanh toán', 'Vui lòng quét mã QR và xác nhận đã chuyển khoản');
             return;
         }
 
@@ -111,7 +111,6 @@ function MembershipCheckoutContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     packageId,
-                    shippingInfo: formData,
                     paymentMethod
                 }),
             });
@@ -119,7 +118,11 @@ function MembershipCheckoutContent() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Lỗi đặt hàng');
 
-            router.push('/checkout/membership/success');
+            setOrderInfo({
+                orderId: data.orderId,
+                vouchersCount: data.vouchersCount
+            });
+            setOrderPlaced(true);
         } catch (error: any) {
             toast.error('Lỗi đặt hàng', error.message);
         } finally {
@@ -173,76 +176,46 @@ function MembershipCheckoutContent() {
                             <p className="text-white/80 text-sm mt-1">Hoàn tất đăng ký của bạn</p>
                         </div>
 
-                        <form onSubmit={handlePlaceOrder} className="p-6 space-y-6">
-                            {/* User Info */}
+                        <form className="p-6 space-y-6">
+                            {/* User Info - Simple for membership */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Họ tên <span className="text-red-500">*</span>
+                                        Họ tên
                                     </label>
                                     <input
                                         type="text"
-                                        required
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all outline-none"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all outline-none bg-gray-50"
                                         placeholder="Nhập họ và tên"
                                         value={formData.name}
                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        disabled
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Số điện thoại <span className="text-red-500">*</span>
+                                        Số điện thoại
                                     </label>
                                     <input
                                         type="tel"
-                                        required
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all outline-none"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all outline-none bg-gray-50"
                                         placeholder="Nhập số điện thoại"
                                         value={formData.phone}
-                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                        disabled
                                     />
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Email <span className="text-red-500">*</span>
+                                    Email
                                 </label>
                                 <input
                                     type="email"
-                                    required
-                                    disabled={!!user}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all outline-none"
                                     value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    disabled
                                 />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Địa chỉ nhận thẻ/quà tặng <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all outline-none"
-                                    placeholder="Số nhà, tên đường, phường/xã..."
-                                    value={formData.address}
-                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Ghi chú (tùy chọn)
-                                </label>
-                                <textarea
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all outline-none resize-none"
-                                    rows={3}
-                                    placeholder="Ghi chú thêm..."
-                                    value={formData.note}
-                                    onChange={e => setFormData({ ...formData, note: e.target.value })}
-                                ></textarea>
                             </div>
 
                             {/* Payment Info */}
@@ -306,10 +279,41 @@ function MembershipCheckoutContent() {
                                 )}
                             </div>
 
+                            {/* Payment Confirmation for Banking */}
+                            {paymentMethod === 'banking' && !paymentConfirmed && (
+                                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <span className="text-xl">✓</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-semibold text-green-800 mb-1">Xác nhận đã chuyển khoản</h4>
+                                            <p className="text-sm text-green-700 mb-3">
+                                                Sau khi quét mã QR và chuyển khoản, hãy xác nhận để hoàn tất đăng ký.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPaymentConfirmed(true)}
+                                                className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <span>✓</span>
+                                                <span>Đã chuyển khoản - Xác nhận</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Submit Button */}
                             <button
-                                type="submit"
-                                disabled={isProcessing}
-                                className="w-full py-4 bg-gradient-to-r from-brand to-brand-light text-white font-bold rounded-xl hover:shadow-lg hover:shadow-brand/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                type="button"
+                                onClick={handlePlaceOrder}
+                                disabled={isProcessing || (paymentMethod === 'banking' && !paymentConfirmed)}
+                                className={`w-full py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+                                    isProcessing || (paymentMethod === 'banking' && !paymentConfirmed)
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-brand to-brand-light text-white hover:shadow-lg hover:shadow-brand/30'
+                                }`}
                             >
                                 {isProcessing ? (
                                     <>
@@ -318,16 +322,89 @@ function MembershipCheckoutContent() {
                                     </>
                                 ) : (
                                     <>
-                                        {paymentMethod === 'banking' ? '✅ Xác nhận đăng ký' : '📦 Xác nhận đăng ký'} - {formatPrice(pkg.price)}đ
+                                        {paymentMethod === 'banking' ? '✅ Xác nhận hoàn tất' : '📦 Xác nhận đăng ký'} - {formatPrice(pkg.price)}đ
                                     </>
                                 )}
                             </button>
+
+                            {/* Cancel Confirmation Button */}
+                            {paymentMethod === 'banking' && paymentConfirmed && (
+                                <button
+                                    type="button"
+                                    onClick={() => setPaymentConfirmed(false)}
+                                    className="w-full py-3 text-gray-500 font-medium hover:text-gray-700 transition-all"
+                                >
+                                    ← Quay lại
+                                </button>
+                            )}
 
                             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                                 <ShieldIcon className="w-5 h-5 text-green-500" />
                                 <span>Thông tin được bảo mật tuyệt đối</span>
                             </div>
                         </form>
+
+                        {/* Order Placed Success View */}
+                        {orderPlaced && (
+                            <div className="p-6 animate-in fade-in duration-500">
+                                <div className="text-center py-8">
+                                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <span className="text-4xl">✓</span>
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                                        {paymentMethod === 'banking' 
+                                            ? 'Đơn hàng đang chờ xác nhận'
+                                            : 'Đăng ký thành công!'}
+                                    </h2>
+                                    
+                                    {paymentMethod === 'banking' ? (
+                                        <div className="space-y-4">
+                                            <p className="text-gray-600">
+                                                Cảm ơn bạn đã đăng ký! Đơn hàng của bạn đang chờ hệ thống kiểm tra và xác nhận thanh toán.
+                                            </p>
+                                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left">
+                                                <div className="flex items-start gap-3">
+                                                    <span className="text-xl">ℹ️</span>
+                                                    <div className="text-sm text-amber-800">
+                                                        <p className="font-semibold mb-1">Quy trình xác nhận:</p>
+                                                        <ol className="list-decimal list-inside space-y-1">
+                                                            <li>Hệ thống kiểm tra khoản chuyển</li>
+                                                            <li>Xác nhận và kích hoạt gói VIP</li>
+                                                            <li>Gửi email thông báo qua {formData.email}</li>
+                                                        </ol>
+                                                        <p className="mt-2">Thời gian xử lý: 1-24 giờ</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-600">
+                                            Gói VIP đã được kích hoạt! Bạn có thể sử dụng voucher ngay bây giờ.
+                                        </p>
+                                    )}
+
+                                    <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                                        <p className="text-sm text-gray-500 mb-1">Mã đơn hàng</p>
+                                        <p className="font-mono font-bold text-lg">{orderInfo?.orderId}</p>
+                                    </div>
+
+                                    <div className="mt-6 flex gap-4 justify-center">
+                                        <button
+                                            onClick={() => router.push('/account')}
+                                            className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-all"
+                                        >
+                                            Xem tài khoản
+                                        </button>
+                                        <button
+                                            onClick={() => router.push('/')}
+                                            className="px-6 py-3 bg-brand text-white font-medium rounded-xl hover:bg-brand/90 transition-all"
+                                        >
+                                            Về trang chủ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

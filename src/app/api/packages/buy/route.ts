@@ -38,7 +38,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Phiên đăng nhập đã hết hạn' }, { status: 401 });
         }
 
-        const { packageId, shippingInfo, paymentMethod = 'banking' } = await req.json();
+        const { packageId, paymentMethod = 'banking' } = await req.json();
+        
         const pkg = await SubscriptionPackage.findById(packageId);
 
         if (!pkg) {
@@ -100,26 +101,26 @@ export async function POST(req: Request) {
         }
 
         // Determine payment status
-        const isPaid = paymentMethod === 'banking';
-        const orderStatus = isPaid ? 'completed' : 'pending';
-        const paymentStatus = isPaid ? 'paid' : 'pending';
+        // For membership packages, always set to pending - admin will confirm after checking payment
+        const orderStatus = 'pending';
+        const paymentStatus = 'pending';
 
         // Create Order with membership type
-        const order = await Order.create({
+        const orderData: any = {
             user: userId,
             orderType: 'membership',
             shippingInfo: {
-                fullName: shippingInfo.name || user.name || 'Guest',
-                phone: shippingInfo.phone || user.phone || '0000',
-                address: shippingInfo.address || 'Membership Purchase',
-                city: shippingInfo.city || 'N/A',
-                district: shippingInfo.district || 'N/A'
+                fullName: user?.name || 'Member',
+                phone: user?.phone || '0000000000',
+                address: 'Online Membership Purchase - No Shipping Required',
+                city: 'Online',
+                district: 'N/A'
             },
             items: [{
-                productId: pkg._id,
+                productId: String(pkg._id),
                 name: `Gói Hội Viên: ${pkg.name}`,
                 quantity: 1,
-                price: pkg.price,
+                price: Number(pkg.price),
                 image: ''
             }],
             packageInfo: {
@@ -130,13 +131,13 @@ export async function POST(req: Request) {
             },
             paymentMethod: paymentMethod,
             paymentStatus: paymentStatus,
-            totalAmount: pkg.price,
+            totalAmount: Number(pkg.price),
             shippingFee: 0,
             status: orderStatus,
-            referrer: referrerId,
             commissionAmount: commissionAmount,
-            commissionStatus: isPaid ? commissionStatus : undefined
-        });
+        };
+
+        const order = await Order.create(orderData);
 
         // Generate vouchers for the user
         const vouchersToCreate = [];
@@ -215,19 +216,6 @@ export async function POST(req: Request) {
             if (commissionRecords.length > 0) {
                 await Order.findByIdAndUpdate(order._id, { commissionId: commissionRecords[0]._id });
             }
-
-            // Auto-approve commissions for membership orders
-            for (const comm of commissionRecords) {
-                comm.status = 'approved';
-                await comm.save();
-
-                const affiliate = await User.findById(comm.affiliateId);
-                if (affiliate) {
-                    affiliate.walletBalance = (affiliate.walletBalance || 0) + comm.commissionAmount;
-                    affiliate.totalCommission = (affiliate.totalCommission || 0) + comm.commissionAmount;
-                    await affiliate.save();
-                }
-            }
         }
 
         return NextResponse.json({
@@ -236,7 +224,7 @@ export async function POST(req: Request) {
             vouchersCount: pkg.voucherQuantity
         }, { status: 201 });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Buy package error:", error);
         return NextResponse.json({ message: 'Lỗi khi mua gói' }, { status: 500 });
     }

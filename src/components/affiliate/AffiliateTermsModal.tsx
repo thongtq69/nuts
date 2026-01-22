@@ -259,32 +259,7 @@ export default function AffiliateTermsModal({ isOpen, onClose, affiliateType }: 
                 }
 
                 .modal-header {
-                    padding: 20px 24px;
-                    border-bottom: 1px solid #eee;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
                     flex-shrink: 0;
-                }
-
-                .modal-header h2 {
-                    margin: 0;
-                    font-size: 20px;
-                    color: #333;
-                }
-
-                .close-btn {
-                    background: none;
-                    border: none;
-                    font-size: 28px;
-                    color: #999;
-                    cursor: pointer;
-                    line-height: 1;
-                    padding: 0;
-                }
-
-                .close-btn:hover {
-                    color: #333;
                 }
 
                 .modal-body {
@@ -292,25 +267,14 @@ export default function AffiliateTermsModal({ isOpen, onClose, affiliateType }: 
                     overflow: hidden;
                     display: flex;
                     flex-direction: column;
-                }
-
-                .terms-intro {
-                    padding: 16px 24px;
-                    background: #f8f4f0;
-                    border-bottom: 1px solid #eee;
-                    flex-shrink: 0;
-                }
-
-                .terms-intro p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: #666;
+                    min-height: 0;
                 }
 
                 .terms-content {
                     flex: 1;
                     overflow-y: auto;
                     padding: 20px 24px;
+                    max-height: 50vh;
                 }
 
                 .terms-content h3 {
