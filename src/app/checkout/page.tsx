@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
 
 interface Province {
     code: number;
@@ -433,6 +434,16 @@ export default function CheckoutPage() {
                                 <span>🏦 Chuyển khoản ngân hàng</span>
                             </label>
                         </div>
+
+                        {/* Bank Transfer Info */}
+                        {paymentMethod === 'banking' && (
+                            <div className="banking-info-section">
+                                <BankInfoDisplay 
+                                    amount={subtotal + shippingFee - appliedDiscount}
+                                    description={`GO${Date.now().toString().slice(-6)}`}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Column: Order Summary */}
@@ -1148,6 +1159,15 @@ export default function CheckoutPage() {
                 .original-price-display {
                     text-decoration: line-through;
                     color: #999;
+                }
+                
+                .banking-info-section {
+                    margin-top: 20px;
+                    animation: fadeIn 0.3s ease;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
             }
           `}</style>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { encodeAffiliateId, generateReferralLink } from '@/lib/affiliate';
+import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
 import {
     Wallet,
     DollarSign,
@@ -420,6 +421,11 @@ export default function AgentDashboard() {
                                 <div className="font-bold text-white">So du vi</div>
                                 <div className="text-white/90 text-lg font-bold">{formatPrice(displayStats.walletBalance)}d</div>
                             </div>
+                        </div>
+
+                        {/* Bank Info for Withdrawal */}
+                        <div className="mt-2">
+                            <BankInfoDisplay compact />
                         </div>
 
                         <Link
