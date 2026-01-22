@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
+import ImageCropper from '@/components/common/ImageCropper';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
@@ -58,6 +59,11 @@ export default function StaffBlogsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
+
+    // New states for image cropping
+    const [tempImage, setTempImage] = useState<string | null>(null);
+    const [showCropper, setShowCropper] = useState(false);
+
     const toast = useToast();
     const confirm = useConfirm();
 
@@ -103,10 +109,20 @@ export default function StaffBlogsPage() {
             return;
         }
 
+        const reader = new FileReader();
+        reader.onload = () => {
+            setTempImage(reader.result as string);
+            setShowCropper(true);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleCropComplete = async (croppedBlob: Blob) => {
+        setShowCropper(false);
         setUploadingImage(true);
         try {
             const uploadData = new FormData();
-            uploadData.append('file', file);
+            uploadData.append('file', croppedBlob, 'blog-cover.jpg');
             uploadData.append('type', 'blog');
             uploadData.append('folder', 'gonuts/blogs');
 
@@ -118,7 +134,7 @@ export default function StaffBlogsPage() {
             if (res.ok) {
                 const data = await res.json();
                 setFormData({ ...formData, coverImage: data.url });
-                toast.success('Thành công', 'Upload ảnh thành công');
+                toast.success('Thành công', 'Upload và căn chỉnh ảnh thành công');
             } else {
                 const error = await res.json();
                 toast.error('Lỗi upload', error.message || 'Không thể upload ảnh');
@@ -128,6 +144,7 @@ export default function StaffBlogsPage() {
             toast.error('Lỗi upload', 'Có lỗi xảy ra khi upload ảnh');
         } finally {
             setUploadingImage(false);
+            setTempImage(null);
         }
     };
 
@@ -425,8 +442,8 @@ export default function StaffBlogsPage() {
                                             <button
                                                 onClick={() => handleTogglePublish(blog)}
                                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${blog.isPublished
-                                                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                                                        : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                                                     }`}
                                             >
                                                 {blog.isPublished ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -516,8 +533,8 @@ export default function StaffBlogsPage() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, isPublished: !formData.isPublished })}
                                         className={`w-full px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${formData.isPublished
-                                                ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-200'
-                                                : 'bg-amber-100 text-amber-700 border-2 border-amber-200'
+                                            ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-200'
+                                            : 'bg-amber-100 text-amber-700 border-2 border-amber-200'
                                             }`}
                                     >
                                         {formData.isPublished ? <Eye size={18} /> : <EyeOff size={18} />}
@@ -639,6 +656,20 @@ export default function StaffBlogsPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {/* Image Cropper Modal */}
+            {showCropper && tempImage && (
+                <ImageCropper
+                    image={tempImage}
+                    aspect={16 / 9}
+                    onCropComplete={handleCropComplete}
+                    onCancel={() => {
+                        setShowCropper(false);
+                        setTempImage(null);
+                    }}
+                    title="Căn chỉnh ảnh bìa"
+                />
             )}
         </div>
     );
