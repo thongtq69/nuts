@@ -49,30 +49,34 @@ export default function ImageCropper({
 
     // Load image và tính toán kích thước
     useEffect(() => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+        const imgElement = imageRef.current;
+        if (!imgElement) return;
 
-            // Tính toán scale và position ban đầu để fit ảnh vào crop area
-            const scaleX = cropArea.width / img.naturalWidth;
-            const scaleY = cropArea.height / img.naturalHeight;
+        setImageLoaded(false);
+        setImageError(false);
+
+        // Thêm cache buster để force CORS check mới
+        const cacheBuster = imageUrl.includes('?') ? `&t=${Date.now()}` : `?t=${Date.now()}`;
+        const finalUrl = imageUrl + cacheBuster;
+
+        imgElement.crossOrigin = 'anonymous';
+        imgElement.onload = () => {
+            setImageDimensions({ width: imgElement.naturalWidth, height: imgElement.naturalHeight });
+
+            // Tính toán scale và position ban đầu
+            const scaleX = cropArea.width / imgElement.naturalWidth;
+            const scaleY = cropArea.height / imgElement.naturalHeight;
             const initialScale = Math.max(scaleX, scaleY);
 
             setScale(initialScale);
             setPosition({ x: 0, y: 0 });
             setImageLoaded(true);
-            setImageError(false);
-
-            if (imageRef.current) {
-                imageRef.current.src = img.src;
-            }
         };
-        img.onerror = () => {
+        imgElement.onerror = () => {
             setImageError(true);
             setImageLoaded(false);
         };
-        img.src = imageUrl;
+        imgElement.src = finalUrl;
     }, [imageUrl, cropArea]);
 
     // Vẽ ảnh lên canvas với high DPI support
@@ -225,94 +229,113 @@ export default function ImageCropper({
 
     // Crop và export ảnh - VẼ TRỰC TIẾP TỪ ẢNH GỐC để giữ chất lượng cao
     const handleCropImage = useCallback(() => {
-        const img = imageRef.current;
-        if (!img || !imageLoaded) return;
-
-        // Tạo canvas với kích thước output cao (3000px width)
-        const finalCanvas = document.createElement('canvas');
-        const finalWidth = 3000;
-        const finalHeight = Math.round(finalWidth / aspectRatio);
-
-        finalCanvas.width = finalWidth;
-        finalCanvas.height = finalHeight;
-
-        const finalCtx = finalCanvas.getContext('2d');
-        if (!finalCtx) return;
-
-        // Fill white background first (prevents black borders)
-        finalCtx.fillStyle = '#FFFFFF';
-        finalCtx.fillRect(0, 0, finalWidth, finalHeight);
-
-        // Tính toán tỉ lệ scale từ preview canvas sang output canvas
-        const outputScale = finalWidth / cropArea.width;
-
-        // Tính toán kích thước ảnh trên canvas output với tỉ lệ cao
-        const scaledWidthOnOutput = imageDimensions.width * scale * outputScale;
-        const scaledHeightOnOutput = imageDimensions.height * scale * outputScale;
-
-        // Tính vị trí ảnh trên canvas output
-        const xOnOutput = (finalWidth - scaledWidthOnOutput) / 2 + (position.x * outputScale);
-        const yOnOutput = (finalHeight - scaledHeightOnOutput) / 2 + (position.y * outputScale);
-
-        // Bật image smoothing chất lượng cao
-        finalCtx.imageSmoothingEnabled = true;
-        finalCtx.imageSmoothingQuality = 'high';
-
-        // Vẽ ảnh trực tiếp từ ảnh gốc lên canvas output với đầy đủ độ phân giải
-        finalCtx.drawImage(
-            img,
-            0, 0, img.naturalWidth, img.naturalHeight, // Source: toàn bộ ảnh gốc
-            xOnOutput, yOnOutput, scaledWidthOnOutput, scaledHeightOnOutput // Dest: vị trí và kích thước trên output
-        );
-
-        // Convert sang base64 và upload lên Cloudinary
-        // Convert sang base64 và upload lên Cloudinary
-        finalCanvas.toBlob(async (blob) => {
-            if (blob) {
-                try {
-                    setIsUploading(true);
-                    // Convert blob to base64
-                    const reader = new FileReader();
-                    reader.onload = async () => {
-                        const base64Data = reader.result as string;
-
-                        // Upload to Cloudinary
-                        const response = await fetch('/api/upload', {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                imageData: base64Data,
-                                folder: 'gonuts/banners',
-                                type: 'banner',
-                                filename: `cropped_${Date.now()}`
-                            })
-                        });
-
-                        const result = await response.json();
-
-                        if (result.success) {
-                            console.log('✅ Image uploaded to Cloudinary:', result.data.url);
-                            onCrop(result.data.url);
-                        } else {
-                            console.error('❌ Upload failed:', result.message);
-                            // Fallback to blob URL
-                            const croppedUrl = URL.createObjectURL(blob);
-                            onCrop(croppedUrl);
-                        }
-                        setIsUploading(false);
-                    };
-                    reader.readAsDataURL(blob);
-                } catch (error) {
-                    console.error('❌ Error uploading to Cloudinary:', error);
-                    // Fallback to blob URL
-                    const croppedUrl = URL.createObjectURL(blob);
-                    onCrop(croppedUrl);
-                    setIsUploading(false);
-                }
+        try {
+            console.log('🎞️ Starting crop process...');
+            const img = imageRef.current;
+            if (!img || !imageLoaded) {
+                console.error('❌ Image not ready for cropping');
+                return;
             }
-        }, 'image/jpeg', 0.9);
+
+            // Tạo canvas với kích thước output phù hợp (2000px width là tối ưu cho banner)
+            const finalCanvas = document.createElement('canvas');
+            const finalWidth = 2000;
+            const finalHeight = Math.round(finalWidth / aspectRatio);
+
+            console.log(`📐 Output dimensions: ${finalWidth}x${finalHeight}`);
+            finalCanvas.width = finalWidth;
+            finalCanvas.height = finalHeight;
+
+            const finalCtx = finalCanvas.getContext('2d');
+            if (!finalCtx) return;
+
+            // Fill white background first (prevents black borders)
+            finalCtx.fillStyle = '#FFFFFF';
+            finalCtx.fillRect(0, 0, finalWidth, finalHeight);
+
+            // Tính toán tỉ lệ scale từ preview canvas sang output canvas
+            const outputScale = finalWidth / cropArea.width;
+
+            // Tính toán kích thước ảnh trên canvas output với tỉ lệ cao
+            const scaledWidthOnOutput = imageDimensions.width * scale * outputScale;
+            const scaledHeightOnOutput = imageDimensions.height * scale * outputScale;
+
+            // Tính vị trí ảnh trên canvas output
+            const xOnOutput = (finalWidth - scaledWidthOnOutput) / 2 + (position.x * outputScale);
+            const yOnOutput = (finalHeight - scaledHeightOnOutput) / 2 + (position.y * outputScale);
+
+            // Bật image smoothing chất lượng cao
+            finalCtx.imageSmoothingEnabled = true;
+            finalCtx.imageSmoothingQuality = 'high';
+
+            // Vẽ ảnh trực tiếp từ ảnh gốc lên canvas output với đầy đủ độ phân giải
+            console.log('🎨 Drawing final image to hidden canvas...');
+            try {
+                finalCtx.drawImage(
+                    img,
+                    0, 0, img.naturalWidth, img.naturalHeight, // Source: toàn bộ ảnh gốc
+                    xOnOutput, yOnOutput, scaledWidthOnOutput, scaledHeightOnOutput // Dest: vị trí và kích thước trên output
+                );
+            } catch (drawError) {
+                console.error('❌ Canvas Draw Error (Possibly CORS):', drawError);
+                alert('Lỗi khi vẽ ảnh: ' + (drawError instanceof Error ? drawError.message : 'Dung lượng quá lớn hoặc lỗi bảo mật CORS'));
+                return;
+            }
+
+            // Convert sang base64 và upload lên Cloudinary
+            finalCanvas.toBlob(async (blob) => {
+                if (blob) {
+                    try {
+                        setIsUploading(true);
+                        // Convert blob to base64
+                        const reader = new FileReader();
+                        reader.onload = async () => {
+                            const base64Data = reader.result as string;
+
+                            // Upload to Cloudinary
+                            const response = await fetch('/api/upload', {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    imageData: base64Data,
+                                    folder: 'gonuts/banners',
+                                    type: 'banner',
+                                    filename: `cropped_${Date.now()}`
+                                })
+                            });
+
+                            const result = await response.json();
+
+                            if (result.success) {
+                                console.log('✅ Image uploaded to Cloudinary:', result.data.url);
+                                onCrop(result.data.url);
+                            } else {
+                                console.error('❌ Upload failed:', result.message);
+                                // Fallback to blob URL
+                                const croppedUrl = URL.createObjectURL(blob);
+                                onCrop(croppedUrl);
+                            }
+                            setIsUploading(false);
+                        };
+                        reader.readAsDataURL(blob);
+                    } catch (error) {
+                        console.error('❌ Error uploading to Cloudinary:', error);
+                        // Fallback to blob URL
+                        const croppedUrl = URL.createObjectURL(blob);
+                        onCrop(croppedUrl);
+                        setIsUploading(false);
+                    }
+                } else {
+                    console.error('❌ Failed to generate blob from canvas');
+                    alert('Không thể tạo file ảnh từ canvas.');
+                }
+            }, 'image/jpeg', 0.9);
+        } catch (err) {
+            console.error('❌ Unexpected error in handleCropImage:', err);
+            alert('Lỗi không xác định: ' + (err instanceof Error ? err.message : 'Vui lòng thử lại'));
+        }
     }, [aspectRatio, cropArea, onCrop, scale, position, imageDimensions, imageLoaded]);
 
     // Keyboard support
@@ -557,6 +580,7 @@ export default function ImageCropper({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 ref={imageRef}
+                crossOrigin="anonymous"
                 style={{ display: 'none', position: 'absolute', left: '-9999px', top: '-9999px' }}
                 alt="Crop source"
             />
