@@ -133,8 +133,11 @@ export default function ImageCropper({
         const scaledWidth = imageDimensions.width * scale;
         const scaledHeight = imageDimensions.height * scale;
 
-        const maxX = Math.max(0, (scaledWidth - cropArea.width) / 2);
-        const maxY = Math.max(0, (scaledHeight - cropArea.height) / 2);
+        // Horizontally: center if smaller, clamp boundaries if larger
+        const maxX = scaledWidth > cropArea.width ? (scaledWidth - cropArea.width) / 2 : 0;
+
+        // Vertically: allow dragging within the "slack" if smaller, clamp boundaries if larger
+        const maxY = Math.abs(scaledHeight - cropArea.height) / 2;
 
         const clampedX = Math.max(-maxX, Math.min(maxX, newX));
         const clampedY = Math.max(-maxY, Math.min(maxY, newY));
@@ -156,8 +159,8 @@ export default function ImageCropper({
                 const scaledWidth = imageDimensions.width * scale;
                 const scaledHeight = imageDimensions.height * scale;
 
-                const maxX = Math.max(0, (scaledWidth - cropArea.width) / 2);
-                const maxY = Math.max(0, (scaledHeight - cropArea.height) / 2);
+                const maxX = scaledWidth > cropArea.width ? (scaledWidth - cropArea.width) / 2 : 0;
+                const maxY = Math.abs(scaledHeight - cropArea.height) / 2;
 
                 const clampedX = Math.max(-maxX, Math.min(maxX, newX));
                 const clampedY = Math.max(-maxY, Math.min(maxY, newY));
@@ -198,8 +201,8 @@ export default function ImageCropper({
         const scaledWidth = imageDimensions.width * scale;
         const scaledHeight = imageDimensions.height * scale;
 
-        const maxX = Math.max(0, (scaledWidth - cropArea.width) / 2);
-        const maxY = Math.max(0, (scaledHeight - cropArea.height) / 2);
+        const maxX = scaledWidth > cropArea.width ? (scaledWidth - cropArea.width) / 2 : 0;
+        const maxY = Math.abs(scaledHeight - cropArea.height) / 2;
 
         const clampedX = Math.max(-maxX, Math.min(maxX, newX));
         const clampedY = Math.max(-maxY, Math.min(maxY, newY));
@@ -496,7 +499,20 @@ export default function ImageCropper({
                                 />
                             </div>
                             <ZoomIn className="w-5 h-5 text-gray-500" />
-                            <span className="text-sm text-gray-600 min-w-[60px]">{Math.round(scale * 100)}%</span>
+                            <div className="flex items-center bg-gray-100 rounded-lg px-2 py-1 border border-slate-200 focus-within:border-blue-500 transition-colors">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="300"
+                                    value={Math.round(scale * 100)}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        if (!isNaN(val)) setScale(Math.max(0.01, Math.min(3, val / 100)));
+                                    }}
+                                    className="w-12 bg-transparent text-sm font-bold text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <span className="text-xs font-bold text-slate-400">%</span>
+                            </div>
                         </div>
 
                         {/* Quick Actions */}
