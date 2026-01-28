@@ -4,15 +4,16 @@ import Contact from '@/models/Contact';
 
 export async function PATCH(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await dbConnect();
+        const { id } = await params;
         const body = await req.json();
         const { status } = body;
 
         const updatedContact = await Contact.findByIdAndUpdate(
-            params.id,
+            id,
             { status },
             { new: true }
         );
@@ -29,11 +30,12 @@ export async function PATCH(
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await dbConnect();
-        const deletedContact = await Contact.findByIdAndDelete(params.id);
+        const { id } = await params;
+        const deletedContact = await Contact.findByIdAndDelete(id);
 
         if (!deletedContact) {
             return NextResponse.json({ error: 'Không tìm thấy liên hệ' }, { status: 404 });

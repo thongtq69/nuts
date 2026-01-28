@@ -3,7 +3,7 @@ import mongoose, { Schema, Model, Document } from 'mongoose';
 export interface IContact extends Document {
     name: string;
     email: string;
-    phone?: string;
+    phone: string;
     message: string;
     status: 'pending' | 'processing' | 'completed' | 'canceled';
     createdAt: Date;
@@ -14,7 +14,7 @@ const ContactSchema: Schema<IContact> = new Schema(
     {
         name: { type: String, required: true },
         email: { type: String, required: true },
-        phone: { type: String, required: false, default: '' },
+        phone: { type: String, required: true },
         message: { type: String, required: true },
         status: {
             type: String,
@@ -26,11 +26,6 @@ const ContactSchema: Schema<IContact> = new Schema(
         timestamps: true,
     }
 );
-
-// Better Next.js model handling: delete if exists in development to force schema updates
-if (process.env.NODE_ENV === 'development') {
-    delete mongoose.models.Contact;
-}
 
 const Contact: Model<IContact> = mongoose.models.Contact || mongoose.model<IContact>('Contact', ContactSchema);
 

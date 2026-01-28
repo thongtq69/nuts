@@ -58,8 +58,7 @@ export default function ContactPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate phone only if provided
-        if (formData.phone && !validatePhone(formData.phone)) {
+        if (!formData.phone || !validatePhone(formData.phone)) {
             toast.error('Số điện thoại không hợp lệ', 'Vui lòng nhập số điện thoại Việt Nam hợp lệ (VD: 0912345678)');
             return;
         }
@@ -152,6 +151,7 @@ export default function ContactPage() {
                                     value={formData.phone}
                                     onChange={handleChange}
                                     placeholder="Nhập số điện thoại"
+                                    required
                                 />
                             </div>
                             <div className="form-group">
