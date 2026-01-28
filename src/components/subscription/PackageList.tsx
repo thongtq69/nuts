@@ -213,16 +213,22 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                     {/* Mesh Gradient Overlay */}
                                     <div className="absolute inset-0 opacity-30 mix-blend-overlay bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.4),transparent_70%)]"></div>
 
-                                    {/* Mascot */}
-                                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 h-48 z-20 drop-shadow-[0_20px_40px_rgba(0,0,0,0.3)] transition-all duration-700 group-hover:scale-110 group-hover:-translate-y-4 animate-float">
-                                        <Image
-                                            src={imageSrc}
-                                            alt={pkg.name}
-                                            fill
-                                            className="object-contain"
-                                            sizes="400px"
-                                            priority={index < 4}
-                                        />
+                                    {/* Mascot Section */}
+                                    <div className="absolute inset-0 flex items-end justify-center pb-8 overflow-visible">
+                                        {/* Floating Wrapper */}
+                                        <div className="relative w-56 h-56 z-20 animate-float">
+                                            {/* Hover Scale Wrapper */}
+                                            <div className="w-full h-full transition-all duration-700 group-hover:scale-110 drop-shadow-[0_25px_50px_rgba(0,0,0,0.3)]">
+                                                <Image
+                                                    src={imageSrc}
+                                                    alt={pkg.name}
+                                                    fill
+                                                    className="object-contain"
+                                                    sizes="500px"
+                                                    priority={index < 4}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Special Label Badge */}
@@ -404,9 +410,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                 }
 
                 @keyframes float {
-                    0% { transform: translate(-50%, 0px); }
-                    50% { transform: translate(-50%, -15px); }
-                    100% { transform: translate(-50%, 0px); }
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-20px); }
                 }
                 .animate-float {
                     animation: float 4s ease-in-out infinite;

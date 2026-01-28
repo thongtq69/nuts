@@ -617,6 +617,18 @@ export default function ImageCropper({
 
                 {/* Footer */}
                 <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
+                    {/* Warning when can't crop due to CORS */}
+                    {imageLoaded && !canCrop && (
+                        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                                <span className="text-amber-600">⚠️</span>
+                                <div className="text-sm text-amber-700">
+                                    <p className="font-medium">Không thể chỉnh sửa ảnh này</p>
+                                    <p className="text-xs mt-1">Ảnh từ nguồn bên ngoài không cho phép chỉnh sửa. Bạn có thể giữ ảnh gốc hoặc tải ảnh mới lên.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className="flex gap-3">
                         <button
                             onClick={onCancel}
@@ -624,20 +636,29 @@ export default function ImageCropper({
                         >
                             Hủy
                         </button>
-                        <button
-                            onClick={handleCropImage}
-                            disabled={!imageLoaded || imageError || isUploading}
-                            className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2"
-                        >
-                            {isUploading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    <span>Đang lưu...</span>
-                                </>
-                            ) : (
-                                imageError ? 'Không thể áp dụng' : 'Áp dụng & Lưu'
-                            )}
-                        </button>
+                        {imageLoaded && !canCrop ? (
+                            <button
+                                onClick={() => onCrop(imageUrl)}
+                                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                            >
+                                Giữ ảnh gốc
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleCropImage}
+                                disabled={!imageLoaded || imageError || isUploading}
+                                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2"
+                            >
+                                {isUploading ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <span>Đang lưu...</span>
+                                    </>
+                                ) : (
+                                    imageError ? 'Không thể áp dụng' : 'Áp dụng & Lưu'
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
