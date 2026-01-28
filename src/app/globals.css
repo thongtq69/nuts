@@ -5701,6 +5701,9 @@ a[class*="from-orange"] {
   font-size: 16px;
   line-height: 1.8;
   color: var(--color-text-dark);
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  line-break: relaxed !important;
 }
 
 .blog-content p {

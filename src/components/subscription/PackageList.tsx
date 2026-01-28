@@ -343,23 +343,23 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                     onClick={() => setSelectedTerms(null)}
                 >
                     <div
-                        className="bg-white rounded-[48px] w-full max-w-xl overflow-hidden shadow-[0_32px_64px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-500 scale-100"
+                        className="bg-white rounded-[48px] w-full max-w-3xl overflow-hidden shadow-[0_32px_64px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-500 scale-100 flex flex-col"
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="bg-[#9C7044] p-10 text-white relative overflow-hidden">
+                        <div className="bg-[#9C7044] p-12 text-white relative overflow-hidden flex flex-col items-center justify-center text-center">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-                            <h3 className="text-3xl font-black uppercase tracking-tight relative z-10">{selectedTerms.name}</h3>
-                            <p className="text-sm opacity-60 font-black uppercase tracking-[0.2em] mt-1 relative z-10">Chi tiết thể lệ hội viên</p>
+                            <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tight relative z-10 w-full break-words">{selectedTerms.name}</h3>
+                            <p className="text-sm md:text-base opacity-60 font-black uppercase tracking-[0.2em] mt-3 relative z-10 w-full">Chi tiết thể lệ hội viên</p>
                             <button
                                 onClick={() => setSelectedTerms(null)}
-                                className="absolute top-10 right-10 w-12 h-12 flex items-center justify-center rounded-[20px] bg-white/10 hover:bg-white/20 transition-all hover:scale-110 active:scale-90 z-20"
+                                className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all hover:scale-110 active:scale-90 z-20"
                             >
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         </div>
-                        <div className="p-10 max-h-[50vh] overflow-y-auto custom-scrollbar">
+                        <div className="p-8 md:p-12 max-h-[60vh] overflow-y-auto overflow-x-hidden custom-scrollbar bg-slate-50/30">
                             <div
-                                className="prose prose-slate max-w-none text-slate-600 font-bold leading-relaxed text-[15px]"
+                                className="prose prose-slate max-w-none text-slate-600 font-bold leading-relaxed text-[15px] terms-content"
                                 dangerouslySetInnerHTML={{ __html: selectedTerms.terms }}
                             />
                         </div>
@@ -407,6 +407,28 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                     background: #CBD5E1;
+                }
+                
+                .terms-content {
+                    width: 100% !important;
+                    overflow-wrap: break-word !important;
+                    word-break: normal !important;
+                    line-break: relaxed !important;
+                }
+                
+                .terms-content img {
+                    max-width: 100% !important;
+                    height: auto !important;
+                    display: block;
+                    margin: 1.5rem auto;
+                    border-radius: 1rem;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+
+                .terms-content table {
+                    width: 100% !important;
+                    overflow-x: auto;
+                    display: block;
                 }
 
                 @keyframes float {
