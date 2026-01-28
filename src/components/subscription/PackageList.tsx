@@ -35,46 +35,50 @@ const cardThemes = [
     {
         // Theme 1: Premium Yellow
         bg: 'bg-[#E3E846]',
-        headerBg: 'bg-[#9C7044]',
-        title: 'text-[#333]',
+        gradient: 'from-[#E3E846] to-[#D5DA3E]',
+        headerBg: 'bg-gradient-to-br from-[#9C7044] to-[#7D5A36]',
+        title: 'text-[#3C2A1A]',
         headerTitle: 'text-white',
-        text: 'text-[#4A4E00]',
-        button: 'bg-[#9C7044] text-white hover:bg-[#855D36]',
+        text: 'text-[#3C2A1A]/80',
+        button: 'bg-[#9C7044] text-white hover:bg-[#855D36] shadow-[0_6px_0_#6A4C2E] active:shadow-none active:translate-y-[6px]',
         accent: 'bg-[#9C7044]/15 text-[#9C7044]',
-        border: 'border-[#9C7044]/20',
+        border: 'border-[#9C7044]/10',
     },
     {
         // Theme 2: Premium Brown
         bg: 'bg-[#9C7044]',
-        headerBg: 'bg-[#E3E846]',
+        gradient: 'from-[#9C7044] to-[#855D36]',
+        headerBg: 'bg-gradient-to-br from-[#E3E846] to-[#C8CF2D]',
         title: 'text-white',
         headerTitle: 'text-[#9C7044]',
         text: 'text-white/90',
-        button: 'bg-[#E3E846] text-[#9C7044] hover:bg-[#EEF27A]',
+        button: 'bg-[#E3E846] text-[#3C2A1A] hover:bg-[#D5DA3E] shadow-[0_6px_0_#B4BB1E] active:shadow-none active:translate-y-[6px]',
         accent: 'bg-white/20 text-white',
-        border: 'border-white/20',
+        border: 'border-white/10',
     },
     {
         // Theme 3: Elegant White
         bg: 'bg-white',
-        headerBg: 'bg-[#FDFBF7]',
+        gradient: 'from-white to-[#F9F9F9]',
+        headerBg: 'bg-gradient-to-br from-[#FDFBF7] to-[#F5F0E6]',
         title: 'text-[#1A1A1A]',
         headerTitle: 'text-[#9C7044]',
-        text: 'text-slate-700',
-        button: 'bg-[#9C7044] text-white hover:bg-[#855D36]',
+        text: 'text-slate-600',
+        button: 'bg-[#9C7044] text-white hover:bg-[#855D36] shadow-[0_6px_0_#6A4C2E] active:shadow-none active:translate-y-[6px]',
         accent: 'bg-[#9C7044]/10 text-[#9C7044]',
-        border: 'border-slate-200',
+        border: 'border-slate-100',
     },
     {
         // Theme 4: Deep Tech
         bg: 'bg-[#1A1A1A]',
-        headerBg: 'bg-[#000000]',
-        title: 'text-white font-black',
+        gradient: 'from-[#1A1A1A] to-[#0A0A0A]',
+        headerBg: 'bg-gradient-to-br from-[#000000] to-[#1A1A1A]',
+        title: 'text-white',
         headerTitle: 'text-[#E3E846]',
-        text: 'text-white/80',
-        button: 'bg-[#E3E846] text-[#000000] hover:bg-[#EEF27A]',
+        text: 'text-white/70',
+        button: 'bg-[#E3E846] text-[#000000] hover:bg-[#D5DA3E] shadow-[0_6px_0_#B4BB1E] active:shadow-none active:translate-y-[6px]',
         accent: 'bg-white/10 text-[#E3E846]',
-        border: 'border-white/10',
+        border: 'border-white/5',
     }
 ];
 
@@ -150,28 +154,28 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
 
     return (
         <div className="relative group/scroll px-4">
-            {/* Scroll Navigation Buttons - Hidden on Mobile, Visible on Desktop */}
+            {/* Scroll Navigation Buttons */}
             <div className="hidden lg:block">
                 <button
                     onClick={() => scroll('left')}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 z-40 bg-white shadow-xl rounded-full p-4 border border-slate-100 text-slate-800 hover:bg-brand hover:text-white transition-all duration-300 opacity-0 group-hover/scroll:opacity-100 hover:scale-110"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-40 bg-white/90 backdrop-blur-md shadow-2xl rounded-full p-5 border border-slate-100 text-slate-800 hover:bg-[#9C7044] hover:text-white transition-all duration-300 opacity-0 group-hover/scroll:opacity-100 hover:scale-110 active:scale-95"
                     aria-label="Previous"
                 >
-                    <ChevronLeft size={24} strokeWidth={3} />
+                    <ChevronLeft size={28} strokeWidth={3} />
                 </button>
                 <button
                     onClick={() => scroll('right')}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-40 bg-white shadow-xl rounded-full p-4 border border-slate-100 text-slate-800 hover:bg-brand hover:text-white transition-all duration-300 opacity-0 group-hover/scroll:opacity-100 hover:scale-110"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-40 bg-white/90 backdrop-blur-md shadow-2xl rounded-full p-5 border border-slate-100 text-slate-800 hover:bg-[#9C7044] hover:text-white transition-all duration-300 opacity-0 group-hover/scroll:opacity-100 hover:scale-110 active:scale-95"
                     aria-label="Next"
                 >
-                    <ChevronRight size={24} strokeWidth={3} />
+                    <ChevronRight size={28} strokeWidth={3} />
                 </button>
             </div>
 
             {/* Scroll Container */}
             <div
                 ref={containerRef}
-                className="flex overflow-x-auto py-24 gap-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth items-stretch"
+                className="flex overflow-x-auto py-24 gap-12 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth items-stretch"
             >
                 {packages.map((pkg, index) => {
                     const theme = cardThemes[index % cardThemes.length];
@@ -186,11 +190,10 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                     const normalizedName = normalizeName(pkg.name);
                     const imageSrc = pkg.imageUrl || imageMap[normalizedName] || fallbackImages[index % fallbackImages.length];
 
-                    // Logic for custom badge or fallback
                     let specialLabel = pkg.badgeText;
                     if (!specialLabel && pkg.price === 99000) {
                         if (normalizedName.includes('pro')) {
-                            specialLabel = 'Best Value';
+                            specialLabel = 'Đề xuất';
                         } else if (pkg.validityDays >= 60) {
                             specialLabel = 'Long Term';
                         }
@@ -199,16 +202,19 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                     return (
                         <div
                             key={pkg._id}
-                            className={`snap-center shrink-0 w-[85vw] sm:w-[340px] lg:w-[calc(25%-24px)] min-w-[300px] max-w-[360px] flex flex-col transition-all duration-500`}
+                            className={`snap-center shrink-0 w-[85vw] sm:w-[360px] lg:w-[calc(25%-32px)] min-w-[320px] max-w-[400px] flex flex-col transition-all duration-700`}
                         >
                             <div
                                 onClick={() => setSelectedTerms({ name: pkg.name, terms: pkg.terms || pkg.description || 'Đang cập nhật...' })}
-                                className={`relative w-full h-[740px] group ${theme.bg} rounded-none border ${theme.border} shadow-2xl flex flex-col transition-all duration-500 hover:-translate-y-4 overflow-hidden cursor-pointer`}
+                                className={`relative w-full h-[780px] group bg-gradient-to-b ${theme.gradient} rounded-[48px] border-4 ${theme.border} shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] flex flex-col transition-all duration-500 hover:-translate-y-6 overflow-hidden cursor-pointer`}
                             >
-                                {/* Header Decorative Section - Balanced height */}
-                                <div className={`relative h-60 w-full ${theme.headerBg} flex items-center justify-center transition-colors duration-500`}>
-                                    {/* Mascot - Moved up into the header area */}
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-44 h-44 z-20 drop-shadow-[0_25px_45px_rgba(0,0,0,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:-translate-y-4">
+                                {/* Header Decorative Section */}
+                                <div className={`relative h-64 w-full ${theme.headerBg} flex items-center justify-center transition-all duration-700 overflow-hidden`}>
+                                    {/* Mesh Gradient Overlay */}
+                                    <div className="absolute inset-0 opacity-30 mix-blend-overlay bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.4),transparent_70%)]"></div>
+
+                                    {/* Mascot */}
+                                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 h-48 z-20 drop-shadow-[0_20px_40px_rgba(0,0,0,0.3)] transition-all duration-700 group-hover:scale-110 group-hover:-translate-y-4 animate-float">
                                         <Image
                                             src={imageSrc}
                                             alt={pkg.name}
@@ -219,101 +225,103 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                         />
                                     </div>
 
-                                    {/* Special Medal Badge */}
+                                    {/* Special Label Badge */}
                                     {specialLabel && (
-                                        <div className="absolute top-8 right-10 z-30">
-                                            <div className="bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-none border border-white/20 shadow-2xl">
+                                        <div className="absolute top-8 right-8 z-30 transform rotate-3 scale-110">
+                                            <div className="bg-black text-[#E3E846] text-[11px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-2xl border-2 border-white/20 shadow-2xl">
                                                 {specialLabel}
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Main Body Content - Adjusted spacing for the higher mascot */}
-                                <div className="mt-16 px-8 flex flex-col flex-1 pb-12 justify-between">
+                                {/* Main Body Content */}
+                                <div className="mt-14 px-10 flex flex-col flex-1 pb-14 justify-between relative z-10">
                                     {/* Title Section */}
                                     <div className="text-center">
-                                        <h3 className={`text-2xl font-black tracking-tight mb-2 uppercase leading-none ${theme.title}`}>
+                                        <h3 className={`text-3xl font-black tracking-tight mb-3 uppercase leading-none ${theme.title}`}>
                                             {pkg.name}
                                         </h3>
-                                        <div className="flex justify-center items-center gap-3">
-                                            <div className="h-[1px] w-6 bg-current opacity-20"></div>
-                                            <span className={`text-[10px] font-bold uppercase tracking-[0.4em] opacity-40 ${theme.title}`}>
+                                        <div className="flex justify-center items-center gap-4">
+                                            <div className="h-[2px] w-8 bg-current opacity-10 rounded-full"></div>
+                                            <span className={`text-[11px] font-black uppercase tracking-[0.4em] opacity-40 ${theme.title}`}>
                                                 Đặc quyền VIP
                                             </span>
-                                            <div className="h-[1px] w-6 bg-current opacity-20"></div>
+                                            <div className="h-[2px] w-8 bg-current opacity-10 rounded-full"></div>
                                         </div>
                                     </div>
 
                                     {/* Price Section */}
-                                    <div className="flex flex-col items-center py-4">
+                                    <div className="flex flex-col items-center py-6">
                                         <div className="flex items-baseline gap-1 relative">
-                                            <span className={`text-6xl font-black tracking-tighter ${theme.title}`}>
+                                            <span className={`text-7xl font-black tracking-tighter ${theme.title}`}>
                                                 {formatPrice(pkg.price).replace('đ', '')}
                                             </span>
-                                            <span className={`text-2xl font-black mb-1 ${theme.title}`}>đ</span>
+                                            <span className={`text-2xl font-black mb-2 ${theme.title}`}>đ</span>
                                         </div>
-                                        <p className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1 ${theme.title}`}>
-                                            Trọn gói cho 30 ngày
-                                        </p>
+                                        <div className={`px-4 py-1 rounded-full bg-current opacity-5 mt-2`}>
+                                            <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${theme.title}`}>
+                                                Trọn gói cho 30 ngày
+                                            </p>
+                                        </div>
                                     </div>
 
                                     {/* CTA Section */}
-                                    <div className="w-full">
+                                    <div className="w-full mb-8">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onBuyPackage(pkg._id);
                                             }}
-                                            className={`w-full py-5 rounded-none font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 ${theme.button} shadow-xl active:scale-95 flex items-center justify-center gap-3 border-b-4 border-black/10`}
+                                            className={`w-full py-6 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all duration-200 ${theme.button} flex items-center justify-center gap-3 border-none`}
                                         >
                                             Đăng ký ngay
-                                            <ArrowRight size={22} strokeWidth={3} />
+                                            <ArrowRight size={20} strokeWidth={4} />
                                         </button>
                                     </div>
 
-                                    {/* Features List - Balanced spacing */}
-                                    <div className="space-y-5">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-none ${theme.accent}`}>
-                                                <Tag size={18} strokeWidth={3} />
+                                    {/* Features List */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-5 group/feature">
+                                            <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 group-hover/feature:scale-110 ${theme.accent}`}>
+                                                <Tag size={20} strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className={`text-[14px] font-black leading-tight ${theme.title}`}>Giảm {discountValue}</span>
-                                                <span className={`text-[11px] font-bold opacity-50 ${theme.text}`}>Tất cả đơn hàng</span>
+                                                <span className={`text-[15px] font-black leading-tight ${theme.title}`}>Giảm {discountValue}</span>
+                                                <span className={`text-[12px] font-bold opacity-60 ${theme.text}`}>Tất cả đơn hàng</span>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-none ${theme.accent}`}>
-                                                <CheckCircle2 size={18} strokeWidth={3} />
+                                        <div className="flex items-center gap-5 group/feature">
+                                            <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 group-hover/feature:scale-110 ${theme.accent}`}>
+                                                <CheckCircle2 size={20} strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className={`text-[14px] font-black leading-tight ${theme.title}`}>Tối đa {formatPrice(pkg.maxDiscount)}</span>
-                                                <span className={`text-[11px] font-bold opacity-50 ${theme.text}`}>Siêu tiết kiệm bữa ăn</span>
+                                                <span className={`text-[15px] font-black leading-tight ${theme.title}`}>Tối đa {formatPrice(pkg.maxDiscount)}</span>
+                                                <span className={`text-[12px] font-bold opacity-60 ${theme.text}`}>Siêu tiết kiệm bữa ăn</span>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-none ${theme.accent}`}>
-                                                <Zap size={18} strokeWidth={3} />
+                                        <div className="flex items-center gap-5 group/feature">
+                                            <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 group-hover/feature:scale-110 ${theme.accent}`}>
+                                                <Zap size={20} strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className={`text-[14px] font-black leading-tight ${theme.title}`}>{maxVoucher} / tháng</span>
-                                                <span className={`text-[11px] font-bold opacity-50 ${theme.text}`}>Dùng trong {pkg.validityDays} ngày</span>
+                                                <span className={`text-[15px] font-black leading-tight ${theme.title}`}>{maxVoucher} / tháng</span>
+                                                <span className={`text-[12px] font-bold opacity-60 ${theme.text}`}>Dùng trong {pkg.validityDays} ngày</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="text-center pt-2">
-                                        <span className={`text-[9px] font-black uppercase tracking-widest opacity-30 ${theme.title} underline`}>
+                                    <div className="text-center pt-6">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest opacity-20 ${theme.title} hover:opacity-60 transition-opacity`}>
                                             Chạm để xem chi tiết thể lệ
                                         </span>
                                     </div>
                                 </div>
 
                                 {/* Abstract Branding Element */}
-                                <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-current opacity-[0.05] rounded-full blur-3xl"></div>
+                                <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-current opacity-[0.03] rounded-full blur-3xl pointer-events-none"></div>
                             </div>
                         </div>
                     );
@@ -323,35 +331,36 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
             {/* Terms Modal */}
             {selectedTerms && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-500"
                     onClick={() => setSelectedTerms(null)}
                 >
                     <div
-                        className="bg-white rounded-[40px] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300"
+                        className="bg-white rounded-[48px] w-full max-w-xl overflow-hidden shadow-[0_32px_64px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-500 scale-100"
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="bg-[#9C7044] p-8 text-white relative">
-                            <h3 className="text-2xl font-black uppercase tracking-tight">{selectedTerms.name}</h3>
-                            <p className="text-sm opacity-60 font-bold uppercase tracking-widest">Chi tiết thể lệ hội viên</p>
+                        <div className="bg-[#9C7044] p-10 text-white relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                            <h3 className="text-3xl font-black uppercase tracking-tight relative z-10">{selectedTerms.name}</h3>
+                            <p className="text-sm opacity-60 font-black uppercase tracking-[0.2em] mt-1 relative z-10">Chi tiết thể lệ hội viên</p>
                             <button
                                 onClick={() => setSelectedTerms(null)}
-                                className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                                className="absolute top-10 right-10 w-12 h-12 flex items-center justify-center rounded-[20px] bg-white/10 hover:bg-white/20 transition-all hover:scale-110 active:scale-90 z-20"
                             >
-                                ✕
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         </div>
-                        <div className="p-8 max-h-[60vh] overflow-y-auto">
+                        <div className="p-10 max-h-[50vh] overflow-y-auto custom-scrollbar">
                             <div
-                                className="prose prose-slate max-w-none text-slate-600 font-medium leading-relaxed"
+                                className="prose prose-slate max-w-none text-slate-600 font-bold leading-relaxed text-[15px]"
                                 dangerouslySetInnerHTML={{ __html: selectedTerms.terms }}
                             />
                         </div>
-                        <div className="p-8 pt-0">
+                        <div className="p-10 pt-0">
                             <button
                                 onClick={() => setSelectedTerms(null)}
-                                className="w-full py-4 rounded-full bg-[#9C7044] text-white font-black uppercase tracking-widest hover:bg-[#855D36] transition-colors"
+                                className="w-full py-5 rounded-[24px] bg-[#9C7044] text-white font-black uppercase tracking-[0.2em] text-sm hover:bg-[#855D36] shadow-[0_8px_0_#6A4C2E] active:shadow-none active:translate-y-[8px] transition-all"
                             >
-                                Đã hiểu
+                                Tôi đã hiểu
                             </button>
                         </div>
                     </div>
@@ -360,11 +369,11 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
 
             {/* Pagination / Progress */}
             {packages.length > 1 && (
-                <div className="flex justify-center gap-4 mt-4">
+                <div className="flex justify-center gap-3 mt-8">
                     {packages.map((_, i) => (
                         <div
                             key={i}
-                            className={`h-1.5 transition-all duration-700 rounded-full ${activeIndex === i ? 'w-10 bg-[#9C7044]' : 'w-2.5 bg-[#9C7044]/20'}`}
+                            className={`h-2 transition-all duration-700 rounded-full ${activeIndex === i ? 'w-12 bg-[#9C7044]' : 'w-2 bg-[#9C7044]/20'}`}
                         />
                     ))}
                 </div>
@@ -377,6 +386,28 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                 .scrollbar-hide {
                     -ms-overflow-style: none;
                     scrollbar-width: none;
+                }
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #E2E8F0;
+                    border-radius: 10px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #CBD5E1;
+                }
+
+                @keyframes float {
+                    0% { transform: translate(-50%, 0px); }
+                    50% { transform: translate(-50%, -15px); }
+                    100% { transform: translate(-50%, 0px); }
+                }
+                .animate-float {
+                    animation: float 4s ease-in-out infinite;
                 }
             `}</style>
         </div>
