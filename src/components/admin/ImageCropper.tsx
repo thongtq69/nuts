@@ -22,6 +22,7 @@ export default function ImageCropper({
 
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
@@ -265,14 +266,16 @@ export default function ImageCropper({
         );
 
         // Convert sang base64 và upload lên Cloudinary
+        // Convert sang base64 và upload lên Cloudinary
         finalCanvas.toBlob(async (blob) => {
             if (blob) {
                 try {
+                    setIsUploading(true);
                     // Convert blob to base64
                     const reader = new FileReader();
                     reader.onload = async () => {
                         const base64Data = reader.result as string;
-                        
+
                         // Upload to Cloudinary
                         const response = await fetch('/api/upload', {
                             method: 'PUT',
@@ -288,7 +291,7 @@ export default function ImageCropper({
                         });
 
                         const result = await response.json();
-                        
+
                         if (result.success) {
                             console.log('✅ Image uploaded to Cloudinary:', result.data.url);
                             onCrop(result.data.url);
@@ -298,6 +301,7 @@ export default function ImageCropper({
                             const croppedUrl = URL.createObjectURL(blob);
                             onCrop(croppedUrl);
                         }
+                        setIsUploading(false);
                     };
                     reader.readAsDataURL(blob);
                 } catch (error) {
@@ -305,6 +309,7 @@ export default function ImageCropper({
                     // Fallback to blob URL
                     const croppedUrl = URL.createObjectURL(blob);
                     onCrop(croppedUrl);
+                    setIsUploading(false);
                 }
             }
         }, 'image/jpeg', 0.9);
@@ -348,7 +353,7 @@ export default function ImageCropper({
                     break;
                 case 'Enter':
                     e.preventDefault();
-                    if (imageLoaded && !imageError) {
+                    if (imageLoaded && !imageError && !isUploading) {
                         handleCropImage();
                     }
                     break;
@@ -532,10 +537,17 @@ export default function ImageCropper({
                         </button>
                         <button
                             onClick={handleCropImage}
-                            disabled={!imageLoaded || imageError}
-                            className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-black font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-500 disabled:hover:to-blue-600"
+                            disabled={!imageLoaded || imageError || isUploading}
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2"
                         >
-                            {imageError ? 'Không thể áp dụng' : 'Áp dụng & Lưu'}
+                            {isUploading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <span>Đang lưu...</span>
+                                </>
+                            ) : (
+                                imageError ? 'Không thể áp dụng' : 'Áp dụng & Lưu'
+                            )}
                         </button>
                     </div>
                 </div>

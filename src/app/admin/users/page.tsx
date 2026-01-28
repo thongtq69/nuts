@@ -17,7 +17,7 @@ interface User {
     name: string;
     email: string;
     phone?: string;
-    role: 'user' | 'sale' | 'admin';
+    role: 'user' | 'sale' | 'admin' | 'staff';
     saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
     createdAt: string;
 }
@@ -25,7 +25,7 @@ interface User {
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'user' | 'sale' | 'admin' | 'pending'>('all');
+    const [filter, setFilter] = useState<'all' | 'user' | 'sale' | 'admin' | 'staff' | 'pending'>('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -185,7 +185,7 @@ export default function AdminUsersPage() {
         { key: 'phone', label: 'Số điện thoại', format: (v) => v || '-' },
         {
             key: 'role', label: 'Vai trò', format: (v) =>
-                v === 'admin' ? 'Admin' : v === 'sale' ? 'Đại lý' : 'Khách hàng'
+                v === 'admin' ? 'Admin' : v === 'staff' ? 'Nhân viên' : v === 'sale' ? 'Đại lý' : 'Khách hàng'
         },
         {
             key: 'saleApplicationStatus', label: 'Trạng thái', format: (v) =>
@@ -253,6 +253,12 @@ export default function AdminUsersPage() {
                             Đại lý ({users.filter(u => u.role === 'sale').length})
                         </button>
                         <button
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'staff' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                            onClick={() => setFilter('staff')}
+                        >
+                            Nhân viên ({users.filter(u => u.role === 'staff').length})
+                        </button>
+                        <button
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'admin' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                             onClick={() => setFilter('admin')}
                         >
@@ -316,12 +322,14 @@ export default function AdminUsersPage() {
                                         <td className="px-6 py-4 text-slate-600 font-mono text-xs">{user.phone || '-'}</td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-                                                ${user.role === 'admin' ? 'bg-brand/10 text-brand' :
-                                                    user.role === 'sale' ? 'bg-brand-light/30 text-brand-dark' :
-                                                        'bg-slate-100 text-slate-600'
+                                                ${user.role === 'admin' ? 'bg-red-100 text-red-600' :
+                                                    user.role === 'staff' ? 'bg-brand/10 text-brand' :
+                                                        user.role === 'sale' ? 'bg-brand-light/30 text-brand-dark' :
+                                                            'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {user.role === 'user' ? 'Khách hàng' :
-                                                    user.role === 'sale' ? 'Đại lý' : 'Admin'}
+                                                    user.role === 'sale' ? 'Đại lý' :
+                                                        user.role === 'staff' ? 'Nhân viên' : 'Admin'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">

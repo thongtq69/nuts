@@ -40,7 +40,7 @@ const cardThemes = [
         title: 'text-[#3C2A1A]',
         headerTitle: 'text-white',
         text: 'text-[#3C2A1A]/80',
-        button: 'bg-[#9C7044] text-white hover:bg-[#855D36] shadow-[0_6px_0_#6A4C2E] active:shadow-none active:translate-y-[6px]',
+        button: 'bg-[#9C7044] text-white hover:bg-[#855D36] shadow-[0_10px_0_#6A4C2E] active:shadow-none active:translate-y-[10px]',
         accent: 'bg-[#9C7044]/15 text-[#9C7044]',
         border: 'border-[#9C7044]/10',
     },
@@ -52,7 +52,7 @@ const cardThemes = [
         title: 'text-white',
         headerTitle: 'text-[#9C7044]',
         text: 'text-white/90',
-        button: 'bg-[#E3E846] text-[#3C2A1A] hover:bg-[#D5DA3E] shadow-[0_6px_0_#B4BB1E] active:shadow-none active:translate-y-[6px]',
+        button: 'bg-[#E3E846] text-[#3C2A1A] hover:bg-[#D5DA3E] shadow-[0_10px_0_#B4BB1E] active:shadow-none active:translate-y-[10px]',
         accent: 'bg-white/20 text-white',
         border: 'border-white/10',
     },
@@ -64,7 +64,7 @@ const cardThemes = [
         title: 'text-[#1A1A1A]',
         headerTitle: 'text-[#9C7044]',
         text: 'text-slate-600',
-        button: 'bg-[#9C7044] text-white hover:bg-[#855D36] shadow-[0_6px_0_#6A4C2E] active:shadow-none active:translate-y-[6px]',
+        button: 'bg-[#9C7044] text-white hover:bg-[#855D36] shadow-[0_10px_0_#6A4C2E] active:shadow-none active:translate-y-[10px]',
         accent: 'bg-[#9C7044]/10 text-[#9C7044]',
         border: 'border-slate-100',
     },
@@ -76,7 +76,7 @@ const cardThemes = [
         title: 'text-white',
         headerTitle: 'text-[#E3E846]',
         text: 'text-white/70',
-        button: 'bg-[#E3E846] text-[#000000] hover:bg-[#D5DA3E] shadow-[0_6px_0_#B4BB1E] active:shadow-none active:translate-y-[6px]',
+        button: 'bg-[#E3E846] text-[#000000] hover:bg-[#D5DA3E] shadow-[0_10px_0_#B4BB1E] active:shadow-none active:translate-y-[10px]',
         accent: 'bg-white/10 text-[#E3E846]',
         border: 'border-white/5',
     }
@@ -175,7 +175,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
             {/* Scroll Container */}
             <div
                 ref={containerRef}
-                className="flex overflow-x-auto py-24 gap-12 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth items-stretch"
+                className="flex overflow-x-auto py-24 gap-10 snap-x snap-mandatory scrollbar-hide px-[10vw] sm:px-[15vw] lg:px-12 scroll-smooth items-stretch"
             >
                 {packages.map((pkg, index) => {
                     const theme = cardThemes[index % cardThemes.length];
@@ -202,14 +202,14 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                     return (
                         <div
                             key={pkg._id}
-                            className={`snap-center shrink-0 w-[85vw] sm:w-[360px] lg:w-[calc(25%-32px)] min-w-[320px] max-w-[400px] flex flex-col transition-all duration-700`}
+                            className={`snap-center shrink-0 w-[80vw] sm:w-[360px] lg:w-[calc(25%-30px)] min-w-[320px] max-w-[400px] flex flex-col transition-all duration-700`}
                         >
                             <div
                                 onClick={() => setSelectedTerms({ name: pkg.name, terms: pkg.terms || pkg.description || 'Đang cập nhật...' })}
-                                className={`relative w-full h-[780px] group bg-gradient-to-b ${theme.gradient} rounded-[48px] border-4 ${theme.border} shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] flex flex-col transition-all duration-500 hover:-translate-y-6 overflow-hidden cursor-pointer`}
+                                className={`relative w-full h-[780px] group bg-gradient-to-b ${theme.gradient} rounded-[48px] border-4 ${theme.border} shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] flex flex-col transition-all duration-500 overflow-visible cursor-pointer`}
                             >
                                 {/* Header Decorative Section */}
-                                <div className={`relative h-64 w-full ${theme.headerBg} flex items-center justify-center transition-all duration-700 overflow-hidden`}>
+                                <div className={`relative h-64 w-full ${theme.headerBg} flex items-center justify-center transition-all duration-700 rounded-t-[44px]`}>
                                     {/* Mesh Gradient Overlay */}
                                     <div className="absolute inset-0 opacity-30 mix-blend-overlay bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.4),transparent_70%)]"></div>
 
@@ -253,30 +253,30 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
 
                                     {/* Price Section */}
                                     <div className="flex flex-col items-center py-6">
-                                        <div className="flex items-baseline gap-1 relative">
-                                            <span className={`text-7xl font-black tracking-tighter ${theme.title}`}>
+                                        <div className="flex items-baseline gap-1 relative group/price">
+                                            <span className={`text-7xl font-black tracking-tighter transition-transform duration-500 group-hover/price:scale-110 ${theme.title}`}>
                                                 {formatPrice(pkg.price).replace('đ', '')}
                                             </span>
                                             <span className={`text-2xl font-black mb-2 ${theme.title}`}>đ</span>
                                         </div>
-                                        <div className={`px-4 py-1 rounded-full bg-current opacity-5 mt-2`}>
-                                            <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${theme.title}`}>
-                                                Trọn gói cho 30 ngày
+                                        <div className={`px-5 py-1.5 rounded-full bg-current/10 mt-3 border border-current/10`}>
+                                            <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${theme.title} opacity-60`}>
+                                                Trọn gói cho {pkg.validityDays} ngày
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* CTA Section */}
-                                    <div className="w-full mb-8">
+                                    <div className="w-full mb-10">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onBuyPackage(pkg._id);
                                             }}
-                                            className={`w-full py-6 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all duration-200 ${theme.button} flex items-center justify-center gap-3 border-none`}
+                                            className={`w-full py-7 rounded-[32px] font-black text-xl uppercase tracking-[0.2em] transition-all duration-300 ${theme.button} flex items-center justify-center gap-4 border-t-2 border-white/30 group/btn`}
                                         >
-                                            Đăng ký ngay
-                                            <ArrowRight size={20} strokeWidth={4} />
+                                            <span className="relative z-10 drop-shadow-sm">Đăng ký ngay</span>
+                                            <ArrowRight size={28} strokeWidth={4} className="transition-transform duration-300 group-hover/btn:translate-x-2" />
                                         </button>
                                     </div>
 
@@ -326,6 +326,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                         </div>
                     );
                 })}
+                {/* End Spacer for balanced snapping and shadow visibility */}
+                <div className="shrink-0 w-4 lg:hidden"></div>
             </div>
 
             {/* Terms Modal */}
