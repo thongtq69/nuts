@@ -28,6 +28,7 @@ export default function ImageCropper({
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+    const [zoomInput, setZoomInput] = useState('100');
 
     // Device pixel ratio for high-DPI displays
     const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
@@ -70,6 +71,7 @@ export default function ImageCropper({
 
             setScale(initialScale);
             setPosition({ x: 0, y: 0 });
+            setZoomInput(Math.round(initialScale * 100).toString());
             setImageLoaded(true);
         };
         imgElement.onerror = () => {
@@ -180,7 +182,7 @@ export default function ImageCropper({
                 document.removeEventListener('mouseup', handleGlobalMouseUp);
             };
         }
-    }, [isDragging, dragStart, scale, imageDimensions, cropArea]);
+    }, [isDragging, dragStart, scale, imageDimensions, cropArea, setPosition]); // Added setPosition to dependencies
 
     // Touch events for mobile support
     const handleTouchStart = (e: React.TouchEvent) => {
@@ -216,8 +218,9 @@ export default function ImageCropper({
 
     // Handle zoom
     const handleZoom = useCallback((delta: number) => {
-        const newScale = Math.max(0.1, Math.min(3, scale + delta));
+        const newScale = Math.max(0.01, Math.min(3, scale + delta));
         setScale(newScale);
+        setZoomInput(Math.round(newScale * 100).toString());
     }, [scale]);
 
     // Reset về vị trí ban đầu
@@ -228,6 +231,7 @@ export default function ImageCropper({
 
         setScale(initialScale);
         setPosition({ x: 0, y: 0 });
+        setZoomInput(Math.round(initialScale * 100).toString());
     }, [cropArea, imageDimensions]);
 
     // Crop và export ảnh - VẼ TRỰC TIẾP TỪ ẢNH GỐC để giữ chất lượng cao
@@ -346,6 +350,9 @@ export default function ImageCropper({
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!imageLoaded || imageError) return;
 
+            // Không chạy phím tắt nếu đang gõ trong input
+            if (document.activeElement?.tagName === 'INPUT') return;
+
             switch (e.key) {
                 case 'ArrowLeft':
                     e.preventDefault();
@@ -392,7 +399,7 @@ export default function ImageCropper({
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [imageLoaded, imageError, onCancel, handleZoom, handleReset, handleCropImage]);
+    }, [imageLoaded, imageError, onCancel, handleZoom, handleReset, handleCropImage, isUploading]); // Added isUploading to dependencies
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
@@ -493,7 +500,11 @@ export default function ImageCropper({
                                     max="3"
                                     step="0.1"
                                     value={scale}
-                                    onChange={(e) => setScale(parseFloat(e.target.value))}
+                                    onChange={(e) => {
+                                        const newScale = parseFloat(e.target.value);
+                                        setScale(newScale);
+                                        setZoomInput(Math.round(newScale * 100).toString());
+                                    }}
                                     disabled={!imageLoaded || imageError}
                                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
@@ -504,10 +515,18 @@ export default function ImageCropper({
                                     type="number"
                                     min="1"
                                     max="300"
-                                    value={Math.round(scale * 100)}
+                                    value={zoomInput}
                                     onChange={(e) => {
-                                        const val = parseInt(e.target.value);
-                                        if (!isNaN(val)) setScale(Math.max(0.01, Math.min(3, val / 100)));
+                                        const valStr = e.target.value;
+                                        setZoomInput(valStr);
+                                        const valNum = parseInt(valStr);
+                                        if (!isNaN(valNum)) {
+                                            setScale(Math.max(0.01, Math.min(3, valNum / 100)));
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        // Sync lại nếu bỏ trống hoặc giá trị không hợp lệ
+                                        setZoomInput(Math.round(scale * 100).toString());
                                     }}
                                     className="w-12 bg-transparent text-sm font-bold text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
