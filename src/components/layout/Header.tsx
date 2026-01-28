@@ -187,29 +187,41 @@ export default function Header() {
                             </div>
                         </div>
 
-                        {/* Search Bar - Full width on mobile/tablet */}
-                        <div className="w-full lg:flex-1 max-w-2xl relative group">
-                            <div className="flex items-center bg-slate-100 rounded-2xl border-2 border-transparent focus-within:border-[#9C7044]/30 focus-within:bg-white transition-all overflow-hidden shadow-inner">
-                                <div className="pl-4 text-slate-400">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        {/* Search Bar - Premium Floating Glass Design */}
+                        <div className="w-full lg:flex-1 max-w-2xl relative group px-2 lg:px-0">
+                            <div className="relative flex items-center bg-white/80 backdrop-blur-md rounded-[22px] border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(156,112,68,0.1)] focus-within:shadow-[0_0_25px_rgba(227,232,70,0.35)] focus-within:border-[#E3E846]/50 transition-all duration-500 overflow-hidden group/search-box">
+                                {/* Search Icon with Animation */}
+                                <div className="pl-5 text-slate-400 group-focus-within/search-box:text-[#9C7044] group-focus-within/search-box:scale-110 transition-all duration-300">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <circle cx="11" cy="11" r="8" />
                                         <path d="M21 21l-4.35-4.35" />
                                     </svg>
                                 </div>
+
                                 <input
                                     type="text"
-                                    className="w-full py-3 px-4 bg-transparent text-sm md:text-base outline-none font-medium placeholder:text-slate-400 text-slate-800"
-                                    placeholder="Tìm kiếm sản phẩm hạt dinh dưỡng..."
+                                    className="w-full py-4 px-4 bg-transparent text-sm md:text-base outline-none font-semibold placeholder:text-slate-400 placeholder:font-medium text-slate-800 z-10"
+                                    placeholder="Bạn đang tìm loại hạt nào hôm nay?..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                 />
-                                <button
-                                    onClick={handleSearch}
-                                    className="bg-[#9C7044] text-white px-6 py-3 font-semibold text-sm transition-colors"
-                                >
-                                    Tìm
-                                </button>
+
+                                {/* Premium Gradient Button */}
+                                <div className="pr-1.5 py-1.5 h-full">
+                                    <button
+                                        onClick={handleSearch}
+                                        className="h-full bg-gradient-to-br from-[#9C7044] via-[#855D36] to-[#7d5a36] text-white px-8 py-2.5 rounded-[18px] font-bold text-sm tracking-wider hover:shadow-[0_4px_15px_rgba(156,112,68,0.4)] active:scale-95 transition-all duration-300 flex items-center gap-2"
+                                    >
+                                        <span className="hidden md:inline">Search</span>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="md:hidden">
+                                            <path d="M5 12h14m-7-7l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Interactive Shine Effect on Hover */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/search-box:translate-x-full transition-transform duration-1000 pointer-events-none"></div>
                             </div>
                         </div>
 
