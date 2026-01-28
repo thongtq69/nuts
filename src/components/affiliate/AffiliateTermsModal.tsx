@@ -81,25 +81,42 @@ export default function AffiliateTermsModal({ isOpen, onClose, affiliateType }: 
     const typeLabel = affiliateType === 'agent' ? 'Đại lý' : 'Cộng tác viên';
 
     useEffect(() => {
-        const handleScroll = () => {
+        const checkScroll = () => {
             if (contentRef.current) {
                 const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-                if (scrollTop + clientHeight >= scrollHeight - 10) {
+                // If content is not scrollable or already near bottom
+                if (scrollHeight <= clientHeight || scrollTop + clientHeight >= scrollHeight - 20) {
                     setHasScrolled(true);
                 }
             }
         };
 
-        const element = contentRef.current;
-        if (element) {
-            element.addEventListener('scroll', handleScroll);
-            return () => element.removeEventListener('scroll', handleScroll);
+        if (isOpen) {
+            // Check initially after a brief delay for content rendering
+            const timer = setTimeout(checkScroll, 100);
+
+            const element = contentRef.current;
+            if (element) {
+                element.addEventListener('scroll', checkScroll);
+                window.addEventListener('resize', checkScroll); // Also check on resize
+
+                return () => {
+                    element.removeEventListener('scroll', checkScroll);
+                    window.removeEventListener('resize', checkScroll);
+                    clearTimeout(timer);
+                };
+            }
         }
-    }, []);
+    }, [isOpen]);
 
     const handleSubmit = async () => {
-        if (!agreed || !hasScrolled) {
-            toast.error('Vui lòng đọc hết điều khoản và đồng ý để tiếp tục');
+        if (!agreed) {
+            toast.error('Vui lòng tích vào ô đồng ý với các điều khoản');
+            return;
+        }
+
+        if (!hasScrolled) {
+            toast.error('Vui lòng cuộn xuống đọc hết các điều khoản để tiếp tục');
             return;
         }
 
@@ -139,7 +156,7 @@ export default function AffiliateTermsModal({ isOpen, onClose, affiliateType }: 
                 <div className="modal-body">
                     <div className="terms-intro">
                         <p>
-                            Xin chào <strong>{user?.name}</strong>! 
+                            Xin chào <strong>{user?.name}</strong>!
                             Trước khi đăng ký làm {typeLabel.toLowerCase()}, vui lòng đọc kỹ và đồng ý với các điều khoản dưới đây.
                         </p>
                     </div>
@@ -228,7 +245,11 @@ export default function AffiliateTermsModal({ isOpen, onClose, affiliateType }: 
                     <button
                         className="submit-btn"
                         onClick={handleSubmit}
-                        disabled={!agreed || !hasScrolled || isSubmitting}
+                        disabled={isSubmitting}
+                        style={{
+                            opacity: (!agreed || !hasScrolled) && !isSubmitting ? 0.6 : 1,
+                            cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                        }}
                     >
                         {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu đăng ký'}
                     </button>
