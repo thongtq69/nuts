@@ -40,13 +40,13 @@ export default function AdminHeader({
                     </button>
 
                     <div className="hidden lg:block w-full max-w-md relative group">
-                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand transition-colors">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand transition-colors pointer-events-none z-20">
                             <Search size={18} />
                         </div>
                         <input
                             type="text"
                             placeholder="Tìm kiếm nhanh (Ctrl + K)..."
-                            className="w-full pl-11 pr-4 py-2.5 bg-slate-100/80 dark:bg-slate-800/80 border border-transparent rounded-xl text-sm focus:bg-white dark:focus:bg-slate-900 focus:border-brand/30 focus:shadow-[0_0_15px_rgba(156,112,68,0.1)] dark:text-slate-200 transition-all outline-none"
+                            className="w-full pl-12 pr-4 py-2.5 bg-slate-100/80 dark:bg-slate-800/80 border border-transparent rounded-xl text-sm focus:bg-white dark:focus:bg-slate-900 focus:border-brand/30 focus:shadow-[0_0_15px_rgba(156,112,68,0.1)] dark:text-slate-200 transition-all outline-none relative z-10"
                         />
                     </div>
                 </div>

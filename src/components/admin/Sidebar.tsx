@@ -150,14 +150,14 @@ export default function AdminSidebar() {
                 <div className="relative group/sidebar-search">
                     <Search
                         size={16}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/sidebar-search:text-brand transition-colors"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/sidebar-search:text-brand transition-colors pointer-events-none z-20"
                     />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Tìm menu..."
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-800/30 border border-slate-700/50 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:bg-slate-800/60 focus:border-brand/40 transition-all"
+                        className="w-full pl-12 pr-4 py-2.5 bg-slate-800/30 border border-slate-700/50 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:bg-slate-800/60 focus:border-brand/40 transition-all relative z-10"
                     />
                 </div>
             </div>
