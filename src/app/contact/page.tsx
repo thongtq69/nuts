@@ -21,6 +21,13 @@ interface SiteSettings {
 export default function ContactPage() {
     const [settings, setSettings] = useState<SiteSettings | null>(null);
     const toast = useToast();
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        message: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -34,13 +41,57 @@ export default function ContactPage() {
                 console.error('Error fetching settings:', error);
             }
         };
-        
+
         fetchSettings();
     }, []);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const validatePhone = (phone: string) => {
+        const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+        return phoneRegex.test(phone);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        toast.success('Đã gửi liên hệ', 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất.');
+
+        if (!validatePhone(formData.phone)) {
+            toast.error('Số điện thoại không hợp lệ', 'Vui lòng nhập số điện thoại Việt Nam hợp lệ (VD: 0912345678)');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success('Đã gửi liên hệ', 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất.');
+                setFormData({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    message: ''
+                });
+            } else {
+                toast.error('Lỗi khi gửi', data.message || 'Vui lòng thử lại sau.');
+            }
+        } catch (error) {
+            console.error('Error submitting contact form:', error);
+            toast.error('Lỗi kết nối', 'Không thể gửi tin nhắn. Vui lòng kiểm tra kết nối mạng.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // Default values nếu chưa load được settings
@@ -72,21 +123,55 @@ export default function ContactPage() {
                             <h3>Gửi tin nhắn cho chúng tôi</h3>
                             <div className="form-group">
                                 <label>Họ và tên</label>
-                                <input type="text" placeholder="Nhập họ và tên" required />
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    placeholder="Nhập họ và tên"
+                                    required
+                                />
                             </div>
                             <div className="form-group">
                                 <label>Email</label>
-                                <input type="email" placeholder="Nhập email" required />
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="Nhập email"
+                                    required
+                                />
                             </div>
                             <div className="form-group">
                                 <label>Số điện thoại</label>
-                                <input type="tel" placeholder="Nhập số điện thoại" />
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    placeholder="Nhập số điện thoại"
+                                    required
+                                />
                             </div>
                             <div className="form-group">
                                 <label>Nội dung</label>
-                                <textarea rows={5} placeholder="Nhập nội dung tin nhắn" required></textarea>
+                                <textarea
+                                    name="message"
+                                    value={formData.message}
+                                    onChange={handleChange}
+                                    rows={5}
+                                    placeholder="Nhập nội dung tin nhắn"
+                                    required
+                                ></textarea>
                             </div>
-                            <button type="submit" className="submit-btn">Gửi tin nhắn</button>
+                            <button
+                                type="submit"
+                                className="submit-btn"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? 'Đang gửi...' : 'Gửi tin nhắn'}
+                            </button>
                         </form>
                     </div>
 
@@ -112,21 +197,21 @@ export default function ContactPage() {
                         <div className="social-links" style={{ marginTop: '20px' }}>
                             <h4>Theo dõi chúng tôi</h4>
                             <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                <a href={currentSettings.facebookUrl} target="_blank" rel="noopener noreferrer" 
-                                   style={{ padding: '8px', backgroundColor: '#1877f2', color: 'white', borderRadius: '5px', textDecoration: 'none' }}>
+                                <a href={currentSettings.facebookUrl} target="_blank" rel="noopener noreferrer"
+                                    style={{ padding: '8px', backgroundColor: '#1877f2', color: 'white', borderRadius: '5px', textDecoration: 'none' }}>
                                     Facebook
                                 </a>
                                 <a href={currentSettings.instagramUrl} target="_blank" rel="noopener noreferrer"
-                                   style={{ padding: '8px', backgroundColor: '#e4405f', color: 'white', borderRadius: '5px', textDecoration: 'none' }}>
+                                    style={{ padding: '8px', backgroundColor: '#e4405f', color: 'white', borderRadius: '5px', textDecoration: 'none' }}>
                                     Instagram
                                 </a>
                                 <a href={currentSettings.youtubeUrl} target="_blank" rel="noopener noreferrer"
-                                   style={{ padding: '8px', backgroundColor: '#ff0000', color: 'white', borderRadius: '5px', textDecoration: 'none' }}>
+                                    style={{ padding: '8px', backgroundColor: '#ff0000', color: 'white', borderRadius: '5px', textDecoration: 'none' }}>
                                     YouTube
                                 </a>
                                 {currentSettings.tiktokUrl && (
                                     <a href={currentSettings.tiktokUrl} target="_blank" rel="noopener noreferrer"
-                                       style={{ padding: '8px', backgroundColor: '#000000', color: 'white', borderRadius: '5px', textDecoration: 'none' }}>
+                                        style={{ padding: '8px', backgroundColor: '#000000', color: 'white', borderRadius: '5px', textDecoration: 'none' }}>
                                         TikTok
                                     </a>
                                 )}
@@ -147,7 +232,7 @@ export default function ContactPage() {
                                     title="Google Maps"
                                 />
                             </div>
-                            <a 
+                            <a
                                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentSettings.address)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"

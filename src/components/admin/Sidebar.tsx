@@ -26,6 +26,7 @@ import {
     Sparkles,
     Star,
     ExternalLink,
+    Mail,
 } from 'lucide-react';
 
 const menuItems = [
@@ -63,6 +64,7 @@ const menuItems = [
         items: [
             { href: '/admin/blogs', icon: PenTool, label: 'Bài viết' },
             { href: '/admin/banners', icon: Image, label: 'Banner' },
+            { href: '/admin/contacts', icon: Mail, label: 'Liên hệ' },
             { href: '/admin/product-tags', icon: Tag, label: 'Danh mục sản phẩm' },
         ],
     },
@@ -144,18 +146,18 @@ export default function AdminSidebar() {
                 </Link>
             </div>
 
-            <div className="p-4 border-b border-slate-800/50">
-                <div className="relative">
+            <div className="px-4 py-4 border-b border-slate-800/50">
+                <div className="relative group/sidebar-search">
                     <Search
-                        size={18}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                        size={16}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/sidebar-search:text-brand transition-colors"
                     />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Tìm kiếm..."
-                        className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                        placeholder="Tìm menu..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-800/30 border border-slate-700/50 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:bg-slate-800/60 focus:border-brand/40 transition-all"
                     />
                 </div>
             </div>

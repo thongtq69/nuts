@@ -34,17 +34,19 @@ export default function AdminHeader({
                 <div className="flex items-center gap-4 flex-1">
                     <button
                         onClick={onMenuClick}
-                        className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+                        className="lg:hidden p-2.5 -ml-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                     >
-                        <Menu size={20} />
+                        <Menu size={22} />
                     </button>
 
-                    <div className="hidden md:block w-full max-w-md relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <div className="hidden lg:block w-full max-w-md relative group">
+                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand transition-colors">
+                            <Search size={18} />
+                        </div>
                         <input
                             type="text"
-                            placeholder="Tìm kiếm đơn hàng, sản phẩm..."
-                            className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-transparent rounded-lg text-sm focus:bg-white dark:focus:bg-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 dark:text-slate-200 transition-all outline-none"
+                            placeholder="Tìm kiếm nhanh (Ctrl + K)..."
+                            className="w-full pl-11 pr-4 py-2.5 bg-slate-100/80 dark:bg-slate-800/80 border border-transparent rounded-xl text-sm focus:bg-white dark:focus:bg-slate-900 focus:border-brand/30 focus:shadow-[0_0_15px_rgba(156,112,68,0.1)] dark:text-slate-200 transition-all outline-none"
                         />
                     </div>
                 </div>
