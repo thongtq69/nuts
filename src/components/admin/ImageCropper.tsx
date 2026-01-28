@@ -22,6 +22,7 @@ export default function ImageCropper({
 
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [canCrop, setCanCrop] = useState(true); // Can we export from canvas? (CORS related)
     const [isUploading, setIsUploading] = useState(false);
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -55,13 +56,21 @@ export default function ImageCropper({
 
         setImageLoaded(false);
         setImageError(false);
+        setCanCrop(true); // Reset canCrop state
 
-        // Thêm cache buster để force CORS check mới
-        const cacheBuster = imageUrl.includes('?') ? `&t=${Date.now()}` : `?t=${Date.now()}`;
-        const finalUrl = imageUrl + cacheBuster;
+        // Kiểm tra xem có phải URL Cloudinary không - không cần cache buster
+        const isCloudinaryUrl = imageUrl.includes('cloudinary.com') || imageUrl.includes('res.cloudinary');
+        const isBlobUrl = imageUrl.startsWith('blob:');
+        const isDataUrl = imageUrl.startsWith('data:');
 
-        imgElement.crossOrigin = 'anonymous';
-        imgElement.onload = () => {
+        // Chỉ thêm cache buster cho URL không phải Cloudinary/blob/data
+        let finalUrl = imageUrl;
+        if (!isCloudinaryUrl && !isBlobUrl && !isDataUrl) {
+            const cacheBuster = imageUrl.includes('?') ? `&t=${Date.now()}` : `?t=${Date.now()}`;
+            finalUrl = imageUrl + cacheBuster;
+        }
+
+        const handleImageLoad = () => {
             setImageDimensions({ width: imgElement.naturalWidth, height: imgElement.naturalHeight });
 
             // Tính toán scale và position ban đầu
@@ -74,10 +83,32 @@ export default function ImageCropper({
             setZoomInput(Math.round(initialScale * 100).toString());
             setImageLoaded(true);
         };
-        imgElement.onerror = () => {
-            setImageError(true);
-            setImageLoaded(false);
+
+        const handleImageError = () => {
+            // Nếu lỗi với crossOrigin, thử lại không có crossOrigin (chỉ cho preview)
+            if (imgElement.crossOrigin === 'anonymous') {
+                console.log('⚠️ CORS error detected, retrying without crossOrigin...');
+                imgElement.crossOrigin = '';
+                imgElement.src = ''; // Reset src
+                setCanCrop(false); // Ảnh không có CORS access, không thể crop
+                // Retry với URL gốc (không cache buster)
+                setTimeout(() => {
+                    imgElement.src = imageUrl;
+                }, 100);
+            } else {
+                // Thực sự lỗi - không thể tải ảnh
+                console.error('❌ Failed to load image:', imageUrl);
+                setImageError(true);
+                setImageLoaded(false);
+            }
         };
+
+        imgElement.onload = handleImageLoad;
+        imgElement.onerror = handleImageError;
+
+        // Thử tải với crossOrigin="anonymous" trước (cần cho canvas CORS)
+        // Nếu thất bại, sẽ retry không có crossOrigin trong handleImageError
+        imgElement.crossOrigin = 'anonymous';
         imgElement.src = finalUrl;
     }, [imageUrl, cropArea]);
 
