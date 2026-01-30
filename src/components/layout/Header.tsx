@@ -213,7 +213,7 @@ export default function Header() {
                                         onClick={handleSearch}
                                         className="h-full bg-gradient-to-br from-[#9C7044] via-[#855D36] to-[#7d5a36] text-white px-8 py-2.5 rounded-[18px] font-bold text-sm tracking-wider hover:shadow-[0_4px_15px_rgba(156,112,68,0.4)] active:scale-95 transition-all duration-300 flex items-center gap-2"
                                     >
-                                        <span className="hidden md:inline">Search</span>
+                                        <span className="hidden md:inline">Tìm</span>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="md:hidden">
                                             <path d="M5 12h14m-7-7l7 7-7 7" />
                                         </svg>
