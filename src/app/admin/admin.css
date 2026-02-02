@@ -116,8 +116,8 @@
 }
 
 .stat-icon-blue {
-  color: #3b82f6;
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #9C7044;
+  background: linear-gradient(135deg, #E3C88D 0%, #D9B87A 100%);
 }
 
 .stat-icon-amber {
@@ -610,7 +610,7 @@ a.bg-green-300 {
 }
 
 .admin-btn-secondary {
-  background: #3b82f6 !important;
+  background: #9C7044 !important;
   color: #000 !important;
   border: none;
   padding: 8px 16px;
@@ -620,7 +620,7 @@ a.bg-green-300 {
 }
 
 .admin-btn-secondary:hover {
-  background: #2563eb !important;
+  background: #7d5a36 !important;
   color: #000 !important;
 }
 

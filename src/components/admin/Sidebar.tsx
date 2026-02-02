@@ -16,6 +16,7 @@ import {
     Ticket,
     PenTool,
     Image,
+    Calendar,
     Settings,
     Crown,
     TrendingUp,
@@ -63,6 +64,7 @@ const menuItems = [
         title: 'NỘI DUNG',
         items: [
             { href: '/admin/blogs', icon: PenTool, label: 'Bài viết' },
+            { href: '/admin/events', icon: Calendar, label: 'Sự kiện' },
             { href: '/admin/banners', icon: Image, label: 'Banner' },
             { href: '/admin/contacts', icon: Mail, label: 'Liên hệ' },
             { href: '/admin/product-tags', icon: Tag, label: 'Danh mục sản phẩm' },

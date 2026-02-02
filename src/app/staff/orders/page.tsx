@@ -37,7 +37,7 @@ const statusConfig = {
     },
     processing: { 
         label: 'Đang xử lý', 
-        color: 'bg-blue-100 text-blue-700 border border-blue-200',
+        color: 'bg-[#E3C88D] text-[#7d5a36] border border-[#E3C88D]',
         icon: Package 
     },
     shipped: { 

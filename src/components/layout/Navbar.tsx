@@ -88,6 +88,7 @@ export default function Navbar() {
         { href: '/subscriptions', label: 'Gói VIP' },
         { href: '/agent', label: 'Đại lý' },
         { href: '/news', label: 'Tin tức' },
+        { href: '/events', label: 'Sự kiện' },
         { href: '/contact', label: 'Liên hệ' },
     ];
 

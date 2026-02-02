@@ -125,6 +125,9 @@ export default function Footer() {
                                 <Link href="/news">Tin tức</Link>
                             </li>
                             <li>
+                                <Link href="/events">Sự kiện</Link>
+                            </li>
+                            <li>
                                 <Link href="/contact">Liên hệ</Link>
                             </li>
                         </ul>

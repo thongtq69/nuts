@@ -28,7 +28,7 @@ interface Order {
 
 const statusConfig: Record<string, { label: string; class: string; color: string }> = {
     pending: { label: 'Chờ xử lý', class: 'bg-amber-100 text-amber-700', color: '#f59e0b' },
-    processing: { label: 'Đang xử lý', class: 'bg-blue-100 text-blue-700', color: '#3b82f6' },
+    processing: { label: 'Đang xử lý', class: 'bg-[#E3C88D] text-[#7d5a36]', color: '#9C7044' },
     confirmed: { label: 'Đã xác nhận', class: 'bg-indigo-100 text-indigo-700', color: '#6366f1' },
     shipping: { label: 'Đang giao', class: 'bg-purple-100 text-purple-700', color: '#8b5cf6' },
     delivered: { label: 'Đã giao', class: 'bg-emerald-100 text-emerald-700', color: '#10b981' },
@@ -40,7 +40,7 @@ const commissionStatusConfig: Record<string, { label: string; class: string }> =
     pending: { label: 'Chờ duyệt', class: 'bg-amber-100 text-amber-700' },
     approved: { label: 'Đã duyệt', class: 'bg-emerald-100 text-emerald-700' },
     cancelled: { label: 'Đã hủy', class: 'bg-red-100 text-red-700' },
-    paid: { label: 'Đã thanh toán', class: 'bg-blue-100 text-blue-700' },
+    paid: { label: 'Đã thanh toán', class: 'bg-[#E3C88D] text-[#7d5a36]' },
 };
 
 export default function AgentOrdersPage() {
@@ -149,8 +149,8 @@ export default function AgentOrdersPage() {
                             <div className="text-gray-500 font-medium text-sm">Tổng đơn hàng</div>
                             <div className="text-3xl font-bold text-gray-800 mt-1">{stats.totalOrders}</div>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                            <ShoppingCart className="w-6 h-6 text-blue-600" />
+                        <div className="w-12 h-12 rounded-xl bg-[#E3C88D] flex items-center justify-center">
+                            <ShoppingCart className="w-6 h-6 text-[#9C7044]" />
                         </div>
                     </div>
                 </div>
@@ -485,7 +485,7 @@ export default function AgentOrdersPage() {
                                         </div>
                                         {orderDetail.status !== 'pending' && (
                                             <div className="flex items-start gap-3">
-                                                <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+                                                <div className="w-2 h-2 rounded-full bg-[#9C7044] mt-2"></div>
                                                 <div>
                                                     <p className="font-medium text-gray-800">Đã xác nhận</p>
                                                     <p className="text-sm text-gray-500">Đơn hàng đang được xử lý</p>

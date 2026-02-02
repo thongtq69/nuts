@@ -357,16 +357,16 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         </div>
-                        <div className="p-8 md:p-12 max-h-[60vh] overflow-y-auto overflow-x-hidden custom-scrollbar bg-slate-50/30">
+                        <div className="px-10 py-12 md:px-20 md:py-16 max-h-[65vh] overflow-y-auto overflow-x-hidden custom-scrollbar bg-slate-50/10">
                             <div
-                                className="prose prose-slate max-w-none text-slate-600 font-bold leading-relaxed text-[15px] terms-content"
+                                className="prose prose-slate max-w-none text-slate-600 font-bold leading-relaxed text-[16px] md:text-[17px] terms-content"
                                 dangerouslySetInnerHTML={{ __html: selectedTerms.terms }}
                             />
                         </div>
-                        <div className="p-10 pt-0">
+                        <div className="p-10 md:p-12 pt-0 md:pt-0">
                             <button
                                 onClick={() => setSelectedTerms(null)}
-                                className="w-full py-5 rounded-[24px] bg-[#9C7044] text-white font-black uppercase tracking-[0.2em] text-sm hover:bg-[#855D36] shadow-[0_8px_0_#6A4C2E] active:shadow-none active:translate-y-[8px] transition-all"
+                                className="w-full py-6 rounded-[24px] bg-[#9C7044] text-white font-black uppercase tracking-[0.2em] text-sm md:text-base hover:bg-[#855D36] shadow-[0_10px_0_#6A4C2E] active:shadow-none active:translate-y-[10px] transition-all"
                             >
                                 Tôi đã hiểu
                             </button>

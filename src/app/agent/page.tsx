@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { encodeAffiliateId, generateReferralLink } from '@/lib/affiliate';
+import { generateReferralLink } from '@/lib/affiliate';
 import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
 import {
     Wallet,
@@ -12,14 +12,15 @@ import {
     ShoppingCart,
     Copy,
     TrendingUp,
-    ArrowUpRight,
+    TrendingDown,
     ChevronRight,
     Sparkles,
     Link as LinkIcon,
     RefreshCw,
     Clock,
     ExternalLink,
-    Users
+    BarChart3,
+    Package
 } from 'lucide-react';
 import {
     AreaChart,
@@ -40,7 +41,15 @@ interface AgentStats {
     totalReferrals: number;
     pendingOrders: number;
     totalRevenue: number;
-    recentOrders: any[];
+    recentOrders: Array<{
+        _id: string;
+        orderId: string;
+        customerName: string;
+        totalAmount: number;
+        commissionAmount: number;
+        status: string;
+        createdAt: string;
+    }>;
     commissionData: { date: string; commission: number }[];
 }
 
@@ -50,6 +59,7 @@ export default function AgentDashboard() {
     const [stats, setStats] = useState<AgentStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
+    const [selectedPeriod, setSelectedPeriod] = useState(7);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -124,268 +134,262 @@ export default function AgentDashboard() {
         }
     };
 
-    const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price);
-
-    const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+    // Safe format price function to prevent NaN
+    const formatPrice = (price: number | null | undefined) => {
+        if (price === null || price === undefined || isNaN(price)) {
+            return '0';
+        }
+        return new Intl.NumberFormat('vi-VN').format(price);
     };
 
-    const statCards = [
-        {
-            label: 'So du vi',
-            value: formatPrice(displayStats.walletBalance) + 'd',
-            icon: Wallet,
-            color: 'from-emerald-500 to-teal-500',
-            change: '+12.5%',
-            trend: 'up' as const
-        },
-        {
-            label: 'Tong hoa hong',
-            value: formatPrice(displayStats.totalCommission) + 'd',
-            icon: DollarSign,
-            color: 'from-brand to-brand-light',
-            change: '+8.2%',
-            trend: 'up' as const
-        },
-        {
-            label: 'Don hang gioi thieu',
-            value: displayStats.totalReferrals,
-            icon: ShoppingCart,
-            color: 'from-blue-500 to-indigo-500',
-            change: '+5',
-            trend: 'up' as const,
-            href: '/agent/orders'
-        },
-        {
-            label: 'Cho xu ly',
-            value: displayStats.pendingOrders,
-            icon: Clock,
-            color: 'from-amber-500 to-orange-500',
-            change: `${displayStats.pendingOrders} don`,
-            trend: 'neutral' as const
+    const formatDate = (date: string) => {
+        if (!date) return '';
+        try {
+            return new Date(date).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch {
+            return '';
         }
-    ];
+    };
 
     const getStatusConfig = (status: string) => {
         const configs: Record<string, { label: string; class: string }> = {
-            pending: { label: 'Cho xu ly', class: 'bg-amber-100 text-amber-700' },
-            processing: { label: 'Dang xu ly', class: 'bg-blue-100 text-blue-700' },
-            shipping: { label: 'Dang giao', class: 'bg-purple-100 text-purple-700' },
-            completed: { label: 'Hoan thanh', class: 'bg-emerald-100 text-emerald-700' },
-            cancelled: { label: 'Da huy', class: 'bg-red-100 text-red-700' }
+            pending: { label: 'Chờ xử lý', class: 'bg-amber-100 text-amber-700' },
+            processing: { label: 'Đang xử lý', class: 'bg-[#E3C88D] text-[#7d5a36]' },
+            shipping: { label: 'Đang giao', class: 'bg-purple-100 text-purple-700' },
+            completed: { label: 'Hoàn thành', class: 'bg-green-100 text-green-700' },
+            cancelled: { label: 'Đã hủy', class: 'bg-red-100 text-red-700' }
         };
-        return configs[status] || { label: status, class: 'bg-gray-100 text-gray-700' };
+        return configs[status] || { label: status, class: 'bg-slate-100 text-slate-700' };
     };
 
     if (authLoading || loading) {
         return (
-            <div className="max-w-[1200px] mx-auto px-4 py-8">
+            <div className="w-full">
                 <DashboardSkeleton />
             </div>
         );
     }
 
     return (
-        <div className="space-y-8 w-full max-w-[1200px]">
+        <div className="w-full space-y-6">
             {/* Welcome Banner */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-brand via-brand-light to-amber-400 rounded-3xl p-6 sm:p-8 text-gray-800 shadow-2xl shadow-brand/20">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-amber-300/20 rounded-full blur-3xl" />
-                <div className="absolute inset-0 opacity-10">
-                    <svg className="w-full h-full" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                        <g fill="none" fillRule="evenodd">
-                            <g fill="#ffffff" fillOpacity="0.08">
-                                <path d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z" />
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-                
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="w-5 h-5 text-amber-900" />
-                        <span className="font-semibold text-sm text-gray-900">Xin chao, {user?.name}!</span>
+            <div className="flex flex-col lg:flex-row gap-6">
+                {/* Welcome Card */}
+                <div className="flex-1 bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#E3C88D] rounded-xl flex items-center justify-center">
+                                <Sparkles className="w-6 h-6 text-[#9C7044]" />
+                            </div>
+                            <div>
+                                <p className="text-slate-500 text-sm font-medium">Xin chào</p>
+                                <h1 className="text-xl font-bold text-slate-900">{user?.name || 'Đại lý'}</h1>
+                            </div>
+                        </div>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 text-gray-900">
-                        Dashboard Dai ly
-                    </h1>
-                    <p className="text-gray-900 text-base sm:text-lg max-w-2xl mb-6 leading-relaxed opacity-90">
-                        Theo doi doanh thu va hoa hong tu khach hang ban gioi thieu
+                    
+                    <p className="text-slate-600 mt-4 mb-6">
+                        Theo dõi doanh thu và hoa hồng từ khách hàng bạn giới thiệu
                     </p>
 
                     {/* Referral Link */}
-                    <div className="bg-white rounded-2xl p-5 max-w-2xl border border-gray-200 shadow-sm">
-                        <div className="flex items-center gap-2 text-sm text-gray-700 mb-4">
-                            <LinkIcon size={16} className="text-brand" />
-                            <span className="font-semibold text-gray-800">Link tiep thi cua ban</span>
+                    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                        <div className="flex items-center gap-2 text-sm text-slate-700 mb-3">
+                            <LinkIcon size={16} className="text-[#9C7044]" />
+                            <span className="font-semibold text-slate-900">Link tiếp thị của bạn</span>
                         </div>
                         
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex-1 bg-gradient-to-r from-brand/10 to-amber-100 rounded-xl px-4 py-3 border border-brand/20">
-                                <div className="text-xs text-gray-500 mb-1">Ma gioi thieu</div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-mono font-bold text-lg text-brand">
-                                        {displayStats.referralCode}
-                                    </span>
-                                    <button
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(displayStats.referralCode);
-                                        }}
-                                        className="p-1.5 hover:bg-white rounded-lg transition-colors"
-                                        title="Sao chep ma"
-                                    >
-                                        <Copy size={14} className="text-brand" />
-                                    </button>
-                                </div>
+                        <div className="bg-white rounded-lg px-3 py-2 border border-slate-200 flex items-center gap-2 mb-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Mã giới thiệu</div>
+                                <div className="font-mono font-semibold text-slate-700 truncate">{displayStats.referralCode}</div>
                             </div>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(displayStats.referralCode);
+                                }}
+                                className="p-1.5 hover:bg-slate-100 rounded-md transition-colors"
+                                title="Sao chép mã"
+                            >
+                                <Copy size={16} className="text-slate-400" />
+                            </button>
                         </div>
 
-                        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                        <div className="flex gap-2">
                             <input
                                 type="text"
                                 readOnly
                                 value={referralLink}
                                 onClick={copyReferralLink}
-                                className="w-full lg:flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 font-mono placeholder-gray-400 focus:outline-none cursor-pointer hover:bg-gray-100 transition-colors"
-                                title="Click de sao chep link tiep thi day du"
+                                className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-600 font-mono cursor-pointer hover:bg-slate-50 transition-colors truncate"
+                                title="Click để sao chép link tiếp thị đầy đủ"
                             />
                             <button
                                 onClick={copyReferralLink}
-                                className={`w-full lg:w-auto px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg border-2 ${
+                                className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
                                     copied
-                                        ? 'bg-emerald-500 text-gray-900 border-black hover:bg-emerald-600 shadow-emerald-500/25'
-                                        : 'bg-brand text-gray-900 border-black hover:bg-brand-dark shadow-brand/30'
+                                        ? 'bg-green-100 text-green-700 border border-green-200'
+                                        : 'bg-[#9C7044] text-white hover:bg-[#7d5a36]'
                                 }`}
                             >
-                                {copied ? 'Da sao link!' : 'Sao chep link'}
+                                {copied ? 'Đã sao chép!' : 'Sao chép'}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
+                        <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
                             <span className="text-amber-500">*</span>
-                            Chia se link tiep thi de nhan hoa hong 10% tu don hang cua khach
+                            Chia sẻ link tiếp thị để nhận hoa hồng 10% từ đơn hàng của khách
                         </p>
+                    </div>
+                </div>
+
+                {/* Stats Summary Card */}
+                <div className="lg:w-[420px] bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <DollarSign className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-slate-900">Tổng doanh thu giới thiệu</h3>
+                            <p className="text-xs text-slate-500">Tổng giá trị đơn hàng từ khách bạn giới thiệu</p>
+                        </div>
+                    </div>
+                    
+                    <div className="text-3xl font-bold text-slate-900 mb-4">
+                        {formatPrice(displayStats.totalRevenue)}đ
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                            <p className="text-xs text-slate-500 mb-1">Tổng hoa hồng</p>
+                            <p className="text-lg font-bold text-slate-900">{formatPrice(displayStats.totalCommission)}đ</p>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                            <p className="text-xs text-slate-500 mb-1">Số dư ví</p>
+                            <p className="text-lg font-bold text-green-600">{formatPrice(displayStats.walletBalance)}đ</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-                {statCards.map((stat, index) => {
-                    const Icon = stat.icon;
-                    return (
-                        <div
-                            key={index}
-                            className="group bg-white rounded-3xl p-6 shadow-lg shadow-gray-100/50 border border-gray-100 hover:shadow-xl hover:shadow-brand/10 hover:-translate-y-1 transition-all duration-300"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                                    <Icon className="w-7 h-7 text-white" />
-                                </div>
-                                {stat.change && (
-                                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                        stat.trend === 'up' 
-                                            ? 'bg-emerald-100 text-emerald-600' 
-                                            : 'bg-amber-100 text-amber-600'
-                                    }`}>
-                                        {stat.trend === 'up' ? <ArrowUpRight size={12} /> : null}
-                                        {stat.change}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="text-3xl font-black text-gray-800 mb-1 group-hover:text-brand transition-colors">
-                                {stat.value}
-                            </div>
-                            <div className="text-gray-500 font-medium">{stat.label}</div>
-                            {stat.href && (
-                                <Link
-                                    href={stat.href}
-                                    className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-gray-50 hover:bg-brand/10 text-gray-600 hover:text-brand font-semibold rounded-xl transition-all text-sm"
-                                >
-                                    <span>Xem chi tiet</span>
-                                    <ChevronRight size={16} />
-                                </Link>
-                            )}
-                        </div>
-                    );
-                })}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                    icon={Wallet}
+                    label="Số dư ví"
+                    value={`${formatPrice(displayStats.walletBalance)}đ`}
+                    trend="+12.5%"
+                    trendUp={true}
+                    color="green"
+                />
+                <StatCard
+                    icon={DollarSign}
+                    label="Tổng hoa hồng"
+                    value={`${formatPrice(displayStats.totalCommission)}đ`}
+                    trend="+8.2%"
+                    trendUp={true}
+                    color="blue"
+                />
+                <StatCard
+                    icon={ShoppingCart}
+                    label="Đơn hàng giới thiệu"
+                    value={displayStats.totalReferrals?.toString() || '0'}
+                    trend="+5"
+                    trendUp={true}
+                    color="purple"
+                    href="/agent/orders"
+                />
+                <StatCard
+                    icon={Clock}
+                    label="Chờ xử lý"
+                    value={displayStats.pendingOrders?.toString() || '0'}
+                    subtitle="đơn hàng"
+                    trend=""
+                    trendUp={true}
+                    color="orange"
+                />
             </div>
 
             {/* Charts & Quick Actions Row */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
                 {/* Commission Chart */}
-                <div className="xl:col-span-2 bg-white rounded-3xl p-6 shadow-lg shadow-gray-100/50 border border-gray-100">
+                <div className="xl:col-span-2 bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                         <div>
-                            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-brand" />
-                                Hoa hong 7 ngay qua
+                            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-[#9C7044]" />
+                                Hoa hồng 7 ngày qua
                             </h3>
-                            <p className="text-gray-500 text-sm mt-1">Tong quan thu nhap tu gioi thieu</p>
+                            <p className="text-slate-500 text-sm mt-1">Tổng quan thu nhập từ giới thiệu</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <select className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer">
-                                <option value="7">7 ngay gan nhat</option>
-                                <option value="14">14 ngay gan nhat</option>
-                                <option value="30">30 ngay gan nhat</option>
-                            </select>
+                            <div className="flex bg-slate-100 rounded-lg p-1">
+                                {[7, 14, 30].map((period) => (
+                                    <button
+                                        key={period}
+                                        onClick={() => setSelectedPeriod(period)}
+                                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                            selectedPeriod === period
+                                                ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                                                : 'text-slate-600 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        {period}D
+                                    </button>
+                                ))}
+                            </div>
                             <button
                                 onClick={fetchAgentStats}
-                                className="p-2.5 hover:bg-amber-50 rounded-xl transition-colors"
-                                title="Lam moi"
+                                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                                title="Làm mới"
                             >
-                                <RefreshCw size={18} className="text-gray-400" />
+                                <RefreshCw size={18} className="text-slate-400" />
                             </button>
                         </div>
                     </div>
-                    <div className="h-[300px] w-full min-h-[250px]">
+                    <div className="h-[280px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={displayStats.commissionData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                            <AreaChart data={displayStats.commissionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorCommissionAgent" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#9C7043" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#9C7043" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#2563EB" stopOpacity={0.15} />
+                                        <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={true} horizontal={true} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                                 <XAxis 
                                     dataKey="date" 
-                                    tick={{ fontSize: 12, fill: '#9ca3af' }} 
-                                    axisLine={{ stroke: '#e5e7eb' }}
+                                    tick={{ fontSize: 12, fill: '#64748B' }} 
+                                    axisLine={false}
                                     tickLine={false}
-                                    dy={10}
-                                    minTickGap={30}
                                 />
                                 <YAxis
-                                    tick={{ fontSize: 12, fill: '#9ca3af' }}
+                                    tick={{ fontSize: 12, fill: '#64748B' }}
                                     tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
                                     axisLine={false}
                                     tickLine={false}
-                                    dx={-10}
-                                    width={50}
+                                    width={45}
                                 />
                                 <Tooltip
-                                    formatter={(value: number | undefined) => [`${(value || 0).toLocaleString('vi-VN')}d`, 'Hoa hong']}
-                                    labelStyle={{ color: '#374151', fontWeight: 600 }}
+                                    formatter={(value: number | undefined) => [`${formatPrice(value)}đ`, 'Hoa hồng']}
                                     contentStyle={{
                                         backgroundColor: 'white',
-                                        border: '1px solid #e5e7eb',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 10px 40px -10px rgba(0,0,0,0.15)'
+                                        border: '1px solid #E2E8F0',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                     }}
                                 />
                                 <Area
                                     type="monotone"
                                     dataKey="commission"
-                                    stroke="#9C7043"
-                                    strokeWidth={3}
+                                    stroke="#2563EB"
+                                    strokeWidth={2}
                                     fillOpacity={1}
                                     fill="url(#colorCommissionAgent)"
-                                    animationDuration={1000}
-                                    activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                                    activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: '#2563EB' }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -393,130 +397,94 @@ export default function AgentDashboard() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-white rounded-3xl p-6 shadow-lg shadow-gray-100/50 border border-gray-100">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-amber-500" />
-                        Thao tac nhanh
+                <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-[#9C7044]" />
+                        Thao tác nhanh
                     </h3>
                     <div className="space-y-3">
-                        <Link
+                        <QuickAction
                             href="/agent/orders"
-                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-brand to-brand-light rounded-2xl hover:shadow-xl hover:shadow-brand/30 transition-all group border-2 border-transparent hover:border-brand/30"
-                        >
-                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-                                <ShoppingCart className="w-6 h-6 text-brand" />
-                            </div>
-                            <div className="flex-1">
-                                <div className="font-bold text-gray-900">Xem don hang</div>
-                                <div className="text-gray-600 text-sm">{displayStats.totalReferrals} don da gioi thieu</div>
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-brand group-hover:translate-x-1 transition-all" />
-                        </Link>
+                            icon={ShoppingCart}
+                            title="Xem đơn hàng"
+                            subtitle={`${displayStats.totalReferrals || 0} đơn đã giới thiệu`}
+                            color="blue"
+                        />
 
-                        <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl border-2 border-emerald-400">
-                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                                <Wallet className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex-1">
-                                <div className="font-bold text-white">So du vi</div>
-                                <div className="text-white/90 text-lg font-bold">{formatPrice(displayStats.walletBalance)}d</div>
-                            </div>
-                        </div>
+                        <QuickAction
+                            href="/agent/commissions"
+                            icon={Wallet}
+                            title="Số dư ví"
+                            subtitle={`${formatPrice(displayStats.walletBalance)}đ`}
+                            color="green"
+                        />
 
                         {/* Bank Info for Withdrawal */}
                         <div className="mt-2">
                             <BankInfoDisplay compact />
                         </div>
 
-                        <Link
+                        <QuickAction
                             href="/products"
-                            className="flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
-                        >
-                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Users className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <div className="flex-1">
-                                <div className="font-bold text-gray-900">San pham</div>
-                                <div className="text-gray-500 text-sm">Xem danh sach san pham</div>
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-                        </Link>
+                            icon={Package}
+                            title="Sản phẩm"
+                            subtitle="Xem danh sách sản phẩm"
+                            color="purple"
+                            variant="outline"
+                        />
 
-                        <Link
+                        <QuickAction
                             href="/"
-                            className="flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group"
-                        >
-                            <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <ExternalLink className="w-6 h-6 text-gray-600" />
-                            </div>
-                            <div className="flex-1">
-                                <div className="font-bold text-gray-900">Website</div>
-                                <div className="text-gray-500 text-sm">Xem trang chu</div>
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-all" />
-                        </Link>
-                    </div>
-                </div>
-            </div>
-
-            {/* Total Revenue Summary */}
-            <div className="bg-white rounded-3xl p-6 shadow-lg shadow-gray-100/50 border border-gray-100">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
-                            <DollarSign className="w-7 h-7 text-white" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-800">Tong doanh thu gioi thieu</h3>
-                            <p className="text-gray-500 text-sm mt-1">Tong gia tri don hang tu khach ban gioi thieu</p>
-                        </div>
-                    </div>
-                    <div className="text-3xl sm:text-4xl font-black text-gray-800">
-                        {formatPrice(displayStats.totalRevenue)}<span className="text-lg font-bold text-gray-500">d</span>
+                            icon={ExternalLink}
+                            title="Website"
+                            subtitle="Xem trang chủ"
+                            color="gray"
+                            variant="outline"
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Recent Orders */}
-            <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200 flex items-center justify-between flex-wrap gap-4">
                     <div>
-                        <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <ShoppingCart className="w-5 h-5 text-brand" />
-                            Don hang gan day
+                        <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                            <ShoppingCart className="w-5 h-5 text-[#9C7044]" />
+                            Đơn hàng gần đây
                         </h3>
-                        <p className="text-gray-500 text-sm mt-1">Danh sach don hang moi nhat</p>
+                        <p className="text-slate-500 text-sm mt-1">Danh sách đơn hàng mới nhất</p>
                     </div>
                     <Link
                         href="/agent/orders"
-                        className="text-brand hover:text-brand/80 font-semibold text-sm flex items-center gap-1"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#F5EFE6] text-[#7d5a36] rounded-lg font-medium hover:bg-[#E3C88D] transition-colors"
                     >
-                        Xem tat ca <ChevronRight size={16} />
+                        Xem tất cả <ChevronRight size={16} />
                     </Link>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-amber-50/50 border-b border-gray-100">
+                        <thead className="bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ma don</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Khach hang</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Gia tri</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Hoa hong</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Trang thai</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Ngay</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mã đơn</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Khách hàng</th>
+                                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Giá trị</th>
+                                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Hoa hồng</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
+                        <tbody className="divide-y divide-slate-100">
                             {(!displayStats.recentOrders || displayStats.recentOrders.length === 0) ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center gap-4">
-                                            <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center">
-                                                <ShoppingCart className="w-10 h-10 text-amber-400" />
+                                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
+                                                <ShoppingCart className="w-8 h-8 text-slate-400" />
                                             </div>
                                             <div>
-                                                <p className="text-gray-600 font-medium text-lg">Chua co don hang nao</p>
-                                                <p className="text-gray-500 text-sm mt-1">Don hang se hien thi khi co khach dat hang qua ma gioi thieu cua ban</p>
+                                                <p className="text-slate-700 font-medium text-lg">Chưa có đơn hàng nào</p>
+                                                <p className="text-slate-500 text-sm mt-1">Đơn hàng sẽ hiển thị khi có khách đặt hàng qua mã giới thiệu của bạn</p>
                                             </div>
                                         </div>
                                     </td>
@@ -525,28 +493,28 @@ export default function AgentDashboard() {
                                 displayStats.recentOrders.map((order) => {
                                     const statusConfig = getStatusConfig(order.status);
                                     return (
-                                        <tr key={order._id} className="hover:bg-amber-50/30 transition-colors">
+                                        <tr key={order._id} className="hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-4">
-                                                <span className="font-mono text-sm bg-gray-100 px-3 py-1.5 rounded-lg text-gray-700">
+                                                <span className="font-mono text-sm bg-slate-100 px-2.5 py-1 rounded-md text-slate-700">
                                                     #{order.orderId}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="font-semibold text-gray-800">{order.customerName}</span>
+                                                <span className="font-medium text-slate-900">{order.customerName}</span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <span className="font-semibold text-gray-800">{formatPrice(order.totalAmount)}d</span>
+                                                <span className="font-semibold text-slate-900">{formatPrice(order.totalAmount)}đ</span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <span className="font-bold text-emerald-600">+{formatPrice(order.commissionAmount)}d</span>
+                                                <span className="font-semibold text-green-600">+{formatPrice(order.commissionAmount)}đ</span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${statusConfig.class}`}>
+                                                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.class}`}>
                                                     {statusConfig.label}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className="text-gray-500 text-sm">{formatDate(order.createdAt)}</span>
+                                                <span className="text-slate-500 text-sm">{formatDate(order.createdAt)}</span>
                                             </td>
                                         </tr>
                                     );
@@ -557,5 +525,123 @@ export default function AgentDashboard() {
                 </div>
             </div>
         </div>
+    );
+}
+
+// Stat Card Component
+function StatCard({ 
+    icon: Icon, 
+    label, 
+    value, 
+    subtitle,
+    trend, 
+    trendUp,
+    color,
+    href 
+}: { 
+    icon: any; 
+    label: string; 
+    value: string;
+    subtitle?: string;
+    trend: string;
+    trendUp: boolean;
+    color: 'blue' | 'green' | 'purple' | 'orange';
+    href?: string;
+}) {
+    const colorClasses = {
+        blue: 'bg-[#E3C88D] text-[#9C7044]',
+        green: 'bg-green-100 text-green-600',
+        purple: 'bg-purple-100 text-purple-600',
+        orange: 'bg-orange-100 text-orange-600',
+    };
+
+    const content = (
+        <div className={`bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 ${href ? 'cursor-pointer' : ''}`}>
+            <div className="flex items-start justify-between mb-3">
+                <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+                    <Icon className="w-5 h-5" />
+                </div>
+                {trend && (
+                    <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${trendUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                        {trendUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                        {trend}
+                    </span>
+                )}
+            </div>
+            <p className="text-xl font-bold text-slate-900">{value}</p>
+            <p className="text-slate-500 text-sm mt-1">
+                {label}
+                {subtitle && <span className="text-slate-400 ml-1">({subtitle})</span>}
+            </p>
+        </div>
+    );
+
+    if (href) {
+        return <Link href={href}>{content}</Link>;
+    }
+
+    return content;
+}
+
+// Quick Action Component
+function QuickAction({ 
+    href, 
+    icon: Icon, 
+    title, 
+    subtitle, 
+    color,
+    variant = 'solid'
+}: { 
+    href: string; 
+    icon: any; 
+    title: string; 
+    subtitle: string;
+    color: 'blue' | 'green' | 'purple' | 'orange' | 'gray';
+    variant?: 'solid' | 'outline';
+}) {
+    const solidClasses = {
+        blue: 'bg-[#9C7044] text-white hover:bg-[#7d5a36]',
+        green: 'bg-green-600 text-white hover:bg-green-700',
+        purple: 'bg-purple-600 text-white hover:bg-purple-700',
+        orange: 'bg-orange-600 text-white hover:bg-orange-700',
+        gray: 'bg-slate-700 text-white hover:bg-slate-800',
+    };
+
+    const outlineClasses = {
+        blue: 'bg-white border-2 border-slate-200 hover:border-[#9C7044] hover:bg-[#F5EFE6]',
+        green: 'bg-white border-2 border-slate-200 hover:border-green-300 hover:bg-green-50',
+        purple: 'bg-white border-2 border-slate-200 hover:border-purple-300 hover:bg-purple-50',
+        orange: 'bg-white border-2 border-slate-200 hover:border-orange-300 hover:bg-orange-50',
+        gray: 'bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50',
+    };
+
+    const iconClasses = {
+        blue: variant === 'solid' ? 'bg-white/20 text-white' : 'bg-[#E3C88D] text-[#9C7044]',
+        green: variant === 'solid' ? 'bg-white/20 text-white' : 'bg-green-100 text-green-600',
+        purple: variant === 'solid' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-600',
+        orange: variant === 'solid' ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600',
+        gray: variant === 'solid' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600',
+    };
+
+    const textClasses = variant === 'solid' ? 'text-white' : 'text-slate-900';
+    const subtitleClasses = variant === 'solid' ? 'text-white/70' : 'text-slate-500';
+    const chevronClasses = variant === 'solid' ? 'text-white/60' : 'text-slate-400';
+
+    return (
+        <Link
+            href={href}
+            className={`flex items-center gap-4 p-4 rounded-xl transition-all group ${
+                variant === 'solid' ? solidClasses[color] : outlineClasses[color]
+            }`}
+        >
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconClasses[color]}`}>
+                <Icon className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+                <p className={`font-semibold ${textClasses}`}>{title}</p>
+                <p className={`text-sm ${subtitleClasses}`}>{subtitle}</p>
+            </div>
+            <ChevronRight className={`w-5 h-5 ${chevronClasses}`} />
+        </Link>
     );
 }
