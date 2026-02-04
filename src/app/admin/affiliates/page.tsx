@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, Mail, Phone, Tag, Wallet, DollarSign, Calendar } from 'lucide-react';
+import { Users, Mail, Phone, Tag, Wallet, Calendar } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
 export default function AdminAffiliatesPage() {

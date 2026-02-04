@@ -1,13 +1,12 @@
 'use client';
 
-import './admin.css';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from 'next-themes';
 import AdminSidebar from '@/components/admin/Sidebar';
 import AdminHeader from '@/components/admin/Header';
-import { useTheme } from 'next-themes';
-import { useToast } from '@/context/ToastContext';
+import './admin.css';
 
 export default function AdminLayout({
     children,
@@ -17,64 +16,51 @@ export default function AdminLayout({
     const router = useRouter();
     const { user, loading } = useAuth();
     const [isAuthorized, setIsAuthorized] = useState(false);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const { setTheme } = useTheme();
-    const toast = useToast();
 
     // Force light theme for admin
     useEffect(() => {
         setTheme('light');
     }, [setTheme]);
 
+    // Auth check
     useEffect(() => {
         if (!loading) {
             if (!user) {
                 router.push('/login');
             } else if (user.role !== 'admin') {
-                toast.error('Không có quyền truy cập', 'Bạn không có quyền truy cập trang này.');
                 router.push('/');
             } else {
                 setIsAuthorized(true);
             }
         }
-    }, [user, loading, router, toast]);
+    }, [user, loading, router]);
 
     if (loading || !isAuthorized) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-white">
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
-                    <div className="text-slate-500 font-medium">Đang kiểm tra quyền truy cập...</div>
+                    <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-slate-600 font-medium">Đang kiểm tra quyền truy cập...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="admin-layout min-h-screen bg-white flex transition-colors duration-200">
-            {/* Sidebar Desktop */}
-            <div className="hidden lg:block w-64 flex-shrink-0">
-                <AdminSidebar />
-            </div>
-
-            {/* Sidebar Mobile */}
-            {isSidebarOpen && (
-                <div className="fixed inset-0 z-50 lg:hidden">
-                    <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={() => setIsSidebarOpen(false)}
-                    />
-                    <div className="absolute inset-y-0 left-0 w-64 bg-slate-900 shadow-xl animate-in slide-in-from-left duration-300">
-                        <AdminSidebar />
-                    </div>
-                </div>
-            )}
+        <div className="min-h-screen bg-slate-50 flex">
+            {/* Sidebar */}
+            <AdminSidebar 
+                isOpen={sidebarOpen} 
+                onClose={() => setSidebarOpen(false)} 
+            />
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0">
-                <AdminHeader onMenuClick={() => setIsSidebarOpen(true)} />
-
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+            <div className="flex-1 lg:ml-72 flex flex-col min-w-0 overflow-x-hidden">
+                <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
+                
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
                     {children}
                 </main>
             </div>

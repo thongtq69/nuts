@@ -11,7 +11,7 @@ import {
     Copy,
     TrendingUp,
     Users,
-    DollarSign,
+    Wallet,
     Package as PackageIcon,
     Percent,
     Calendar,
@@ -285,7 +285,7 @@ export default function AdminPackagesPage() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-emerald-200 transition-all hover:shadow-lg hover:-translate-y-1">
                     <div className="flex items-start justify-between mb-4">
                         <div className="p-3 rounded-xl bg-emerald-50">
-                            <DollarSign className="w-6 h-6 text-emerald-600" strokeWidth={2} />
+                            <Wallet className="w-6 h-6 text-emerald-600" strokeWidth={2} />
                         </div>
                         <div className="flex items-center gap-1 text-emerald-600 text-xs font-semibold bg-emerald-50 px-2 py-1 rounded-full">
                             <TrendingUp size={12} />
@@ -368,7 +368,7 @@ export default function AdminPackagesPage() {
 
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                    <DollarSign size={16} className="text-emerald-600" />
+                                    <Wallet size={16} className="text-emerald-600" />
                                     Giá bán (VND)
                                 </label>
                                 <input

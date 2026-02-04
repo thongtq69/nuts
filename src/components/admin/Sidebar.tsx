@@ -129,7 +129,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                             <Link
                                                 href={item.href}
                                                 className={`
-                                                    flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
+                                                    flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium leading-relaxed
                                                     transition-all duration-200 min-h-[48px]
                                                     ${active 
                                                         ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/25' 
@@ -138,9 +138,9 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                                 `}
                                             >
                                                 <Icon className="w-5 h-5 flex-shrink-0" />
-                                                <span>{item.label}</span>
+                                                <span className="flex-1">{item.label}</span>
                                                 {active && (
-                                                    <ChevronRight className="w-4 h-4 ml-auto" />
+                                                    <ChevronRight className="w-4 h-4 flex-shrink-0" />
                                                 )}
                                             </Link>
                                         </li>
@@ -209,20 +209,20 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                     
                                     return (
                                         <li key={item.href}>
-                                            <Link
-                                                href={item.href}
-                                                className={`
-                                                    flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium
-                                                    transition-all duration-200 min-h-[52px]
-                                                    ${active 
-                                                        ? 'bg-amber-500 text-slate-900' 
-                                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                                    }
-                                                `}
-                                            >
-                                                <Icon className="w-5 h-5 flex-shrink-0" />
-                                                <span>{item.label}</span>
-                                            </Link>
+                                        <Link
+                                            href={item.href}
+                                            className={`
+                                                flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium leading-relaxed
+                                                transition-all duration-200 min-h-[52px]
+                                                ${active 
+                                                    ? 'bg-amber-500 text-slate-900' 
+                                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                }
+                                            `}
+                                        >
+                                            <Icon className="w-5 h-5 flex-shrink-0" />
+                                            <span className="flex-1">{item.label}</span>
+                                        </Link>
                                         </li>
                                     );
                                 })}
