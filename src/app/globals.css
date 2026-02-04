@@ -68,12 +68,18 @@
   --container-max-width: 1520px;
 }
 
-/* Reset & Base */
+/* Reset & Base - Removed aggressive global * reset that overrides Tailwind utilities */
+/*
 *,
 *::before,
 *::after {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+}
+*/
+
+* {
   box-sizing: border-box;
 }
 

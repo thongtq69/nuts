@@ -3,13 +3,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
-import { 
-    Save, 
-    ArrowLeft, 
-    Package, 
-    Image as ImageIcon, 
-    Tag, 
-    FileText, 
+import {
+    Save,
+    ArrowLeft,
+    Package,
+    Image as ImageIcon,
+    Tag,
+    FileText,
     Box,
     Loader2,
     X,
@@ -70,21 +70,21 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         category: initialData.category || '',
         description: initialData.description || '',
         tags: (initialData.tags || []).join(', '),
-        
+
         // Images
         image: initialData.image || '',
         images: initialData.images || [],
-        
+
         // Inventory
         stock: initialData.stock || 100,
         stockStatus: initialData.stockStatus || 'in_stock',
         sku: initialData.sku || '',
         soldCount: initialData.soldCount || 0,
-        
+
         // Badge
         badgeText: initialData.badgeText || '',
         badgeColor: initialData.badgeColor || '',
-        
+
         // SEO
         metaTitle: initialData.metaTitle || '',
         metaDescription: initialData.metaDescription || '',
@@ -168,7 +168,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
             images: [...prev.images, ...uploadedUrls]
         }));
         setUploadingImages(false);
-        
+
         if (uploadedUrls.length > 0) {
             toast.success(`Đã tải ${uploadedUrls.length} ảnh`);
         }
@@ -314,9 +314,8 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                             <div className="flex items-start justify-between gap-4">
                                 <div>
                                     {formData.badgeText && (
-                                        <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium mb-2 ${
-                                            BADGE_COLORS.find(c => c.value === formData.badgeColor)?.class || 'bg-brand'
-                                        }`}>
+                                        <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium mb-2 ${BADGE_COLORS.find(c => c.value === formData.badgeColor)?.class || 'bg-brand'
+                                            }`}>
                                             {formData.badgeText}
                                         </span>
                                     )}
@@ -339,13 +338,12 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     <Box className="h-4 w-4 text-slate-400" />
                                     Tồn kho: {formData.stock}
                                 </span>
-                                <span className={`flex items-center gap-2 ${
-                                    formData.stockStatus === 'in_stock' ? 'text-emerald-400' :
+                                <span className={`flex items-center gap-2 ${formData.stockStatus === 'in_stock' ? 'text-emerald-400' :
                                     formData.stockStatus === 'low_stock' ? 'text-amber-400' : 'text-red-400'
-                                }`}>
+                                    }`}>
                                     <CheckCircle2 className="h-4 w-4" />
                                     {formData.stockStatus === 'in_stock' ? 'Còn hàng' :
-                                     formData.stockStatus === 'low_stock' ? 'Sắp hết' : 'Hết hàng'}
+                                        formData.stockStatus === 'low_stock' ? 'Sắp hết' : 'Hết hàng'}
                                 </span>
                             </div>
                         </div>
@@ -363,11 +361,10 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all ${
-                                        activeTab === tab.id
-                                            ? 'border-brand text-brand'
-                                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                                    }`}
+                                    className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id
+                                        ? 'border-brand text-brand'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                        }`}
                                 >
                                     <Icon className="h-4 w-4" />
                                     {tab.label}
@@ -487,7 +484,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                             value={formData.tags}
                                             onChange={handleChange}
                                             placeholder="bán-chạy, mới, khuyến-mãi (phân cách bằng dấu phẩy)"
-                                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                                            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                                         />
                                     </div>
                                 </div>
@@ -559,9 +556,9 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                 <div className="flex items-start gap-6">
                                     <div className="w-48 h-48 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center">
                                         {formData.image ? (
-                                            <img 
-                                                src={formData.image} 
-                                                alt="Main" 
+                                            <img
+                                                src={formData.image}
+                                                alt="Main"
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
@@ -625,12 +622,12 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
 
                                     {/* Gallery Items */}
                                     {formData.images.map((img, index) => (
-                                        <div 
-                                            key={index} 
+                                        <div
+                                            key={index}
                                             className="relative aspect-square rounded-2xl bg-slate-100 overflow-hidden group"
                                         >
-                                            <img 
-                                                src={img} 
+                                            <img
+                                                src={img}
                                                 alt={`Gallery ${index + 1}`}
                                                 className="w-full h-full object-cover"
                                             />
@@ -664,7 +661,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                             value={formData.stock}
                                             onChange={(e) => handleStockChange(Number(e.target.value))}
                                             min="0"
-                                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                                            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                                         />
                                     </div>
                                 </div>
@@ -678,11 +675,10 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         <button
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, stockStatus: 'in_stock' }))}
-                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
-                                                formData.stockStatus === 'in_stock'
-                                                    ? 'bg-emerald-50 text-emerald-700 border-2 border-emerald-500'
-                                                    : 'bg-slate-50 text-slate-600 border-2 border-transparent hover:bg-slate-100'
-                                            }`}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${formData.stockStatus === 'in_stock'
+                                                ? 'bg-emerald-50 text-emerald-700 border-2 border-emerald-500'
+                                                : 'bg-slate-50 text-slate-600 border-2 border-transparent hover:bg-slate-100'
+                                                }`}
                                         >
                                             <CheckCircle2 className="h-4 w-4" />
                                             Còn hàng
@@ -690,11 +686,10 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         <button
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, stockStatus: 'low_stock' }))}
-                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
-                                                formData.stockStatus === 'low_stock'
-                                                    ? 'bg-amber-50 text-amber-700 border-2 border-amber-500'
-                                                    : 'bg-slate-50 text-slate-600 border-2 border-transparent hover:bg-slate-100'
-                                            }`}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${formData.stockStatus === 'low_stock'
+                                                ? 'bg-amber-50 text-amber-700 border-2 border-amber-500'
+                                                : 'bg-slate-50 text-slate-600 border-2 border-transparent hover:bg-slate-100'
+                                                }`}
                                         >
                                             <AlertCircle className="h-4 w-4" />
                                             Sắp hết
@@ -702,11 +697,10 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         <button
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, stockStatus: 'out_of_stock' }))}
-                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
-                                                formData.stockStatus === 'out_of_stock'
-                                                    ? 'bg-red-50 text-red-700 border-2 border-red-500'
-                                                    : 'bg-slate-50 text-slate-600 border-2 border-transparent hover:bg-slate-100'
-                                            }`}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${formData.stockStatus === 'out_of_stock'
+                                                ? 'bg-red-50 text-red-700 border-2 border-red-500'
+                                                : 'bg-slate-50 text-slate-600 border-2 border-transparent hover:bg-slate-100'
+                                                }`}
                                         >
                                             <X className="h-4 w-4" />
                                             Hết hàng
@@ -728,7 +722,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                                 value={formData.soldCount}
                                                 onChange={handleNumberChange}
                                                 min="0"
-                                                className="w-full pl-11 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 cursor-not-allowed"
+                                                className="w-full pl-12 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 cursor-not-allowed"
                                                 readOnly={isEdit}
                                             />
                                         </div>
@@ -743,7 +737,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                 <div>
                                     <h4 className="font-medium text-amber-800">Lưu ý về tồn kho</h4>
                                     <p className="text-sm text-amber-700 mt-1">
-                                        Khi số lượng tồn kho = 0, trạng thái sẽ tự động chuyển thành &quot;Hết hàng&quot;. 
+                                        Khi số lượng tồn kho = 0, trạng thái sẽ tự động chuyển thành &quot;Hết hàng&quot;.
                                         Sản phẩm hết hàng sẽ không hiển thị trên trang chủ.
                                     </p>
                                 </div>
