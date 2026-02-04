@@ -98,7 +98,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     return (
         <>
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex flex-col w-72 h-screen bg-slate-900 text-white fixed left-0 top-0 z-40 overflow-y-auto">
+            <aside className="hidden lg:flex flex-col w-72 h-screen bg-slate-900 text-white sticky top-0 flex-shrink-0 z-40 overflow-y-auto">
                 {/* Logo */}
                 <div className="p-6 border-b border-slate-800">
                     <Link href="/admin" className="flex items-center gap-4">
@@ -123,7 +123,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                 {section.items.map((item) => {
                                     const active = isActive(item.href);
                                     const Icon = item.icon;
-                                    
+
                                     return (
                                         <li key={item.href}>
                                             <Link
@@ -131,8 +131,8 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                                 className={`
                                                     flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium leading-relaxed
                                                     transition-all duration-200 min-h-[48px]
-                                                    ${active 
-                                                        ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/25' 
+                                                    ${active
+                                                        ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/25'
                                                         : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                                                     }
                                                 `}
@@ -166,14 +166,14 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
 
             {/* Mobile Sidebar Overlay */}
             {isOpen && (
-                <div 
+                <div
                     className="lg:hidden fixed inset-0 bg-black/50 z-40"
                     onClick={onClose}
                 />
             )}
 
             {/* Mobile Sidebar */}
-            <aside 
+            <aside
                 className={`
                     lg:hidden fixed inset-y-0 left-0 w-72 bg-slate-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto
                     ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -206,23 +206,23 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                 {section.items.map((item) => {
                                     const active = isActive(item.href);
                                     const Icon = item.icon;
-                                    
+
                                     return (
                                         <li key={item.href}>
-                                        <Link
-                                            href={item.href}
-                                            className={`
+                                            <Link
+                                                href={item.href}
+                                                className={`
                                                 flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium leading-relaxed
                                                 transition-all duration-200 min-h-[52px]
-                                                ${active 
-                                                    ? 'bg-amber-500 text-slate-900' 
-                                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                                                }
+                                                ${active
+                                                        ? 'bg-amber-500 text-slate-900'
+                                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                    }
                                             `}
-                                        >
-                                            <Icon className="w-5 h-5 flex-shrink-0" />
-                                            <span className="flex-1">{item.label}</span>
-                                        </Link>
+                                            >
+                                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                                <span className="flex-1">{item.label}</span>
+                                            </Link>
                                         </li>
                                     );
                                 })}

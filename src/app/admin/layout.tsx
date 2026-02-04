@@ -51,15 +51,15 @@ export default function AdminLayout({
     return (
         <div className="min-h-screen bg-slate-50 flex">
             {/* Sidebar */}
-            <AdminSidebar 
-                isOpen={sidebarOpen} 
-                onClose={() => setSidebarOpen(false)} 
+            <AdminSidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
             />
 
             {/* Main Content */}
-            <div className="flex-1 lg:ml-72 flex flex-col min-w-0 overflow-x-hidden">
+            <div className="flex-1 flex flex-col min-w-0">
                 <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
-                
+
                 <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
                     {children}
                 </main>
