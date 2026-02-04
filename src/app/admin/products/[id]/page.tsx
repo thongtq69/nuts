@@ -1,32 +1,56 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import ProductForm from '@/components/admin/ProductForm';
-import dbConnect from '@/lib/db';
-import Product from '@/models/Product';
-import { notFound } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
+export default function EditProductPage() {
+    const params = useParams();
+    const [product, setProduct] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-    await dbConnect();
-    const product = await Product.findById(id).lean();
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const res = await fetch(`/api/products/${params.id}`);
+                if (!res.ok) throw new Error('Không tìm thấy sản phẩm');
+                const data = await res.json();
+                setProduct(data);
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    if (!product) {
-        notFound();
+        fetchProduct();
+    }, [params.id]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <Loader2 className="h-8 w-8 animate-spin text-brand" />
+            </div>
+        );
     }
 
-    // Serialize MongoDB object to plain JSON object
-    const p = {
-        ...product,
-        _id: product._id.toString(),
-        id: product._id.toString(),
-        createdAt: product.createdAt?.toISOString(),
-        updatedAt: product.updatedAt?.toISOString()
-    };
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="text-center">
+                    <p className="text-red-500 font-medium">{error}</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="mt-4 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
+                    >
+                        Thử lại
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
-    return (
-        <div>
-            <h1>Edit Product</h1>
-            <ProductForm initialData={p} isEdit={true} />
-        </div>
-    );
+    return <ProductForm initialData={product} isEdit={true} />;
 }

@@ -2,17 +2,32 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import ProductListActions from '@/components/admin/ProductListActions';
-import ProductImageManager from '@/components/admin/ProductImageManager';
-import { PlusCircle, Package, Grid3X3, List, Loader2, Image } from 'lucide-react';
-import { Pagination } from '@/components/admin/ui/Pagination';
-import { SearchInput } from '@/components/admin/ui/SearchInput';
-import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
-import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
-import { Button } from '@/components/admin/ui/Button';
+import { useRouter } from 'next/navigation';
+import { 
+    Plus, 
+    Package, 
+    Search, 
+    Filter, 
+    Grid3X3, 
+    List, 
+    Loader2, 
+    Image as ImageIcon,
+    Edit3,
+    Trash2,
+    MoreVertical,
+    CheckCircle2,
+    XCircle,
+    AlertCircle,
+    TrendingUp,
+    Box,
+    ArrowUpRight,
+    Download
+} from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 
 interface Product {
+    _id: string;
     id: string;
     name: string;
     currentPrice: number;
@@ -20,389 +35,603 @@ interface Product {
     category?: string;
     image: string;
     images?: string[];
-    inStock: boolean;
+    stock: number;
+    stockStatus: 'in_stock' | 'out_of_stock' | 'low_stock';
+    sku?: string;
+    soldCount?: number;
     createdAt?: string;
 }
 
+const STATUS_CONFIG = {
+    in_stock: { label: 'Còn hàng', color: 'bg-emerald-500', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700', icon: CheckCircle2 },
+    low_stock: { label: 'Sắp hết', color: 'bg-amber-500', bgColor: 'bg-amber-50', textColor: 'text-amber-700', icon: AlertCircle },
+    out_of_stock: { label: 'Hết hàng', color: 'bg-red-500', bgColor: 'bg-red-50', textColor: 'text-red-700', icon: XCircle },
+};
+
 export default function AdminProductsPage() {
+    const router = useRouter();
+    const toast = useToast();
+    const confirm = useConfirm();
+    
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-    const [totalRecords, setTotalRecords] = useState(0);
-    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string | null; productName: string }>({
-        isOpen: false,
-        productId: null,
-        productName: ''
-    });
-    const [deleting, setDeleting] = useState(false);
-    const toast = useToast();
-    const [imageManager, setImageManager] = useState<{
-        isOpen: boolean;
-        productId: string | null;
-        productName: string;
-        images: string[];
-    }>({
-        isOpen: false,
-        productId: null,
-        productName: '',
-        images: []
-    });
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock' | 'low_stock'>('all');
+    const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+    const [updatingStock, setUpdatingStock] = useState<string | null>(null);
+
+    // Stats
+    const totalProducts = products.length;
+    const inStockCount = products.filter(p => p.stockStatus === 'in_stock').length;
+    const outOfStockCount = products.filter(p => p.stockStatus === 'out_of_stock').length;
+    const lowStockCount = products.filter(p => p.stockStatus === 'low_stock').length;
 
     const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
             const response = await fetch('/api/products');
-            if (!response.ok) {
-                throw new Error('Failed to fetch products');
-            }
+            if (!response.ok) throw new Error('Failed to fetch products');
+            
             const data = await response.json();
             const mappedProducts = data.map((p: any) => ({
+                ...p,
                 id: p._id,
-                name: p.name,
-                currentPrice: p.currentPrice,
-                originalPrice: p.originalPrice,
-                category: p.category,
-                image: p.image,
-                images: p.images || [],
-                inStock: true,
-                createdAt: p.createdAt
+                stock: p.stock || 0,
+                stockStatus: p.stockStatus || (p.stock > 10 ? 'in_stock' : p.stock > 0 ? 'low_stock' : 'out_of_stock'),
+                soldCount: p.soldCount || 0,
             }));
             setProducts(mappedProducts);
-            setTotalRecords(mappedProducts.length);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
+            toast.error('Lỗi tải sản phẩm', 'Không thể tải danh sách sản phẩm');
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [toast]);
 
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
 
-    const handleDelete = async () => {
-        if (!deleteModal.productId) return;
+    const handleUpdateStockStatus = async (productId: string, newStatus: 'in_stock' | 'out_of_stock') => {
+        setUpdatingStock(productId);
         try {
-            setDeleting(true);
-            const res = await fetch(`/api/admin/products/${deleteModal.productId}`, {
-                method: 'DELETE'
+            const res = await fetch(`/api/admin/products/${productId}/stock`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stockStatus: newStatus }),
             });
+
             if (res.ok) {
-                setProducts(prev => prev.filter(p => p.id !== deleteModal.productId));
-                setTotalRecords(prev => prev - 1);
-                setDeleteModal({ isOpen: false, productId: null, productName: '' });
+                setProducts(prev => prev.map(p => 
+                    p.id === productId ? { ...p, stockStatus: newStatus } : p
+                ));
+                toast.success('Cập nhật thành công', `Sản phẩm đã chuyển sang trạng thái ${STATUS_CONFIG[newStatus].label}`);
             } else {
-                const data = await res.json();
-                toast.error('Lỗi xóa sản phẩm', data.error || 'Vui lòng thử lại.');
+                throw new Error('Failed to update');
             }
-        } catch (error) {
-            console.error('Error deleting product:', error);
-            toast.error('Lỗi xóa sản phẩm', 'Vui lòng thử lại.');
+        } catch {
+            toast.error('Lỗi cập nhật', 'Không thể cập nhật trạng thái tồn kho');
         } finally {
-            setDeleting(false);
+            setUpdatingStock(null);
         }
     };
 
-    const openDeleteModal = (productId: string, productName: string) => {
-        setDeleteModal({ isOpen: true, productId, productName });
-    };
+    const handleDeleteProduct = async (productId: string, productName: string) => {
+        const confirmed = await confirm({
+            title: 'Xác nhận xóa',
+            description: `Bạn có chắc muốn xóa sản phẩm "${productName}"? Hành động này không thể hoàn tác.`,
+            confirmText: 'Xóa sản phẩm',
+            cancelText: 'Hủy',
+        });
 
-    const openImageManager = async (productId: string, productName: string) => {
+        if (!confirmed) return;
+
         try {
-            const res = await fetch(`/api/admin/products/${productId}/images`);
+            const res = await fetch(`/api/admin/products/${productId}`, { method: 'DELETE' });
             if (res.ok) {
-                const data = await res.json();
-                setImageManager({
-                    isOpen: true,
-                    productId,
-                    productName,
-                    images: data.images || []
-                });
+                setProducts(prev => prev.filter(p => p.id !== productId));
+                toast.success('Đã xóa sản phẩm');
             } else {
-                // If API doesn't exist yet, use local data
-                const product = products.find(p => p.id === productId);
-                setImageManager({
-                    isOpen: true,
-                    productId,
-                    productName,
-                    images: product?.images || []
-                });
+                throw new Error('Failed to delete');
             }
-        } catch (error) {
-            console.error('Error fetching product images:', error);
-            const product = products.find(p => p.id === productId);
-            setImageManager({
-                isOpen: true,
-                productId,
-                productName,
-                images: product?.images || []
-            });
+        } catch {
+            toast.error('Lỗi xóa sản phẩm');
         }
     };
 
-    const handleUpdateImages = (productId: string, newImages: string[]) => {
-        setProducts(prev => prev.map(p => 
-            p.id === productId ? { ...p, images: newImages } : p
-        ));
+    const toggleSelectAll = () => {
+        if (selectedProducts.size === filteredProducts.length) {
+            setSelectedProducts(new Set());
+        } else {
+            setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+        }
     };
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const totalPages = Math.ceil(filteredProducts.length / pageSize);
-    const startIndex = (currentPage - 1) * pageSize;
-    const paginatedProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
-
-    useEffect(() => {
-        if (currentPage > totalPages && totalPages > 0) {
-            setCurrentPage(1);
+    const toggleSelectProduct = (productId: string) => {
+        const newSet = new Set(selectedProducts);
+        if (newSet.has(productId)) {
+            newSet.delete(productId);
+        } else {
+            newSet.add(productId);
         }
-    }, [totalPages, currentPage]);
+        setSelectedProducts(newSet);
+    };
 
-    const exportColumns: ExportColumn<Product>[] = [
-        { key: 'id', label: 'ID', format: (v) => v || '' },
-        { key: 'name', label: 'Tên sản phẩm' },
-        { key: 'category', label: 'Danh mục' },
-        { key: 'originalPrice', label: 'Giá gốc', format: (v) => v ? `${v.toLocaleString()}đ` : '-' },
-        { key: 'currentPrice', label: 'Giá bán', format: (v) => `${v.toLocaleString()}đ` },
-        { key: 'inStock', label: 'Trạng thái', format: (v) => v ? 'Còn hàng' : 'Hết hàng' }
-    ];
+    const filteredProducts = products.filter(product => {
+        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            product.sku?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStock = stockFilter === 'all' || product.stockStatus === stockFilter;
+        return matchesSearch && matchesStock;
+    });
 
-    if (loading && products.length === 0) {
+    if (loading) {
         return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-brand" />
-                </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="space-y-6">
-                <div className="text-center py-12">
-                    <p className="text-red-500">Error: {error}</p>
-                    <button
-                        onClick={fetchProducts}
-                        className="mt-4 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark"
-                    >
-                        Retry
-                    </button>
-                </div>
+            <div className="flex items-center justify-center h-96">
+                <Loader2 className="w-8 h-8 animate-spin text-brand" />
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            <ConfirmModal
-                isOpen={deleteModal.isOpen}
-                onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
-                onConfirm={handleDelete}
-                title="Xóa sản phẩm"
-                message={`Bạn có chắc chắn muốn xóa sản phẩm "${deleteModal.productName}"? Hành động này không thể hoàn tác.`}
-                confirmText="Xóa"
-                variant="danger"
-                isLoading={deleting}
-            />
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center text-white shadow-lg shadow-brand/25">
                             <Package className="h-5 w-5" />
                         </div>
                         Quản lý Sản phẩm
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1 ml-13">
-                        {filteredProducts.length} sản phẩm
-                    </p>
+                    <p className="text-slate-500 mt-1">{totalProducts} sản phẩm trong kho</p>
                 </div>
-                <div className="flex gap-2">
-                    <ExportButton
-                        data={filteredProducts}
-                        columns={exportColumns}
-                        filename="san-pham"
-                        disabled={filteredProducts.length === 0}
-                    />
+                <div className="flex items-center gap-3">
+                    <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+                        <Download className="h-4 w-4" />
+                        Xuất Excel
+                    </button>
                     <Link
                         href="/admin/products/new"
-                        className="inline-flex items-center gap-2 bg-brand-light hover:bg-brand-light/80 text-slate-800 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-dark text-white rounded-xl font-medium transition-all shadow-lg shadow-brand/25 hover:shadow-xl hover:shadow-brand/30"
                     >
-                        <PlusCircle size={18} />
-                        Thêm Sản phẩm Mới
+                        <Plus className="h-5 w-5" />
+                        Thêm sản phẩm
                     </Link>
                 </div>
             </div>
 
-            <div className="glass-card p-4 flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                    <SearchInput
-                        value={searchTerm}
-                        onChange={setSearchTerm}
-                        placeholder="Tìm kiếm sản phẩm..."
-                        isLoading={loading}
-                    />
+            {/* Stats Cards - Bento Grid Style */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Tổng sản phẩm</p>
+                            <p className="text-2xl font-bold text-slate-900 mt-1">{totalProducts}</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                            <Box className="h-5 w-5 text-brand" />
+                        </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2 text-sm text-emerald-600">
+                        <TrendingUp className="h-4 w-4" />
+                        <span>+12% so với tháng trước</span>
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    <button className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium transition-colors">
-                        Lọc
-                    </button>
-                    <div className="flex border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                        <button className="px-3 py-2.5 bg-brand-light/20 dark:bg-brand-light/10 text-brand border-r border-slate-200 dark:border-slate-700">
-                            <List size={18} />
+
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Còn hàng</p>
+                            <p className="text-2xl font-bold text-emerald-600 mt-1">{inStockCount}</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        </div>
+                    </div>
+                    <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5">
+                        <div 
+                            className="bg-emerald-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${totalProducts ? (inStockCount / totalProducts) * 100 : 0}%` }}
+                        />
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Sắp hết hàng</p>
+                            <p className="text-2xl font-bold text-amber-600 mt-1">{lowStockCount}</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                            <AlertCircle className="h-5 w-5 text-amber-600" />
+                        </div>
+                    </div>
+                    <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5">
+                        <div 
+                            className="bg-amber-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${totalProducts ? (lowStockCount / totalProducts) * 100 : 0}%` }}
+                        />
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Hết hàng</p>
+                            <p className="text-2xl font-bold text-red-600 mt-1">{outOfStockCount}</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                            <XCircle className="h-5 w-5 text-red-600" />
+                        </div>
+                    </div>
+                    <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5">
+                        <div 
+                            className="bg-red-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${totalProducts ? (outOfStockCount / totalProducts) * 100 : 0}%` }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters & Actions */}
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    {/* Search */}
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm sản phẩm..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                        />
+                    </div>
+
+                    {/* Stock Filter */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
+                        {([
+                            { key: 'all', label: 'Tất cả', count: totalProducts },
+                            { key: 'in_stock', label: 'Còn hàng', count: inStockCount },
+                            { key: 'low_stock', label: 'Sắp hết', count: lowStockCount },
+                            { key: 'out_of_stock', label: 'Hết hàng', count: outOfStockCount },
+                        ] as const).map((filter) => (
+                            <button
+                                key={filter.key}
+                                onClick={() => setStockFilter(filter.key)}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                                    stockFilter === filter.key
+                                        ? 'bg-brand text-white shadow-md shadow-brand/20'
+                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                                }`}
+                            >
+                                {filter.label}
+                                <span className={`ml-2 px-1.5 py-0.5 rounded-md text-xs ${
+                                    stockFilter === filter.key ? 'bg-white/20' : 'bg-slate-200'
+                                }`}>
+                                    {filter.count}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* View Mode */}
+                    <div className="flex items-center gap-2 ml-auto">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2.5 rounded-xl transition-all ${
+                                viewMode === 'list' 
+                                    ? 'bg-brand text-white shadow-md' 
+                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                            }`}
+                        >
+                            <List className="h-4 w-4" />
                         </button>
-                        <button className="px-3 py-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                            <Grid3X3 size={18} />
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2.5 rounded-xl transition-all ${
+                                viewMode === 'grid' 
+                                    ? 'bg-brand text-white shadow-md' 
+                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                            }`}
+                        >
+                            <Grid3X3 className="h-4 w-4" />
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="glass-card overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="premium-table w-full">
-                        <thead>
-                            <tr>
-                                <th className="w-16 text-center">STT</th>
-                                <th className="w-20">Hình ảnh</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Danh mục</th>
-                                <th className="text-right">Giá gốc</th>
-                                <th className="text-right">Giá bán</th>
-                                <th className="text-center">Trạng thái</th>
-                                <th className="text-right w-32">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paginatedProducts.length === 0 ? (
+            {/* Products Display */}
+            {filteredProducts.length === 0 ? (
+                <div className="bg-white rounded-2xl p-12 border border-slate-100 text-center">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-slate-50 flex items-center justify-center">
+                        <Package className="h-10 w-10 text-slate-300" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900">Không tìm thấy sản phẩm</h3>
+                    <p className="text-slate-500 mt-1">Thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc</p>
+                    <Link
+                        href="/admin/products/new"
+                        className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-brand text-white rounded-xl font-medium hover:bg-brand-dark transition-all"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Thêm sản phẩm mới
+                    </Link>
+                </div>
+            ) : viewMode === 'list' ? (
+                /* List View */
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50/80 border-b border-slate-100">
                                 <tr>
-                                    <td colSpan={9} className="px-6 py-16 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                                <Package className="w-8 h-8 text-slate-400" />
-                                            </div>
-                                            <p className="text-slate-500 dark:text-slate-400">
-                                                {searchTerm ? 'Không tìm thấy sản phẩm nào' : 'Chưa có sản phẩm nào'}
+                                    <th className="px-4 py-4 w-12">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
+                                            onChange={toggleSelectAll}
+                                            className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand"
+                                        />
+                                    </th>
+                                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Sản phẩm</th>
+                                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Danh mục</th>
+                                    <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Giá</th>
+                                    <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Tồn kho</th>
+                                    <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>
+                                    <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredProducts.map((product) => {
+                                    const status = STATUS_CONFIG[product.stockStatus];
+                                    const StatusIcon = status.icon;
+                                    
+                                    return (
+                                        <tr 
+                                            key={product.id} 
+                                            className="group hover:bg-slate-50/80 transition-colors"
+                                        >
+                                            <td className="px-4 py-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedProducts.has(product.id)}
+                                                    onChange={() => toggleSelectProduct(product.id)}
+                                                    className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand"
+                                                />
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="relative w-14 h-14 rounded-xl bg-slate-100 overflow-hidden border border-slate-200 group-hover:border-brand/30 transition-colors">
+                                                        {product.image ? (
+                                                            <img 
+                                                                src={product.image} 
+                                                                alt={product.name}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <ImageIcon className="h-6 w-6 text-slate-300" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-semibold text-slate-900 group-hover:text-brand transition-colors">
+                                                            {product.name}
+                                                        </h4>
+                                                        <p className="text-xs text-slate-500 font-mono mt-0.5">
+                                                            SKU: {product.sku || product.id.slice(-8)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <span className="inline-flex px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">
+                                                    {product.category || 'Chưa phân loại'}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-4 text-right">
+                                                <div className="space-y-1">
+                                                    <p className="font-bold text-slate-900">
+                                                        {product.currentPrice?.toLocaleString('vi-VN')}đ
+                                                    </p>
+                                                    {product.originalPrice && (
+                                                        <p className="text-sm text-slate-400 line-through">
+                                                            {product.originalPrice?.toLocaleString('vi-VN')}đ
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4 text-center">
+                                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg">
+                                                    <Box className="h-4 w-4 text-slate-400" />
+                                                    <span className="font-semibold text-slate-700">{product.stock || 0}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex items-center justify-center">
+                                                    <button
+                                                        onClick={() => handleUpdateStockStatus(
+                                                            product.id, 
+                                                            product.stockStatus === 'out_of_stock' ? 'in_stock' : 'out_of_stock'
+                                                        )}
+                                                        disabled={updatingStock === product.id}
+                                                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                                            product.stockStatus === 'in_stock'
+                                                                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                                                : product.stockStatus === 'low_stock'
+                                                                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                                                : 'bg-red-50 text-red-700 hover:bg-red-100'
+                                                        }`}
+                                                    >
+                                                        {updatingStock === product.id ? (
+                                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                        ) : (
+                                                            <StatusIcon className="h-3.5 w-3.5" />
+                                                        )}
+                                                        {status.label}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                        onClick={() => router.push(`/admin/products/${product.id}`)}
+                                                        className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-all"
+                                                        title="Chỉnh sửa"
+                                                    >
+                                                        <Edit3 className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteProduct(product.id, product.name)}
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                    <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                /* Grid View */
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {filteredProducts.map((product) => {
+                        const status = STATUS_CONFIG[product.stockStatus];
+                        const StatusIcon = status.icon;
+                        
+                        return (
+                            <div 
+                                key={product.id}
+                                className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20 transition-all overflow-hidden"
+                            >
+                                <div className="relative aspect-square bg-slate-100 overflow-hidden">
+                                    {product.image ? (
+                                        <img 
+                                            src={product.image} 
+                                            alt={product.name}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <ImageIcon className="h-12 w-12 text-slate-300" />
+                                        </div>
+                                    )}
+                                    <div className="absolute top-3 left-3">
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${status.bgColor} ${status.textColor}`}>
+                                            <StatusIcon className="h-3 w-3" />
+                                            {status.label}
+                                        </span>
+                                    </div>
+                                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedProducts.has(product.id)}
+                                            onChange={() => toggleSelectProduct(product.id)}
+                                            className="w-4 h-4 rounded border-slate-300 text-brand focus:ring-brand"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4">
+                                    <p className="text-xs text-slate-500 font-mono mb-1">
+                                        SKU: {product.sku || product.id.slice(-8)}
+                                    </p>
+                                    <h4 className="font-semibold text-slate-900 line-clamp-2 mb-2 group-hover:text-brand transition-colors">
+                                        {product.name}
+                                    </h4>
+                                    <p className="text-sm text-slate-500 mb-3">
+                                        {product.category || 'Chưa phân loại'}
+                                    </p>
+                                    
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <p className="font-bold text-slate-900">
+                                                {product.currentPrice?.toLocaleString('vi-VN')}đ
                                             </p>
-                                            {!searchTerm && (
-                                                <Link href="/admin/products/new" className="text-brand hover:text-brand-dark font-medium text-sm">
-                                                    + Thêm sản phẩm đầu tiên
-                                                </Link>
+                                            {product.originalPrice && (
+                                                <p className="text-xs text-slate-400 line-through">
+                                                    {product.originalPrice?.toLocaleString('vi-VN')}đ
+                                                </p>
                                             )}
                                         </div>
-                                    </td>
-                                </tr>
-                            ) : (
-                                paginatedProducts.map((product, index) => (
-                                    <tr
-                                        key={product.id}
-                                        className="group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                                        onClick={() => window.location.href = `/admin/products/${product.id}`}
-                                    >
-                                        <td className="text-center font-semibold text-slate-500 text-sm">
-                                            {startIndex + index + 1}
-                                        </td>
-                                        <td>
-                                            <div className="h-14 w-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800 p-1.5 group-hover:border-brand transition-colors">
-                                                <img
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-contain"
-                                                />
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className="font-semibold text-slate-800 dark:text-white group-hover:text-brand transition-colors">
-                                                {product.name}
-                                            </div>
-                                            <div className="text-xs text-slate-400 font-mono">
-                                                ID: {product.id.slice(-8)}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span className="badge-premium badge-info">
-                                                {product.category || 'Chưa phân loại'}
-                                            </span>
-                                        </td>
-                                        <td className="text-right text-slate-500 dark:text-slate-400 line-through text-sm">
-                                            {product.originalPrice?.toLocaleString()}đ
-                                        </td>
-                                        <td className="text-right">
-                                            <span className="font-bold text-lg text-brand">
-                                                {product.currentPrice.toLocaleString()}đ
-                                            </span>
-                                        </td>
-                                        <td className="text-center">
-                                            {product.inStock ? (
-                                                <span className="badge-premium badge-success">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                    Còn hàng
-                                                </span>
-                                            ) : (
-                                                <span className="badge-premium badge-danger">
-                                                    Hết hàng
-                                                </span>
+                                        <div className="text-right">
+                                            <p className="text-xs text-slate-500">Tồn kho</p>
+                                            <p className="font-semibold text-slate-700">{product.stock || 0}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
+                                        <button
+                                            onClick={() => router.push(`/admin/products/${product.id}`)}
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 hover:bg-brand/10 text-slate-600 hover:text-brand rounded-xl text-sm font-medium transition-all"
+                                        >
+                                            <Edit3 className="h-4 w-4" />
+                                            Sửa
+                                        </button>
+                                        <button
+                                            onClick={() => handleUpdateStockStatus(
+                                                product.id,
+                                                product.stockStatus === 'out_of_stock' ? 'in_stock' : 'out_of_stock'
                                             )}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openImageManager(product.id, product.name);
-                                                }}
-                                                className="mt-2 flex items-center justify-center gap-1 w-full text-xs text-slate-500 hover:text-brand transition-colors"
-                                                title="Quản lý ảnh sản phẩm"
-                                            >
-                                                <Image size={12} />
-                                                <span>{(product.images || []).length} ảnh</span>
-                                            </button>
-                                        </td>
-                                        <td className="text-right flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openImageManager(product.id, product.name);
-                                                }}
-                                                className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-all"
-                                                title="Quản lý ảnh"
-                                            >
-                                                <Image size={18} />
-                                            </button>
-                                            <ProductListActions productId={product.id} />
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                            disabled={updatingStock === product.id}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                                                product.stockStatus === 'out_of_stock'
+                                                    ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                                                    : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                            }`}
+                                        >
+                                            {updatingStock === product.id ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    {product.stockStatus === 'out_of_stock' ? (
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                    ) : (
+                                                        <XCircle className="h-4 w-4" />
+                                                    )}
+                                                    {product.stockStatus === 'out_of_stock' ? 'Mở bán' : 'Hết hàng'}
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
+            )}
 
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalRecords={filteredProducts.length}
-                    pageSize={pageSize}
-                    onPageChange={setCurrentPage}
-                    onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
-                    isLoading={loading}
-                />
-
-                {/* Image Manager Modal */}
-                {imageManager.isOpen && (
-                    <ProductImageManager
-                        productId={imageManager.productId!}
-                        productName={imageManager.productName}
-                        initialImages={imageManager.images}
-                        onClose={() => setImageManager({ ...imageManager, isOpen: false })}
-                        onUpdate={(newImages) => handleUpdateImages(imageManager.productId!, newImages)}
-                    />
-                )}
-            </div>
+            {/* Bulk Actions Bar */}
+            {selectedProducts.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+                    <div className="flex items-center gap-4 px-6 py-3 bg-slate-900 text-white rounded-2xl shadow-2xl">
+                        <span className="text-sm font-medium">
+                            Đã chọn {selectedProducts.size} sản phẩm
+                        </span>
+                        <div className="w-px h-4 bg-slate-700" />
+                        <button className="text-sm hover:text-brand-light transition-colors">
+                            Xóa
+                        </button>
+                        <button className="text-sm hover:text-brand-light transition-colors">
+                            Cập nhật tồn kho
+                        </button>
+                        <button 
+                            onClick={() => setSelectedProducts(new Set())}
+                            className="text-sm text-slate-400 hover:text-white transition-colors"
+                        >
+                            Hủy
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

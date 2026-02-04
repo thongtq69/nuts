@@ -328,17 +328,6 @@ export default function AdminOrdersPage() {
                 </div>
 
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row gap-4">
-                    <div className="flex-1 relative">
-                        <SearchInput
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                            placeholder="Tìm kiếm đơn hàng..."
-                            debounceMs={300}
-                            isLoading={false}
-                            onClear={() => setSearchQuery('')}
-                            className="flex-1"
-                        />
-                    </div>
 
                     <div className="relative">
                         <select

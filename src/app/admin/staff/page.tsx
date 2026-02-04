@@ -324,14 +324,7 @@ export default function AdminStaffPage() {
                 </div>
             </div>
 
-            <div className="glass-card p-4">
-                <SearchInput
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                    placeholder="Tìm theo tên, email, mã nhân viên, vai trò..."
-                    isLoading={loading}
-                />
-            </div>
+
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto">

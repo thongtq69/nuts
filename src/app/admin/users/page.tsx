@@ -275,14 +275,6 @@ export default function AdminUsersPage() {
                     </div>
                 </div>
 
-                <div className="flex-1 min-w-[200px]">
-                    <SearchInput
-                        value={searchTerm}
-                        onChange={setSearchTerm}
-                        placeholder="Tìm theo tên, email, SĐT..."
-                        isLoading={loading}
-                    />
-                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

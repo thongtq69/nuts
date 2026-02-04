@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-    ChevronDown,
-    ChevronRight,
-    Search,
     LayoutDashboard,
     ShoppingBag,
     Package,
@@ -15,7 +12,7 @@ import {
     CreditCard,
     Ticket,
     PenTool,
-    Image,
+    ImageIcon,
     Calendar,
     Settings,
     Crown,
@@ -28,240 +25,224 @@ import {
     Star,
     ExternalLink,
     Mail,
+    X,
+    ChevronRight
 } from 'lucide-react';
 
-const menuItems = [
+const menuSections = [
     {
-        title: 'TỔNG QUAN',
+        title: 'Tổng quan',
         items: [
             { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
             { href: '/admin/analytics', icon: TrendingUp, label: 'Thống kê' },
         ],
     },
     {
-        title: 'QUẢN LÝ BÁN HÀNG',
+        title: 'Quản lý bán hàng',
         items: [
-            { href: '/admin/orders', icon: ShoppingBag, label: 'Đơn hàng', badge: 'orders' },
+            { href: '/admin/orders', icon: ShoppingBag, label: 'Đơn hàng' },
             { href: '/admin/products', icon: Package, label: 'Sản phẩm' },
-            { href: '/admin/products/featured', icon: Star, label: 'Sản phẩm Nổi bật' },
-            { href: '/admin/products/best-sellers', icon: TrendingUp, label: 'Sản phẩm Bán chạy' },
-            { href: '/admin/products/new-products', icon: Sparkles, label: 'Sản phẩm Mới' },
-            { href: '/admin/product-tags', icon: Tag, label: 'Tags Sản phẩm' },
             { href: '/admin/vouchers', icon: Ticket, label: 'Voucher' },
         ],
     },
     {
-        title: 'HỆ THỐNG',
+        title: 'Hệ thống',
         items: [
-            { href: '/admin/users', icon: Users, label: 'Người dùng' },
+            { href: '/admin/users', icon: Users, label: 'Ngườii dùng' },
             { href: '/admin/staff', icon: UserCheck, label: 'Nhân viên' },
-            { href: '/admin/affiliates', icon: UserCheck, label: 'Đối tác' },
             { href: '/admin/commissions', icon: CreditCard, label: 'Hoa hồng' },
             { href: '/admin/packages', icon: Crown, label: 'Gói Hội Viên' },
         ],
     },
     {
-        title: 'NỘI DUNG',
+        title: 'Nội dung',
         items: [
             { href: '/admin/blogs', icon: PenTool, label: 'Bài viết' },
             { href: '/admin/events', icon: Calendar, label: 'Sự kiện' },
-            { href: '/admin/banners', icon: Image, label: 'Banner' },
+            { href: '/admin/banners', icon: ImageIcon, label: 'Banner' },
             { href: '/admin/contacts', icon: Mail, label: 'Liên hệ' },
-            { href: '/admin/product-tags', icon: Tag, label: 'Danh mục sản phẩm' },
         ],
     },
     {
-        title: 'CÀI ĐẶT',
+        title: 'Cài đặt',
         items: [
             { href: '/admin/settings', icon: Settings, label: 'Cài đặt Website' },
             { href: '/admin/affiliate-settings', icon: TrendingUp, label: 'Cấu hình Affiliate' },
-            { href: '/admin/voucher-rewards', icon: Gift, label: 'Voucher quà tặng' },
-            { href: '/admin/packages', icon: Crown, label: 'Gói hội viên' },
-            { href: '/admin/fix-homepage', icon: Home, label: 'Sửa Trang Chủ' },
             { href: '/admin/cloudinary', icon: Cloud, label: 'Quản lý Cloudinary' },
         ],
     },
 ];
 
-export default function AdminSidebar() {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
+    // Close sidebar when route changes on mobile
     useEffect(() => {
-        const savedExpanded = localStorage.getItem('sidebar-expanded');
-        if (savedExpanded) {
-            setExpandedSections(new Set(JSON.parse(savedExpanded)));
+        if (onClose && isOpen) {
+            onClose();
         }
-    }, []);
+    }, [pathname, isOpen, onClose]);
 
-    useEffect(() => {
-        localStorage.setItem('sidebar-expanded', JSON.stringify([...expandedSections]));
-    }, [expandedSections]);
-
-    const toggleSection = (title: string) => {
-        setExpandedSections(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(title)) {
-                newSet.delete(title);
-            } else {
-                newSet.add(title);
-            }
-            return newSet;
-        });
-    };
-
-    const isSectionActive = (items: typeof menuItems[0]['items']): boolean => {
-        return items.some(item => pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href)));
-    };
-
-    const filterMenuItems = (items: typeof menuItems): typeof menuItems => {
-        if (!searchQuery.trim()) {
-            return items;
+    const isActive = (href: string) => {
+        if (href === '/admin') {
+            return pathname === '/admin';
         }
-
-        const query = searchQuery.toLowerCase();
-
-        return items.filter((group) => {
-            const matchesTitle = group.title.toLowerCase().includes(query);
-            const matchesItems = group.items.some((item) =>
-                item.label.toLowerCase().includes(query)
-            );
-
-            return matchesTitle || matchesItems;
-        });
+        return pathname.startsWith(href);
     };
 
     return (
-        <aside className="w-64 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300 flex flex-col fixed inset-y-0 left-0 z-20 border-r border-slate-800/50 transition-colors duration-200">
-            <div className="h-16 flex items-center px-6 border-b border-slate-800/50">
-                <Link href="/admin" className="flex items-center gap-3 group">
-                    <img
-                        src="/assets/logo.png"
-                        alt="Go Nuts Logo"
-                        className="w-10 h-10 rounded-xl object-contain shadow-lg shadow-brand/25 group-hover:shadow-brand/40 transition-shadow"
-                    />
-                    <div className="flex flex-col">
-                        <span className="text-white font-bold text-lg tracking-tight">Go Nuts</span>
-                        <span className="text-[10px] text-brand-light/80 font-medium uppercase tracking-wider">Admin Panel</span>
-                    </div>
-                </Link>
-            </div>
-
-            <div className="px-4 py-4 border-b border-slate-800/50">
-                <div className="relative group/sidebar-search">
-                    <Search
-                        size={16}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/sidebar-search:text-brand transition-colors pointer-events-none z-20"
-                    />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Tìm menu..."
-                        className="w-full pl-12 pr-4 py-2.5 bg-slate-800/30 border border-slate-700/50 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:bg-slate-800/60 focus:border-brand/40 transition-all relative z-10"
-                    />
+        <>
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:flex flex-col w-72 h-screen bg-slate-900 text-white fixed left-0 top-0 z-40 overflow-y-auto">
+                {/* Logo */}
+                <div className="p-6 border-b border-slate-800">
+                    <Link href="/admin" className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <span className="text-2xl">🥜</span>
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-bold text-white">Go Nuts</h1>
+                            <p className="text-xs text-slate-400">Admin Panel</p>
+                        </div>
+                    </Link>
                 </div>
-            </div>
 
-            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-2">
-                {filterMenuItems(menuItems).map((group, groupIndex) => {
-                    const isExpanded = expandedSections.has(group.title);
-                    const isGroupActive = isSectionActive(group.items);
-
-                    return (
-                        <div key={groupIndex} className="mb-1">
-                            <button
-                                onClick={() => toggleSection(group.title)}
-                                className={`
-                                    w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    ${isGroupActive
-                                        ? 'bg-brand/15 text-brand-light'
-                                        : 'hover:bg-slate-800/50 hover:text-white'
-                                    }
-                                `}
-                            >
-                                <span className="font-semibold text-xs uppercase tracking-wider">
-                                    {group.title}
-                                </span>
-                                <div className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-                                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                </div>
-                            </button>
-
-                            {isExpanded && (
-                                <div className="ml-2 mt-1 space-y-1">
-                                    {group.items.map((item, index) => {
-                                        const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
-
-                                        return (
+                {/* Navigation */}
+                <nav className="flex-1 p-4 space-y-6">
+                    {menuSections.map((section) => (
+                        <div key={section.title}>
+                            <h3 className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                {section.title}
+                            </h3>
+                            <ul className="space-y-1">
+                                {section.items.map((item) => {
+                                    const active = isActive(item.href);
+                                    const Icon = item.icon;
+                                    
+                                    return (
+                                        <li key={item.href}>
                                             <Link
-                                                key={index}
                                                 href={item.href}
                                                 className={`
-                                                    relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                                                    ${isActive
-                                                        ? 'bg-gradient-to-r from-brand/20 to-brand-light/15 text-brand-light font-semibold'
-                                                        : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                                                    flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
+                                                    transition-all duration-200 min-h-[48px]
+                                                    ${active 
+                                                        ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/25' 
+                                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                                                     }
                                                 `}
                                             >
-                                                <div className={`
-                                                    w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200
-                                                    ${isActive
-                                                        ? 'bg-brand'
-                                                        : 'bg-slate-800/50'
-                                                    }
-                                                `}>
-                                                    <item.icon size={16} className={isActive ? 'text-white' : 'text-slate-400'} />
-                                                </div>
-                                                <span className="flex-1 whitespace-nowrap">{item.label}</span>
-                                                {isActive && (
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-brand-light animate-pulse" />
-                                                )}
-                                                {item.badge && (
-                                                    <span className="ml-auto bg-brand text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
-                                                        {item.badge}
-                                                    </span>
+                                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                                <span>{item.label}</span>
+                                                {active && (
+                                                    <ChevronRight className="w-4 h-4 ml-auto" />
                                                 )}
                                             </Link>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
                         </div>
-                    );
-                })}
-            </nav>
+                    ))}
+                </nav>
 
-            <div className="px-4 py-4 border-t border-slate-800/50">
-                <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl p-4 border border-slate-700/50">
-                    <div className="flex items-center gap-2 mb-3">
-                        <TrendingUp size={14} className="text-emerald-400" />
-                        <span className="text-xs font-semibold text-slate-400">Hôm nay</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <div className="text-lg font-bold text-white">--</div>
-                            <div className="text-[10px] text-slate-500">Đơn hàng</div>
-                        </div>
-                        <div>
-                            <div className="text-lg font-bold text-emerald-400">--</div>
-                            <div className="text-[10px] text-slate-500">Doanh thu</div>
-                        </div>
-                    </div>
+                {/* Footer */}
+                <div className="p-4 border-t border-slate-800">
+                    <Link
+                        href="/"
+                        target="_blank"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all min-h-[48px]"
+                    >
+                        <ExternalLink className="w-5 h-5" />
+                        <span className="text-sm font-medium">Xem Website</span>
+                    </Link>
                 </div>
-            </div>
+            </aside>
 
-            <div className="p-4 border-t border-slate-800/50">
-                <Link
-                    href="/"
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors text-sm"
-                >
-                    <ExternalLink size={14} />
-                    <span>Xem Website</span>
-                </Link>
-            </div>
-        </aside>
+            {/* Mobile Sidebar Overlay */}
+            {isOpen && (
+                <div 
+                    className="lg:hidden fixed inset-0 bg-black/50 z-40"
+                    onClick={onClose}
+                />
+            )}
+
+            {/* Mobile Sidebar */}
+            <aside 
+                className={`
+                    lg:hidden fixed inset-y-0 left-0 w-72 bg-slate-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                `}
+            >
+                {/* Mobile Header */}
+                <div className="flex items-center justify-between p-4 border-b border-slate-800">
+                    <Link href="/admin" className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center">
+                            <span className="text-xl">🥜</span>
+                        </div>
+                        <span className="text-lg font-bold text-white">Go Nuts</span>
+                    </Link>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+
+                {/* Mobile Navigation */}
+                <nav className="p-4 space-y-6">
+                    {menuSections.map((section) => (
+                        <div key={section.title}>
+                            <h3 className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                {section.title}
+                            </h3>
+                            <ul className="space-y-1">
+                                {section.items.map((item) => {
+                                    const active = isActive(item.href);
+                                    const Icon = item.icon;
+                                    
+                                    return (
+                                        <li key={item.href}>
+                                            <Link
+                                                href={item.href}
+                                                className={`
+                                                    flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium
+                                                    transition-all duration-200 min-h-[52px]
+                                                    ${active 
+                                                        ? 'bg-amber-500 text-slate-900' 
+                                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                    }
+                                                `}
+                                            >
+                                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                                <span>{item.label}</span>
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    ))}
+                </nav>
+
+                {/* Mobile Footer */}
+                <div className="p-4 border-t border-slate-800">
+                    <Link
+                        href="/"
+                        target="_blank"
+                        className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                    >
+                        <ExternalLink className="w-5 h-5" />
+                        <span className="text-base font-medium">Xem Website</span>
+                    </Link>
+                </div>
+            </aside>
+        </>
     );
 }

@@ -140,20 +140,6 @@ export default function BestSellersPage() {
                 </Link>
             </div>
 
-            {/* Search */}
-            <div className="glass-card p-4">
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm sản phẩm..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-slate-800 dark:text-slate-200"
-                    />
-                </div>
-            </div>
-
             {/* Current Best Sellers */}
             <div className="glass-card">
                 <div className="p-6 border-b border-slate-200">

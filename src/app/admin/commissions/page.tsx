@@ -223,14 +223,6 @@ export default function AdminCommissionsPage() {
             </div>
 
             <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex-1">
-                    <SearchInput
-                        value={searchTerm}
-                        onChange={setSearchTerm}
-                        placeholder="Tìm theo tên CTV, mã giới thiệu, đơn hàng..."
-                        isLoading={loading}
-                    />
-                </div>
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
                     <div className="flex gap-2 p-2">
                         {['all', 'pending', 'approved', 'paid', 'rejected'].map((status) => (

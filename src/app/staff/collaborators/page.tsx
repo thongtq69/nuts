@@ -226,18 +226,6 @@ export default function CollaboratorsPage() {
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                    type="text"
-                    placeholder="Tìm theo tên, email, mã CTV..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:ring-4 focus:ring-brand/10 focus:border-brand outline-none transition-all text-lg"
-                />
-            </div>
-
             {/* Table */}
             <div className="bg-white rounded-3xl shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">

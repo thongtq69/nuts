@@ -18,6 +18,10 @@ export interface IProduct {
     priceColor?: string;
     agentPrice?: number;
     bulkPricing?: IBulkPricingTier[];
+    stock?: number;
+    stockStatus?: 'in_stock' | 'out_of_stock' | 'low_stock';
+    sku?: string;
+    soldCount?: number;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -51,7 +55,15 @@ const ProductSchema: Schema<IProduct> = new Schema(
         buttonColor: { type: String },
         priceColor: { type: String },
         agentPrice: { type: Number },
-        bulkPricing: { type: [BulkPricingTierSchema], default: [] }
+        bulkPricing: { type: [BulkPricingTierSchema], default: [] },
+        stock: { type: Number, default: 100 },
+        stockStatus: { 
+            type: String, 
+            enum: ['in_stock', 'out_of_stock', 'low_stock'],
+            default: 'in_stock'
+        },
+        sku: { type: String },
+        soldCount: { type: Number, default: 0 }
     },
     {
         timestamps: true,

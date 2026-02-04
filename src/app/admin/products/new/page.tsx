@@ -1,10 +1,9 @@
 import ProductForm from '@/components/admin/ProductForm';
 
+export const metadata = {
+    title: 'Thêm sản phẩm mới - Go Nuts Admin',
+};
+
 export default function NewProductPage() {
-    return (
-        <div>
-            <h1>Add New Product</h1>
-            <ProductForm />
-        </div>
-    );
+    return <ProductForm />;
 }
