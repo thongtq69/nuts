@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSettings } from '@/context/SettingsContext';
 import {
     LayoutDashboard,
     ShoppingBag,
@@ -80,6 +81,8 @@ interface SidebarProps {
 
 export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
+    const { settings } = useSettings();
+    const [scrolled, setScrolled] = useState(false);
 
     // Close sidebar when route changes on mobile
     useEffect(() => {
@@ -102,12 +105,18 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                 {/* Logo */}
                 <div className="p-6 border-b border-slate-800">
                     <Link href="/admin" className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <span className="text-2xl">🥜</span>
+                        <div className="w-12 h-12 flex items-center justify-center bg-white/10 rounded-xl p-2 shadow-sm border border-white/5 overflow-hidden">
+                            <img
+                                src={settings?.logoUrl || "/assets/logo.png"}
+                                alt="Logo"
+                                className="w-full h-full object-contain"
+                            />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-white">Go Nuts</h1>
-                            <p className="text-xs text-slate-400">Admin Panel</p>
+                            <h1 className="text-xl font-bold text-white tracking-tight">
+                                {settings?.companyName?.split(' ')[0] || 'Go'} <span className="text-amber-500">{settings?.companyName?.split(' ').slice(1).join(' ') || 'Nuts'}</span>
+                            </h1>
+                            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Hệ thống quản trị</p>
                         </div>
                     </Link>
                 </div>
@@ -182,10 +191,16 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                 {/* Mobile Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-800">
                     <Link href="/admin" className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center">
-                            <span className="text-xl">🥜</span>
+                        <div className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-xl p-1.5 border border-white/5 overflow-hidden">
+                            <img
+                                src={settings?.logoUrl || "/assets/logo.png"}
+                                alt="Logo"
+                                className="w-full h-full object-contain"
+                            />
                         </div>
-                        <span className="text-lg font-bold text-white">Go Nuts</span>
+                        <span className="text-lg font-bold text-white">
+                            {settings?.companyName || 'Go Nuts'}
+                        </span>
                     </Link>
                     <button
                         onClick={onClose}
