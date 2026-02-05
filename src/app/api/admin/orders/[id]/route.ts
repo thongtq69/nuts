@@ -84,17 +84,16 @@ export async function PATCH(
             'cancelled': 'đã bị hủy',
         };
 
-        if (order.user) {
+        const recipientEmail = order.shippingInfo?.email;
+
+        if (recipientEmail) {
             try {
-                const user = await User.findById(order.user);
-                if (user && user.email) {
-                    await sendOrderStatusEmail(user.email, {
-                        orderId: order._id.toString().slice(-6).toUpperCase(),
-                        customerName: order.shippingInfo.fullName,
-                        status: status,
-                        statusMessage: statusMessages[status] || `đã chuyển sang trạng thái ${status}`,
-                    });
-                }
+                await sendOrderStatusEmail(recipientEmail, {
+                    orderId: order._id.toString().slice(-6).toUpperCase(),
+                    customerName: order.shippingInfo.fullName,
+                    status: status,
+                    statusMessage: statusMessages[status] || `đã chuyển sang trạng thái ${status}`,
+                });
             } catch (emailError) {
                 console.error('Failed to send order status email:', emailError);
             }
