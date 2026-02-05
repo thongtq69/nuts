@@ -61,7 +61,9 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                 price={product.currentPrice}
                                 originalPrice={product.originalPrice}
                                 description={product.description || ''}
-                                inStock={true}
+                                sku={product.sku}
+                                inStock={product.stockStatus !== 'out_of_stock'}
+                                tags={product.tags}
                             />
                         </div>
                     </div>

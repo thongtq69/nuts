@@ -2,6 +2,7 @@ import dbConnect from '@/lib/db';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
+import FAQSection from '@/components/common/FAQSection';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -79,26 +80,12 @@ export default async function SubscriptionsPage() {
                             </div>
                         </div>
 
-                        <div className="faq-section">
-                            <h2>Câu hỏi thường gặp</h2>
-                            <div className="faq-grid">
-                                <div className="faq-item">
-                                    <h4>Voucher có thể dùng cho sản phẩm nào?</h4>
-                                    <p>Voucher áp dụng cho tất cả sản phẩm trên website, không giới hạn danh mục.</p>
-                                </div>
-                                <div className="faq-item">
-                                    <h4>Mỗi đơn hàng dùng được bao nhiêu voucher?</h4>
-                                    <p>Mỗi đơn hàng chỉ áp dụng được 1 voucher. Hãy chọn voucher phù hợp nhất!</p>
-                                </div>
-                                <div className="faq-item">
-                                    <h4>Voucher có thời hạn bao lâu?</h4>
-                                    <p>Tùy theo gói, voucher có hiệu lực từ 30-90 ngày kể từ ngày mua gói.</p>
-                                </div>
-                                <div className="faq-item">
-                                    <h4>Có thể mua nhiều gói cùng lúc?</h4>
-                                    <p>Có, bạn có thể mua nhiều gói để tích lũy thêm voucher.</p>
-                                </div>
-                            </div>
+                        <div className="mt-20">
+                            <FAQSection
+                                category="membership"
+                                title="Câu hỏi về gói VIP"
+                                description="Mọi thắc mắc của bạn về quyền lợi và cách sử dụng gói hội viên sẽ được giải đáp tại đây."
+                            />
                         </div>
                     </div>
                 </section>

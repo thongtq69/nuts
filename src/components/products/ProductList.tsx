@@ -139,6 +139,7 @@ export default function ProductList({ products }: ProductListProps) {
                                     badgeColor={product.badgeColor}
                                     buttonColor={product.buttonColor}
                                     priceColor={product.priceColor}
+                                    stockStatus={product.stockStatus}
                                 />
                             ))
                         ) : (

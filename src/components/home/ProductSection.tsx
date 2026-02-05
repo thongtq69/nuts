@@ -14,6 +14,7 @@ interface Product {
     badgeColor?: string;
     buttonColor?: string;
     priceColor?: string;
+    stockStatus?: 'in_stock' | 'out_of_stock' | 'low_stock';
 }
 
 interface ProductSectionProps {
@@ -110,6 +111,7 @@ export default function ProductSection({ title, products, variant = 'six' }: Pro
                                 badgeColor={product.badgeColor}
                                 buttonColor={product.buttonColor}
                                 priceColor={product.priceColor}
+                                stockStatus={product.stockStatus}
                             />
                         ))}
                     </div>

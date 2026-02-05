@@ -13,11 +13,11 @@ interface BankInfoProps {
 }
 
 const BANK_INFO = {
-    name: 'Vietcombank',
-    shortName: 'VCB',
-    accountNumber: '1061613181',
+    name: 'ACB',
+    shortName: 'ACB',
+    accountNumber: '621588',
     accountName: 'CÔNG TY TNHH GO NUTS VIỆT NAM',
-    qrCodeUrl: 'https://img.vietqr.io/image/VCB-1061613181-compact.png'
+    qrCodeUrl: 'https://img.vietqr.io/image/ACB-621588-compact.png'
 };
 
 export default function BankInfoDisplay({ 

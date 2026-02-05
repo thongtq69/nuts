@@ -198,6 +198,15 @@ export default function CheckoutPage() {
             toast.warning('Thiếu thông tin', 'Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.');
             return;
         }
+        // Bắt buộc email cho khách vãng lai (chưa đăng nhập)
+        if (!user && !formData.email.trim()) {
+            toast.warning('Thiếu thông tin', 'Vui lòng nhập email để nhận thông tin đơn hàng.');
+            return;
+        }
+        if (!user && formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            toast.warning('Email không hợp lệ', 'Vui lòng kiểm tra lại định dạng email.');
+            return;
+        }
         if (!selectedProvince || !selectedDistrict || !selectedWard) {
             toast.warning('Thiếu thông tin', 'Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã.');
             return;
@@ -227,6 +236,7 @@ export default function CheckoutPage() {
                 shippingInfo: {
                     fullName: formData.name,
                     phone: formData.phone,
+                    email: formData.email.trim() || undefined,
                     address: formData.address,
                     city: provinceName,
                     district: districtName,
@@ -287,13 +297,23 @@ export default function CheckoutPage() {
                             </div>
                             <div className="form-group-row">
                                 <div className="form-group">
-                                    <label>Email</label>
+                                    <label>
+                                        Email 
+                                        {!user && <span className="text-red-500">*</span>}
+                                        {user && <span className="text-gray-400 text-xs ml-1">(tùy chọn)</span>}
+                                    </label>
                                     <input
                                         type="email"
-                                        placeholder="Nhập email"
+                                        placeholder={!user ? "Nhập email để nhận thông tin đơn hàng" : "Nhập email"}
+                                        required={!user}
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     />
+                                    {!user && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Email sẽ được dùng để tra cứu đơn hàng và nhận thông báo
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>Số điện thoại <span className="text-red-500">*</span></label>

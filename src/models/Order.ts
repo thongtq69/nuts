@@ -6,9 +6,11 @@ export interface IOrder {
     shippingInfo: {
         fullName: string;
         phone: string;
+        email?: string;
         address: string;
         city: string;
         district: string;
+        ward?: string;
     };
     items: {
         productId: string;
@@ -49,12 +51,14 @@ const OrderSchema: Schema<IOrder> = new Schema(
         shippingInfo: {
             fullName: { type: String, required: true },
             phone: { type: String, required: true },
+            email: { type: String },
             address: {
                 type: String,
                 required: true
             },
             city: { type: String, required: true },
             district: { type: String },
+            ward: { type: String },
         },
         items: [
             {

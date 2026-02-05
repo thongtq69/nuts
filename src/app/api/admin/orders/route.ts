@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
+import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { sendOrderStatusEmail } from '@/lib/email';
 
 // Helper to check if user is admin
 async function isAdmin() {
@@ -77,6 +79,42 @@ export async function PATCH(req: Request) {
 
         if (!order) {
             return NextResponse.json({ message: 'Order not found' }, { status: 404 });
+        }
+
+        // Gửi email thông báo khi đơn hàng được xác nhận
+        if (status === 'confirmed' || status === 'shipping' || status === 'completed' || status === 'cancelled') {
+            try {
+                // Lấy email từ shippingInfo hoặc từ user
+                let customerEmail = order.shippingInfo?.email;
+                let customerName = order.shippingInfo?.fullName;
+
+                if (!customerEmail && order.user) {
+                    const user = await User.findById(order.user);
+                    if (user) {
+                        customerEmail = user.email;
+                        customerName = user.name || customerName;
+                    }
+                }
+
+                if (customerEmail) {
+                    const statusMessages: Record<string, string> = {
+                        'confirmed': 'đã được xác nhận và đang được chuẩn bị',
+                        'shipping': 'đang được giao đến bạn',
+                        'completed': 'đã được giao thành công',
+                        'cancelled': 'đã bị hủy'
+                    };
+
+                    await sendOrderStatusEmail(customerEmail, {
+                        orderId: order._id.toString().slice(-6).toUpperCase(),
+                        customerName: customerName || 'Khách hàng',
+                        status: status,
+                        statusMessage: statusMessages[status] || 'đã được cập nhật'
+                    });
+                }
+            } catch (emailError) {
+                console.error('Failed to send order status email:', emailError);
+                // Không throw lỗi để không ảnh hưởng đến việc cập nhật đơn hàng
+            }
         }
 
         return NextResponse.json({

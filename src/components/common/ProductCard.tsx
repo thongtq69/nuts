@@ -16,15 +16,17 @@ interface ProductCardProps {
     priceColor?: string;
     agentPrice?: string | number;
     bulkPricing?: { minQuantity: number; discountPercent: number }[];
+    stockStatus?: 'in_stock' | 'out_of_stock' | 'low_stock';
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
     id, image, name, currentPrice, originalPrice,
     badgeText, badgeColor, buttonColor, priceColor,
-    agentPrice, bulkPricing
+    agentPrice, bulkPricing, stockStatus = 'in_stock'
 }) => {
     const { addToCart } = useCart();
     const toast = useToast();
+    const isOutOfStock = stockStatus === 'out_of_stock';
 
     const formattedCurrentPrice = typeof currentPrice === 'number'
         ? `${currentPrice.toLocaleString('vi-VN')}₫`
@@ -36,6 +38,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
+
+        if (isOutOfStock) {
+            toast.error('Sản phẩm đã hết hàng', 'Vui lòng chọn sản phẩm khác');
+            return;
+        }
 
         const price = typeof currentPrice === 'number'
             ? currentPrice
@@ -94,10 +101,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     {originalPrice && <span className="original-price">{formattedOriginalPrice}</span>}
                 </div>
                 <button
-                    className={`btn-choose ${buttonColor}`}
+                    className={`btn-choose ${buttonColor} ${isOutOfStock ? 'out-of-stock' : ''}`}
                     onClick={handleAddToCart}
+                    disabled={isOutOfStock}
                 >
-                    Thêm vào giỏ
+                    {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
                 </button>
             </div>
         </div>

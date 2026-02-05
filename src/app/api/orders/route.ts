@@ -84,6 +84,14 @@ export async function POST(req: Request) {
             );
         }
 
+        // Bắt buộc email cho khách vãng lai
+        if (!userId && !shippingInfo?.email) {
+            return NextResponse.json(
+                { message: 'Vui lòng nhập email để nhận thông tin đơn hàng' },
+                { status: 400 }
+            );
+        }
+
         if (!items || !Array.isArray(items) || items.length === 0) {
             return NextResponse.json(
                 { message: 'Đơn hàng phải có ít nhất 1 sản phẩm' },
@@ -130,6 +138,18 @@ export async function POST(req: Request) {
             const product = await Product.findById(item.productId);
             if (!product) {
                 return NextResponse.json({ message: `Sản phẩm ${item.name} không tồn tại` }, { status: 400 });
+            }
+
+            // Kiểm tra tồn kho
+            if (product.stockStatus === 'out_of_stock') {
+                return NextResponse.json({ message: `Sản phẩm ${item.name} đã hết hàng` }, { status: 400 });
+            }
+
+            // Kiểm tra số lượng tồn kho
+            if (typeof product.stock === 'number' && product.stock < item.quantity) {
+                return NextResponse.json({ 
+                    message: `Sản phẩm ${item.name} chỉ còn ${product.stock} sản phẩm trong kho` 
+                }, { status: 400 });
             }
 
             const { finalPrice, discountAmount: itemDiscount, discountType } = calculateFinalPrice(
@@ -231,6 +251,21 @@ export async function POST(req: Request) {
             agentSavings: totalAgentSavings,
             isAgentOrder: isAgent
         });
+
+        // Cập nhật tồn kho sau khi đặt hàng thành công
+        for (const item of processedItems) {
+            const product = await Product.findById(item.productId);
+            if (product && typeof product.stock === 'number') {
+                product.stock = Math.max(0, product.stock - item.quantity);
+                // Cập nhật stock status dựa trên số lượng mới
+                if (product.stock === 0) {
+                    product.stockStatus = 'out_of_stock';
+                } else if (product.stock <= 10) {
+                    product.stockStatus = 'low_stock';
+                }
+                await product.save();
+            }
+        }
 
         if (appliedVoucherId) {
             await UserVoucher.findByIdAndUpdate(appliedVoucherId, {

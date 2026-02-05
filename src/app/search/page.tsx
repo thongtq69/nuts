@@ -19,6 +19,7 @@ interface Product {
     badgeColor?: string;
     buttonColor?: string;
     priceColor?: string;
+    stockStatus?: 'in_stock' | 'out_of_stock' | 'low_stock';
 }
 
 function SearchResults() {
@@ -77,6 +78,7 @@ function SearchResults() {
                             badgeColor={product.badgeColor as any}
                             buttonColor={product.buttonColor as any}
                             priceColor={product.priceColor as any}
+                            stockStatus={product.stockStatus}
                         />
                     ))}
                 </div>

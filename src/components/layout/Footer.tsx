@@ -102,6 +102,9 @@ export default function Footer() {
                             <li>
                                 <Link href="/contact">Liên hệ</Link>
                             </li>
+                            <li>
+                                <Link href="/tra-cuu-don-hang">Tra cứu đơn hàng</Link>
+                            </li>
                         </ul>
                     </div>
 
