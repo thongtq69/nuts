@@ -76,6 +76,7 @@ export async function POST(req: Request) {
         await dbConnect();
         const body = await req.json();
         const { items, shippingInfo, paymentMethod, shippingFee, note, voucherCode } = body;
+        const userId = await getUserId();
 
         if (!shippingInfo?.address) {
             return NextResponse.json(
@@ -99,7 +100,6 @@ export async function POST(req: Request) {
             );
         }
 
-        const userId = await getUserId();
         const cookieStore = await cookies();
 
         const user = userId ? await User.findById(userId) : null;
@@ -147,8 +147,8 @@ export async function POST(req: Request) {
 
             // Kiểm tra số lượng tồn kho
             if (typeof product.stock === 'number' && product.stock < item.quantity) {
-                return NextResponse.json({ 
-                    message: `Sản phẩm ${item.name} chỉ còn ${product.stock} sản phẩm trong kho` 
+                return NextResponse.json({
+                    message: `Sản phẩm ${item.name} chỉ còn ${product.stock} sản phẩm trong kho`
                 }, { status: 400 });
             }
 

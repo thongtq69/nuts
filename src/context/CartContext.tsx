@@ -13,6 +13,7 @@ export interface CartItem {
     agentPrice?: number;
     bulkPricing?: { minQuantity: number; discountPercent: number }[];
     isAgent: boolean;
+    weight?: number; // In kg
 }
 
 interface CartContextType {
@@ -44,7 +45,7 @@ function calculatePrice(
         console.warn('Invalid originalPrice:', originalPrice);
         return 0;
     }
-    
+
     let finalPrice = originalPrice;
 
     if (!isAgent || !agentSettings?.agentDiscountEnabled) {
@@ -108,7 +109,8 @@ function normalizeStoredCartItem(raw: any): CartItem | null {
         quantity,
         agentPrice: raw.agentPrice !== undefined ? parseStoredPrice(raw.agentPrice) : undefined,
         bulkPricing: Array.isArray(raw.bulkPricing) ? raw.bulkPricing : undefined,
-        isAgent: Boolean(raw.isAgent)
+        isAgent: Boolean(raw.isAgent),
+        weight: typeof raw.weight === 'number' ? raw.weight : 0.5
     };
 }
 
@@ -167,7 +169,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 }
             }
         }, 0);
-        
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -175,7 +177,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (isMounted && cartItems.length > 0 && user) {
             const currentUserIsAgent = user?.role === 'sale';
             const needsRecalculation = cartItems.some(item => item.isAgent !== currentUserIsAgent);
-            
+
             if (needsRecalculation) {
                 setCartItems(prev => prev.map(item => ({
                     ...item,
@@ -215,19 +217,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
             if (existing) {
                 const newQuantity = existing.quantity + item.quantity;
                 return prev.map(i =>
-                    i.id === item.id 
-                        ? { 
-                            ...i, 
+                    i.id === item.id
+                        ? {
+                            ...i,
                             quantity: newQuantity,
                             price: calculatePrice(i.originalPrice, newQuantity, i.isAgent, agentSettings || undefined, i.bulkPricing)
-                        } 
+                        }
                         : i
                 );
             }
             const newItem: CartItem = {
                 ...item,
                 isAgent,
-                price: calculatePrice(item.originalPrice, item.quantity, isAgent, agentSettings || undefined, item.bulkPricing)
+                price: calculatePrice(item.originalPrice, item.quantity, isAgent, agentSettings || undefined, item.bulkPricing),
+                weight: item.weight || 0.5
             };
             return [...prev, newItem];
         });
@@ -244,19 +247,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
             if (existing) {
                 const newQuantity = existing.quantity + item.quantity;
                 return prev.map(i =>
-                    i.id === item.id 
-                        ? { 
-                            ...i, 
+                    i.id === item.id
+                        ? {
+                            ...i,
                             quantity: newQuantity,
                             price: calculatePrice(i.originalPrice, newQuantity, i.isAgent, finalSettings || undefined, i.bulkPricing)
-                        } 
+                        }
                         : i
                 );
             }
             const newItem: CartItem = {
                 ...item,
                 isAgent,
-                price: calculatePrice(item.originalPrice, item.quantity, isAgent, finalSettings || undefined, item.bulkPricing)
+                price: calculatePrice(item.originalPrice, item.quantity, isAgent, finalSettings || undefined, item.bulkPricing),
+                weight: item.weight || 0.5
             };
             return [...prev, newItem];
         });
@@ -270,8 +274,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartItems(prev => prev.map(item => {
             if (item.id === id) {
                 const newQty = Math.max(1, item.quantity + delta);
-                return { 
-                    ...item, 
+                return {
+                    ...item,
                     quantity: newQty,
                     price: calculatePrice(item.originalPrice, newQty, item.isAgent, agentSettings || undefined, item.bulkPricing)
                 };
@@ -284,8 +288,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (quantity < 1) return;
         setCartItems(prev => prev.map(item => {
             if (item.id === id) {
-                return { 
-                    ...item, 
+                return {
+                    ...item,
                     quantity,
                     price: calculatePrice(item.originalPrice, quantity, item.isAgent, agentSettings || undefined, item.bulkPricing)
                 };
@@ -299,27 +303,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    
+
     const cartTotal = cartItems.reduce((sum, item) => {
         return sum + (getItemPrice(item) * item.quantity);
     }, 0);
-    
+
     const originalTotal = cartItems.reduce((sum, item) => {
         return sum + (item.originalPrice * item.quantity);
     }, 0);
-    
+
     const savingsTotal = Math.max(0, originalTotal - cartTotal);
 
     return (
-        <CartContext.Provider value={{ 
-            cartItems, 
-            addToCart, 
+        <CartContext.Provider value={{
+            cartItems,
+            addToCart,
             addToCartWithAgentPrice,
-            removeFromCart, 
+            removeFromCart,
             updateQuantity,
             setQuantity,
-            clearCart, 
-            cartCount, 
+            clearCart,
+            cartCount,
             cartTotal,
             originalTotal,
             savingsTotal,

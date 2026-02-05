@@ -51,6 +51,7 @@ export default function CheckoutPage() {
     const [selectedDistrict, setSelectedDistrict] = useState('');
     const [selectedWard, setSelectedWard] = useState('');
     const [addressError, setAddressError] = useState('');
+    const [shippingConfig, setShippingConfig] = useState<any>(null);
 
     useEffect(() => {
         if (user) {
@@ -64,7 +65,14 @@ export default function CheckoutPage() {
                 })
                 .catch(err => console.error(err))
                 .finally(() => setLoadingVouchers(false));
+
         }
+
+        // Fetch shipping config - outside if(user) to support guests
+        fetch('/api/admin/shipping')
+            .then(res => res.json())
+            .then(data => setShippingConfig(data))
+            .catch(err => console.error('Error fetching shipping config:', err));
     }, [user]);
 
     useEffect(() => {
@@ -90,7 +98,7 @@ export default function CheckoutPage() {
             setWards([]);
             setSelectedDistrict('');
             setSelectedWard('');
-            
+
             fetch(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`)
                 .then(res => {
                     if (!res.ok) throw new Error('Failed to fetch districts');
@@ -112,7 +120,7 @@ export default function CheckoutPage() {
         if (selectedDistrict) {
             setWards([]);
             setSelectedWard('');
-            
+
             fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`)
                 .then(res => {
                     if (!res.ok) throw new Error('Failed to fetch wards');
@@ -138,7 +146,46 @@ export default function CheckoutPage() {
     const subtotal = cartTotal;
     const originalSubtotal = originalTotal;
     const savings = savingsTotal;
-    const shippingFee = subtotal > 500000 ? 0 : 30000;
+
+    const calculateShippingFee = () => {
+        if (!shippingConfig || !selectedProvince) return 30000;
+
+        const provinceName = provinces.find(p => p.code.toString() === selectedProvince)?.name;
+        if (!provinceName) return 30000;
+
+        const zone = shippingConfig.zones.find((z: any) => z.provinceNames.includes(provinceName));
+        if (!zone) return 35000;
+
+        const totalWeight = cartItems.reduce((sum, item) => sum + (item.weight || 0.5) * item.quantity, 0);
+
+        // Find tier (handle sorting just in case)
+        const sortedTiers = [...zone.tiers].sort((a, b) => a.minWeight - b.minWeight);
+        const tier = sortedTiers.find((t: any) => totalWeight > t.minWeight && totalWeight <= t.maxWeight)
+            || sortedTiers[sortedTiers.length - 1]; // Fallback to last tier if > max
+
+        if (!tier) return 30000;
+
+        let fee = 0;
+        if (tier.isDirectMultiplier) {
+            fee = totalWeight * tier.extraPricePerKg;
+        } else {
+            // Formula: base + (actual - min) * extra
+            const overweight = Math.max(0, totalWeight - tier.minWeight);
+            fee = tier.basePrice + overweight * tier.extraPricePerKg;
+        }
+
+        // Apply Surcharges (Fuel & VAT)
+        if (shippingConfig.fuelSurchargePercent) {
+            fee = fee * (1 + shippingConfig.fuelSurchargePercent / 100);
+        }
+        if (shippingConfig.vatPercent) {
+            fee = fee * (1 + shippingConfig.vatPercent / 100);
+        }
+
+        return Math.round(fee);
+    };
+
+    const shippingFee = calculateShippingFee();
     const total = subtotal + shippingFee - appliedDiscount;
 
     const [formData, setFormData] = useState({
@@ -298,7 +345,7 @@ export default function CheckoutPage() {
                             <div className="form-group-row">
                                 <div className="form-group">
                                     <label>
-                                        Email 
+                                        Email
                                         {!user && <span className="text-red-500">*</span>}
                                         {user && <span className="text-gray-400 text-xs ml-1">(tùy chọn)</span>}
                                     </label>
@@ -356,8 +403,8 @@ export default function CheckoutPage() {
                                             </button>
                                         </div>
                                     ) : provinces.length > 0 ? (
-                                        <select 
-                                            value={selectedProvince} 
+                                        <select
+                                            value={selectedProvince}
                                             onChange={e => {
                                                 setSelectedProvince(e.target.value);
                                                 const provinceName = provinces.find(p => p.code.toString() === e.target.value)?.name || '';
@@ -380,8 +427,8 @@ export default function CheckoutPage() {
                                 </div>
                                 <div className="form-group">
                                     <label>Quận / Huyện <span className="text-red-500">*</span></label>
-                                    <select 
-                                        value={selectedDistrict} 
+                                    <select
+                                        value={selectedDistrict}
                                         onChange={e => {
                                             setSelectedDistrict(e.target.value);
                                             const districtName = districts.find(d => d.code.toString() === e.target.value)?.name || '';
@@ -401,8 +448,8 @@ export default function CheckoutPage() {
                             </div>
                             <div className="form-group">
                                 <label>Phường / Xã <span className="text-red-500">*</span></label>
-                                <select 
-                                    value={selectedWard} 
+                                <select
+                                    value={selectedWard}
                                     onChange={e => {
                                         setSelectedWard(e.target.value);
                                         const wardName = wards.find(w => w.code.toString() === e.target.value)?.name || '';
@@ -458,7 +505,7 @@ export default function CheckoutPage() {
                         {/* Bank Transfer Info */}
                         {paymentMethod === 'banking' && (
                             <div className="banking-info-section">
-                                <BankInfoDisplay 
+                                <BankInfoDisplay
                                     amount={subtotal + shippingFee - appliedDiscount}
                                     description={`GO${Date.now().toString().slice(-6)}`}
                                 />
@@ -509,7 +556,7 @@ export default function CheckoutPage() {
                                     <span className="voucher-icon">🎟️</span>
                                     <span className="voucher-label">Mã giảm giá</span>
                                 </div>
-                                
+
                                 {isVoucherApplied ? (
                                     <div className="voucher-applied">
                                         <div className="voucher-applied-info">
@@ -528,7 +575,7 @@ export default function CheckoutPage() {
                                         </button>
                                     </div>
                                 ) : (
-                                    <button 
+                                    <button
                                         className="voucher-select-btn"
                                         onClick={() => setShowVoucherModal(true)}
                                     >
@@ -546,7 +593,7 @@ export default function CheckoutPage() {
                                             <h3>🎟️ Chọn mã giảm giá</h3>
                                             <button className="voucher-modal-close" onClick={() => setShowVoucherModal(false)}>✕</button>
                                         </div>
-                                        
+
                                         {/* Manual Input */}
                                         <div className="voucher-input-section">
                                             <input
@@ -587,11 +634,11 @@ export default function CheckoutPage() {
                                             </button>
                                         </div>
                                         {voucherError && <p className="voucher-error">{voucherError}</p>}
-                                        
+
                                         {/* Voucher List */}
                                         <div className="voucher-list-section">
                                             <div className="voucher-list-title">Voucher của bạn ({vouchers.length})</div>
-                                            
+
                                             {loadingVouchers ? (
                                                 <div className="voucher-loading">Đang tải...</div>
                                             ) : vouchers.length === 0 ? (
@@ -628,9 +675,9 @@ export default function CheckoutPage() {
                                                             >
                                                                 <div className="voucher-card-left">
                                                                     <div className="voucher-card-discount">
-                                                                        {voucher.discountType === 'percent' 
-                                                                            ? `${voucher.discountValue}%` 
-                                                                            : `${(voucher.discountValue/1000).toFixed(0)}K`}
+                                                                        {voucher.discountType === 'percent'
+                                                                            ? `${voucher.discountValue}%`
+                                                                            : `${(voucher.discountValue / 1000).toFixed(0)}K`}
                                                                     </div>
                                                                     <div className="voucher-card-type">GIẢM</div>
                                                                 </div>
