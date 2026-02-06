@@ -78,7 +78,7 @@ const OrderSchema: Schema<IOrder> = new Schema(
             voucherQuantity: { type: Number },
             expiresAt: { type: Date },
         },
-        paymentMethod: { type: String, required: true, default: 'cod' },
+        paymentMethod: { type: String, required: true, default: 'banking' },
         paymentStatus: { type: String, default: 'pending' },
         vnpayTransactionNo: { type: String },
         acbTransactionNo: { type: String },

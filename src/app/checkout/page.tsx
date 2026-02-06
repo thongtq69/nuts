@@ -36,7 +36,7 @@ export default function CheckoutPage() {
     const [appliedDiscount, setAppliedDiscount] = useState(0);
     const [isVoucherApplied, setIsVoucherApplied] = useState(false);
 
-    const [paymentMethod, setPaymentMethod] = useState('cod');
+    const [paymentMethod, setPaymentMethod] = useState('banking');
     const [isBankConfirmed, setIsBankConfirmed] = useState(false);
     const [paymentReference, setPaymentReference] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -488,16 +488,6 @@ export default function CheckoutPage() {
 
                         <h3 className="section-header mt-4">Phương thức thanh toán</h3>
                         <div className="payment-methods">
-                            <label className={`payment-option ${paymentMethod === 'cod' ? 'active' : ''}`}>
-                                <input
-                                    type="radio"
-                                    name="payment"
-                                    value="cod"
-                                    checked={paymentMethod === 'cod'}
-                                    onChange={() => setPaymentMethod('cod')}
-                                />
-                                <span>💵 Thanh toán khi nhận hàng (COD)</span>
-                            </label>
                             {/* VNPay Disabled temporarily */}
                             <label className={`payment-option ${paymentMethod === 'banking' ? 'active' : ''}`}>
                                 <input

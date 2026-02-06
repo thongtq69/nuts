@@ -96,7 +96,7 @@ export default function ContactPage() {
 
     // Default values nếu chưa load được settings
     const defaultSettings = {
-        hotline: '090 118 5753',
+        hotline: '096 118 5753',
         email: 'contact.gonuts@gmail.com',
         address: 'Tầng 4, VT1-B09, Khu đô thị mới An Hưng, Phường Dương Nội, Thành phố Hà Nội, Việt Nam',
         facebookUrl: 'https://www.facebook.com/profile.php?id=61572944004088',

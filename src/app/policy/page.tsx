@@ -63,8 +63,8 @@ export default function PolicyPage() {
                                                 key={item.slug}
                                                 onClick={() => setActiveSlug(item.slug)}
                                                 className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-bold transition-all ${isActive
-                                                        ? 'bg-brand text-white shadow-lg shadow-brand/20'
-                                                        : 'text-slate-600 hover:bg-slate-50 hover:text-brand'
+                                                    ? 'bg-brand text-white shadow-lg shadow-brand/20'
+                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-brand'
                                                     }`}
                                             >
                                                 <div className={`p-2 rounded-xl ${isActive ? 'bg-white/20' : 'bg-slate-100'}`}>
@@ -86,10 +86,10 @@ export default function PolicyPage() {
                                     Nếu bạn có thắc mắc về các điều khoản, hãy liên hệ trực tiếp với chúng tôi.
                                 </p>
                                 <a
-                                    href="tel:0901185753"
+                                    href="tel:0961185753"
                                     className="block text-center py-3 bg-brand text-white font-black rounded-xl hover:bg-white hover:text-brand transition-all text-sm"
                                 >
-                                    090 118 5753
+                                    096 118 5753
                                 </a>
                             </div>
                         </div>

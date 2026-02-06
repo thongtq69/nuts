@@ -21,24 +21,24 @@ async function createTransporter() {
             },
         });
     }
-    
+
     // Method 2: OAuth2 (more secure but complex setup)
     if (GMAIL_CLIENT_ID && GMAIL_CLIENT_SECRET && GMAIL_REFRESH_TOKEN) {
         const { google } = await import('googleapis');
         const OAuth2 = google.auth.OAuth2;
-        
+
         const oauth2Client = new OAuth2(
             GMAIL_CLIENT_ID,
             GMAIL_CLIENT_SECRET,
             'https://developers.google.com/oauthplayground'
         );
-        
+
         oauth2Client.setCredentials({
             refresh_token: GMAIL_REFRESH_TOKEN
         });
-        
+
         const accessToken = await oauth2Client.getAccessToken();
-        
+
         return nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -51,7 +51,7 @@ async function createTransporter() {
             },
         });
     }
-    
+
     throw new Error('Gmail credentials not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local');
 }
 
@@ -106,7 +106,7 @@ export function generateOTP(): string {
 // Send OTP Email
 export async function sendOTPEmail(to: string, otp: string, purpose: string = 'xác thực') {
     const transporter = await createTransporter();
-    
+
     const html = `
         <!DOCTYPE html>
         <html>
@@ -133,7 +133,7 @@ export async function sendOTPEmail(to: string, otp: string, purpose: string = 'x
         </body>
         </html>
     `;
-    
+
     await transporter.sendMail({
         from: `"Go Nuts" <${GMAIL_USER}>`,
         to,
@@ -157,7 +157,7 @@ export async function sendOrderConfirmationEmail(
     }
 ) {
     const transporter = await createTransporter();
-    
+
     const itemsHtml = orderData.items.map(item => `
         <tr>
             <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.name}</td>
@@ -165,7 +165,7 @@ export async function sendOrderConfirmationEmail(
             <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${(item.price * item.quantity).toLocaleString()}đ</td>
         </tr>
     `).join('');
-    
+
     const html = `
         <!DOCTYPE html>
         <html>
@@ -217,7 +217,7 @@ export async function sendOrderConfirmationEmail(
                         <p style="margin: 0; color: #666;">${orderData.shippingAddress}</p>
                     </div>
                     
-                    <p><strong>💳 Phương thức thanh toán:</strong> ${orderData.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng'}</p>
+                    <p><strong>💳 Phương thức thanh toán:</strong> ${orderData.paymentMethod === 'banking' ? 'Chuyển khoản ngân hàng' : 'Thanh toán trực tuyến'}</p>
                     
                     <p style="text-align: center; margin-top: 30px;">
                         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/account" class="btn">Theo dõi đơn hàng</a>
@@ -232,7 +232,7 @@ export async function sendOrderConfirmationEmail(
         </body>
         </html>
     `;
-    
+
     await transporter.sendMail({
         from: `"Go Nuts" <${GMAIL_USER}>`,
         to,
@@ -252,21 +252,21 @@ export async function sendOrderStatusEmail(
     }
 ) {
     const transporter = await createTransporter();
-    
+
     const statusColors: Record<string, string> = {
         'processing': '#f59e0b',
         'shipped': '#3b82f6',
         'delivered': '#10b981',
         'cancelled': '#ef4444',
     };
-    
+
     const statusIcons: Record<string, string> = {
         'processing': '📦',
         'shipped': '🚚',
         'delivered': '✅',
         'cancelled': '❌',
     };
-    
+
     const html = `
         <!DOCTYPE html>
         <html>
@@ -293,7 +293,7 @@ export async function sendOrderStatusEmail(
         </body>
         </html>
     `;
-    
+
     await transporter.sendMail({
         from: `"Go Nuts" <${GMAIL_USER}>`,
         to,
@@ -305,7 +305,7 @@ export async function sendOrderStatusEmail(
 // Send Welcome Email
 export async function sendWelcomeEmail(to: string, name: string, voucherCode?: string) {
     const transporter = await createTransporter();
-    
+
     const html = `
         <!DOCTYPE html>
         <html>
@@ -337,7 +337,7 @@ export async function sendWelcomeEmail(to: string, name: string, voucherCode?: s
         </body>
         </html>
     `;
-    
+
     await transporter.sendMail({
         from: `"Go Nuts" <${GMAIL_USER}>`,
         to,
@@ -350,7 +350,7 @@ export async function sendWelcomeEmail(to: string, name: string, voucherCode?: s
 export async function sendPasswordResetEmail(to: string, resetToken: string) {
     const transporter = await createTransporter();
     const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-    
+
     const html = `
         <!DOCTYPE html>
         <html>
@@ -376,7 +376,7 @@ export async function sendPasswordResetEmail(to: string, resetToken: string) {
         </body>
         </html>
     `;
-    
+
     await transporter.sendMail({
         from: `"Go Nuts" <${GMAIL_USER}>`,
         to,
@@ -388,7 +388,7 @@ export async function sendPasswordResetEmail(to: string, resetToken: string) {
 // Send Sale Application Approved Email
 export async function sendSaleApprovedEmail(to: string, name: string, referralCode: string) {
     const transporter = await createTransporter();
-    
+
     const html = `
         <!DOCTYPE html>
         <html>
@@ -426,7 +426,7 @@ export async function sendSaleApprovedEmail(to: string, name: string, referralCo
         </body>
         </html>
     `;
-    
+
     await transporter.sendMail({
         from: `"Go Nuts" <${GMAIL_USER}>`,
         to,

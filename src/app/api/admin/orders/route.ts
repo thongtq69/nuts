@@ -36,7 +36,7 @@ export async function GET() {
             email: (order.user as any)?.email || '',
             total: order.totalAmount,
             status: order.status,
-            paymentMethod: order.paymentMethod || 'COD',
+            paymentMethod: order.paymentMethod || 'Banking',
             date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : 'N/A',
             time: order.createdAt ? new Date(order.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '',
             itemCount: order.items.length

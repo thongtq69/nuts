@@ -52,13 +52,13 @@ const Settings = mongoose.models.Settings || mongoose.model('Settings', settings
 export async function GET() {
     try {
         await dbConnect();
-        
+
         let settings = await Settings.findOne({});
-        
+
         // Nếu chưa có settings, tạo mặc định
         if (!settings) {
             const defaultSettings = {
-                hotline: '090 118 5753',
+                hotline: '096 118 5753',
                 zaloLink: 'https://zalo.me/...',
                 email: 'contact.gonuts@gmail.com',
                 address: 'Tầng 4, VT1-B09, Khu đô thị mới An Hưng, Phường Dương Nội, Thành phố Hà Nội, Việt Nam',
@@ -76,10 +76,10 @@ export async function GET() {
                 businessLicense: '0123xxxxxx',
                 workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
             };
-            
+
             settings = await Settings.create(defaultSettings);
         }
-        
+
         return NextResponse.json(settings);
     } catch (error) {
         console.error('Error fetching settings:', error);
@@ -92,23 +92,23 @@ export async function PUT(request: NextRequest) {
     try {
         const body = await request.json();
         await dbConnect();
-        
+
         const updateData = {
             ...body,
             updatedAt: new Date()
         };
-        
+
         // Upsert - cập nhật nếu có, tạo mới nếu chưa có
         const settings = await Settings.findOneAndUpdate(
             {},
             { $set: updateData },
             { upsert: true, new: true }
         );
-        
-        return NextResponse.json({ 
-            success: true, 
+
+        return NextResponse.json({
+            success: true,
             message: 'Cập nhật cài đặt thành công',
-            settings 
+            settings
         });
     } catch (error) {
         console.error('Error updating settings:', error);

@@ -85,7 +85,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
     const confirm = useConfirm();
 
     // Check if this is a membership order
-    const isMembershipOrder = order.orderType === 'membership' || 
+    const isMembershipOrder = order.orderType === 'membership' ||
         order.items.some(item => item.name?.includes('Gói Hội Viên') || item.name?.includes('Gói VIP'));
 
     const config = statusConfig[currentStatus] || statusConfig.pending;
@@ -170,7 +170,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                     </div>
                     <div class="info-row">
                         <span class="info-label">Thanh toán:</span>
-                        <span class="info-value">${order.paymentMethod === 'COD' ? 'COD' : order.paymentMethod}</span>
+                        <span class="info-value">${order.paymentMethod === 'banking' ? 'Chuyển khoản' : order.paymentMethod}</span>
                     </div>
                 </div>
                 
@@ -244,7 +244,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
             </body>
             </html>
         `;
-        
+
         const printWindow = window.open('', '_blank');
         if (printWindow) {
             printWindow.document.write(printContent);
@@ -525,9 +525,8 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                             <div>
                                 <div className="text-sm text-slate-500">Phương thức</div>
                                 <div className="font-semibold text-slate-800">
-                                    {order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' :
-                                        order.paymentMethod === 'Banking' ? 'Chuyển khoản ngân hàng' :
-                                            order.paymentMethod === 'VNPay' ? 'VNPay' : order.paymentMethod}
+                                    {order.paymentMethod === 'Banking' || order.paymentMethod === 'banking' ? 'Chuyển khoản ngân hàng' :
+                                        order.paymentMethod === 'VNPay' || order.paymentMethod === 'vnpay' ? 'VNPay' : order.paymentMethod}
                                 </div>
                             </div>
                             <div>

@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-    Settings, 
-    Phone, 
-    Mail, 
-    MapPin, 
-    Facebook, 
-    Instagram, 
+import {
+    Settings,
+    Phone,
+    Mail,
+    MapPin,
+    Facebook,
+    Instagram,
     Youtube,
     Save,
     Loader2,
@@ -40,7 +40,7 @@ interface SiteSettings {
 
 export default function AdminSettingsPage() {
     const [settings, setSettings] = useState<SiteSettings>({
-        hotline: '090 118 5753',
+        hotline: '096 118 5753',
         zaloLink: 'https://zalo.me/...',
         email: 'contact.gonuts@gmail.com',
         address: 'Tầng 4, VT1-B09, Khu đô thị mới An Hưng, Phường Dương Nội, Thành phố Hà Nội, Việt Nam',
@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings),
             });
-            
+
             if (res.ok) {
                 toast.success('Đã lưu cài đặt thành công');
             } else {

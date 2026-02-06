@@ -247,30 +247,6 @@ export default function AdminOrdersPage() {
                 </div>
             </div>
 
-            {/* COD Warning */}
-            {(() => {
-                const codPending = orders.filter(o => o.paymentMethod === 'cod' && o.status === 'completed');
-                if (codPending.length === 0) return null;
-                return (
-                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                            <AlertTriangle className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-semibold text-amber-800">Cảnh báo COD chưa thu tiền</h3>
-                            <p className="text-sm text-amber-700 mt-1">
-                                Có <strong>{codPending.length} đơn hàng</strong> đã hoàn thành nhưng chưa thu tiền COD.
-                            </p>
-                        </div>
-                        <button 
-                            onClick={() => setFilterStatus('completed')}
-                            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-lg transition-colors"
-                        >
-                            Xem ngay
-                        </button>
-                    </div>
-                );
-            })()}
 
             {/* Table - Fixed layout */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -310,8 +286,8 @@ export default function AdminOrdersPage() {
                                     const isDropdownOpen = openDropdown === order.id;
 
                                     return (
-                                        <tr 
-                                            key={order.id} 
+                                        <tr
+                                            key={order.id}
                                             className="hover:bg-slate-50 transition-colors"
                                         >
                                             <td className="px-4 py-4 text-center font-semibold text-slate-500">
@@ -363,13 +339,6 @@ export default function AdminOrdersPage() {
                                             </td>
                                             <td className="px-4 py-4">
                                                 <div className="relative flex justify-center">
-                                                    {order.paymentMethod === 'cod' && order.status === 'completed' && (
-                                                        <div className="absolute -top-1 -right-1 z-10">
-                                                            <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center" title="COD chưa thu tiền">
-                                                                <AlertTriangle size={12} className="text-white" />
-                                                            </div>
-                                                        </div>
-                                                    )}
 
                                                     <button
                                                         onClick={() => setOpenDropdown(isDropdownOpen ? null : order.id)}
