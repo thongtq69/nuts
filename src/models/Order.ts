@@ -30,6 +30,7 @@ export interface IOrder {
     paymentMethod: string;
     paymentStatus?: string;
     vnpayTransactionNo?: string;
+    acbTransactionNo?: string;
     shippingFee: number;
     totalAmount: number;
     status: string;
@@ -80,6 +81,7 @@ const OrderSchema: Schema<IOrder> = new Schema(
         paymentMethod: { type: String, required: true, default: 'cod' },
         paymentStatus: { type: String, default: 'pending' },
         vnpayTransactionNo: { type: String },
+        acbTransactionNo: { type: String },
         shippingFee: { type: Number, required: true },
         totalAmount: { type: Number, required: true },
         status: { type: String, default: 'pending' },

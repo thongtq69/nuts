@@ -38,6 +38,7 @@ export default function CheckoutPage() {
 
     const [paymentMethod, setPaymentMethod] = useState('cod');
     const [isBankConfirmed, setIsBankConfirmed] = useState(false);
+    const [paymentReference, setPaymentReference] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [vouchers, setVouchers] = useState<any[]>([]);
@@ -212,6 +213,13 @@ export default function CheckoutPage() {
         }
     }, [user]);
 
+    // Generate stable payment reference when banking is selected
+    useEffect(() => {
+        if (paymentMethod === 'banking' && !paymentReference) {
+            setPaymentReference(`GO${Date.now().toString().slice(-6)}`);
+        }
+    }, [paymentMethod, paymentReference]);
+
     const handleApplyVoucher = async () => {
         if (!voucherCode) return;
         setVoucherError('');
@@ -293,7 +301,7 @@ export default function CheckoutPage() {
                 paymentMethod,
                 shippingFee,
                 totalAmount: total,
-                note: formData.note,
+                note: paymentMethod === 'banking' ? `${formData.note} [PaymentRef: ${paymentReference}]`.trim() : formData.note,
                 voucherCode: isVoucherApplied ? voucherCode : undefined
             };
 
@@ -516,7 +524,7 @@ export default function CheckoutPage() {
 
                                     <BankInfoDisplay
                                         amount={subtotal + shippingFee - appliedDiscount}
-                                        description={`GO${Date.now().toString().slice(-6)}`}
+                                        description={paymentReference}
                                     />
 
                                     <div className="mt-6 flex items-start gap-3 p-4 bg-white rounded-lg border border-amber-300">
