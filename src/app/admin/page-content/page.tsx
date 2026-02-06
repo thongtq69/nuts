@@ -17,7 +17,7 @@ import {
     Eye
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import { Button, Card, Input, Textarea, Badge } from '@/components/admin/ui';
+import { Button, Card, Input, Textarea, Badge, RichTextEditor } from '@/components/admin/ui';
 
 const PAGES = [
     { slug: 'about-us', title: 'Về Go Nuts', icon: Info, description: 'Trang giới thiệu câu chuyện thương hiệu, giá trị cốt lõi.' },
@@ -88,10 +88,24 @@ export default function AdminPageContent() {
                 body: JSON.stringify(processedData),
             });
 
+            const result = await res.json();
+
             if (res.ok) {
                 toast.success('Đã lưu nội dung trang thành công');
+                // Sync state with server response (which might have normalized data)
+                if (result.content) {
+                    const savedData = result.content;
+                    setContentData({
+                        title: savedData.title || '',
+                        content: savedData.content || '',
+                        metadata: {
+                            description: savedData.metadata?.description || '',
+                            keywords: (savedData.metadata?.keywords || []).join(', ')
+                        }
+                    });
+                }
             } else {
-                toast.error('Lỗi khi lưu dữ liệu');
+                toast.error(result.error || 'Lỗi khi lưu dữ liệu');
             }
         } catch (error) {
             toast.error('Lỗi kết nối');
@@ -194,23 +208,17 @@ export default function AdminPageContent() {
                                             />
                                         </div>
 
-                                        <div className="space-y-2">
+                                        <div className="space-y-4">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Nội dung trang (HTML)</label>
-                                                <Badge variant="default" className="text-[10px] font-mono">Rich Content Editor</Badge>
+                                                <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Nội dung trang</label>
+                                                <Badge variant="default" className="text-[10px] font-mono">WYSIWYG Editor</Badge>
                                             </div>
-                                            <div className="relative group">
-                                                <Textarea
-                                                    value={contentData.content}
-                                                    onChange={e => setContentData({ ...contentData, content: e.target.value })}
-                                                    rows={15}
-                                                    placeholder="Sử dụng HTML để định dạng nội dung..."
-                                                    className="font-mono text-sm leading-relaxed focus:ring-brand/30 transition-all border-2"
-                                                />
-                                                <div className="absolute bottom-4 right-4 text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    Dùng các thẻ &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;strong&gt;
-                                                </div>
-                                            </div>
+
+                                            <RichTextEditor
+                                                value={contentData.content}
+                                                onChange={content => setContentData({ ...contentData, content })}
+                                                placeholder="Soạn thảo nội dung giới thiệu/chính sách tại đây..."
+                                            />
                                         </div>
                                     </Card>
 
@@ -254,9 +262,43 @@ export default function AdminPageContent() {
                                         {contentData.title}
                                     </h1>
                                     <div
-                                        className="prose prose-slate max-w-none prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-p:text-slate-600 prose-li:text-slate-600"
+                                        className="prose prose-slate max-w-none prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-p:text-slate-600 prose-li:text-slate-600 admin-page-preview"
                                         dangerouslySetInnerHTML={{ __html: contentData.content }}
                                     />
+
+                                    <style jsx>{`
+                                        .admin-page-preview :global(h2) {
+                                            font-size: 1.875rem;
+                                            font-weight: 900;
+                                            margin-top: 2rem;
+                                            margin-bottom: 1.5rem;
+                                            color: #0f172a;
+                                        }
+                                        .admin-page-preview :global(p) {
+                                            margin-bottom: 1.5rem;
+                                        }
+                                        .admin-page-preview :global(ul) {
+                                            margin-bottom: 2rem;
+                                            list-style: none;
+                                            padding: 0;
+                                        }
+                                        .admin-page-preview :global(li) {
+                                            position: relative;
+                                            padding-left: 1.5rem;
+                                            margin-bottom: 0.75rem;
+                                            color: #475569;
+                                        }
+                                        .admin-page-preview :global(li::before) {
+                                            content: "";
+                                            position: absolute;
+                                            left: 0;
+                                            top: 0.7rem;
+                                            width: 0.5rem;
+                                            height: 0.5rem;
+                                            background-color: #E3E846;
+                                            border-radius: 999px;
+                                        }
+                                    `}</style>
                                 </Card>
                             )}
                         </div>

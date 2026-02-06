@@ -6,6 +6,7 @@ import { Textarea } from './Textarea';
 import { Badge } from './Badge';
 import { Table } from './Table';
 import { Modal } from './Modal';
+import { RichTextEditor } from './RichTextEditor';
 
 export {
     Button,
@@ -15,5 +16,6 @@ export {
     Textarea,
     Badge,
     Table,
-    Modal
+    Modal,
+    RichTextEditor
 };
