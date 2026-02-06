@@ -24,6 +24,7 @@ import {
     BarChart3,
     Wallet
 } from 'lucide-react';
+import { RichTextEditor } from './ui';
 
 interface ProductFormProps {
     initialData?: any;
@@ -177,7 +178,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const removeGalleryImage = (index: number) => {
         setFormData(prev => ({
             ...prev,
-            images: prev.images.filter((_, i) => i !== index)
+            images: prev.images.filter((_: string, i: number) => i !== index)
         }));
     };
 
@@ -532,13 +533,10 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Mô tả sản phẩm
                                     </label>
-                                    <textarea
-                                        name="description"
+                                    <RichTextEditor
                                         value={formData.description}
-                                        onChange={handleChange}
-                                        rows={6}
+                                        onChange={(content: string) => setFormData(prev => ({ ...prev, description: content }))}
                                         placeholder="Nhập mô tả chi tiết về sản phẩm..."
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all resize-none"
                                     />
                                 </div>
                             </div>
@@ -621,7 +619,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     </div>
 
                                     {/* Gallery Items */}
-                                    {formData.images.map((img, index) => (
+                                    {formData.images.map((img: string, index: number) => (
                                         <div
                                             key={index}
                                             className="relative aspect-square rounded-2xl bg-slate-100 overflow-hidden group"

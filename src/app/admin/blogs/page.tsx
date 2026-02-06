@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FileText, Plus, Edit2, Trash2, Eye, EyeOff, Calendar, Tag, X, Image as ImageIcon, TrendingUp } from 'lucide-react';
 import { useConfirm } from '@/context/ConfirmContext';
+import { RichTextEditor } from '@/components/admin/ui';
 
 interface Blog {
     _id: string;
@@ -467,14 +468,11 @@ export default function AdminBlogsPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-slate-700">Nội dung</label>
-                                    <textarea
+                                    <label className="text-sm font-semibold text-slate-700">Nội dung bài viết</label>
+                                    <RichTextEditor
                                         value={formData.content}
-                                        onChange={e => setFormData({ ...formData, content: e.target.value })}
-                                        required
-                                        rows={12}
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all resize-none font-mono text-sm"
-                                        placeholder="Nội dung chi tiết bài viết..."
+                                        onChange={content => setFormData({ ...formData, content })}
+                                        placeholder="Soạn thảo nội dung bài viết..."
                                     />
                                 </div>
                             </div>

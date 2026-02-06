@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import { Button, Input, Modal, Table, Badge, Card, Select, Textarea } from '@/components/admin/ui';
+import { Button, Input, Modal, Table, Badge, Card, Select, Textarea, RichTextEditor } from '@/components/admin/ui';
 
 interface FAQ {
     _id: string;
@@ -309,11 +309,9 @@ export default function AdminFAQsPage() {
 
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-700">Câu trả lời <span className="text-red-500">*</span></label>
-                                <Textarea
+                                <RichTextEditor
                                     value={formData.answer}
-                                    onChange={e => setFormData({ ...formData, answer: e.target.value })}
-                                    required
-                                    rows={6}
+                                    onChange={content => setFormData({ ...formData, answer: content })}
                                     placeholder="Nhập câu trả lời chi tiết..."
                                 />
                             </div>
