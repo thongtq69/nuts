@@ -9,6 +9,7 @@ import ProductGallery from '@/components/products/ProductGallery';
 import ProductInfo from '@/components/products/ProductInfo';
 import ProductSection from '@/components/home/ProductSection';
 import { IProduct } from '@/models/Product';
+import { cleanHTMLContent } from '@/lib/textUtils';
 
 interface ProductDetailViewProps {
     product: IProduct;
@@ -133,7 +134,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                             <div className="tab-panel active">
                                 <div className="description-content">
                                     {product.description ? (
-                                        <div dangerouslySetInnerHTML={{ __html: product.description.replace(/\u00a0/g, ' ') }} />
+                                        <div dangerouslySetInnerHTML={{ __html: cleanHTMLContent(product.description) }} />
                                     ) : (
                                         <p className="no-description">Chưa có mô tả cho sản phẩm này.</p>
                                     )}
