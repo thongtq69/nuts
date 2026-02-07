@@ -144,7 +144,6 @@ export default function ProductInfo({
             {/* Description */}
             <div
                 className="product-description-modern"
-                style={{ whiteSpace: 'pre-wrap' }}
                 dangerouslySetInnerHTML={{ __html: description }}
             />
 

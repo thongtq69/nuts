@@ -81,7 +81,6 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                             <div className="description-content">
                                 {product.description ? (
                                     <div
-                                        style={{ whiteSpace: 'pre-wrap' }}
                                         dangerouslySetInnerHTML={{ __html: product.description }}
                                     />
                                 ) : (
