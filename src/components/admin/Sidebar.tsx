@@ -49,10 +49,18 @@ const menuSections = [
     {
         title: 'Hệ thống',
         items: [
-            { href: '/admin/users', icon: Users, label: 'Ngườii dùng' },
+            { href: '/admin/users', icon: Users, label: 'Người dùng' },
             { href: '/admin/staff', icon: UserCheck, label: 'Nhân viên' },
-            { href: '/admin/commissions', icon: CreditCard, label: 'Hoa hồng' },
+            { href: '/admin/commissions', icon: CreditCard, label: 'Hoa hồng (cũ)' },
             { href: '/admin/packages', icon: Crown, label: 'Gói Hội Viên' },
+        ],
+    },
+    {
+        title: 'Hệ thống Hoa hồng',
+        items: [
+            { href: '/admin/commission/tiers', icon: Star, label: 'Cấp bậc CTV' },
+            { href: '/admin/commission/transactions', icon: CreditCard, label: 'Giao dịch HH' },
+            { href: '/admin/commission/users', icon: Users, label: 'HH theo User' },
         ],
     },
     {
@@ -74,6 +82,7 @@ const menuSections = [
         ],
     },
 ];
+
 
 interface SidebarProps {
     isOpen?: boolean;

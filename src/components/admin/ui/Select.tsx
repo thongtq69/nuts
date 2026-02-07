@@ -1,15 +1,16 @@
-import React, { SelectHTMLAttributes } from 'react';
+import React, { SelectHTMLAttributes, ReactNode } from 'react';
 import { AlertCircle, ChevronDown } from 'lucide-react';
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
     label?: string;
     error?: string;
     helperText?: string;
-    options: Array<{ label: string; value: string | number }>;
+    options?: Array<{ label: string; value: string | number }>;
+    children?: ReactNode;
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-    ({ className = '', label, error, helperText, options, id, ...props }, ref) => {
+    ({ className = '', label, error, helperText, options, children, id, ...props }, ref) => {
         const selectId = id || props.name;
 
         return (
@@ -35,11 +36,11 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                         `}
                         {...props}
                     >
-                        {options.map((option) => (
+                        {options ? options.map((option) => (
                             <option key={option.value} value={option.value}>
                                 {option.label}
                             </option>
-                        ))}
+                        )) : children}
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                         <ChevronDown size={16} />
@@ -60,3 +61,4 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 );
 
 Select.displayName = 'Select';
+
