@@ -119,12 +119,14 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                         >
                             Thông tin chi tiết
                         </button>
+                        {/* Tạm ẩn tab Đánh giá
                         <button
                             className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
                             onClick={() => setActiveTab('reviews')}
                         >
                             Đánh giá
                         </button>
+                        */}
                     </div>
                     <div className="tabs-content">
                         {activeTab === 'description' && (
@@ -169,6 +171,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                             </div>
                         )}
 
+                        {/* Tạm ẩn tab Đánh giá
                         {activeTab === 'reviews' && (
                             <div className="tab-panel active">
                                 <div className="reviews-placeholder">
@@ -178,6 +181,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                 </div>
                             </div>
                         )}
+                        */}
                     </div>
                 </div>
 
