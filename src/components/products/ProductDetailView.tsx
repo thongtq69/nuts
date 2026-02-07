@@ -38,22 +38,30 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
 
     const mainImage = productImages[0];
 
-    // Logical description splitting: Summary at top, split details in tabs
-    const { intro, specs } = React.useMemo(() => {
-        if (!product.description) return { intro: '', specs: '' };
+    // Get short description: prioritize shortDescription field, fallback to parsing
+    const shortDesc = React.useMemo(() => {
+        // If shortDescription field exists, use it
+        if (product.shortDescription) {
+            return product.shortDescription;
+        }
+
+        // Fallback: try to extract intro from description for backward compatibility
+        if (!product.description) return '';
 
         const separatorRegex = /<hr\/?>|----------------------------------------|THÔNG TIN CHI TIẾT SẢN PHẨM:/i;
         const parts = product.description.split(separatorRegex);
 
-        if (parts.length > 1) {
-            return {
-                intro: parts[0].trim(),
-                specs: product.description.substring(parts[0].length).trim()
-            };
+        if (parts.length > 1 && parts[0].trim().length > 0) {
+            return parts[0].trim();
         }
 
-        return { intro: product.description, specs: '' };
-    }, [product.description]);
+        // If description is very long, truncate it
+        if (product.description.length > 500) {
+            return product.description.substring(0, 300) + '...';
+        }
+
+        return product.description;
+    }, [product.shortDescription, product.description]);
 
     return (
         <main className="product-detail-page">
@@ -87,7 +95,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                 name={product.name}
                                 price={product.currentPrice}
                                 originalPrice={product.originalPrice}
-                                description={intro || product.description || ''}
+                                description={shortDesc || ''}
                                 sku={product.sku}
                                 inStock={product.stockStatus !== 'out_of_stock'}
                                 tags={product.tags}
@@ -134,33 +142,29 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                         {activeTab === 'specs' && (
                             <div className="tab-panel active">
                                 <div className="description-content">
-                                    {specs ? (
-                                        <div dangerouslySetInnerHTML={{ __html: specs }} />
-                                    ) : (
-                                        <div className="specs-list bg-slate-50 p-6 rounded-2xl space-y-3">
-                                            {product.sku && (
-                                                <div className="flex justify-between py-2 border-b border-slate-200">
-                                                    <span className="font-medium text-slate-600">Mã sản phẩm:</span>
-                                                    <span className="text-slate-900">{product.sku}</span>
-                                                </div>
-                                            )}
-                                            {product.category && (
-                                                <div className="flex justify-between py-2 border-b border-slate-200">
-                                                    <span className="font-medium text-slate-600">Danh mục:</span>
-                                                    <span className="text-slate-900">{product.category}</span>
-                                                </div>
-                                            )}
-                                            {product.weight && (
-                                                <div className="flex justify-between py-2 border-b border-slate-200">
-                                                    <span className="font-medium text-slate-600">Trọng lượng:</span>
-                                                    <span className="text-slate-900">{product.weight} kg</span>
-                                                </div>
-                                            )}
-                                            {!product.sku && !product.category && !product.weight && (
-                                                <p className="no-description">Thông tin chi tiết đang được cập nhật.</p>
-                                            )}
-                                        </div>
-                                    )}
+                                    <div className="specs-list bg-slate-50 p-6 rounded-2xl space-y-3">
+                                        {product.sku && (
+                                            <div className="flex justify-between py-2 border-b border-slate-200">
+                                                <span className="font-medium text-slate-600">Mã sản phẩm:</span>
+                                                <span className="text-slate-900">{product.sku}</span>
+                                            </div>
+                                        )}
+                                        {product.category && (
+                                            <div className="flex justify-between py-2 border-b border-slate-200">
+                                                <span className="font-medium text-slate-600">Danh mục:</span>
+                                                <span className="text-slate-900">{product.category}</span>
+                                            </div>
+                                        )}
+                                        {product.weight && (
+                                            <div className="flex justify-between py-2 border-b border-slate-200">
+                                                <span className="font-medium text-slate-600">Trọng lượng:</span>
+                                                <span className="text-slate-900">{product.weight} kg</span>
+                                            </div>
+                                        )}
+                                        {!product.sku && !product.category && !product.weight && (
+                                            <p className="no-description">Thông tin chi tiết đang được cập nhật.</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}

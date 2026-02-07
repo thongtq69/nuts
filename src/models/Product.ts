@@ -11,6 +11,7 @@ export interface IProduct {
     rating?: number;
     reviewsCount?: number;
     description?: string;
+    shortDescription?: string;
     images?: string[];
     category?: string;
     tags?: string[];
@@ -50,6 +51,7 @@ const ProductSchema: Schema<IProduct> = new Schema(
         rating: { type: Number, default: 5 },
         reviewsCount: { type: Number, default: 0 },
         description: { type: String },
+        shortDescription: { type: String },
         images: { type: [String] },
         category: { type: String },
         tags: { type: [String] },

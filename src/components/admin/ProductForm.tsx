@@ -69,6 +69,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         currentPrice: initialData.currentPrice || 0,
         originalPrice: initialData.originalPrice || 0,
         category: initialData.category || '',
+        shortDescription: initialData.shortDescription || '',
         description: initialData.description || '',
         tags: (initialData.tags || []).join(', '),
 
@@ -528,15 +529,35 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     </div>
                                 </div>
 
+                                {/* Short Description */}
+                                <div className="lg:col-span-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Mô tả ngắn
+                                        <span className="text-xs text-slate-400 ml-2">(Hiển thị ở phần thông tin sản phẩm)</span>
+                                    </label>
+                                    <textarea
+                                        name="shortDescription"
+                                        value={formData.shortDescription}
+                                        onChange={handleChange}
+                                        rows={3}
+                                        placeholder="Mô tả ngắn gọn về sản phẩm (1-2 câu giới thiệu)..."
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all resize-none"
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        Ví dụ: "Hạt điều vỏ lụa nguyên hạt rang muối, sự kết hợp hoàn hảo giữa hạt điều thơm ngon và vị mặn nhẹ của muối."
+                                    </p>
+                                </div>
+
                                 {/* Description */}
                                 <div className="lg:col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Mô tả sản phẩm
+                                        Mô tả chi tiết
+                                        <span className="text-xs text-slate-400 ml-2">(Hiển thị trong tab "Mô tả sản phẩm")</span>
                                     </label>
                                     <RichTextEditor
                                         value={formData.description}
                                         onChange={(content: string) => setFormData(prev => ({ ...prev, description: content }))}
-                                        placeholder="Nhập mô tả chi tiết về sản phẩm..."
+                                        placeholder="Nhập mô tả chi tiết về sản phẩm: thành phần, hướng vị, nguồn gốc, hướng dẫn sử dụng..."
                                     />
                                 </div>
                             </div>
