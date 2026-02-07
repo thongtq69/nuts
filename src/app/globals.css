@@ -5001,6 +5001,43 @@ a[class*="from-orange"] {
   line-height: 1.7;
   font-size: 15px;
   margin-bottom: var(--spacing-md);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.product-description-modern p,
+.description-content p,
+.faq-answer-container p {
+  margin-bottom: 1rem;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.product-description-modern ul,
+.description-content ul,
+.faq-answer-container ul {
+  list-style-type: disc !important;
+  margin-left: 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.product-description-modern ol,
+.description-content ol,
+.faq-answer-container ol {
+  list-style-type: decimal !important;
+  margin-left: 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.product-description-modern li,
+.description-content li,
+.faq-answer-container li {
+  margin-bottom: 0.5rem;
 }
 
 .product-tags {

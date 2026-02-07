@@ -17,15 +17,15 @@ interface ProductDetailViewProps {
 
 export default function ProductDetailView({ product, relatedProducts }: ProductDetailViewProps) {
     // Handle case where images array is empty - use main image
-    const productImages = (product.images && product.images.length > 0) 
-        ? product.images 
-        : product.image 
-            ? [product.image] 
+    const productImages = (product.images && product.images.length > 0)
+        ? product.images
+        : product.image
+            ? [product.image]
             : ['/assets/images/product1.jpg'];
 
     // Fallback for single image display
-    const mainImage = (product.images && product.images.length > 0) 
-        ? product.images[0] 
+    const mainImage = (product.images && product.images.length > 0)
+        ? product.images[0]
         : product.image || '/assets/images/product1.jpg';
 
     return (
@@ -34,8 +34,8 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
             <Navbar />
             <Breadcrumb
                 items={[
-                    { label: 'Trang chu', href: '/' },
-                    { label: 'San pham', href: '/products' },
+                    { label: 'Trang chủ', href: '/' },
+                    { label: 'Sản phẩm', href: '/products' },
                     { label: product.name }
                 ]}
             />
@@ -46,8 +46,8 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                     <div className="product-detail-grid">
                         {/* Left: Gallery */}
                         <div className="product-gallery-column">
-                            <ProductGallery 
-                                images={productImages} 
+                            <ProductGallery
+                                images={productImages}
                                 productName={product.name}
                             />
                         </div>
@@ -72,17 +72,20 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                 {/* Product Description Tabs */}
                 <div className="product-tabs-section">
                     <div className="tabs-header">
-                        <button className="tab-btn active">Mo ta san pham</button>
-                        <button className="tab-btn">Thong tin chi tiet</button>
-                        <button className="tab-btn">Danh gia</button>
+                        <button className="tab-btn active">Mô tả sản phẩm</button>
+                        <button className="tab-btn">Thông tin chi tiết</button>
+                        <button className="tab-btn">Đánh giá</button>
                     </div>
                     <div className="tabs-content">
                         <div className="tab-panel active">
                             <div className="description-content">
                                 {product.description ? (
-                                    <p>{product.description}</p>
+                                    <div
+                                        style={{ whiteSpace: 'pre-wrap' }}
+                                        dangerouslySetInnerHTML={{ __html: product.description }}
+                                    />
                                 ) : (
-                                    <p className="no-description">Chua co mo ta cho san pham nay.</p>
+                                    <p className="no-description">Chưa có mô tả cho sản phẩm này.</p>
                                 )}
                             </div>
                         </div>
@@ -92,10 +95,10 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                 {/* Related Products */}
                 {relatedProducts.length > 0 && (
                     <div className="related-products-section">
-                        <ProductSection 
-                            title="San pham lien quan" 
-                            products={relatedProducts as any[]} 
-                            variant="four" 
+                        <ProductSection
+                            title="Sản phẩm liên quan"
+                            products={relatedProducts as any[]}
+                            variant="four"
                         />
                     </div>
                 )}

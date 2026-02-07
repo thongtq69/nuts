@@ -74,8 +74,8 @@ export default function FAQSection({
                     <div
                         key={faq._id}
                         className={`faq-item-wrapper rounded-2xl border-2 transition-all duration-300 overflow-hidden ${openIndex === index
-                                ? 'border-brand bg-white shadow-xl shadow-brand/5'
-                                : 'border-slate-100 bg-slate-50/50 hover:border-slate-200'
+                            ? 'border-brand bg-white shadow-xl shadow-brand/5'
+                            : 'border-slate-100 bg-slate-50/50 hover:border-slate-200'
                             }`}
                     >
                         <button
@@ -94,9 +94,10 @@ export default function FAQSection({
                             className={`faq-answer-container transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
                                 }`}
                         >
-                            <div className="p-5 md:p-6 pt-0 text-slate-600 leading-relaxed border-t border-slate-50 mt-1">
-                                {faq.answer}
-                            </div>
+                            <div
+                                className="p-5 md:p-6 pt-0 text-slate-600 leading-relaxed border-t border-slate-50 mt-1"
+                                dangerouslySetInnerHTML={{ __html: faq.answer }}
+                            />
                         </div>
                     </div>
                 ))}

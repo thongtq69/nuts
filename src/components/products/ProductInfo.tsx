@@ -16,12 +16,12 @@ interface ProductInfoProps {
     tags?: string[];
 }
 
-export default function ProductInfo({ 
-    id, 
-    image, 
-    name, 
-    price, 
-    originalPrice, 
+export default function ProductInfo({
+    id,
+    image,
+    name,
+    price,
+    originalPrice,
     description,
     sku,
     inStock = true,
@@ -42,7 +42,7 @@ export default function ProductInfo({
 
     const formattedPrice = formatPrice(price);
     const formattedOriginalPrice = formatPrice(originalPrice);
-    
+
     // Calculate discount percentage
     const discountPercent = (() => {
         if (!originalPrice) return 0;
@@ -68,14 +68,14 @@ export default function ProductInfo({
 
     const handleAddToCart = async () => {
         const priceValue = typeof price === 'number' ? price : parseFloat(String(price).replace(/[^\d]/g, ''));
-        
+
         if (!priceValue || isNaN(priceValue) || priceValue <= 0) {
             toast.error('Không thể thêm vào giỏ', 'Giá sản phẩm không hợp lệ');
             return;
         }
 
         setIsAddingToCart(true);
-        
+
         try {
             addToCart({
                 id,
@@ -113,7 +113,7 @@ export default function ProductInfo({
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <polyline points="20 6 9 17 4 12" />
                             </svg>
-                            Con hang
+                            Còn hàng
                         </>
                     ) : (
                         <>
@@ -122,7 +122,7 @@ export default function ProductInfo({
                                 <line x1="15" y1="9" x2="9" y2="15" />
                                 <line x1="9" y1="9" x2="15" y2="15" />
                             </svg>
-                            Het hang
+                            Hết hàng
                         </>
                     )}
                 </span>
@@ -142,9 +142,11 @@ export default function ProductInfo({
             </div>
 
             {/* Description */}
-            <div className="product-description-modern">
-                <p>{description}</p>
-            </div>
+            <div
+                className="product-description-modern"
+                style={{ whiteSpace: 'pre-wrap' }}
+                dangerouslySetInnerHTML={{ __html: description }}
+            />
 
             {/* Tags */}
             {tags.length > 0 && (
@@ -161,13 +163,13 @@ export default function ProductInfo({
             {/* Quantity & Actions */}
             <div className="purchase-section">
                 <div className="quantity-row">
-                    <span className="quantity-label">So luong:</span>
+                    <span className="quantity-label">Số lượng:</span>
                     <div className="quantity-selector-modern">
-                        <button 
+                        <button
                             className="qty-btn-modern"
                             onClick={() => handleQuantityChange(-1)}
                             disabled={quantity <= 1}
-                            aria-label="Giam so luong"
+                            aria-label="Giảm số lượng"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -181,11 +183,11 @@ export default function ProductInfo({
                             min="1"
                             max="999"
                         />
-                        <button 
+                        <button
                             className="qty-btn-modern"
                             onClick={() => handleQuantityChange(1)}
                             disabled={quantity >= 999}
-                            aria-label="Tang so luong"
+                            aria-label="Tăng số lượng"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -196,7 +198,7 @@ export default function ProductInfo({
                 </div>
 
                 <div className="action-buttons">
-                    <button 
+                    <button
                         className="btn-add-to-cart"
                         onClick={handleAddToCart}
                         disabled={isAddingToCart || !inStock}
@@ -210,11 +212,11 @@ export default function ProductInfo({
                                     <circle cx="20" cy="21" r="1" />
                                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                                 </svg>
-                                Them vao gio hang
+                                Thêm vào giỏ hàng
                             </>
                         )}
                     </button>
-                    <button 
+                    <button
                         className="btn-buy-now"
                         onClick={handleBuyNow}
                         disabled={!inStock}
@@ -239,8 +241,8 @@ export default function ProductInfo({
                         </svg>
                     </div>
                     <div className="feature-text-modern">
-                        <strong>Giao hang toan quoc</strong>
-                        <span>Mien phi don tu 500.000d</span>
+                        <strong>Giao hàng toàn quốc</strong>
+                        <span>Miễn phí đơn từ 500.000đ</span>
                     </div>
                 </div>
                 <div className="feature-item-modern">
@@ -252,8 +254,8 @@ export default function ProductInfo({
                         </svg>
                     </div>
                     <div className="feature-text-modern">
-                        <strong>Doi tra trong 7 ngay</strong>
-                        <span>Neu san pham loi tu nha san xuat</span>
+                        <strong>Đổi trả trong 7 ngày</strong>
+                        <span>Nếu sản phẩm lỗi từ nhà sản xuất</span>
                     </div>
                 </div>
                 <div className="feature-item-modern">
@@ -264,8 +266,8 @@ export default function ProductInfo({
                         </svg>
                     </div>
                     <div className="feature-text-modern">
-                        <strong>Dam bao chat luong</strong>
-                        <span>San pham chinh hang 100%</span>
+                        <strong>Đảm bảo chất lượng</strong>
+                        <span>Sản phẩm chính hãng 100%</span>
                     </div>
                 </div>
             </div>
@@ -277,7 +279,7 @@ export default function ProductInfo({
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                     </svg>
                     <div>
-                        <span>Hotline ho tro:</span>
+                        <span>Hotline hỗ trợ:</span>
                         <a href="tel:1900123456" className="hotline-number">1900 123 456</a>
                     </div>
                 </div>

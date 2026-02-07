@@ -133,10 +133,11 @@ export default function AdminProductsPage() {
                 setProducts(prev => prev.filter(p => p.id !== productId));
                 toast.success('Đã xóa sản phẩm');
             } else {
-                throw new Error('Failed to delete');
+                const data = await res.json().catch(() => null);
+                throw new Error(data?.message || 'Failed to delete');
             }
-        } catch {
-            toast.error('Lỗi xóa sản phẩm');
+        } catch (error: any) {
+            toast.error('Lỗi xóa sản phẩm', error.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
         }
     };
 
