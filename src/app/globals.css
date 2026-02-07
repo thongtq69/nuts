@@ -5004,6 +5004,10 @@ a[class*="from-orange"] {
   overflow-wrap: break-word !important;
   word-break: normal !important;
   word-wrap: break-word !important;
+  white-space: normal !important;
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  -ms-hyphens: none !important;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -5017,6 +5021,10 @@ a[class*="from-orange"] {
   overflow-wrap: break-word !important;
   word-break: normal !important;
   word-wrap: break-word !important;
+  white-space: normal !important;
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  -ms-hyphens: none !important;
 }
 
 .product-description-modern ul,

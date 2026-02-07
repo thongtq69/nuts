@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useSettings } from '@/context/SettingsContext';
+import { cleanHTMLContent } from '@/lib/textUtils';
 
 interface ProductInfoProps {
     id: string;
@@ -146,7 +147,7 @@ export default function ProductInfo({
             {/* Description */}
             <div
                 className="product-description-modern"
-                dangerouslySetInnerHTML={{ __html: String(description || '').replace(/\u00a0/g, ' ') }}
+                dangerouslySetInnerHTML={{ __html: cleanHTMLContent(description) }}
             />
 
             {/* Tags */}
