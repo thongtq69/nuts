@@ -37,6 +37,15 @@ const CATEGORIES = [
     { value: 'payment', label: 'Thanh toán' },
 ];
 
+// Helper function to strip HTML tags and decode entities for preview
+const stripHtml = (html: string): string => {
+    if (!html) return '';
+    // Create a temporary div to decode HTML entities
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+};
+
 export default function AdminFAQsPage() {
     const [faqs, setFaqs] = useState<FAQ[]>([]);
     const [loading, setLoading] = useState(true);
@@ -64,7 +73,7 @@ export default function AdminFAQsPage() {
     const fetchFAQs = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/faqs');
+            const res = await fetch('/api/faqs?admin=true');
             if (res.ok) {
                 const data = await res.json();
                 setFaqs(data);
@@ -241,8 +250,8 @@ export default function AdminFAQsPage() {
                                         <span className="font-mono text-sm text-slate-400">#{faq.order}</span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="font-semibold text-slate-800 line-clamp-1">{faq.question}</div>
-                                        <div className="text-xs text-slate-400 line-clamp-1 mt-1">{faq.answer}</div>
+                                        <div className="font-semibold text-slate-800 line-clamp-1">{stripHtml(faq.question)}</div>
+                                        <div className="text-xs text-slate-400 line-clamp-1 mt-1">{stripHtml(faq.answer)}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <Badge variant="default" className="bg-slate-50">
@@ -319,11 +328,15 @@ export default function AdminFAQsPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-slate-700">Danh mục</label>
-                                    <Select
+                                    <select
                                         value={formData.category}
                                         onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                        options={CATEGORIES}
-                                    />
+                                        className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-500"
+                                    >
+                                        {CATEGORIES.map(cat => (
+                                            <option key={cat.value} value={cat.value}>{cat.label}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-slate-700">Thứ tự hiển thị</label>

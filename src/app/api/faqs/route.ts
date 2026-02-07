@@ -10,8 +10,9 @@ export async function GET(request: NextRequest) {
         await dbConnect();
         const { searchParams } = new URL(request.url);
         const category = searchParams.get('category');
+        const admin = searchParams.get('admin'); // For admin panel, return all FAQs including inactive
 
-        const query: any = { isActive: true };
+        const query: any = admin === 'true' ? {} : { isActive: true };
         if (category) {
             query.category = category;
         }

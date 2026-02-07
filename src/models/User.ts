@@ -1,6 +1,23 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import type { Permission, RoleType } from '@/constants/permissions';
 
+export interface IUserCommissionSettings {
+    tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+    personalCommissionRate?: number;
+    overrideTeamCommission?: boolean;
+    managerId?: Schema.Types.ObjectId;
+    teamId?: Schema.Types.ObjectId;
+}
+
+export interface IUserPerformance {
+    currentMonthSales: number;
+    currentMonthOrders: number;
+    currentMonthNewCustomers: number;
+    totalSales: number;
+    totalOrders: number;
+    lastResetAt?: Date;
+}
+
 export interface IUser {
     _id?: string;
     name: string;
@@ -36,9 +53,35 @@ export interface IUser {
     staffCommissionRate?: number;
     roleType?: RoleType;
     customPermissions?: Permission[];
+    // New commission system fields
+    commissionSettings?: IUserCommissionSettings;
+    performance?: IUserPerformance;
+    lastPromotionAt?: Date;
+    consecutiveMonthsInTier?: number;
     createdAt?: Date;
     updatedAt?: Date;
 }
+
+const UserCommissionSettingsSchema = new Schema<IUserCommissionSettings>({
+    tier: {
+        type: String,
+        enum: ['bronze', 'silver', 'gold', 'platinum', 'diamond'],
+        default: 'bronze'
+    },
+    personalCommissionRate: { type: Number },
+    overrideTeamCommission: { type: Boolean, default: false },
+    managerId: { type: Schema.Types.ObjectId, ref: 'User' },
+    teamId: { type: Schema.Types.ObjectId, ref: 'Team' }
+}, { _id: false });
+
+const UserPerformanceSchema = new Schema<IUserPerformance>({
+    currentMonthSales: { type: Number, default: 0 },
+    currentMonthOrders: { type: Number, default: 0 },
+    currentMonthNewCustomers: { type: Number, default: 0 },
+    totalSales: { type: Number, default: 0 },
+    totalOrders: { type: Number, default: 0 },
+    lastResetAt: { type: Date }
+}, { _id: false });
 
 const UserSchema: Schema<IUser> = new Schema(
     {
@@ -99,9 +142,18 @@ const UserSchema: Schema<IUser> = new Schema(
                 'blogs:view', 'blogs:create', 'blogs:edit', 'blogs:delete',
                 'reports:view', 'reports:export', 'reports:financial',
                 'settings:view', 'settings:edit', 'settings:site', 'settings:payments',
-                'admin:super', 'admin:logs'
+                'admin:super', 'admin:logs',
+                // New commission permissions
+                'commission:view', 'commission:edit', 'commission:approve', 'commission:pay',
+                'kpi:view', 'kpi:edit', 'kpi:manage',
+                'teams:view', 'teams:create', 'teams:edit', 'teams:delete'
             ]
-        }]
+        }],
+        // New commission system fields
+        commissionSettings: { type: UserCommissionSettingsSchema, default: { tier: 'bronze' } },
+        performance: { type: UserPerformanceSchema, default: {} },
+        lastPromotionAt: { type: Date },
+        consecutiveMonthsInTier: { type: Number, default: 0 }
     },
     {
         timestamps: true,
@@ -110,6 +162,9 @@ const UserSchema: Schema<IUser> = new Schema(
 
 UserSchema.index({ roleType: 1 });
 UserSchema.index({ role: 1, roleType: 1 });
+UserSchema.index({ 'commissionSettings.tier': 1 });
+UserSchema.index({ 'commissionSettings.teamId': 1 });
+UserSchema.index({ 'commissionSettings.managerId': 1 });
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
