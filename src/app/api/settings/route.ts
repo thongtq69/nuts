@@ -75,6 +75,8 @@ export async function GET() {
                 siteName: 'Go Nuts Vietnam',
                 businessLicense: '0123xxxxxx',
                 workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
+                productsBannerUrl: '/assets/images/slide1.jpg',
+                productsBannerEnabled: true,
             };
 
             settings = await Settings.create(defaultSettings);

@@ -14,9 +14,22 @@ import {
     Globe,
     Megaphone,
     Truck,
-    Users
+    Users,
+    Shield,
+    RefreshCw,
+    Package,
+    ImageIcon,
+    Crop
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import ImageCropper from '@/components/admin/ImageCropper';
+
+interface ProductFeature {
+    title: string;
+    description: string;
+    icon: 'truck' | 'refresh' | 'shield';
+    enabled: boolean;
+}
 
 interface SiteSettings {
     hotline: string;
@@ -36,6 +49,10 @@ interface SiteSettings {
     siteName: string;
     businessLicense: string;
     workingHours: string;
+    productFeatures: ProductFeature[];
+    supportHotline: string;
+    productsBannerUrl: string;
+    productsBannerEnabled: boolean;
 }
 
 export default function AdminSettingsPage() {
@@ -57,9 +74,20 @@ export default function AdminSettingsPage() {
         siteName: 'Go Nuts Vietnam',
         businessLicense: '0123xxxxxx',
         workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
+        productFeatures: [
+            { title: 'Giao hàng toàn quốc', description: 'Miễn phí đơn từ 500.000đ', icon: 'truck', enabled: true },
+            { title: 'Đổi trả trong 7 ngày', description: 'Nếu sản phẩm lỗi từ nhà sản xuất', icon: 'refresh', enabled: true },
+            { title: 'Đảm bảo chất lượng', description: 'Sản phẩm chính hãng 100%', icon: 'shield', enabled: true }
+        ],
+        supportHotline: '096 118 5753',
+        productsBannerUrl: '/assets/images/slide1.jpg',
+        productsBannerEnabled: true,
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showCropper, setShowCropper] = useState(false);
+    const [cropperImageUrl, setCropperImageUrl] = useState('');
+    const [uploadingBanner, setUploadingBanner] = useState(false);
     const toast = useToast();
 
     useEffect(() => {
@@ -99,6 +127,104 @@ export default function AdminSettingsPage() {
         } finally {
             setSaving(false);
         }
+    };
+
+    // Handle file upload for products banner
+    const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Kiểm tra tỉ lệ ảnh
+        const img = new Image();
+        img.onload = async () => {
+            const aspectRatio = img.naturalWidth / img.naturalHeight;
+            const targetRatio = 3; // 3:1
+
+            // Nếu tỉ lệ không đúng (cho phép sai lệch 15%), mở cropper
+            if (Math.abs(aspectRatio - targetRatio) > 0.15) {
+                setCropperImageUrl(URL.createObjectURL(file));
+                setShowCropper(true);
+            } else {
+                // Tỉ lệ đúng, upload trực tiếp
+                await uploadBannerFile(file);
+            }
+        };
+        img.onerror = () => {
+            toast.error('Không thể đọc file ảnh', 'Vui lòng chọn file ảnh hợp lệ.');
+        };
+        img.src = URL.createObjectURL(file);
+    };
+
+    // Upload banner file to Cloudinary
+    const uploadBannerFile = async (file: File | null, croppedImageUrl?: string) => {
+        setUploadingBanner(true);
+        try {
+            let imageData: string | FormData;
+            let isBase64 = false;
+
+            if (croppedImageUrl) {
+                // Sử dụng ảnh đã crop (base64)
+                imageData = croppedImageUrl;
+                isBase64 = true;
+            } else if (file) {
+                // Upload file trực tiếp
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('folder', 'gonuts/banners');
+                formData.append('type', 'products_banner');
+                imageData = formData;
+            } else {
+                throw new Error('No file or image data provided');
+            }
+
+            let result;
+            if (isBase64) {
+                // Upload base64 (ảnh đã crop)
+                const response = await fetch('/api/upload', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageData: imageData,
+                        folder: 'gonuts/banners',
+                        type: 'products_banner',
+                        filename: 'cropped'
+                    }),
+                });
+                result = await response.json();
+            } else {
+                // Upload file
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: imageData as FormData,
+                });
+                result = await response.json();
+            }
+
+            if (result.success) {
+                setSettings({ ...settings, productsBannerUrl: result.data.url });
+                toast.success('Upload ảnh thành công');
+            } else {
+                toast.error('Upload thất bại', result.message || 'Vui lòng thử lại.');
+            }
+        } catch (error) {
+            console.error('Error uploading banner:', error);
+            toast.error('Lỗi khi upload ảnh', 'Vui lòng thử lại.');
+        } finally {
+            setUploadingBanner(false);
+            setShowCropper(false);
+            setCropperImageUrl('');
+        }
+    };
+
+    // Handle cropped image
+    const handleCroppedImage = (croppedImageUrl: string) => {
+        uploadBannerFile(null, croppedImageUrl);
+    };
+
+    // Handle cropper cancel
+    const handleCropperCancel = () => {
+        setShowCropper(false);
+        setCropperImageUrl('');
     };
 
     if (loading) {
@@ -289,6 +415,107 @@ export default function AdminSettingsPage() {
                     </div>
                 </div>
 
+                {/* Products Page Banner */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <ImageIcon className="text-brand" size={20} />
+                        Banner trang Sản phẩm
+                    </h2>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="productsBannerEnabled"
+                                checked={settings.productsBannerEnabled}
+                                onChange={e => setSettings({ ...settings, productsBannerEnabled: e.target.checked })}
+                                className="w-5 h-5 text-brand rounded focus:ring-brand"
+                            />
+                            <label htmlFor="productsBannerEnabled" className="text-sm font-medium text-slate-700">
+                                Hiển thị banner trang sản phẩm
+                            </label>
+                        </div>
+
+                        {/* Upload Info */}
+                        <div className="bg-brand/10 border border-brand/20 rounded-lg p-3">
+                            <div className="flex items-center gap-2 text-brand-dark text-sm">
+                                <span className="font-medium">💡 Khuyến nghị:</span>
+                                <span>Tỉ lệ 3:1 (VD: 1200x400px) để hiển thị tốt nhất</span>
+                            </div>
+                            <div className="text-brand text-xs mt-1">
+                                Ảnh sẽ được tự động cắt và điều chỉnh về đúng tỉ lệ
+                            </div>
+                        </div>
+
+                        {/* Upload Button */}
+                        <div className="flex gap-3">
+                            <label className="flex-1 cursor-pointer">
+                                <div className={`flex items-center justify-center gap-2 px-4 py-3 bg-brand/10 hover:bg-brand/20 text-brand font-medium rounded-lg border-2 border-brand/20 transition-all ${uploadingBanner ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                    {uploadingBanner ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <ImageIcon size={18} />
+                                    )}
+                                    <span>{uploadingBanner ? 'Đang upload...' : 'Chọn ảnh từ thiết bị'}</span>
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff"
+                                    className="hidden"
+                                    onChange={handleBannerFileUpload}
+                                    disabled={uploadingBanner}
+                                />
+                            </label>
+
+                            {settings.productsBannerUrl && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setCropperImageUrl(settings.productsBannerUrl);
+                                        setShowCropper(true);
+                                    }}
+                                    className="px-4 py-3 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark font-medium rounded-lg border-2 border-brand-light/50 transition-all flex items-center gap-2"
+                                    disabled={uploadingBanner}
+                                >
+                                    <Crop size={18} />
+                                    <span>Chỉnh sửa</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* URL Input */}
+                        <div className="relative">
+                            <div className="text-xs text-slate-500 mb-2 text-center">hoặc nhập URL</div>
+                            <input
+                                type="text"
+                                value={settings.productsBannerUrl}
+                                onChange={e => setSettings({ ...settings, productsBannerUrl: e.target.value })}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                placeholder="/assets/images/slide1.jpg"
+                            />
+                        </div>
+
+                        {/* Image Preview */}
+                        {settings.productsBannerUrl && (
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Xem trước:</label>
+                                <div className="relative w-full rounded-lg overflow-hidden border-2 border-slate-200" style={{ aspectRatio: '3/1' }}>
+                                    <img
+                                        src={settings.productsBannerUrl}
+                                        alt="Products Banner Preview"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = '/assets/images/slide1.jpg';
+                                        }}
+                                    />
+                                    <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                        Tỉ lệ 3:1
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* Agent/CTV */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -343,7 +570,98 @@ export default function AdminSettingsPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Product Features / Commitments */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+                    <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Package className="text-brand" size={20} />
+                        Thông tin cam kết sản phẩm
+                    </h2>
+                    <p className="text-sm text-slate-500 mb-4">Hiển thị dưới phần thông tin sản phẩm trên trang chi tiết</p>
+
+                    <div className="space-y-4">
+                        {settings.productFeatures?.map((feature, index) => (
+                            <div key={index} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className="flex items-center gap-2">
+                                        {feature.icon === 'truck' && <Truck className="text-brand" size={20} />}
+                                        {feature.icon === 'refresh' && <RefreshCw className="text-brand" size={20} />}
+                                        {feature.icon === 'shield' && <Shield className="text-brand" size={20} />}
+                                        <span className="font-medium text-slate-700">Cam kết {index + 1}</span>
+                                    </div>
+                                    <label className="flex items-center gap-2 ml-auto">
+                                        <input
+                                            type="checkbox"
+                                            checked={feature.enabled}
+                                            onChange={e => {
+                                                const newFeatures = [...settings.productFeatures];
+                                                newFeatures[index] = { ...feature, enabled: e.target.checked };
+                                                setSettings({ ...settings, productFeatures: newFeatures });
+                                            }}
+                                            className="w-4 h-4 text-brand rounded focus:ring-brand"
+                                        />
+                                        <span className="text-sm text-slate-600">Hiển thị</span>
+                                    </label>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Tiêu đề</label>
+                                        <input
+                                            type="text"
+                                            value={feature.title}
+                                            onChange={e => {
+                                                const newFeatures = [...settings.productFeatures];
+                                                newFeatures[index] = { ...feature, title: e.target.value };
+                                                setSettings({ ...settings, productFeatures: newFeatures });
+                                            }}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm"
+                                            placeholder="Giao hàng toàn quốc"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Mô tả</label>
+                                        <input
+                                            type="text"
+                                            value={feature.description}
+                                            onChange={e => {
+                                                const newFeatures = [...settings.productFeatures];
+                                                newFeatures[index] = { ...feature, description: e.target.value };
+                                                setSettings({ ...settings, productFeatures: newFeatures });
+                                            }}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm"
+                                            placeholder="Miễn phí đơn từ 500.000đ"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Support Hotline */}
+                    <div className="mt-6 pt-4 border-t border-slate-200">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Hotline hỗ trợ (hiển thị trên trang sản phẩm)
+                        </label>
+                        <input
+                            type="text"
+                            value={settings.supportHotline}
+                            onChange={e => setSettings({ ...settings, supportHotline: e.target.value })}
+                            className="w-full md:w-1/2 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                            placeholder="096 118 5753"
+                        />
+                    </div>
+                </div>
             </div>
+
+            {/* Image Cropper Modal */}
+            {showCropper && cropperImageUrl && (
+                <ImageCropper
+                    imageUrl={cropperImageUrl}
+                    onCrop={handleCroppedImage}
+                    onCancel={handleCropperCancel}
+                    aspectRatio={3}
+                />
+            )}
         </div>
     );
 }

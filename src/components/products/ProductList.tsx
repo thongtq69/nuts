@@ -15,9 +15,37 @@ interface ProductListProps {
     products: IProduct[];
 }
 
+interface SiteSettings {
+    productsBannerUrl?: string;
+    productsBannerEnabled?: boolean;
+}
+
 export default function ProductList({ products }: ProductListProps) {
     const searchParams = useSearchParams();
     const [sortOption, setSortOption] = useState('default');
+    const [settings, setSettings] = useState<SiteSettings>({
+        productsBannerUrl: '/assets/images/slide1.jpg',
+        productsBannerEnabled: true
+    });
+
+    // Fetch settings on mount
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch('/api/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSettings({
+                        productsBannerUrl: data.productsBannerUrl || '/assets/images/slide1.jpg',
+                        productsBannerEnabled: data.productsBannerEnabled !== false
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching settings:', error);
+            }
+        };
+        fetchSettings();
+    }, []);
     
     // Get sort parameter from URL
     const urlSort = searchParams.get('sort');
@@ -88,16 +116,18 @@ export default function ProductList({ products }: ProductListProps) {
                 <Sidebar />
 
                 <div className="product-content">
-                    <div className="product-banner">
-                        <img 
-                            src="/assets/images/slide1.jpg" 
-                            alt="Shop Banner" 
-                            className="banner-img"
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                            }}
-                        />
-                    </div>
+                    {settings.productsBannerEnabled && (
+                        <div className="product-banner">
+                            <img 
+                                src={settings.productsBannerUrl || '/assets/images/slide1.jpg'} 
+                                alt="Shop Banner" 
+                                className="banner-img"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    )}
 
                     {/* Page Title */}
                     <div className="page-header">

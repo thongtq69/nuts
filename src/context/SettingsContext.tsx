@@ -2,6 +2,13 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+interface ProductFeature {
+    title: string;
+    description: string;
+    icon: 'truck' | 'refresh' | 'shield';
+    enabled: boolean;
+}
+
 interface Settings {
     companyName?: string;
     hotline?: string;
@@ -15,6 +22,8 @@ interface Settings {
         instagram?: string;
         youtube?: string;
     };
+    productFeatures?: ProductFeature[];
+    supportHotline?: string;
 }
 
 interface SettingsContextType {

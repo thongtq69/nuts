@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { useSettings } from '@/context/SettingsContext';
 
 interface ProductInfoProps {
     id: string;
@@ -31,6 +32,7 @@ export default function ProductInfo({
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const { addToCart } = useCart();
     const toast = useToast();
+    const { settings } = useSettings();
 
     // Format price
     const formatPrice = (value: string | number | undefined): string => {
@@ -144,7 +146,7 @@ export default function ProductInfo({
             {/* Description */}
             <div
                 className="product-description-modern"
-                dangerouslySetInnerHTML={{ __html: description }}
+                dangerouslySetInnerHTML={{ __html: String(description || '').replace(/\u00a0/g, ' ') }}
             />
 
             {/* Tags */}
@@ -230,45 +232,41 @@ export default function ProductInfo({
 
             {/* Features */}
             <div className="product-features">
-                <div className="feature-item-modern">
-                    <div className="feature-icon-modern">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="1" y="3" width="15" height="13" />
-                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-                            <circle cx="5.5" cy="18.5" r="2.5" />
-                            <circle cx="18.5" cy="18.5" r="2.5" />
-                        </svg>
+                {(settings?.productFeatures || [
+                    { title: 'Giao hàng toàn quốc', description: 'Miễn phí đơn từ 500.000đ', icon: 'truck', enabled: true },
+                    { title: 'Đổi trả trong 7 ngày', description: 'Nếu sản phẩm lỗi từ nhà sản xuất', icon: 'refresh', enabled: true },
+                    { title: 'Đảm bảo chất lượng', description: 'Sản phẩm chính hãng 100%', icon: 'shield', enabled: true }
+                ]).filter(f => f.enabled).map((feature, index) => (
+                    <div key={index} className="feature-item-modern">
+                        <div className="feature-icon-modern">
+                            {feature.icon === 'truck' && (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <rect x="1" y="3" width="15" height="13" />
+                                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                                    <circle cx="5.5" cy="18.5" r="2.5" />
+                                    <circle cx="18.5" cy="18.5" r="2.5" />
+                                </svg>
+                            )}
+                            {feature.icon === 'refresh' && (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="23 4 23 10 17 10" />
+                                    <polyline points="1 20 1 14 7 14" />
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                </svg>
+                            )}
+                            {feature.icon === 'shield' && (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                    <polyline points="9 12 11 14 15 10" />
+                                </svg>
+                            )}
+                        </div>
+                        <div className="feature-text-modern">
+                            <strong>{feature.title}</strong>
+                            <span>{feature.description}</span>
+                        </div>
                     </div>
-                    <div className="feature-text-modern">
-                        <strong>Giao hàng toàn quốc</strong>
-                        <span>Miễn phí đơn từ 500.000đ</span>
-                    </div>
-                </div>
-                <div className="feature-item-modern">
-                    <div className="feature-icon-modern">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="23 4 23 10 17 10" />
-                            <polyline points="1 20 1 14 7 14" />
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                        </svg>
-                    </div>
-                    <div className="feature-text-modern">
-                        <strong>Đổi trả trong 7 ngày</strong>
-                        <span>Nếu sản phẩm lỗi từ nhà sản xuất</span>
-                    </div>
-                </div>
-                <div className="feature-item-modern">
-                    <div className="feature-icon-modern">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                            <polyline points="9 12 11 14 15 10" />
-                        </svg>
-                    </div>
-                    <div className="feature-text-modern">
-                        <strong>Đảm bảo chất lượng</strong>
-                        <span>Sản phẩm chính hãng 100%</span>
-                    </div>
-                </div>
+                ))}
             </div>
 
             {/* Contact Support */}
@@ -279,7 +277,9 @@ export default function ProductInfo({
                     </svg>
                     <div>
                         <span>Hotline hỗ trợ:</span>
-                        <a href="tel:1900123456" className="hotline-number">1900 123 456</a>
+                        <a href={`tel:${(settings?.supportHotline || '1900 123 456').replace(/\s/g, '')}`} className="hotline-number">
+                            {settings?.supportHotline || '1900 123 456'}
+                        </a>
                     </div>
                 </div>
             </div>

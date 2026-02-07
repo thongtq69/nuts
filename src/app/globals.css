@@ -5001,21 +5001,22 @@ a[class*="from-orange"] {
   line-height: 1.7;
   font-size: 15px;
   margin-bottom: var(--spacing-md);
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  word-wrap: break-word !important;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  text-align: left;
 }
 
 .product-description-modern p,
 .description-content p,
 .faq-answer-container p {
   margin-bottom: 1rem;
-  overflow-wrap: break-word;
-  white-space: pre-wrap;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  word-wrap: break-word !important;
 }
 
 .product-description-modern ul,
@@ -5326,6 +5327,10 @@ a[class*="from-orange"] {
   color: #555;
   line-height: 1.8;
   font-size: 15px;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  word-wrap: break-word !important;
+  text-align: left;
 }
 
 .description-content p {
@@ -5889,9 +5894,11 @@ a[class*="from-orange"] {
   font-size: 16px;
   line-height: 1.8;
   color: var(--color-text-dark);
-  overflow-wrap: break-word !important;
+  overflow-wrap: normal !important;
   word-break: normal !important;
+  word-wrap: normal !important;
   line-break: relaxed !important;
+  text-align: left;
 }
 
 .blog-content p {
