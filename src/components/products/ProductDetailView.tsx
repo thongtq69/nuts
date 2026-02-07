@@ -16,17 +16,44 @@ interface ProductDetailViewProps {
 }
 
 export default function ProductDetailView({ product, relatedProducts }: ProductDetailViewProps) {
-    // Handle case where images array is empty - use main image
-    const productImages = (product.images && product.images.length > 0)
-        ? product.images
-        : product.image
-            ? [product.image]
-            : ['/assets/images/product1.jpg'];
+    const [activeTab, setActiveTab] = React.useState<'description' | 'specs' | 'reviews'>('description');
 
-    // Fallback for single image display
-    const mainImage = (product.images && product.images.length > 0)
-        ? product.images[0]
-        : product.image || '/assets/images/product1.jpg';
+    // Process images: Main image should be first, followed by gallery images
+    const productImages = React.useMemo(() => {
+        const allImages: string[] = [];
+        if (product.image) {
+            allImages.push(product.image);
+        }
+
+        if (product.images && Array.isArray(product.images)) {
+            product.images.forEach(img => {
+                if (img && img !== product.image && !allImages.includes(img)) {
+                    allImages.push(img);
+                }
+            });
+        }
+
+        return allImages.length > 0 ? allImages : ['/assets/images/product1.jpg'];
+    }, [product.image, product.images]);
+
+    const mainImage = productImages[0];
+
+    // Logical description splitting: Summary at top, split details in tabs
+    const { intro, specs } = React.useMemo(() => {
+        if (!product.description) return { intro: '', specs: '' };
+
+        const separatorRegex = /<hr\/?>|----------------------------------------|THÔNG TIN CHI TIẾT SẢN PHẨM:/i;
+        const parts = product.description.split(separatorRegex);
+
+        if (parts.length > 1) {
+            return {
+                intro: parts[0].trim(),
+                specs: product.description.substring(parts[0].length).trim()
+            };
+        }
+
+        return { intro: product.description, specs: '' };
+    }, [product.description]);
 
     return (
         <main className="product-detail-page">
@@ -60,7 +87,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                 name={product.name}
                                 price={product.currentPrice}
                                 originalPrice={product.originalPrice}
-                                description={product.description || ''}
+                                description={intro || product.description || ''}
                                 sku={product.sku}
                                 inStock={product.stockStatus !== 'out_of_stock'}
                                 tags={product.tags}
@@ -72,22 +99,81 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                 {/* Product Description Tabs */}
                 <div className="product-tabs-section">
                     <div className="tabs-header">
-                        <button className="tab-btn active">Mô tả sản phẩm</button>
-                        <button className="tab-btn">Thông tin chi tiết</button>
-                        <button className="tab-btn">Đánh giá</button>
+                        <button
+                            className={`tab-btn ${activeTab === 'description' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('description')}
+                        >
+                            Mô tả sản phẩm
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'specs' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('specs')}
+                        >
+                            Thông tin chi tiết
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('reviews')}
+                        >
+                            Đánh giá
+                        </button>
                     </div>
                     <div className="tabs-content">
-                        <div className="tab-panel active">
-                            <div className="description-content">
-                                {product.description ? (
-                                    <div
-                                        dangerouslySetInnerHTML={{ __html: product.description }}
-                                    />
-                                ) : (
-                                    <p className="no-description">Chưa có mô tả cho sản phẩm này.</p>
-                                )}
+                        {activeTab === 'description' && (
+                            <div className="tab-panel active">
+                                <div className="description-content">
+                                    {product.description ? (
+                                        <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                                    ) : (
+                                        <p className="no-description">Chưa có mô tả cho sản phẩm này.</p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
+
+                        {activeTab === 'specs' && (
+                            <div className="tab-panel active">
+                                <div className="description-content">
+                                    {specs ? (
+                                        <div dangerouslySetInnerHTML={{ __html: specs }} />
+                                    ) : (
+                                        <div className="specs-list bg-slate-50 p-6 rounded-2xl space-y-3">
+                                            {product.sku && (
+                                                <div className="flex justify-between py-2 border-b border-slate-200">
+                                                    <span className="font-medium text-slate-600">Mã sản phẩm:</span>
+                                                    <span className="text-slate-900">{product.sku}</span>
+                                                </div>
+                                            )}
+                                            {product.category && (
+                                                <div className="flex justify-between py-2 border-b border-slate-200">
+                                                    <span className="font-medium text-slate-600">Danh mục:</span>
+                                                    <span className="text-slate-900">{product.category}</span>
+                                                </div>
+                                            )}
+                                            {product.weight && (
+                                                <div className="flex justify-between py-2 border-b border-slate-200">
+                                                    <span className="font-medium text-slate-600">Trọng lượng:</span>
+                                                    <span className="text-slate-900">{product.weight} kg</span>
+                                                </div>
+                                            )}
+                                            {!product.sku && !product.category && !product.weight && (
+                                                <p className="no-description">Thông tin chi tiết đang được cập nhật.</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'reviews' && (
+                            <div className="tab-panel active">
+                                <div className="reviews-placeholder">
+                                    <p className="text-slate-500 text-center py-10 italic">
+                                        Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên đánh giá!
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
