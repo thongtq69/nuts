@@ -59,7 +59,6 @@ const menuSections = [
         title: 'Nội dung',
         items: [
             { href: '/admin/blogs', icon: PenTool, label: 'Bài viết' },
-            { href: '/admin/events', icon: Calendar, label: 'Sự kiện' },
             { href: '/admin/banners', icon: ImageIcon, label: 'Banner' },
             { href: '/admin/contacts', icon: Mail, label: 'Liên hệ' },
             { href: '/admin/faqs', icon: Sparkles, label: 'Câu hỏi thường gặp' },

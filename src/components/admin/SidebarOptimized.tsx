@@ -86,7 +86,6 @@ const defaultNavItems: NavItem[] = [
         children: [
             { label: 'Banners', href: '/admin/banners' },
             { label: 'Blogs', href: '/admin/blogs' },
-            { label: 'Sự kiện', href: '/admin/events' },
             { label: 'Danh mục sản phẩm', href: '/admin/product-tags' },
         ],
     },
