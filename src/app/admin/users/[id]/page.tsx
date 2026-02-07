@@ -3,17 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-    ArrowLeft, 
-    User, 
-    Mail, 
-    Phone, 
-    Calendar, 
-    MapPin, 
-    Shield, 
-    CreditCard, 
-    Package, 
-    Ticket, 
+import {
+    ArrowLeft,
+    User,
+    Mail,
+    Phone,
+    Calendar,
+    MapPin,
+    Shield,
+    CreditCard,
+    Package,
+    Ticket,
     ShoppingBag,
     Edit2,
     Trash2,
@@ -34,7 +34,8 @@ interface UserDetail {
     name: string;
     email: string;
     phone?: string;
-    role: 'user' | 'sale' | 'admin';
+    role: 'user' | 'sale' | 'admin' | 'staff';
+
     saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
     createdAt: string;
     lastLogin?: string;
@@ -114,7 +115,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
     const handleToggleActive = async () => {
         if (!user) return;
-        
+
         try {
             setUpdating(true);
             const res = await fetch(`/api/admin/users/${userId}`, {
@@ -146,7 +147,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         });
 
         if (!confirmed) return;
-        
+
         try {
             setUpdating(true);
             const res = await fetch(`/api/admin/users/${userId}`, {
@@ -187,17 +188,21 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
     const getRoleColor = (role: string) => {
         switch (role) {
-            case 'admin': return 'bg-brand/10 text-brand border-brand/20';
-            case 'sale': return 'bg-brand-light/30 text-brand-dark border-brand-light/50';
+            case 'admin': return 'bg-red-100 text-red-600 border-red-200';
+            case 'sale': return 'bg-amber-100 text-amber-600 border-amber-200';
+            case 'staff': return 'bg-violet-100 text-violet-600 border-violet-200';
             default: return 'bg-slate-100 text-slate-600 border-slate-200';
+
         }
     };
 
     const getRoleIcon = (role: string) => {
         switch (role) {
-            case 'admin': return <Crown size={16} />;
+            case 'admin': return <Shield size={16} />;
             case 'sale': return <Users size={16} />;
+            case 'staff': return <Crown size={16} />;
             default: return <User size={16} />;
+
         }
     };
 
@@ -206,7 +211,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link 
+                    <Link
                         href="/admin/users"
                         className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                     >
@@ -217,20 +222,19 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                         <p className="text-slate-500">Thông tin chi tiết và quản lý người dùng</p>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <button
                         onClick={handleToggleActive}
                         disabled={updating}
-                        className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                            user.isActive 
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                        className={`px-4 py-2 rounded-lg font-medium transition-all ${user.isActive
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
                                 : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
+                            }`}
                     >
                         {user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                     </button>
-                    
+
                     {user.role !== 'admin' && (
                         <button
                             onClick={handleDelete}
@@ -260,11 +264,13 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                     <div className="flex items-center gap-2 mt-2">
                                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${getRoleColor(user.role)}`}>
                                             {getRoleIcon(user.role)}
-                                            {user.role === 'user' ? 'Khách hàng' : user.role === 'sale' ? 'Đại lý' : 'Admin'}
+                                            {user.role === 'user' ? 'Khách hàng' :
+                                                user.role === 'sale' ? 'Đại lý' :
+                                                    user.role === 'staff' ? 'Nhân viên' : 'Admin'}
+
                                         </span>
-                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
-                                            user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                        }`}>
+                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                            }`}>
                                             {user.isActive ? <CheckCircle size={14} /> : <XCircle size={14} />}
                                             {user.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
                                         </span>
@@ -283,7 +289,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                             <p className="font-medium">{user.email}</p>
                                         </div>
                                     </div>
-                                    
+
                                     {user.phone && (
                                         <div className="flex items-center gap-3">
                                             <Phone className="text-slate-400" size={18} />
@@ -325,8 +331,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                     )}
 
                                     {user.saleApplicationStatus === 'pending' && (
-                        <div className="bg-brand-light/30 border border-brand-light/50 rounded-lg p-3">
-                            <p className="text-brand-dark font-medium text-sm">
+                                        <div className="bg-brand-light/30 border border-brand-light/50 rounded-lg p-3">
+                                            <p className="text-brand-dark font-medium text-sm">
                                                 🕐 Đang chờ duyệt đăng ký đại lý
                                             </p>
                                         </div>
@@ -342,27 +348,57 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                             <Shield className="text-brand" size={20} />
                             Quản lý quyền
                         </h3>
-                        
+
                         <div className="flex gap-3">
                             {user.role === 'user' && !user.saleApplicationStatus && (
-                                <button
-                                    onClick={() => handleRoleChange('sale')}
-                                    disabled={updating}
-                                    className="px-4 py-2 bg-brand-light/30 text-brand-dark hover:bg-brand-light/50 rounded-lg font-medium transition-all"
-                                >
-                                    Nâng cấp thành Đại lý
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleRoleChange('sale')}
+                                        disabled={updating}
+                                        className="px-4 py-2 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg font-medium transition-all"
+                                    >
+                                        Nâng cấp Đại lý
+                                    </button>
+                                    <button
+                                        onClick={() => handleRoleChange('staff')}
+                                        disabled={updating}
+                                        className="px-4 py-2 bg-violet-100 text-violet-700 hover:bg-violet-200 rounded-lg font-medium transition-all"
+                                    >
+                                        Nâng cấp Nhân viên
+                                    </button>
+                                </div>
                             )}
-                            
-                            {user.role === 'sale' && (
-                                <button
-                                    onClick={() => handleRoleChange('user')}
-                                    disabled={updating}
-                                    className="px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition-all"
-                                >
-                                    Hạ cấp xuống Khách hàng
-                                </button>
+
+                            {(user.role === 'sale' || user.role === 'staff') && (
+                                <div className="flex gap-2">
+                                    {user.role === 'sale' && (
+                                        <button
+                                            onClick={() => handleRoleChange('staff')}
+                                            disabled={updating}
+                                            className="px-4 py-2 bg-violet-100 text-violet-700 hover:bg-violet-200 rounded-lg font-medium transition-all"
+                                        >
+                                            Chuyển thành Nhân viên
+                                        </button>
+                                    )}
+                                    {user.role === 'staff' && (
+                                        <button
+                                            onClick={() => handleRoleChange('sale')}
+                                            disabled={updating}
+                                            className="px-4 py-2 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg font-medium transition-all"
+                                        >
+                                            Chuyển thành Đại lý
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleRoleChange('user')}
+                                        disabled={updating}
+                                        className="px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition-all"
+                                    >
+                                        Hạ cấp xuống Khách hàng
+                                    </button>
+                                </div>
                             )}
+
 
                             {user.saleApplicationStatus === 'pending' && (
                                 <div className="flex gap-2">
@@ -414,7 +450,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                             <TrendingUp className="text-green-600" size={20} />
                             Thống kê
                         </h3>
-                        
+
                         <div className="space-y-4">
                             <div className="flex items-center justify-between p-3 bg-brand/10 rounded-lg">
                                 <div className="flex items-center gap-3">
@@ -423,7 +459,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                 </div>
                                 <span className="font-bold text-brand">{user.totalOrders}</span>
                             </div>
-                            
+
                             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <CreditCard className="text-green-600" size={18} />
@@ -433,7 +469,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                     {new Intl.NumberFormat('vi-VN').format(user.totalSpent)}đ
                                 </span>
                             </div>
-                            
+
                             <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <Package className="text-purple-600" size={18} />
@@ -441,7 +477,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                 </div>
                                 <span className="font-bold text-purple-600">{user.membershipPackages.length}</span>
                             </div>
-                            
+
                             <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <Ticket className="text-amber-600" size={18} />
@@ -455,7 +491,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                     {/* Đơn hàng gần đây */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                         <h3 className="text-lg font-bold text-slate-800 mb-4">Đơn hàng gần đây</h3>
-                        
+
                         {user.recentOrders.length > 0 ? (
                             <div className="space-y-3">
                                 {user.recentOrders.slice(0, 5).map((order: any) => (
@@ -466,18 +502,17 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-sm">{new Intl.NumberFormat('vi-VN').format(order.total)}đ</p>
-                                            <span className={`text-xs px-2 py-1 rounded-full ${
-                                                order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                                'bg-blue-100 text-blue-700'
-                                            }`}>
+                                            <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                    order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                                        'bg-blue-100 text-blue-700'
+                                                }`}>
                                                 {order.status}
                                             </span>
                                         </div>
                                     </div>
                                 ))}
-                                
-                                <Link 
+
+                                <Link
                                     href={`/admin/orders?userId=${userId}`}
                                     className="block text-center text-blue-600 hover:underline text-sm mt-3"
                                 >

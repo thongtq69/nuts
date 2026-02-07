@@ -81,12 +81,17 @@ export default function CommissionUsersPage() {
             const usersData = await usersRes.json();
             const tiersData = await tiersRes.json();
 
-            if (usersData.success) {
+            // Handle users data (it might be an array or { success: true, users: [] })
+            if (Array.isArray(usersData)) {
+                setUsers(usersData);
+            } else if (usersData.success) {
                 setUsers(usersData.users || usersData.data || []);
             }
+
             if (tiersData.success) {
                 setTiers(tiersData.data || []);
             }
+
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {

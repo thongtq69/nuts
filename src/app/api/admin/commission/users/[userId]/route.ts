@@ -9,9 +9,10 @@ import mongoose from 'mongoose';
 // GET - Get user's commission settings and performance
 export async function GET(
     request: NextRequest,
-    { params }: { params: { userId: string } }
+    { params }: { params: Promise<{ userId: string }> }
 ) {
     try {
+        const { userId } = await params;
         const session = await verifyToken();
         if (!session) {
             return NextResponse.json(
@@ -22,7 +23,6 @@ export async function GET(
 
         await dbConnect();
 
-        const { userId } = params;
 
         // Non-admin can only view their own data
         if (session.role !== 'admin' && session.id !== userId) {
@@ -185,7 +185,7 @@ export async function GET(
 // PATCH - Update user's commission settings
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { userId: string } }
+    { params }: { params: Promise<{ userId: string }> }
 ) {
     try {
         const session = await verifyToken();
@@ -198,7 +198,8 @@ export async function PATCH(
 
         await dbConnect();
 
-        const { userId } = params;
+        const { userId } = await params;
+
         const body = await request.json();
 
         const user = await User.findById(userId);

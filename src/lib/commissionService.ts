@@ -94,8 +94,12 @@ export class CommissionService {
         const manager = await User.findById(user.commissionSettings.managerId);
         if (!manager) return;
 
+        // Ensure only sale/staff get team commission
+        if (!['sale', 'staff'].includes(manager.role)) return;
+
         const managerTier = await this.getUserTier(manager);
         if (!managerTier || managerTier.commissionRates.teamSaleL1 <= 0) return;
+
 
         const rate = managerTier.commissionRates.teamSaleL1;
         const commissionAmount = Math.round(order.totalAmount * (rate / 100));
@@ -115,14 +119,15 @@ export class CommissionService {
             commissionRate: rate,
             commissionAmount,
             currency: 'VND',
-            sourceUserId: user._id as mongoose.Types.ObjectId,
+            sourceUserId: new mongoose.Types.ObjectId(user._id as string),
             sourceUserName: user.name,
             sourceUserTier: user.commissionSettings?.tier || 'bronze',
-            teamId: user.commissionSettings?.teamId,
+            teamId: user.commissionSettings?.teamId as any,
             periodYear,
             periodMonth,
             status: 'pending'
         });
+
     }
 
     /**
@@ -142,8 +147,12 @@ export class CommissionService {
         const l2Manager = await User.findById(manager.commissionSettings.managerId);
         if (!l2Manager) return;
 
+        // Ensure only sale/staff get team commission
+        if (!['sale', 'staff'].includes(l2Manager.role)) return;
+
         const l2Tier = await this.getUserTier(l2Manager);
         if (!l2Tier || !l2Tier.commissionRates.teamSaleL2 || l2Tier.commissionRates.teamSaleL2 <= 0) return;
+
 
         const rate = l2Tier.commissionRates.teamSaleL2;
         const commissionAmount = Math.round(order.totalAmount * (rate / 100));
@@ -163,13 +172,14 @@ export class CommissionService {
             commissionRate: rate,
             commissionAmount,
             currency: 'VND',
-            sourceUserId: user._id as mongoose.Types.ObjectId,
+            sourceUserId: new mongoose.Types.ObjectId(user._id as string),
             sourceUserName: user.name,
             sourceUserTier: user.commissionSettings?.tier || 'bronze',
             periodYear,
             periodMonth,
             status: 'pending'
         });
+
     }
 
     /**
@@ -295,19 +305,20 @@ export class CommissionService {
         // Check team size
         if (reqs.minTeamSize && reqs.minTeamSize > 0) {
             const teamSize = await User.countDocuments({
-                'commissionSettings.managerId': user._id,
+                'commissionSettings.managerId': new mongoose.Types.ObjectId(user._id as string),
                 role: { $in: ['sale', 'staff'] }
-            });
+            } as any);
             if (teamSize < reqs.minTeamSize) {
                 return false;
             }
         }
 
+
         // Check team sales
         if (reqs.minTeamSales && reqs.minTeamSales > 0) {
             const teamMembers = await User.find({
-                'commissionSettings.managerId': user._id
-            });
+                'commissionSettings.managerId': new mongoose.Types.ObjectId(user._id as string)
+            } as any);
             const teamSales = teamMembers.reduce(
                 (sum, m) => sum + (m.performance?.currentMonthSales || 0),
                 0
@@ -316,6 +327,7 @@ export class CommissionService {
                 return false;
             }
         }
+
 
         // Check consecutive months (only if > 1)
         if (reqs.consecutiveMonths && reqs.consecutiveMonths > 1) {
