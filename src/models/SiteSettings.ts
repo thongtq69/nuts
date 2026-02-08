@@ -44,6 +44,14 @@ export interface ISiteSettings {
     productsBannerUrl: string;
     productsBannerEnabled: boolean;
 
+    // Home Page Large Promo Banner
+    homePromoBannerUrl: string;
+    homePromoBannerTitle: string;
+    homePromoBannerButtonText: string;
+    homePromoBannerButtonLink: string;
+    homePromoBannerNote: string;
+    homePromoBannerEnabled: boolean;
+
     updatedAt?: Date;
 }
 
@@ -90,6 +98,14 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         // Products Page Banner
         productsBannerUrl: { type: String, default: '/assets/images/slide1.jpg' },
         productsBannerEnabled: { type: Boolean, default: true },
+
+        // Home Page Large Promo Banner
+        homePromoBannerUrl: { type: String, default: '/assets/images/promotion.png' },
+        homePromoBannerTitle: { type: String, default: "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE" },
+        homePromoBannerButtonText: { type: String, default: 'BUY MORE, WIN MORE' },
+        homePromoBannerButtonLink: { type: String, default: '#' },
+        homePromoBannerNote: { type: String, default: '*Jersey & Miniature Bat' },
+        homePromoBannerEnabled: { type: Boolean, default: true },
     },
     {
         timestamps: true,

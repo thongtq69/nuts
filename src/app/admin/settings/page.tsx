@@ -53,6 +53,12 @@ interface SiteSettings {
     supportHotline: string;
     productsBannerUrl: string;
     productsBannerEnabled: boolean;
+    homePromoBannerUrl: string;
+    homePromoBannerTitle: string;
+    homePromoBannerButtonText: string;
+    homePromoBannerButtonLink: string;
+    homePromoBannerNote: string;
+    homePromoBannerEnabled: boolean;
 }
 
 export default function AdminSettingsPage() {
@@ -82,12 +88,19 @@ export default function AdminSettingsPage() {
         supportHotline: '096 118 5753',
         productsBannerUrl: '/assets/images/slide1.jpg',
         productsBannerEnabled: true,
+        homePromoBannerUrl: '/assets/images/promotion.png',
+        homePromoBannerTitle: "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE",
+        homePromoBannerButtonText: 'BUY MORE, WIN MORE',
+        homePromoBannerButtonLink: '#',
+        homePromoBannerNote: '*Jersey & Miniature Bat',
+        homePromoBannerEnabled: true,
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showCropper, setShowCropper] = useState(false);
     const [cropperImageUrl, setCropperImageUrl] = useState('');
     const [uploadingBanner, setUploadingBanner] = useState(false);
+    const [bannerType, setBannerType] = useState<'products' | 'homePromo'>('products');
     const toast = useToast();
 
     useEffect(() => {
@@ -129,16 +142,18 @@ export default function AdminSettingsPage() {
         }
     };
 
-    // Handle file upload for products banner
-    const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handle file upload for banners
+    const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'products' | 'homePromo') => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        setBannerType(type);
 
         // Kiểm tra tỉ lệ ảnh
         const img = new Image();
         img.onload = async () => {
             const aspectRatio = img.naturalWidth / img.naturalHeight;
-            const targetRatio = 3; // 3:1
+            const targetRatio = type === 'products' ? 3 : 3; // Using 3:1 for both for consistency, or adjust as needed
 
             // Nếu tỉ lệ không đúng (cho phép sai lệch 15%), mở cropper
             if (Math.abs(aspectRatio - targetRatio) > 0.15) {
@@ -201,7 +216,11 @@ export default function AdminSettingsPage() {
             }
 
             if (result.success) {
-                setSettings({ ...settings, productsBannerUrl: result.data.url });
+                if (bannerType === 'products') {
+                    setSettings({ ...settings, productsBannerUrl: result.data.url });
+                } else {
+                    setSettings({ ...settings, homePromoBannerUrl: result.data.url });
+                }
                 toast.success('Upload ảnh thành công');
             } else {
                 toast.error('Upload thất bại', result.message || 'Vui lòng thử lại.');
@@ -461,7 +480,7 @@ export default function AdminSettingsPage() {
                                     type="file"
                                     accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff"
                                     className="hidden"
-                                    onChange={handleBannerFileUpload}
+                                    onChange={(e) => handleBannerFileUpload(e, 'products')}
                                     disabled={uploadingBanner}
                                 />
                             </label>
@@ -509,6 +528,131 @@ export default function AdminSettingsPage() {
                                     />
                                     <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                                         Tỉ lệ 3:1
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Home Page Promo Banner */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Megaphone className="text-brand" size={20} />
+                        Banner Khuyến mãi Trang chủ
+                    </h2>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="homePromoBannerEnabled"
+                                checked={settings.homePromoBannerEnabled}
+                                onChange={e => setSettings({ ...settings, homePromoBannerEnabled: e.target.checked })}
+                                className="w-5 h-5 text-brand rounded focus:ring-brand"
+                            />
+                            <label htmlFor="homePromoBannerEnabled" className="text-sm font-medium text-slate-700">
+                                Hiển thị banner này
+                            </label>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Tiêu đề (Hỗ trợ &lt;br /&gt;)</label>
+                            <input
+                                type="text"
+                                value={settings.homePromoBannerTitle}
+                                onChange={e => setSettings({ ...settings, homePromoBannerTitle: e.target.value })}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                placeholder="WIN RAHUL DRAVID'S..."
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Chữ trên nút</label>
+                                <input
+                                    type="text"
+                                    value={settings.homePromoBannerButtonText}
+                                    onChange={e => setSettings({ ...settings, homePromoBannerButtonText: e.target.value })}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                    placeholder="BUY MORE, WIN MORE"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Link trên nút</label>
+                                <input
+                                    type="text"
+                                    value={settings.homePromoBannerButtonLink}
+                                    onChange={e => setSettings({ ...settings, homePromoBannerButtonLink: e.target.value })}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                    placeholder="/products"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Ghi chú nhỏ</label>
+                            <input
+                                type="text"
+                                value={settings.homePromoBannerNote}
+                                onChange={e => setSettings({ ...settings, homePromoBannerNote: e.target.value })}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                placeholder="*Jersey & Miniature Bat"
+                            />
+                        </div>
+
+                        <div className="bg-brand/10 border border-brand/20 rounded-lg p-3">
+                            <div className="text-brand-dark text-xs">
+                                💡 Banner này có kích thước đặc biệt, khuyến nghị dùng ảnh có chủ thể bên phải.
+                            </div>
+                        </div>
+
+                        {/* Upload Button */}
+                        <div className="flex gap-3">
+                            <label className="flex-1 cursor-pointer">
+                                <div className={`flex items-center justify-center gap-2 px-4 py-3 bg-brand/10 hover:bg-brand/20 text-brand font-medium rounded-lg border-2 border-brand/20 transition-all ${uploadingBanner ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                    {uploadingBanner && bannerType === 'homePromo' ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <ImageIcon size={18} />
+                                    )}
+                                    <span>{uploadingBanner && bannerType === 'homePromo' ? 'Đang upload...' : 'Chọn ảnh mới'}</span>
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => handleBannerFileUpload(e, 'homePromo')}
+                                    disabled={uploadingBanner}
+                                />
+                            </label>
+
+                            {settings.homePromoBannerUrl && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setBannerType('homePromo');
+                                        setCropperImageUrl(settings.homePromoBannerUrl);
+                                        setShowCropper(true);
+                                    }}
+                                    className="px-4 py-3 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark font-medium rounded-lg border-2 border-brand-light/50 transition-all flex items-center gap-2"
+                                >
+                                    <Crop size={18} />
+                                    <span>Cắt ảnh</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Image Preview */}
+                        {settings.homePromoBannerUrl && (
+                            <div className="mt-4">
+                                <div className="relative w-full rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-100" style={{ aspectRatio: '3/1' }}>
+                                    <img
+                                        src={settings.homePromoBannerUrl}
+                                        alt="Home Promo Preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                        <span className="bg-white/90 px-3 py-1 rounded-full text-xs font-bold text-brand">Xem trước Banner Trang Chủ</span>
                                     </div>
                                 </div>
                             </div>
@@ -659,7 +803,7 @@ export default function AdminSettingsPage() {
                     imageUrl={cropperImageUrl}
                     onCrop={handleCroppedImage}
                     onCancel={handleCropperCancel}
-                    aspectRatio={3}
+                    aspectRatio={bannerType === 'products' ? 3 : 2}
                 />
             )}
         </div>

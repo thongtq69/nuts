@@ -21,6 +21,14 @@ interface SiteSettings {
     siteName: string;
     businessLicense: string;
     workingHours: string;
+    productsBannerUrl: string;
+    productsBannerEnabled: boolean;
+    homePromoBannerUrl: string;
+    homePromoBannerTitle: string;
+    homePromoBannerButtonText: string;
+    homePromoBannerButtonLink: string;
+    homePromoBannerNote: string;
+    homePromoBannerEnabled: boolean;
     updatedAt: Date;
 }
 
@@ -43,6 +51,14 @@ const settingsSchema = new mongoose.Schema({
     siteName: { type: String, default: '' },
     businessLicense: { type: String, default: '' },
     workingHours: { type: String, default: '' },
+    productsBannerUrl: { type: String, default: '/assets/images/slide1.jpg' },
+    productsBannerEnabled: { type: Boolean, default: true },
+    homePromoBannerUrl: { type: String, default: '/assets/images/promotion.png' },
+    homePromoBannerTitle: { type: String, default: "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE" },
+    homePromoBannerButtonText: { type: String, default: 'BUY MORE, WIN MORE' },
+    homePromoBannerButtonLink: { type: String, default: '#' },
+    homePromoBannerNote: { type: String, default: '*Jersey & Miniature Bat' },
+    homePromoBannerEnabled: { type: Boolean, default: true },
     updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
@@ -77,6 +93,12 @@ export async function GET() {
                 workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
                 productsBannerUrl: '/assets/images/slide1.jpg',
                 productsBannerEnabled: true,
+                homePromoBannerUrl: '/assets/images/promotion.png',
+                homePromoBannerTitle: "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE",
+                homePromoBannerButtonText: 'BUY MORE, WIN MORE',
+                homePromoBannerButtonLink: '#',
+                homePromoBannerNote: '*Jersey & Miniature Bat',
+                homePromoBannerEnabled: true,
             };
 
             settings = await Settings.create(defaultSettings);
