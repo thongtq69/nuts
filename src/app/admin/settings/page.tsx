@@ -153,7 +153,7 @@ export default function AdminSettingsPage() {
         const img = new Image();
         img.onload = async () => {
             const aspectRatio = img.naturalWidth / img.naturalHeight;
-            const targetRatio = type === 'products' ? 3 : 3; // Using 3:1 for both for consistency, or adjust as needed
+            const targetRatio = type === 'products' ? 3 : 2;
 
             // Nếu tỉ lệ không đúng (cho phép sai lệch 15%), mở cropper
             if (Math.abs(aspectRatio - targetRatio) > 0.15) {
@@ -216,11 +216,11 @@ export default function AdminSettingsPage() {
             }
 
             if (result.success) {
-                if (bannerType === 'products') {
-                    setSettings({ ...settings, productsBannerUrl: result.data.url });
-                } else {
-                    setSettings({ ...settings, homePromoBannerUrl: result.data.url });
-                }
+                const newUrl = result.data.url;
+                setSettings(prev => ({
+                    ...prev,
+                    [bannerType === 'products' ? 'productsBannerUrl' : 'homePromoBannerUrl']: newUrl
+                }));
                 toast.success('Upload ảnh thành công');
             } else {
                 toast.error('Upload thất bại', result.message || 'Vui lòng thử lại.');
@@ -267,7 +267,7 @@ export default function AdminSettingsPage() {
                 </div>
                 <button
                     onClick={handleSave}
-                    disabled={saving}
+                    disabled={saving || uploadingBanner}
                     className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand to-brand-dark hover:from-brand-dark hover:to-brand-dark text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
                 >
                     {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
@@ -288,7 +288,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.hotline}
-                                onChange={e => setSettings({ ...settings, hotline: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, hotline: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="090xxxxxxx"
                             />
@@ -298,7 +298,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.zaloLink}
-                                onChange={e => setSettings({ ...settings, zaloLink: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, zaloLink: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://zalo.me/..."
                             />
@@ -308,7 +308,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="email"
                                 value={settings.email}
-                                onChange={e => setSettings({ ...settings, email: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, email: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="contact@gonuts.vn"
                             />
@@ -317,7 +317,7 @@ export default function AdminSettingsPage() {
                             <label className="block text-sm font-medium text-slate-700 mb-1">Địa chỉ</label>
                             <textarea
                                 value={settings.address}
-                                onChange={e => setSettings({ ...settings, address: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, address: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 rows={2}
                                 placeholder="Địa chỉ cửa hàng..."
@@ -360,7 +360,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.facebookUrl}
-                                onChange={e => setSettings({ ...settings, facebookUrl: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, facebookUrl: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://facebook.com/..."
                             />
@@ -372,7 +372,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.instagramUrl}
-                                onChange={e => setSettings({ ...settings, instagramUrl: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, instagramUrl: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://instagram.com/..."
                             />
@@ -384,7 +384,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.youtubeUrl}
-                                onChange={e => setSettings({ ...settings, youtubeUrl: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, youtubeUrl: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://youtube.com/..."
                             />
@@ -394,7 +394,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.tiktokUrl}
-                                onChange={e => setSettings({ ...settings, tiktokUrl: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, tiktokUrl: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://tiktok.com/..."
                             />
@@ -414,7 +414,7 @@ export default function AdminSettingsPage() {
                                 type="checkbox"
                                 id="promoEnabled"
                                 checked={settings.promoEnabled}
-                                onChange={e => setSettings({ ...settings, promoEnabled: e.target.checked })}
+                                onChange={e => setSettings(prev => ({ ...prev, promoEnabled: e.target.checked }))}
                                 className="w-5 h-5 text-brand rounded focus:ring-brand"
                             />
                             <label htmlFor="promoEnabled" className="text-sm font-medium text-slate-700">
@@ -426,7 +426,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.promoText}
-                                onChange={e => setSettings({ ...settings, promoText: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, promoText: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="Giảm giá 8% khi mua hàng từ 899 trở lên..."
                             />
@@ -446,7 +446,7 @@ export default function AdminSettingsPage() {
                                 type="checkbox"
                                 id="productsBannerEnabled"
                                 checked={settings.productsBannerEnabled}
-                                onChange={e => setSettings({ ...settings, productsBannerEnabled: e.target.checked })}
+                                onChange={e => setSettings(prev => ({ ...prev, productsBannerEnabled: e.target.checked }))}
                                 className="w-5 h-5 text-brand rounded focus:ring-brand"
                             />
                             <label htmlFor="productsBannerEnabled" className="text-sm font-medium text-slate-700">
@@ -489,6 +489,7 @@ export default function AdminSettingsPage() {
                                 <button
                                     type="button"
                                     onClick={() => {
+                                        setBannerType('products');
                                         setCropperImageUrl(settings.productsBannerUrl);
                                         setShowCropper(true);
                                     }}
@@ -507,7 +508,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.productsBannerUrl}
-                                onChange={e => setSettings({ ...settings, productsBannerUrl: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, productsBannerUrl: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="/assets/images/slide1.jpg"
                             />
@@ -547,7 +548,7 @@ export default function AdminSettingsPage() {
                                 type="checkbox"
                                 id="homePromoBannerEnabled"
                                 checked={settings.homePromoBannerEnabled}
-                                onChange={e => setSettings({ ...settings, homePromoBannerEnabled: e.target.checked })}
+                                onChange={e => setSettings(prev => ({ ...prev, homePromoBannerEnabled: e.target.checked }))}
                                 className="w-5 h-5 text-brand rounded focus:ring-brand"
                             />
                             <label htmlFor="homePromoBannerEnabled" className="text-sm font-medium text-slate-700">
@@ -560,7 +561,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.homePromoBannerTitle}
-                                onChange={e => setSettings({ ...settings, homePromoBannerTitle: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, homePromoBannerTitle: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="WIN RAHUL DRAVID'S..."
                             />
@@ -572,7 +573,7 @@ export default function AdminSettingsPage() {
                                 <input
                                     type="text"
                                     value={settings.homePromoBannerButtonText}
-                                    onChange={e => setSettings({ ...settings, homePromoBannerButtonText: e.target.value })}
+                                    onChange={e => setSettings(prev => ({ ...prev, homePromoBannerButtonText: e.target.value }))}
                                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                     placeholder="BUY MORE, WIN MORE"
                                 />
@@ -582,7 +583,7 @@ export default function AdminSettingsPage() {
                                 <input
                                     type="text"
                                     value={settings.homePromoBannerButtonLink}
-                                    onChange={e => setSettings({ ...settings, homePromoBannerButtonLink: e.target.value })}
+                                    onChange={e => setSettings(prev => ({ ...prev, homePromoBannerButtonLink: e.target.value }))}
                                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                     placeholder="/products"
                                 />
@@ -594,7 +595,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="text"
                                 value={settings.homePromoBannerNote}
-                                onChange={e => setSettings({ ...settings, homePromoBannerNote: e.target.value })}
+                                onChange={e => setSettings(prev => ({ ...prev, homePromoBannerNote: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="*Jersey & Miniature Bat"
                             />
@@ -704,7 +705,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="number"
                                 value={settings.freeShippingThreshold}
-                                onChange={e => setSettings({ ...settings, freeShippingThreshold: parseInt(e.target.value) || 0 })}
+                                onChange={e => setSettings(prev => ({ ...prev, freeShippingThreshold: parseInt(e.target.value) || 0 }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="500000"
                             />
@@ -754,9 +755,11 @@ export default function AdminSettingsPage() {
                                             type="text"
                                             value={feature.title}
                                             onChange={e => {
-                                                const newFeatures = [...settings.productFeatures];
-                                                newFeatures[index] = { ...feature, title: e.target.value };
-                                                setSettings({ ...settings, productFeatures: newFeatures });
+                                                setSettings(prev => {
+                                                    const newFeatures = [...prev.productFeatures];
+                                                    newFeatures[index] = { ...feature, title: e.target.value };
+                                                    return { ...prev, productFeatures: newFeatures };
+                                                });
                                             }}
                                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm"
                                             placeholder="Giao hàng toàn quốc"
@@ -768,9 +771,11 @@ export default function AdminSettingsPage() {
                                             type="text"
                                             value={feature.description}
                                             onChange={e => {
-                                                const newFeatures = [...settings.productFeatures];
-                                                newFeatures[index] = { ...feature, description: e.target.value };
-                                                setSettings({ ...settings, productFeatures: newFeatures });
+                                                setSettings(prev => {
+                                                    const newFeatures = [...prev.productFeatures];
+                                                    newFeatures[index] = { ...feature, description: e.target.value };
+                                                    return { ...prev, productFeatures: newFeatures };
+                                                });
                                             }}
                                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm"
                                             placeholder="Miễn phí đơn từ 500.000đ"
@@ -789,7 +794,7 @@ export default function AdminSettingsPage() {
                         <input
                             type="text"
                             value={settings.supportHotline}
-                            onChange={e => setSettings({ ...settings, supportHotline: e.target.value })}
+                            onChange={e => setSettings(prev => ({ ...prev, supportHotline: e.target.value }))}
                             className="w-full md:w-1/2 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                             placeholder="096 118 5753"
                         />

@@ -29,6 +29,13 @@ interface SiteSettings {
     homePromoBannerButtonLink: string;
     homePromoBannerNote: string;
     homePromoBannerEnabled: boolean;
+    supportHotline: string;
+    productFeatures: {
+        title: string;
+        description: string;
+        icon: string;
+        enabled: boolean;
+    }[];
     updatedAt: Date;
 }
 
@@ -59,6 +66,13 @@ const settingsSchema = new mongoose.Schema({
     homePromoBannerButtonLink: { type: String, default: '#' },
     homePromoBannerNote: { type: String, default: '*Jersey & Miniature Bat' },
     homePromoBannerEnabled: { type: Boolean, default: true },
+    supportHotline: { type: String, default: '' },
+    productFeatures: [{
+        title: String,
+        description: String,
+        icon: String,
+        enabled: { type: Boolean, default: true }
+    }],
     updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
@@ -114,19 +128,20 @@ export async function GET() {
 // PUT - Cập nhật cài đặt website
 export async function PUT(request: NextRequest) {
     try {
-        const body = await request.json();
+        const { _id, __v, createdAt, updatedAt: bodyUpdatedAt, ...updateData } = await request.json();
         await dbConnect();
 
-        const updateData = {
-            ...body,
+        // Sanitize updateData - remove any fields that shouldn't be updated or cause issues
+        const sanitizedUpdateData = {
+            ...updateData,
             updatedAt: new Date()
         };
 
         // Upsert - cập nhật nếu có, tạo mới nếu chưa có
         const settings = await Settings.findOneAndUpdate(
             {},
-            { $set: updateData },
-            { upsert: true, new: true }
+            { $set: sanitizedUpdateData },
+            { upsert: true, new: true, runValidators: true }
         );
 
         return NextResponse.json({

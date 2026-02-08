@@ -55,29 +55,46 @@ async function createTransporter() {
     throw new Error('Gmail credentials not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local');
 }
 
-// Base URL for assets
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+// Base URL for links and assets
+const getBaseUrl = () => {
+    if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
+    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+    if (process.env.NEXT_PUBLIC_VERCEL_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+
+    // Production fallback - specific to this project
+    if (process.env.NODE_ENV === 'production') {
+        return 'https://nuts-mocha-tau.vercel.app';
+    }
+
+    return 'http://localhost:3000';
+};
+
+const BASE_URL = getBaseUrl();
 const LOGO_URL = `${BASE_URL}/assets/logo.png`;
-const HOTLINE_PHONE = process.env.HOTLINE_PHONE || '09xxxxxxxx';
+const HOTLINE_PHONE = process.env.HOTLINE_PHONE || '096 118 5753';
 
 // Email Templates
 const emailStyles = `
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { background: linear-gradient(135deg, #9C7044 0%, #7d5a36 100%); padding: 30px; text-align: center; }
-        .header img.logo { max-width: 120px; height: auto; margin-bottom: 10px; }
-        .header h1 { color: white; margin: 10px 0 0; font-size: 24px; }
-        .content { padding: 30px; }
-        .otp-box { background: #f8f4f0; border: 2px dashed #9C7044; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
-        .otp-code { font-size: 36px; font-weight: bold; color: #9C7044; letter-spacing: 8px; }
-        .order-box { background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0; }
-        .order-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .header { background: #9C7044; background: linear-gradient(135deg, #9C7044 0%, #7d5a36 100%); padding: 40px 30px; text-align: center; }
+        .header img.logo { max-width: 100px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .header h1 { color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px; }
+        .content { padding: 40px 35px; line-height: 1.6; }
+        .content h2 { color: #9C7044; font-size: 24px; margin-top: 0; margin-bottom: 25px; }
+        .otp-box { background: #fdfaf7; border: 2px solid #e8decb; border-radius: 12px; padding: 25px; text-align: center; margin: 30px 0; }
+        .otp-code { font-size: 40px; font-weight: 800; color: #9C7044; letter-spacing: 10px; }
+        .order-box { background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .order-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
         .order-total { font-size: 20px; font-weight: bold; color: #9C7044; text-align: right; margin-top: 15px; }
-        .btn { display: inline-block; background: #9C7044; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; }
-        .footer { background: #333; color: #999; padding: 20px; text-align: center; font-size: 12px; }
-        .footer a { color: #9C7044; }
-        .footer img.logo-footer { max-width: 80px; height: auto; margin-bottom: 10px; opacity: 0.8; }
+        .btn-container { text-align: center; margin: 35px 0; }
+        .btn { display: inline-block; background-color: #9C7044; color: #ffffff !important; padding: 14px 40px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(156, 112, 68, 0.3); }
+        .footer { background-color: #2d241e; color: #a99a8f; padding: 40px 30px; text-align: center; font-size: 13px; }
+        .footer p { margin: 8px 0; }
+        .footer a { color: #d4a373; text-decoration: none; font-weight: 600; }
+        .footer img.logo-footer { max-width: 80px; height: auto; margin-bottom: 20px; opacity: 0.6; }
+        .info-box { background: #fffcf9; border-left: 4px solid #9C7044; padding: 20px; margin: 25px 0; border-radius: 4px 12px 12px 4px; }
     </style>
 `;
 
@@ -220,7 +237,7 @@ export async function sendOrderConfirmationEmail(
                     <p><strong>💳 Phương thức thanh toán:</strong> ${orderData.paymentMethod === 'banking' ? 'Chuyển khoản ngân hàng' : 'Thanh toán trực tuyến'}</p>
                     
                     <p style="text-align: center; margin-top: 30px;">
-                        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/account" class="btn">Theo dõi đơn hàng</a>
+                        <a href="${BASE_URL}/account" class="btn">Theo dõi đơn hàng</a>
                     </p>
                 </div>
                 <div class="footer">
@@ -285,7 +302,7 @@ export async function sendOrderStatusEmail(
                     </div>
                     
                     <p style="text-align: center; margin-top: 30px;">
-                        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/account" class="btn">Xem chi tiết đơn hàng</a>
+                        <a href="${BASE_URL}/account" class="btn">Xem chi tiết đơn hàng</a>
                     </p>
                 </div>
                 ${emailFooter}
@@ -329,7 +346,7 @@ export async function sendWelcomeEmail(to: string, name: string, voucherCode?: s
                     <p>Khám phá ngay các sản phẩm hạt dinh dưỡng chất lượng cao tại Go Nuts!</p>
                     
                     <p style="text-align: center; margin-top: 30px;">
-                        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/products" class="btn">Mua sắm ngay</a>
+                        <a href="${BASE_URL}/products" class="btn">Mua sắm ngay</a>
                     </p>
                 </div>
                 ${emailFooter}
@@ -349,7 +366,7 @@ export async function sendWelcomeEmail(to: string, name: string, voucherCode?: s
 // Send Password Reset Email
 export async function sendPasswordResetEmail(to: string, resetToken: string) {
     const transporter = await createTransporter();
-    const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    const resetUrl = `${BASE_URL}/reset-password?token=${resetToken}`;
 
     const html = `
         <!DOCTYPE html>
@@ -360,16 +377,20 @@ export async function sendPasswordResetEmail(to: string, resetToken: string) {
                 ${emailHeader}
                 <div class="content">
                     <h2>🔐 Đặt lại mật khẩu</h2>
-                    <p>Xin chào,</p>
-                    <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản Go Nuts. Nhấn vào nút bên dưới để tiếp tục:</p>
+                    <p>Xin chào quý khách,</p>
+                    <p>Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản Go Nuts của bạn. Để tiếp tục quá trình này, vui lòng nhấn vào nút xác nhận bên dưới:</p>
                     
-                    <p style="text-align: center; margin: 30px 0;">
-                        <a href="${resetUrl}" class="btn">Đặt lại mật khẩu</a>
-                    </p>
+                    <div class="btn-container">
+                        <a href="${resetUrl}" class="btn">Xác nhận thay đổi</a>
+                    </div>
                     
-                    <p style="color: #666; font-size: 14px;">
-                        Link này sẽ hết hạn sau 1 giờ. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.
-                    </p>
+                    <div class="info-box">
+                        <p style="margin: 0; color: #666; font-size: 13px;">
+                            <strong>Lưu ý quan trọng:</strong><br>
+                            • Đường dẫn này chỉ có hiệu lực trong vòng <strong>60 phút</strong>.<br>
+                            • Nếu quý khách không thực hiện yêu cầu này, xin vui lòng bỏ qua email này để đảm bảo an toàn cho tài khoản.
+                        </p>
+                    </div>
                 </div>
                 ${emailFooter}
             </div>
