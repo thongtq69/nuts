@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Star, TrendingUp, Sparkles, Package, Plus, BarChart3, Eye } from 'lucide-react';
+import { Star, TrendingUp, Sparkles, Package, Plus, BarChart3, Eye, GripVertical } from 'lucide-react';
 
 interface ProductStats {
     bestSellers: number;
@@ -38,18 +38,18 @@ export default function FeaturedProductsPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            
+
             // Fetch products
             const response = await fetch('/api/products');
             if (!response.ok) throw new Error('Failed to fetch products');
-            
+
             const products = await response.json();
-            
+
             // Calculate stats
             const bestSellers = products.filter((p: FeaturedProduct) => p.tags?.includes('best-seller')).length;
             const newProducts = products.filter((p: FeaturedProduct) => p.tags?.includes('new')).length;
             const promoProducts = products.filter((p: FeaturedProduct) => p.tags?.includes('promo')).length;
-            
+
             setStats({
                 bestSellers,
                 newProducts,
@@ -62,7 +62,7 @@ export default function FeaturedProductsPage() {
                 .filter((p: FeaturedProduct) => p.tags?.some(tag => ['best-seller', 'new', 'promo'].includes(tag)))
                 .sort((a: FeaturedProduct, b: FeaturedProduct) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .slice(0, 8);
-            
+
             setRecentProducts(featuredProducts);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -96,13 +96,22 @@ export default function FeaturedProductsPage() {
                         Tổng quan và quản lý sản phẩm hiển thị trên trang chủ
                     </p>
                 </div>
-                <Link
-                    href="/admin/products/new"
-                    className="inline-flex items-center gap-2 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
-                >
-                    <Plus size={18} />
-                    Thêm Sản phẩm
-                </Link>
+                <div className="flex items-center gap-3">
+                    <Link
+                        href="/admin/products/reorder"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                    >
+                        <GripVertical className="h-4 w-4 text-brand" />
+                        Sắp xếp hiển thị
+                    </Link>
+                    <Link
+                        href="/admin/products/new"
+                        className="inline-flex items-center gap-2 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                    >
+                        <Plus size={18} />
+                        Thêm Sản phẩm
+                    </Link>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -248,16 +257,15 @@ export default function FeaturedProductsPage() {
                                         {product.tags.map((tag) => (
                                             <span
                                                 key={tag}
-                                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    tag === 'best-seller' ? 'bg-brand/10 text-brand' :
-                                                    tag === 'new' ? 'bg-emerald-100 text-emerald-700' :
-                                                    tag === 'promo' ? 'bg-brand-light/30 text-brand-dark' :
-                                                    'bg-gray-100 text-gray-700'
-                                                }`}
+                                                className={`px-2 py-1 rounded-full text-xs font-medium ${tag === 'best-seller' ? 'bg-brand/10 text-brand' :
+                                                        tag === 'new' ? 'bg-emerald-100 text-emerald-700' :
+                                                            tag === 'promo' ? 'bg-brand-light/30 text-brand-dark' :
+                                                                'bg-gray-100 text-gray-700'
+                                                    }`}
                                             >
                                                 {tag === 'best-seller' ? 'Bán chạy' :
-                                                 tag === 'new' ? 'Mới' :
-                                                 tag === 'promo' ? 'Khuyến mãi' : tag}
+                                                    tag === 'new' ? 'Mới' :
+                                                        tag === 'promo' ? 'Khuyến mãi' : tag}
                                             </span>
                                         ))}
                                     </div>
