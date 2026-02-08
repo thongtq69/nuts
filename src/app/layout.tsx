@@ -16,12 +16,12 @@ export const metadata: Metadata = {
   description: "Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam",
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
-      { url: '/assets/logo.png', type: 'image/png', sizes: '192x192' },
+      { url: '/android-chrome-192x192.png', type: 'image/png', sizes: '192x192' },
     ],
-    shortcut: '/favicon.png',
     apple: [
-      { url: '/assets/logo.png', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
   manifest: '/site.webmanifest',
