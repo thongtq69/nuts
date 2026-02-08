@@ -25,6 +25,7 @@ import {
     Wallet
 } from 'lucide-react';
 import { RichTextEditor } from './ui';
+import TagInput from './TagInput';
 
 interface ProductFormProps {
     initialData?: any;
@@ -62,6 +63,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const [uploadingImages, setUploadingImages] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
     const [unsavedChanges, setUnsavedChanges] = useState(false);
+    const [allTags, setAllTags] = useState<string[]>([]);
 
     const [formData, setFormData] = useState({
         // Basic Info
@@ -71,7 +73,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         category: initialData.category || '',
         shortDescription: initialData.shortDescription || '',
         description: initialData.description || '',
-        tags: (initialData.tags || []).join(', '),
+        tags: initialData.tags || [],
 
         // Images
         image: initialData.image || '',
@@ -101,6 +103,28 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     useEffect(() => {
         setUnsavedChanges(true);
     }, [formData]);
+
+    // Fetch all existing tags to suggest
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const res = await fetch('/api/products');
+                if (res.ok) {
+                    const products = await res.json();
+                    const tags = new Set<string>();
+                    products.forEach((p: any) => {
+                        if (p.tags && Array.isArray(p.tags)) {
+                            p.tags.forEach((t: string) => tags.add(t));
+                        }
+                    });
+                    setAllTags(Array.from(tags));
+                }
+            } catch (error) {
+                console.error('Error fetching tags:', error);
+            }
+        };
+        fetchTags();
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -198,7 +222,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
 
             const processedData = {
                 ...formData,
-                tags: formData.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
+                tags: formData.tags,
                 currentPrice: Number(formData.currentPrice),
                 originalPrice: Number(formData.originalPrice),
                 stock: Number(formData.stock),
@@ -502,17 +526,11 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Tags
                                     </label>
-                                    <div className="relative">
-                                        <Tag className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                        <input
-                                            type="text"
-                                            name="tags"
-                                            value={formData.tags}
-                                            onChange={handleChange}
-                                            placeholder="bán-chạy, mới, khuyến-mãi (phân cách bằng dấu phẩy)"
-                                            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
-                                        />
-                                    </div>
+                                    <TagInput
+                                        value={formData.tags}
+                                        onChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
+                                        suggestions={allTags.length > 0 ? allTags : undefined}
+                                    />
                                 </div>
 
                                 {/* Badge */}
