@@ -183,16 +183,17 @@ export default function CheckoutPage() {
         const totalWeight = cartItems.reduce((sum, item) => sum + (Number(item.weight) || 0.5) * item.quantity, 0);
 
         // Find applicable tier
-        // Sort tiers by minWeight to handle continuous logic better
         const sortedTiers = [...zone.tiers].sort((a, b) => a.minWeight - b.minWeight);
 
-        // Find tier where weight falls into [min, max]
-        let tier = sortedTiers.find((t: any) => totalWeight >= t.minWeight && totalWeight <= t.maxWeight);
+        // Match logic: Find the first tier where weight is less than or equal to its maxWeight
+        // This handles gaps automatically (e.g. 2.5kg falls into 3-30kg tier if 0-2kg is too light)
+        let tier = sortedTiers.find((t: any) => totalWeight <= t.maxWeight);
 
-        // If not found in range, pick the last tier for overweight
+        // If still not found (weight exceeds all maxWeights), use the last tier
         if (!tier && sortedTiers.length > 0) {
             tier = sortedTiers[sortedTiers.length - 1];
         }
+
 
         if (!tier) return DEFAULT_FEE;
 
@@ -556,6 +557,7 @@ export default function CheckoutPage() {
                                     <BankInfoDisplay
                                         amount={subtotal + shippingFee - appliedDiscount}
                                         description={paymentReference}
+                                        customerName={formData.name}
                                     />
 
                                     <div className="mt-6 flex items-start gap-3 p-4 bg-white rounded-lg border border-amber-300">

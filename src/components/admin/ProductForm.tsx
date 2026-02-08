@@ -90,7 +90,11 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         // SEO
         metaTitle: initialData.metaTitle || '',
         metaDescription: initialData.metaDescription || '',
+
+        // Physical
+        weight: initialData.weight || 0.5,
     });
+
 
     // Auto-detect unsaved changes
     useEffect(() => {
@@ -198,7 +202,9 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 originalPrice: Number(formData.originalPrice),
                 stock: Number(formData.stock),
                 soldCount: Number(formData.soldCount),
+                weight: Number(formData.weight),
             };
+
 
             const res = await fetch(url, {
                 method,
@@ -685,7 +691,30 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     </div>
                                 </div>
 
+                                {/* Weight */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Khối lượng (kg)
+                                        <span className="text-xs text-slate-400 ml-2">(Dùng để tính phí vận chuyển)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Plus size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="number"
+                                            name="weight"
+                                            value={formData.weight}
+                                            onChange={handleNumberChange}
+                                            step="0.01"
+                                            min="0"
+                                            placeholder="VD: 0.5"
+                                            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-1">VD: Hộp 500g điền 0.5, Túi 100g điền 0.1</p>
+                                </div>
+
                                 {/* Stock Status */}
+
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Trạng thái tồn kho

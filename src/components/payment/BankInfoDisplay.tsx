@@ -10,6 +10,7 @@ interface BankInfoProps {
     amount?: number;
     description?: string;
     compact?: boolean;
+    customerName?: string; // Tên khách hàng để hiển thị trong nội dung CK
 }
 
 const BANK_INFO = {
@@ -20,16 +21,78 @@ const BANK_INFO = {
     qrCodeUrl: 'https://img.vietqr.io/image/ACB-621588-compact.png'
 };
 
+// Hàm tạo URL VietQR động với thông tin chuyển khoản
+const generateVietQRUrl = (
+    bankBin: string,
+    accountNumber: string,
+    amount?: number,
+    description?: string,
+    accountName?: string
+) => {
+    // VietQR.io API format
+    // https://img.vietqr.io/image/{bankBin}-{accountNumber}-{template}.png?amount={amount}&addInfo={description}&accountName={accountName}
+    let url = `https://img.vietqr.io/image/${bankBin}-${accountNumber}-compact.png`;
+    
+    const params = new URLSearchParams();
+    
+    if (amount && amount > 0) {
+        params.append('amount', amount.toString());
+    }
+    
+    if (description) {
+        // Mã hóa nội dung chuyển khoản để URL safe
+        params.append('addInfo', description);
+    }
+    
+    if (accountName) {
+        params.append('accountName', accountName);
+    }
+    
+    const queryString = params.toString();
+    if (queryString) {
+        url += `?${queryString}`;
+    }
+    
+    return url;
+};
+
 export default function BankInfoDisplay({ 
     bankName = BANK_INFO.name,
     accountNumber = BANK_INFO.accountNumber,
     accountName = BANK_INFO.accountName,
-    qrCodeUrl = BANK_INFO.qrCodeUrl,
+    qrCodeUrl,
     amount,
     description,
-    compact = false
+    compact = false,
+    customerName
 }: BankInfoProps) {
     const [copied, setCopied] = useState<string | null>(null);
+
+    // Tạo nội dung chuyển khoản đầy đủ: Tên KH + Mã đơn hàng
+    const generateTransferContent = () => {
+        let content = description || '';
+        if (customerName) {
+            // Lấy tên ngắn (từ cuối cùng) hoặc full nếu ngắn
+            const nameParts = customerName.trim().split(' ');
+            const shortName = nameParts[nameParts.length - 1]; // Lấy tên cuối
+            
+            // Format: GOXXXX TENKH
+            content = `${content} ${shortName}`.trim();
+        }
+        // Giới hạn độ dài nội dung CK theo quy định ngân hàng (thường 50-140 ký tự)
+        return content.substring(0, 50);
+    };
+
+    const transferContent = generateTransferContent();
+    
+    // Tạo URL QR động với thông tin chuyển khoản
+    const dynamicQrUrl = qrCodeUrl || generateVietQRUrl(
+        'ACB', // Bank BIN code
+        accountNumber,
+        amount,
+        transferContent,
+        accountName
+    );
 
     const copyToClipboard = async (text: string, field: string) => {
         await navigator.clipboard.writeText(text);
@@ -41,7 +104,7 @@ export default function BankInfoDisplay({
         return (
             <div className="bank-info-compact">
                 <div className="bank-qr">
-                    <img src={qrCodeUrl} alt="VietQR" />
+                    <img src={dynamicQrUrl} alt="VietQR" />
                 </div>
                 <div className="bank-details">
                     <div className="bank-name">{bankName}</div>
@@ -123,12 +186,15 @@ export default function BankInfoDisplay({
 
             <div className="bank-content">
                 <div className="qr-section">
-                    <img src={qrCodeUrl} alt="VietQR Code" className="qr-image" />
+                    <img src={dynamicQrUrl} alt="VietQR Code" className="qr-image" />
                     {amount && (
                         <div className="amount-display">
                             {amount.toLocaleString()}đ
                         </div>
                     )}
+                    <div className="qr-hint">
+                        👆 Quét mã để tự điền thông tin
+                    </div>
                 </div>
 
                 <div className="details-section">
@@ -165,13 +231,13 @@ export default function BankInfoDisplay({
                         </div>
                     </div>
 
-                    {description && (
+                    {(description || transferContent) && (
                         <div className="detail-row">
                             <span className="label">Nội dung CK</span>
                             <div className="value-with-copy">
-                                <span className="value desc">{description}</span>
+                                <span className="value desc">{transferContent || description}</span>
                                 <button 
-                                    onClick={() => copyToClipboard(description, 'desc')}
+                                    onClick={() => copyToClipboard(transferContent || description || '', 'desc')}
                                     className="copy-btn"
                                     title="Sao chép"
                                 >
@@ -191,8 +257,8 @@ export default function BankInfoDisplay({
             </div>
 
             <div className="bank-footer">
-                <p className="notice">💡 Quét mã QR hoặc chuyển khoản theo thông tin trên</p>
-                <p className="note">Đơn hàng sẽ được xử lý sau khi nhận được thanh toán</p>
+                <p className="notice">💡 Quét mã QR bằng app ngân hàng để tự động điền thông tin chuyển khoản</p>
+                <p className="note">Hoặc chuyển khoản thủ công với đúng số tiền và nội dung bên trên. Đơn hàng sẽ được xử lý sau khi nhận được thanh toán.</p>
             </div>
 
             <style jsx>{`
@@ -234,17 +300,28 @@ export default function BankInfoDisplay({
                     text-align: center;
                 }
                 .qr-image {
-                    width: 160px;
-                    height: 160px;
+                    width: 180px;
+                    height: 180px;
                     object-fit: contain;
                     border-radius: 12px;
-                    border: 1px solid #eee;
+                    border: 2px solid #e5e7eb;
+                    background: white;
+                    padding: 8px;
                 }
                 .amount-display {
                     margin-top: 12px;
                     font-size: 18px;
                     font-weight: 700;
                     color: #9C7043;
+                }
+                .qr-hint {
+                    margin-top: 8px;
+                    font-size: 11px;
+                    color: #059669;
+                    background: #d1fae5;
+                    padding: 4px 10px;
+                    border-radius: 12px;
+                    display: inline-block;
                 }
                 .details-section {
                     display: flex;
