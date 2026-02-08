@@ -54,6 +54,7 @@ export default function CheckoutPage() {
     const [selectedWard, setSelectedWard] = useState('');
     const [addressError, setAddressError] = useState('');
     const [shippingConfig, setShippingConfig] = useState<any>(null);
+    const [siteSettings, setSiteSettings] = useState<any>(null);
 
     useEffect(() => {
         if (user) {
@@ -70,12 +71,19 @@ export default function CheckoutPage() {
 
         }
 
-        // Fetch shipping config - outside if(user) to support guests
+        // Fetch shipping config
         fetch('/api/admin/shipping')
             .then(res => res.json())
             .then(data => setShippingConfig(data))
             .catch(err => console.error('Error fetching shipping config:', err));
+
+        // Fetch site settings for free shipping threshold
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(data => setSiteSettings(data))
+            .catch(err => console.error('Error fetching settings:', err));
     }, [user]);
+
 
     useEffect(() => {
         fetch('https://provinces.open-api.vn/api/p/')
@@ -150,42 +158,75 @@ export default function CheckoutPage() {
     const savings = savingsTotal;
 
     const calculateShippingFee = () => {
-        if (!shippingConfig || !selectedProvince) return 30000;
+        // Fallback default fee if config is missing
+        const DEFAULT_FEE = 30000;
+
+        // Check for free shipping threshold (Global setting)
+        if (siteSettings?.freeShippingThreshold && subtotal >= siteSettings.freeShippingThreshold) {
+            return 0;
+        }
+
+        if (!shippingConfig || !selectedProvince || cartItems.length === 0) {
+            return DEFAULT_FEE;
+        }
+
 
         const provinceName = provinces.find(p => p.code.toString() === selectedProvince)?.name;
-        if (!provinceName) return 30000;
+        if (!provinceName) return DEFAULT_FEE;
 
-        const zone = shippingConfig.zones.find((z: any) => z.provinceNames.includes(provinceName));
-        if (!zone) return 35000;
+        const zone = shippingConfig.zones.find((z: any) =>
+            z.provinceNames.some((p: string) => p.includes(provinceName) || provinceName.includes(p))
+        );
 
-        const totalWeight = cartItems.reduce((sum, item) => sum + (item.weight || 0.5) * item.quantity, 0);
+        if (!zone) return 35000; // Outside standard zones
 
-        // Find tier (handle sorting just in case)
+        const totalWeight = cartItems.reduce((sum, item) => sum + (Number(item.weight) || 0.5) * item.quantity, 0);
+
+        // Find applicable tier
+        // Sort tiers by minWeight to handle continuous logic better
         const sortedTiers = [...zone.tiers].sort((a, b) => a.minWeight - b.minWeight);
-        const tier = sortedTiers.find((t: any) => totalWeight > t.minWeight && totalWeight <= t.maxWeight)
-            || sortedTiers[sortedTiers.length - 1]; // Fallback to last tier if > max
 
-        if (!tier) return 30000;
+        // Find tier where weight falls into [min, max]
+        let tier = sortedTiers.find((t: any) => totalWeight >= t.minWeight && totalWeight <= t.maxWeight);
+
+        // If not found in range, pick the last tier for overweight
+        if (!tier && sortedTiers.length > 0) {
+            tier = sortedTiers[sortedTiers.length - 1];
+        }
+
+        if (!tier) return DEFAULT_FEE;
 
         let fee = 0;
         if (tier.isDirectMultiplier) {
-            fee = totalWeight * tier.extraPricePerKg;
+            // Formula for heavy goods: Actual Weight * PricePerKg
+            fee = totalWeight * (tier.extraPricePerKg || 0);
         } else {
-            // Formula: base + (actual - min) * extra
-            const overweight = Math.max(0, totalWeight - tier.minWeight);
-            fee = tier.basePrice + overweight * tier.extraPricePerKg;
+            // Standard Formula: Base Price + (Extra Weight * PricePerKg)
+            // Extra Weight = Actual Weight - Min Weight of this tier
+            const basePrice = tier.basePrice || 0;
+            const extraPricePerKg = tier.extraPricePerKg || 0;
+            const extraWeight = Math.max(0, totalWeight - tier.minWeight);
+
+            fee = basePrice + (extraWeight * extraPricePerKg);
         }
 
-        // Apply Surcharges (Fuel & VAT)
-        if (shippingConfig.fuelSurchargePercent) {
-            fee = fee * (1 + shippingConfig.fuelSurchargePercent / 100);
+        // Apply Global Surcharges (Fuel & VAT)
+        const fuelSurcharge = shippingConfig.fuelSurchargePercent || 0;
+        const vat = shippingConfig.vatPercent || 0;
+
+        if (fuelSurcharge > 0) {
+            fee = fee * (1 + fuelSurcharge / 100);
         }
-        if (shippingConfig.vatPercent) {
-            fee = fee * (1 + shippingConfig.vatPercent / 100);
+        if (vat > 0) {
+            fee = fee * (1 + vat / 100);
         }
+
+        // Final sanity check
+        if (isNaN(fee) || fee < 0) return DEFAULT_FEE;
 
         return Math.round(fee);
     };
+
 
     const shippingFee = calculateShippingFee();
     const total = subtotal + shippingFee - appliedDiscount;

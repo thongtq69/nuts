@@ -27,8 +27,10 @@ import {
     ExternalLink,
     Mail,
     X,
-    ChevronRight
+    ChevronRight,
+    Truck
 } from 'lucide-react';
+
 
 const menuSections = [
     {
@@ -77,10 +79,12 @@ const menuSections = [
         title: 'Cài đặt',
         items: [
             { href: '/admin/settings', icon: Settings, label: 'Cài đặt Website' },
+            { href: '/admin/shipping', icon: Truck, label: 'Cấu hình Vận chuyển' },
             { href: '/admin/affiliate-settings', icon: TrendingUp, label: 'Cấu hình Affiliate' },
             { href: '/admin/cloudinary', icon: Cloud, label: 'Quản lý Cloudinary' },
         ],
     },
+
 ];
 
 
