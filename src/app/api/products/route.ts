@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
     try {
         console.log('🔍 Products API: Starting request...');
-        
+
         await dbConnect();
         console.log('✅ Products API: Database connected');
 
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
         console.log('🔍 Products API: Query filter:', filter);
 
-        const products = await Product.find(filter).sort({ createdAt: -1 }).lean();
+        const products = await Product.find(filter).sort({ sortOrder: -1, createdAt: -1 } as any).lean();
         console.log(`✅ Products API: Found ${products.length} products`);
 
         // Convert ObjectId to string for JSON serialization
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
         return NextResponse.json(serializedProducts);
     } catch (error: any) {
         console.error('❌ Products API Error:', error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Failed to fetch products',
             message: error.message,
             timestamp: new Date().toISOString()

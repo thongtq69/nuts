@@ -12,6 +12,7 @@ interface Product {
     category?: string;
     image: string;
     tags: string[];
+    sortOrder?: number;
     createdAt: string;
     isActive: boolean;
 }
@@ -35,12 +36,15 @@ export default function NewProductsPage() {
                 throw new Error('Failed to fetch products');
             }
             const data = await response.json();
-            
+
             // Sản phẩm có tag 'new'
-            const newProducts = data.filter((p: Product) => p.tags && p.tags.includes('new'));
+            const newProducts = data
+                .filter((p: Product) => p.tags && p.tags.includes('new'))
+                .sort((a: any, b: any) => (b.sortOrder || 0) - (a.sortOrder || 0));
+
             // Tất cả sản phẩm không có tag 'new'
             const otherProducts = data.filter((p: Product) => !p.tags || !p.tags.includes('new'));
-            
+
             setProducts(newProducts);
             setAllProducts(otherProducts);
         } catch (error) {

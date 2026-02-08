@@ -159,7 +159,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                                 <span className="text-slate-900">{product.category}</span>
                                             </div>
                                         )}
-                                        {product.weight && (
+                                        {!!product.weight && (
                                             <div className="flex justify-between py-2 border-b border-slate-200">
                                                 <span className="font-medium text-slate-600">Trọng lượng:</span>
                                                 <span className="text-slate-900">{product.weight} kg</span>

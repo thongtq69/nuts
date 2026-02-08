@@ -93,6 +93,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
 
         // Physical
         weight: initialData.weight || 0.5,
+        sortOrder: initialData.sortOrder || 0,
     });
 
 
@@ -203,6 +204,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 stock: Number(formData.stock),
                 soldCount: Number(formData.soldCount),
                 weight: Number(formData.weight),
+                sortOrder: Number(formData.sortOrder),
             };
 
 
@@ -476,6 +478,22 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         onChange={handleChange}
                                         placeholder="VD: SP001"
                                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all font-mono"
+                                    />
+                                </div>
+
+                                {/* Sort Order */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Thứ tự ưu tiên
+                                        <span className="text-xs text-slate-400 ml-2">(Số cao hơn sẽ hiển thị trước)</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="sortOrder"
+                                        value={formData.sortOrder}
+                                        onChange={handleNumberChange}
+                                        placeholder="0"
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                                     />
                                 </div>
 

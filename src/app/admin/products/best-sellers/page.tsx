@@ -12,6 +12,7 @@ interface Product {
     category?: string;
     image: string;
     tags: string[];
+    sortOrder?: number;
     createdAt: string;
     isActive: boolean;
 }
@@ -35,12 +36,15 @@ export default function BestSellersPage() {
                 throw new Error('Failed to fetch products');
             }
             const data = await response.json();
-            
+
             // Sản phẩm có tag 'best-seller'
-            const bestSellers = data.filter((p: Product) => p.tags && p.tags.includes('best-seller'));
+            const bestSellers = data
+                .filter((p: Product) => p.tags && p.tags.includes('best-seller'))
+                .sort((a: any, b: any) => (b.sortOrder || 0) - (a.sortOrder || 0));
+
             // Tất cả sản phẩm không có tag 'best-seller'
             const otherProducts = data.filter((p: Product) => !p.tags || !p.tags.includes('best-seller'));
-            
+
             setProducts(bestSellers);
             setAllProducts(otherProducts);
         } catch (error) {

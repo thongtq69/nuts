@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 async function getProducts(): Promise<IProduct[]> {
     try {
         await dbConnect();
-        const products = await Product.find({}).sort({ createdAt: -1 }).lean();
+        const products = await Product.find({}).sort({ sortOrder: -1, createdAt: -1 } as any).lean();
 
         // Serialize MongoDB documents
         return products.map((product: any) => ({

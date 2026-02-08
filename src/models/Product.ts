@@ -24,6 +24,7 @@ export interface IProduct {
     sku?: string;
     soldCount?: number;
     weight?: number; // In kg
+    sortOrder?: number;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -67,7 +68,8 @@ const ProductSchema: Schema<IProduct> = new Schema(
         },
         sku: { type: String },
         soldCount: { type: Number, default: 0 },
-        weight: { type: Number, default: 0.5 }
+        weight: { type: Number, default: 0.5 },
+        sortOrder: { type: Number, default: 0 }
     },
     {
         timestamps: true,

@@ -78,7 +78,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
     return (
         <div className="product-card">
-            {badgeText && (
+            {!!badgeText && (
                 <div className={`product-badge ${badgeColor}`}>
                     {badgeText}
                 </div>
@@ -101,7 +101,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 </h3>
                 <div className="product-price">
                     <span className={`current-price ${priceColor}`}>{formattedCurrentPrice}</span>
-                    {originalPrice && <span className="original-price">{formattedOriginalPrice}</span>}
+                    {!!originalPrice && Number(originalPrice) > 0 && <span className="original-price">{formattedOriginalPrice}</span>}
                 </div>
                 <button
                     className={`btn-choose ${buttonColor} ${isOutOfStock ? 'out-of-stock' : ''}`}

@@ -21,13 +21,27 @@ async function getProductsByTag(tag: string, limit = 4) {
     await dbConnect();
     console.log('✅ Database connected for tag query');
 
-    const products = await Product.find({ tags: tag }).limit(limit).lean();
+    // Sort logic: priority first, then newest first
+    const sortParams: { [key: string]: any } = { sortOrder: -1, createdAt: -1 };
+
+    // For best-seller tag, we might want to prioritize soldCount if sortOrder is equal
+    if (tag === 'best-seller') {
+      sortParams.soldCount = -1;
+    }
+
+    const products = await Product.find({ tags: tag })
+      .sort(sortParams as any)
+      .limit(limit)
+      .lean();
     console.log(`✅ Found ${products.length} products for tag: ${tag}`);
 
     // If no products found with specific tag, get any products as fallback
     if (products.length === 0) {
       console.log(`⚠️ No products found for tag: ${tag}, getting fallback products`);
-      const fallbackProducts = await Product.find({}).limit(limit).lean();
+      const fallbackProducts = await Product.find({})
+        .sort({ sortOrder: -1, createdAt: -1 } as any)
+        .limit(limit)
+        .lean();
       console.log(`✅ Found ${fallbackProducts.length} fallback products`);
 
       return fallbackProducts.map((p: any) => ({

@@ -3,14 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-    Plus, 
-    Package, 
-    Search, 
-    Filter, 
-    Grid3X3, 
-    List, 
-    Loader2, 
+import {
+    Plus,
+    Package,
+    Search,
+    Filter,
+    Grid3X3,
+    List,
+    Loader2,
     Image as ImageIcon,
     Edit3,
     Trash2,
@@ -39,7 +39,8 @@ interface Product {
     stockStatus: 'in_stock' | 'out_of_stock' | 'low_stock';
     sku?: string;
     soldCount?: number;
-    createdAt?: string;
+    sortOrder?: number;
+    createdAt?: Date;
 }
 
 const STATUS_CONFIG = {
@@ -52,7 +53,7 @@ export default function AdminProductsPage() {
     const router = useRouter();
     const toast = useToast();
     const confirm = useConfirm();
-    
+
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -72,7 +73,7 @@ export default function AdminProductsPage() {
             setLoading(true);
             const response = await fetch('/api/products');
             if (!response.ok) throw new Error('Failed to fetch products');
-            
+
             const data = await response.json();
             const mappedProducts = data.map((p: any) => ({
                 ...p,
@@ -103,7 +104,7 @@ export default function AdminProductsPage() {
             });
 
             if (res.ok) {
-                setProducts(prev => prev.map(p => 
+                setProducts(prev => prev.map(p =>
                     p.id === productId ? { ...p, stockStatus: newStatus } : p
                 ));
                 toast.success('Cập nhật thành công', `Sản phẩm đã chuyển sang trạng thái ${STATUS_CONFIG[newStatus].label}`);
@@ -161,7 +162,7 @@ export default function AdminProductsPage() {
 
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            product.sku?.toLowerCase().includes(searchQuery.toLowerCase());
+            product.sku?.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStock = stockFilter === 'all' || product.stockStatus === stockFilter;
         return matchesSearch && matchesStock;
     });
@@ -231,7 +232,7 @@ export default function AdminProductsPage() {
                         </div>
                     </div>
                     <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5">
-                        <div 
+                        <div
                             className="bg-emerald-500 h-1.5 rounded-full transition-all"
                             style={{ width: `${totalProducts ? (inStockCount / totalProducts) * 100 : 0}%` }}
                         />
@@ -249,7 +250,7 @@ export default function AdminProductsPage() {
                         </div>
                     </div>
                     <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5">
-                        <div 
+                        <div
                             className="bg-amber-500 h-1.5 rounded-full transition-all"
                             style={{ width: `${totalProducts ? (lowStockCount / totalProducts) * 100 : 0}%` }}
                         />
@@ -267,7 +268,7 @@ export default function AdminProductsPage() {
                         </div>
                     </div>
                     <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5">
-                        <div 
+                        <div
                             className="bg-red-500 h-1.5 rounded-full transition-all"
                             style={{ width: `${totalProducts ? (outOfStockCount / totalProducts) * 100 : 0}%` }}
                         />
@@ -301,16 +302,14 @@ export default function AdminProductsPage() {
                             <button
                                 key={filter.key}
                                 onClick={() => setStockFilter(filter.key)}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                                    stockFilter === filter.key
-                                        ? 'bg-brand text-white shadow-md shadow-brand/20'
-                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-                                }`}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${stockFilter === filter.key
+                                    ? 'bg-brand text-white shadow-md shadow-brand/20'
+                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                                    }`}
                             >
                                 {filter.label}
-                                <span className={`ml-2 px-1.5 py-0.5 rounded-md text-xs ${
-                                    stockFilter === filter.key ? 'bg-white/20' : 'bg-slate-200'
-                                }`}>
+                                <span className={`ml-2 px-1.5 py-0.5 rounded-md text-xs ${stockFilter === filter.key ? 'bg-white/20' : 'bg-slate-200'
+                                    }`}>
                                     {filter.count}
                                 </span>
                             </button>
@@ -321,21 +320,19 @@ export default function AdminProductsPage() {
                     <div className="flex items-center gap-2 ml-auto">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2.5 rounded-xl transition-all ${
-                                viewMode === 'list' 
-                                    ? 'bg-brand text-white shadow-md' 
-                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                            }`}
+                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'list'
+                                ? 'bg-brand text-white shadow-md'
+                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                }`}
                         >
                             <List className="h-4 w-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2.5 rounded-xl transition-all ${
-                                viewMode === 'grid' 
-                                    ? 'bg-brand text-white shadow-md' 
-                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                            }`}
+                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid'
+                                ? 'bg-brand text-white shadow-md'
+                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                }`}
                         >
                             <Grid3X3 className="h-4 w-4" />
                         </button>
@@ -377,6 +374,7 @@ export default function AdminProductsPage() {
                                     <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Sản phẩm</th>
                                     <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Danh mục</th>
                                     <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Giá</th>
+                                    <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Ưu tiên</th>
                                     <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Tồn kho</th>
                                     <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>
                                     <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Thao tác</th>
@@ -386,10 +384,10 @@ export default function AdminProductsPage() {
                                 {filteredProducts.map((product) => {
                                     const status = STATUS_CONFIG[product.stockStatus];
                                     const StatusIcon = status.icon;
-                                    
+
                                     return (
-                                        <tr 
-                                            key={product.id} 
+                                        <tr
+                                            key={product.id}
                                             className="group hover:bg-slate-50/80 transition-colors"
                                         >
                                             <td className="px-4 py-4">
@@ -404,8 +402,8 @@ export default function AdminProductsPage() {
                                                 <div className="flex items-center gap-4">
                                                     <div className="relative w-14 h-14 rounded-xl bg-slate-100 overflow-hidden border border-slate-200 group-hover:border-brand/30 transition-colors">
                                                         {product.image ? (
-                                                            <img 
-                                                                src={product.image} 
+                                                            <img
+                                                                src={product.image}
                                                                 alt={product.name}
                                                                 className="w-full h-full object-cover"
                                                             />
@@ -435,12 +433,17 @@ export default function AdminProductsPage() {
                                                     <p className="font-bold text-slate-900">
                                                         {product.currentPrice?.toLocaleString('vi-VN')}đ
                                                     </p>
-                                                    {product.originalPrice && (
+                                                    {!!product.originalPrice && Number(product.originalPrice) > 0 && (
                                                         <p className="text-sm text-slate-400 line-through">
                                                             {product.originalPrice?.toLocaleString('vi-VN')}đ
                                                         </p>
                                                     )}
                                                 </div>
+                                            </td>
+                                            <td className="px-4 py-4 text-center">
+                                                <span className="inline-flex items-center justify-center p-2 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-brand min-w-[36px]">
+                                                    {product.sortOrder || 0}
+                                                </span>
                                             </td>
                                             <td className="px-4 py-4 text-center">
                                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg">
@@ -452,17 +455,16 @@ export default function AdminProductsPage() {
                                                 <div className="flex items-center justify-center">
                                                     <button
                                                         onClick={() => handleUpdateStockStatus(
-                                                            product.id, 
+                                                            product.id,
                                                             product.stockStatus === 'out_of_stock' ? 'in_stock' : 'out_of_stock'
                                                         )}
                                                         disabled={updatingStock === product.id}
-                                                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                                                            product.stockStatus === 'in_stock'
-                                                                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                                                                : product.stockStatus === 'low_stock'
+                                                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${product.stockStatus === 'in_stock'
+                                                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                                            : product.stockStatus === 'low_stock'
                                                                 ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                                                                 : 'bg-red-50 text-red-700 hover:bg-red-100'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {updatingStock === product.id ? (
                                                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -507,16 +509,16 @@ export default function AdminProductsPage() {
                     {filteredProducts.map((product) => {
                         const status = STATUS_CONFIG[product.stockStatus];
                         const StatusIcon = status.icon;
-                        
+
                         return (
-                            <div 
+                            <div
                                 key={product.id}
                                 className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20 transition-all overflow-hidden"
                             >
                                 <div className="relative aspect-square bg-slate-100 overflow-hidden">
                                     {product.image ? (
-                                        <img 
-                                            src={product.image} 
+                                        <img
+                                            src={product.image}
                                             alt={product.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
@@ -540,7 +542,7 @@ export default function AdminProductsPage() {
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <div className="p-4">
                                     <p className="text-xs text-slate-500 font-mono mb-1">
                                         SKU: {product.sku || product.id.slice(-8)}
@@ -551,13 +553,13 @@ export default function AdminProductsPage() {
                                     <p className="text-sm text-slate-500 mb-3">
                                         {product.category || 'Chưa phân loại'}
                                     </p>
-                                    
+
                                     <div className="flex items-center justify-between mb-4">
                                         <div>
                                             <p className="font-bold text-slate-900">
                                                 {product.currentPrice?.toLocaleString('vi-VN')}đ
                                             </p>
-                                            {product.originalPrice && (
+                                            {!!product.originalPrice && Number(product.originalPrice) > 0 && (
                                                 <p className="text-xs text-slate-400 line-through">
                                                     {product.originalPrice?.toLocaleString('vi-VN')}đ
                                                 </p>
@@ -568,7 +570,7 @@ export default function AdminProductsPage() {
                                             <p className="font-semibold text-slate-700">{product.stock || 0}</p>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
                                         <button
                                             onClick={() => router.push(`/admin/products/${product.id}`)}
@@ -583,11 +585,10 @@ export default function AdminProductsPage() {
                                                 product.stockStatus === 'out_of_stock' ? 'in_stock' : 'out_of_stock'
                                             )}
                                             disabled={updatingStock === product.id}
-                                            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                                                product.stockStatus === 'out_of_stock'
-                                                    ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                                                    : 'bg-red-50 text-red-600 hover:bg-red-100'
-                                            }`}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${product.stockStatus === 'out_of_stock'
+                                                ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                                                : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                                }`}
                                         >
                                             {updatingStock === product.id ? (
                                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -624,7 +625,7 @@ export default function AdminProductsPage() {
                         <button className="text-sm hover:text-brand-light transition-colors">
                             Cập nhật tồn kho
                         </button>
-                        <button 
+                        <button
                             onClick={() => setSelectedProducts(new Set())}
                             className="text-sm text-slate-400 hover:text-white transition-colors"
                         >
