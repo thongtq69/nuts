@@ -105,10 +105,10 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
 
         // Home Page Large Promo Banner
         homePromoBannerUrl: { type: String, default: '/assets/images/promotion.png' },
-        homePromoBannerTitle: { type: String, default: "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE" },
-        homePromoBannerButtonText: { type: String, default: 'BUY MORE, WIN MORE' },
-        homePromoBannerButtonLink: { type: String, default: '#' },
-        homePromoBannerNote: { type: String, default: '*Jersey & Miniature Bat' },
+        homePromoBannerTitle: { type: String, default: "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN" },
+        homePromoBannerButtonText: { type: String, default: 'ĐĂNG KÝ NGAY' },
+        homePromoBannerButtonLink: { type: String, default: '/register' },
+        homePromoBannerNote: { type: String, default: '*Áp dụng cho đơn hàng từ 300.000đ' },
         homePromoBannerEnabled: { type: Boolean, default: true },
     },
     {

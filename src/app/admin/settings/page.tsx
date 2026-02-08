@@ -89,10 +89,10 @@ export default function AdminSettingsPage() {
         productsBannerUrl: '/assets/images/slide1.jpg',
         productsBannerEnabled: true,
         homePromoBannerUrl: '/assets/images/promotion.png',
-        homePromoBannerTitle: "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE",
-        homePromoBannerButtonText: 'BUY MORE, WIN MORE',
-        homePromoBannerButtonLink: '#',
-        homePromoBannerNote: '*Jersey & Miniature Bat',
+        homePromoBannerTitle: "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN",
+        homePromoBannerButtonText: 'ĐĂNG KÝ NGAY',
+        homePromoBannerButtonLink: '/register',
+        homePromoBannerNote: '*Áp dụng cho đơn hàng từ 300.000đ',
         homePromoBannerEnabled: true,
     });
     const [loading, setLoading] = useState(true);

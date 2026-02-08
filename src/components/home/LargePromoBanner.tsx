@@ -14,10 +14,10 @@ interface PromoBannerSettings {
 export default function LargePromoBanner() {
     const [settings, setSettings] = useState<PromoBannerSettings>({
         homePromoBannerUrl: '/assets/images/promotion.png',
-        homePromoBannerTitle: "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE",
-        homePromoBannerButtonText: 'BUY MORE, WIN MORE',
-        homePromoBannerButtonLink: '#',
-        homePromoBannerNote: '*Jersey & Miniature Bat',
+        homePromoBannerTitle: "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN",
+        homePromoBannerButtonText: 'ĐĂNG KÝ NGAY',
+        homePromoBannerButtonLink: '/register',
+        homePromoBannerNote: '*Áp dụng cho đơn hàng từ 300.000đ',
         homePromoBannerEnabled: true,
     });
 
@@ -30,10 +30,10 @@ export default function LargePromoBanner() {
                     if (data) {
                         setSettings({
                             homePromoBannerUrl: data.homePromoBannerUrl || '/assets/images/promotion.png',
-                            homePromoBannerTitle: data.homePromoBannerTitle || "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE",
-                            homePromoBannerButtonText: data.homePromoBannerButtonText || 'BUY MORE, WIN MORE',
-                            homePromoBannerButtonLink: data.homePromoBannerButtonLink || '#',
-                            homePromoBannerNote: data.homePromoBannerNote || '*Jersey & Miniature Bat',
+                            homePromoBannerTitle: data.homePromoBannerTitle || "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN",
+                            homePromoBannerButtonText: data.homePromoBannerButtonText || 'ĐĂNG KÝ NGAY',
+                            homePromoBannerButtonLink: data.homePromoBannerButtonLink || '/register',
+                            homePromoBannerNote: data.homePromoBannerNote || '*Áp dụng cho đơn hàng từ 300.000đ',
                             homePromoBannerEnabled: data.homePromoBannerEnabled !== false,
                         });
                     }
