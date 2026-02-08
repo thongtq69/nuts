@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { Button, Card, Input, Textarea, Badge, RichTextEditor } from '@/components/admin/ui';
+import ImageUploadField from '@/components/admin/ImageUploadField';
 
 const PAGES = [
     { slug: 'about-us', title: 'Về Go Nuts', icon: Info, description: 'Trang giới thiệu câu chuyện thương hiệu, giá trị cốt lõi.', hasExtraFields: true },
@@ -404,99 +405,62 @@ export default function AdminPageContent() {
 
                                     {/* Images Tab - About Page Only */}
                                     {isAboutPage && activeTab === 'images' && (
-                                        <Card className="p-6 space-y-6">
+                                        <Card className="p-6 space-y-8">
                                             <div className="flex items-center gap-3 mb-6">
                                                 <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
                                                     <ImageIcon className="w-5 h-5 text-brand" />
                                                 </div>
                                                 <div>
                                                     <h3 className="font-bold text-slate-800">Quản lý hình ảnh</h3>
-                                                    <p className="text-sm text-slate-500">Thiết lập hình ảnh cho các section của trang About</p>
+                                                    <p className="text-sm text-slate-500">Tải ảnh từ thiết bị hoặc nhập URL cho các section của trang About</p>
                                                 </div>
                                             </div>
 
-                                            {/* Hero Image */}
-                                            <div className="space-y-4 p-5 bg-slate-50 rounded-2xl border border-slate-200">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="primary" className="text-xs">Hero Section</Badge>
-                                                    <span className="text-sm font-semibold text-slate-700">Hình nền đầu trang</span>
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                                {/* Hero Image */}
+                                                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <Badge variant="primary" className="text-xs">Hero Section</Badge>
+                                                        <span className="text-sm font-semibold text-slate-700">Hình nền đầu trang</span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 mb-4">Tỉ lệ khuyến nghị: 16:9 (1920x1080px)</p>
+                                                    <ImageUploadField
+                                                        label="Hero Image"
+                                                        value={contentData.heroImage}
+                                                        onChange={(heroImage) => setContentData({ ...contentData, heroImage })}
+                                                        folder="gonuts/pages/about"
+                                                        aspectRatio="16:9"
+                                                        placeholder="Kéo thả hoặc click để tải ảnh Hero"
+                                                    />
                                                 </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-semibold text-slate-500">URL hình ảnh</label>
-                                                        <Input
-                                                            value={contentData.heroImage.url}
-                                                            onChange={e => setContentData({
-                                                                ...contentData,
-                                                                heroImage: { ...contentData.heroImage, url: e.target.value }
-                                                            })}
-                                                            placeholder="https://..."
-                                                        />
+
+                                                {/* Side Image */}
+                                                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <Badge variant="primary" className="text-xs">Side Card</Badge>
+                                                        <span className="text-sm font-semibold text-slate-700">Hình ảnh sidebar</span>
                                                     </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-semibold text-slate-500">Alt text (SEO)</label>
-                                                        <Input
-                                                            value={contentData.heroImage.alt}
-                                                            onChange={e => setContentData({
-                                                                ...contentData,
-                                                                heroImage: { ...contentData.heroImage, alt: e.target.value }
-                                                            })}
-                                                            placeholder="Mô tả hình ảnh..."
-                                                        />
-                                                    </div>
+                                                    <p className="text-xs text-slate-500 mb-4">Tỉ lệ khuyến nghị: 4:5 (800x1000px)</p>
+                                                    <ImageUploadField
+                                                        label="Side Image"
+                                                        value={contentData.sideImage}
+                                                        onChange={(sideImage) => setContentData({ ...contentData, sideImage })}
+                                                        folder="gonuts/pages/about"
+                                                        aspectRatio="4:5"
+                                                        placeholder="Kéo thả hoặc click để tải ảnh Side"
+                                                    />
                                                 </div>
-                                                {contentData.heroImage.url && (
-                                                    <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-200">
-                                                        <img
-                                                            src={contentData.heroImage.url}
-                                                            alt={contentData.heroImage.alt}
-                                                            className="w-full h-full object-cover"
-                                                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/800x450/e2e8f0/94a3b8?text=Image+Error'; }}
-                                                        />
-                                                    </div>
-                                                )}
                                             </div>
 
-                                            {/* Side Image */}
-                                            <div className="space-y-4 p-5 bg-slate-50 rounded-2xl border border-slate-200">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="primary" className="text-xs">Side Card</Badge>
-                                                    <span className="text-sm font-semibold text-slate-700">Hình ảnh sidebar</span>
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-semibold text-slate-500">URL hình ảnh</label>
-                                                        <Input
-                                                            value={contentData.sideImage.url}
-                                                            onChange={e => setContentData({
-                                                                ...contentData,
-                                                                sideImage: { ...contentData.sideImage, url: e.target.value }
-                                                            })}
-                                                            placeholder="https://..."
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-semibold text-slate-500">Alt text (SEO)</label>
-                                                        <Input
-                                                            value={contentData.sideImage.alt}
-                                                            onChange={e => setContentData({
-                                                                ...contentData,
-                                                                sideImage: { ...contentData.sideImage, alt: e.target.value }
-                                                            })}
-                                                            placeholder="Mô tả hình ảnh..."
-                                                        />
-                                                    </div>
-                                                </div>
-                                                {contentData.sideImage.url && (
-                                                    <div className="relative aspect-[4/5] max-w-xs rounded-xl overflow-hidden bg-slate-200">
-                                                        <img
-                                                            src={contentData.sideImage.url}
-                                                            alt={contentData.sideImage.alt}
-                                                            className="w-full h-full object-cover"
-                                                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x500/e2e8f0/94a3b8?text=Image+Error'; }}
-                                                        />
-                                                    </div>
-                                                )}
+                                            {/* Tips */}
+                                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                                <h4 className="text-sm font-bold text-blue-800 mb-2">💡 Lưu ý khi tải ảnh:</h4>
+                                                <ul className="text-sm text-blue-700 space-y-1">
+                                                    <li>• Ảnh sẽ được tự động tối ưu và lưu trên Cloudinary CDN</li>
+                                                    <li>• Nên sử dụng ảnh chất lượng cao (tối thiểu 1920px chiều rộng)</li>
+                                                    <li>• Alt text giúp SEO và ngườI dùng trình đọc màn hình</li>
+                                                    <li>• Có thể nhập URL ảnh trực tiếp nếu ảnh đã có sẵn</li>
+                                                </ul>
                                             </div>
                                         </Card>
                                     )}
