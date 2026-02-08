@@ -100,6 +100,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                 sku={product.sku}
                                 inStock={product.stockStatus !== 'out_of_stock'}
                                 tags={product.tags}
+                                weight={product.weight}
                             />
                         </div>
                     </div>

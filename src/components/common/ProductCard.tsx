@@ -17,12 +17,14 @@ interface ProductCardProps {
     agentPrice?: string | number;
     bulkPricing?: { minQuantity: number; discountPercent: number }[];
     stockStatus?: 'in_stock' | 'out_of_stock' | 'low_stock';
+    weight?: number;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
     id, image, name, currentPrice, originalPrice,
     badgeText, badgeColor, buttonColor, priceColor,
-    agentPrice, bulkPricing, stockStatus = 'in_stock'
+    agentPrice, bulkPricing, stockStatus = 'in_stock',
+    weight
 }) => {
     const { addToCart } = useCart();
     const toast = useToast();
@@ -66,7 +68,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
             originalPrice: price,
             quantity: 1,
             agentPrice: agentP,
-            bulkPricing
+            bulkPricing,
+            weight
         };
 
         addToCart(item);
@@ -82,8 +85,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
             )}
             <Link href={`/products/${id}`}>
                 <div className="product-image">
-                    <img 
-                        src={image} 
+                    <img
+                        src={image}
                         alt={name}
                         onError={(e) => {
                             console.error(`Failed to load product image: ${image}`);

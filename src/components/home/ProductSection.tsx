@@ -15,6 +15,7 @@ interface Product {
     buttonColor?: string;
     priceColor?: string;
     stockStatus?: 'in_stock' | 'out_of_stock' | 'low_stock';
+    weight?: number;
 }
 
 interface ProductSectionProps {
@@ -37,7 +38,7 @@ function getPageSize(width: number, variant: 'six' | 'four') {
     return 2;
 }
 
-export default function ProductSection({ title, products, variant = 'six' }: ProductSectionProps) { 
+export default function ProductSection({ title, products, variant = 'six' }: ProductSectionProps) {
     const [pageSize, setPageSize] = useState(6);
     const [page, setPage] = useState(0);
 
@@ -112,6 +113,7 @@ export default function ProductSection({ title, products, variant = 'six' }: Pro
                                 buttonColor={product.buttonColor}
                                 priceColor={product.priceColor}
                                 stockStatus={product.stockStatus}
+                                weight={product.weight}
                             />
                         ))}
                     </div>
