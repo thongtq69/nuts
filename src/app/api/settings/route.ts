@@ -1,82 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import mongoose from 'mongoose';
+import SiteSettings from '@/models/SiteSettings';
 
-interface SiteSettings {
-    _id?: mongoose.Types.ObjectId;
-    hotline: string;
-    zaloLink: string;
-    email: string;
-    address: string;
-    facebookUrl: string;
-    instagramUrl: string;
-    youtubeUrl: string;
-    tiktokUrl: string;
-    promoText: string;
-    promoEnabled: boolean;
-    agentRegistrationUrl: string;
-    ctvRegistrationUrl: string;
-    freeShippingThreshold: number;
-    logoUrl: string;
-    siteName: string;
-    businessLicense: string;
-    workingHours: string;
-    productsBannerUrl: string;
-    productsBannerEnabled: boolean;
-    homePromoBannerUrl: string;
-    homePromoBannerTitle: string;
-    homePromoBannerButtonText: string;
-    homePromoBannerButtonLink: string;
-    homePromoBannerNote: string;
-    homePromoBannerEnabled: boolean;
-    supportHotline: string;
-    productFeatures: {
-        title: string;
-        description: string;
-        icon: string;
-        enabled: boolean;
-    }[];
-    updatedAt: Date;
-}
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-// Mongoose Schema
-const settingsSchema = new mongoose.Schema({
-    hotline: { type: String, default: '' },
-    zaloLink: { type: String, default: '' },
-    email: { type: String, default: '' },
-    address: { type: String, default: '' },
-    facebookUrl: { type: String, default: '' },
-    instagramUrl: { type: String, default: '' },
-    youtubeUrl: { type: String, default: '' },
-    tiktokUrl: { type: String, default: '' },
-    promoText: { type: String, default: '' },
-    promoEnabled: { type: Boolean, default: true },
-    agentRegistrationUrl: { type: String, default: '' },
-    ctvRegistrationUrl: { type: String, default: '' },
-    freeShippingThreshold: { type: Number, default: 0 },
-    logoUrl: { type: String, default: '' },
-    siteName: { type: String, default: '' },
-    businessLicense: { type: String, default: '' },
-    workingHours: { type: String, default: '' },
-    productsBannerUrl: { type: String, default: '/assets/images/slide1.jpg' },
-    productsBannerEnabled: { type: Boolean, default: true },
-    homePromoBannerUrl: { type: String, default: '/assets/images/promotion.png' },
-    homePromoBannerTitle: { type: String, default: "WIN RAHUL DRAVID'S<br />AUTOGRAPHED MERCHANDISE" },
-    homePromoBannerButtonText: { type: String, default: 'BUY MORE, WIN MORE' },
-    homePromoBannerButtonLink: { type: String, default: '#' },
-    homePromoBannerNote: { type: String, default: '*Jersey & Miniature Bat' },
-    homePromoBannerEnabled: { type: Boolean, default: true },
-    supportHotline: { type: String, default: '' },
-    productFeatures: [{
-        title: String,
-        description: String,
-        icon: String,
-        enabled: { type: Boolean, default: true }
-    }],
-    updatedAt: { type: Date, default: Date.now }
-}, { timestamps: true });
-
-const Settings = mongoose.models.Settings || mongoose.model('Settings', settingsSchema);
+// Use the shared model instead of local definition
+const Settings = SiteSettings;
 
 // GET - Lấy cài đặt website
 export async function GET() {
@@ -141,7 +71,12 @@ export async function PUT(request: NextRequest) {
         const settings = await Settings.findOneAndUpdate(
             {},
             { $set: sanitizedUpdateData },
-            { upsert: true, new: true, runValidators: true }
+            {
+                upsert: true,
+                new: true,
+                runValidators: true,
+                setDefaultsOnInsert: true
+            }
         );
 
         return NextResponse.json({

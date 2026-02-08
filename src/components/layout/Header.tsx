@@ -42,7 +42,7 @@ export default function Header() {
 
     useEffect(() => {
         // Fetch site settings
-        fetch('/api/settings')
+        fetch('/api/settings', { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
                 if (data && !data.message) {

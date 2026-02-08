@@ -24,7 +24,7 @@ export default function LargePromoBanner() {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('/api/settings');
+                const res = await fetch('/api/settings', { cache: 'no-store' });
                 if (res.ok) {
                     const data = await res.json();
                     if (data) {

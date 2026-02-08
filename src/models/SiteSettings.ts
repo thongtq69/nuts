@@ -39,6 +39,8 @@ export interface ISiteSettings {
     // Other
     logoUrl: string;
     siteName: string;
+    businessLicense: string;
+    workingHours: string;
 
     // Products Page Banner
     productsBannerUrl: string;
@@ -94,6 +96,8 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
 
         logoUrl: { type: String, default: '/assets/images/logo.png' },
         siteName: { type: String, default: 'Go Nuts' },
+        businessLicense: { type: String, default: '0123xxxxxx' },
+        workingHours: { type: String, default: 'Thứ 2 - Thứ 7: 8:00 - 17:30' },
 
         // Products Page Banner
         productsBannerUrl: { type: String, default: '/assets/images/slide1.jpg' },
