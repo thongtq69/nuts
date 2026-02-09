@@ -202,7 +202,7 @@ export default function ProductInfo({
                     </div>
                 </div>
 
-                <div className="action-buttons hidden lg:flex">
+                <div className="action-buttons">
                     <button
                         className="btn-add-to-cart"
                         onClick={handleAddToCart}
@@ -217,7 +217,7 @@ export default function ProductInfo({
                                     <circle cx="20" cy="21" r="1" />
                                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                                 </svg>
-                                Thêm vào giỏ hàng
+                                Thêm vào giỏ<span className="hidden md:inline"> hàng</span>
                             </>
                         )}
                     </button>

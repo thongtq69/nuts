@@ -5477,24 +5477,67 @@ a[class*="from-orange"] {
   }
 
   .quantity-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
   }
 
   .quantity-selector-modern {
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .qty-btn-modern {
+    width: 36px;
+    height: 36px;
   }
 
   .qty-input-modern {
+    width: 45px;
+    height: 36px;
+    border-left: 1.5px solid #e5e7eb;
+    border-right: 1.5px solid #e5e7eb;
+  }
+
+  .action-buttons {
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .btn-add-to-cart {
     flex: 1;
+    background: white;
+    color: var(--color-primary-brown);
+    border: 1.5px solid var(--color-primary-brown);
+  }
+
+  .btn-buy-now {
+    flex: 1.2;
+    background: var(--color-primary-brown);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(156, 112, 68, 0.25);
   }
 
   .btn-add-to-cart,
   .btn-buy-now {
-    height: 48px;
-    font-size: 14px;
+    height: 46px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 23px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-add-to-cart svg {
+    width: 16px;
+    height: 16px;
   }
 
   .hotline-number {
@@ -6275,6 +6318,7 @@ a[class*="from-orange"] {
     margin-top: 20px;
   }
 }
+
 /* Cart Page Modern Styles */
 .cart-items-container {
   display: flex;
@@ -6350,7 +6394,7 @@ a[class*="from-orange"] {
     padding: 12px;
     gap: 12px;
     display: grid;
-    grid-template-areas: 
+    grid-template-areas:
       "img info info"
       "img qty subtotal";
     grid-template-columns: 80px 1fr 1fr;
@@ -6423,6 +6467,6 @@ a[class*="from-orange"] {
   }
 
   .tab-btn.active {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
 }
