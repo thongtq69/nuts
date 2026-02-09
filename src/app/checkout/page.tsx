@@ -344,7 +344,8 @@ export default function CheckoutPage() {
                 shippingFee,
                 totalAmount: total,
                 note: paymentMethod === 'banking' ? `${formData.note} [PaymentRef: ${paymentReference}]`.trim() : formData.note,
-                voucherCode: isVoucherApplied ? voucherCode : undefined
+                voucherCode: isVoucherApplied ? voucherCode : undefined,
+                paymentReference
             };
 
             const res = await fetch('/api/orders', {

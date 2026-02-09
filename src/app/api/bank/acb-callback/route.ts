@@ -51,26 +51,40 @@ export async function POST(req: Request) {
             });
         }
 
-        await dbConnect();
-
         // 2. Logic: Identify Order from Description
-        // Step 1: Try to match a 6-character alphanumeric pattern (common for the suffix used in emails)
-        // Regex looks for "GN" or just a 6-char hex/alphanum sequence
-        const orderSuffixMatch = description.match(/[A-Z0-9]{6}/i);
+        // Search pattern: GOXXXXXX (where X is alphanumeric, e.g., GO904721)
+        const paymentRefMatch = description.match(/GO[A-Z0-9]{6}/i);
         let order = null;
 
-        if (orderSuffixMatch) {
-            const suffix = orderSuffixMatch[0].toUpperCase();
-            console.log(`🔍 Searching for order with suffix: ${suffix}`);
+        if (paymentRefMatch) {
+            const refCode = paymentRefMatch[0].toUpperCase();
+            console.log(`🔍 Searching for order with paymentRef: ${refCode}`);
 
-            // Search for orders where the ID ends with this suffix
-            const allOrders = await Order.find({ paymentStatus: 'pending' }).sort({ createdAt: -1 }).limit(100);
-            order = allOrders.find(o => o._id.toString().toUpperCase().endsWith(suffix));
+            await dbConnect();
+            order = await Order.findOne({
+                paymentRef: refCode,
+                paymentStatus: 'pending'
+            }).sort({ createdAt: -1 });
         }
 
-        // Step 2: Fallback to searching by total amount if suffix not found
+        // Step 2: Fallback to searching by order ID suffix if paymentRef not found
+        if (!order) {
+            const orderSuffixMatch = description.match(/[A-Z0-9]{6}/i);
+            if (orderSuffixMatch) {
+                const suffix = orderSuffixMatch[0].toUpperCase();
+                console.log(`🔍 Fallback: Searching by order ID suffix: ${suffix}`);
+
+                await dbConnect(); // Ensure DB is connected for fallback searches
+                // Search for orders where the ID ends with this suffix
+                const allOrders = await Order.find({ paymentStatus: 'pending' }).sort({ createdAt: -1 }).limit(100);
+                order = allOrders.find(o => o._id.toString().toUpperCase().endsWith(suffix));
+            }
+        }
+
+        // Step 3: Global Fallback by amount
         if (!order && amount > 0) {
-            console.log(`🔍 Fallback: Searching by amount: ${amount}`);
+            console.log(`🔍 Global Fallback: Searching by amount: ${amount}`);
+            await dbConnect(); // Ensure DB is connected for fallback searches
             order = await Order.findOne({
                 totalAmount: amount,
                 paymentStatus: 'pending',

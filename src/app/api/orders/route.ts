@@ -249,7 +249,8 @@ export async function POST(req: Request) {
             commissionStatus,
             originalTotalAmount: totalOriginalAmount,
             agentSavings: totalAgentSavings,
-            isAgentOrder: isAgent
+            isAgentOrder: isAgent,
+            paymentRef: body.paymentReference
         });
 
         // Cập nhật tồn kho sau khi đặt hàng thành công
