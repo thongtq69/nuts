@@ -156,12 +156,12 @@ export default function Header() {
 
             {/* Main Header - White with subtle shadow */}
             <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">
-                <div className="container mx-auto px-4 py-4 md:py-6">
-                    <div className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-8">
+                <div className="container mx-auto px-4 py-2 md:py-6">
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-8">
                         {/* Mobile Row: Logo & Actions */}
                         <div className="w-full flex items-center justify-between lg:w-auto">
                             <Link href="/" className="shrink-0">
-                                <img src="/assets/logo.png" alt="Go Nuts Logo" className="h-14 md:h-20 w-auto" />
+                                <img src="/assets/logo.png" alt="Go Nuts Logo" className="h-10 md:h-20 w-auto" />
                             </Link>
 
                             {/* Mobile Icons - Right side */}
@@ -200,7 +200,7 @@ export default function Header() {
 
                                 <input
                                     type="text"
-                                    className="w-full py-4 px-4 bg-transparent text-sm md:text-base outline-none font-semibold placeholder:text-slate-400 placeholder:font-medium text-slate-800 z-10"
+                                    className="w-full py-2.5 md:py-4 px-4 bg-transparent text-sm md:text-base outline-none font-semibold placeholder:text-slate-400 placeholder:font-medium text-slate-800 z-10"
                                     placeholder="Bạn đang tìm loại hạt nào hôm nay?..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -211,7 +211,7 @@ export default function Header() {
                                 <div className="pr-1.5 py-1.5 h-full">
                                     <button
                                         onClick={handleSearch}
-                                        className="h-full bg-gradient-to-br from-[#9C7044] via-[#855D36] to-[#7d5a36] text-white px-8 py-2.5 rounded-[18px] font-bold text-sm tracking-wider hover:shadow-[0_4px_15px_rgba(156,112,68,0.4)] active:scale-95 transition-all duration-300 flex items-center gap-2"
+                                        className="h-full bg-gradient-to-br from-[#9C7044] via-[#855D36] to-[#7d5a36] text-white px-4 md:px-8 py-2.5 rounded-[18px] font-bold text-sm tracking-wider hover:shadow-[0_4px_15px_rgba(156,112,68,0.4)] active:scale-95 transition-all duration-300 flex items-center gap-2"
                                     >
                                         <span className="hidden md:inline">Tìm</span>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="md:hidden">

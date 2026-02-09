@@ -65,7 +65,7 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
         if (!touchStart || !touchEnd) return;
         const distance = touchStart - touchEnd;
         const minSwipeDistance = 50;
-        
+
         if (Math.abs(distance) > minSwipeDistance) {
             if (distance > 0) {
                 handleNext();
@@ -78,11 +78,11 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
     // Zoom handlers
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isZoomed || !imageContainerRef.current) return;
-        
+
         const rect = imageContainerRef.current.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
-        
+
         setZoomPosition({ x, y });
     };
 
@@ -93,7 +93,7 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
     return (
         <div className="product-gallery-modern">
             {/* Main Image Container */}
-            <div 
+            <div
                 ref={imageContainerRef}
                 className={`main-image-container ${isZoomed ? 'zoomed' : ''}`}
                 onMouseEnter={() => setIsZoomed(true)}
@@ -103,7 +103,7 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
             >
-                <div 
+                <div
                     className="main-image-wrapper"
                     style={isZoomed ? {
                         transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
@@ -122,7 +122,7 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
                 {/* Navigation Arrows */}
                 {validImages.length > 1 && (
                     <>
-                        <button 
+                        <button
                             className="gallery-nav-btn prev"
                             onClick={handlePrev}
                             aria-label="Previous image"
@@ -131,7 +131,7 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
                                 <polyline points="15 18 9 12 15 6" />
                             </svg>
                         </button>
-                        <button 
+                        <button
                             className="gallery-nav-btn next"
                             onClick={handleNext}
                             aria-label="Next image"
@@ -161,24 +161,39 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
                 </div>
             </div>
 
-            {/* Thumbnail List */}
+            {/* Thumbnail List (Desktop) & Dot Indicators (Mobile) */}
             {validImages.length > 1 && (
-                <div className="thumbnail-container">
-                    <div className="thumbnail-list-modern">
-                        {validImages.map((img, index) => (
+                <div className="gallery-pagination-wrapper">
+                    {/* Thumbnails - Hidden on small mobile in CSS if needed, but here we provide both */}
+                    <div className="thumbnail-container hidden-mobile">
+                        <div className="thumbnail-list-modern">
+                            {validImages.map((img, index) => (
+                                <button
+                                    key={index}
+                                    className={`thumbnail-item ${activeIndex === index ? 'active' : ''}`}
+                                    onClick={() => setActiveIndex(index)}
+                                    aria-label={`View image ${index + 1}`}
+                                >
+                                    <img
+                                        src={img}
+                                        alt={`${productName} thumbnail ${index + 1}`}
+                                        onError={handleImageError}
+                                        draggable={false}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Dot Indicators - Visible only on Mobile */}
+                    <div className="mobile-gallery-dots lg:hidden">
+                        {validImages.map((_, index) => (
                             <button
                                 key={index}
-                                className={`thumbnail-item ${activeIndex === index ? 'active' : ''}`}
+                                className={`gallery-dot ${activeIndex === index ? 'active' : ''}`}
                                 onClick={() => setActiveIndex(index)}
-                                aria-label={`View image ${index + 1}`}
-                            >
-                                <img
-                                    src={img}
-                                    alt={`${productName} thumbnail ${index + 1}`}
-                                    onError={handleImageError}
-                                    draggable={false}
-                                />
-                            </button>
+                                aria-label={`Go to slide ${index + 1}`}
+                            />
                         ))}
                     </div>
                 </div>

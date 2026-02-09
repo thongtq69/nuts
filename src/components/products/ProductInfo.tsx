@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -202,7 +202,7 @@ export default function ProductInfo({
                     </div>
                 </div>
 
-                <div className="action-buttons">
+                <div className="action-buttons hidden lg:flex">
                     <button
                         className="btn-add-to-cart"
                         onClick={handleAddToCart}
@@ -286,6 +286,64 @@ export default function ProductInfo({
                         </a>
                     </div>
                 </div>
+            </div>
+
+            {/* Sticky Mobile Action Bar */}
+            <StickyMobileAction
+                isAddingToCart={isAddingToCart}
+                inStock={inStock}
+                quantity={quantity}
+                handleQuantityChange={handleQuantityChange}
+                handleAddToCart={handleAddToCart}
+                handleBuyNow={handleBuyNow}
+            />
+        </div>
+    );
+}
+
+function StickyMobileAction({
+    isAddingToCart,
+    inStock,
+    quantity,
+    handleQuantityChange,
+    handleAddToCart,
+    handleBuyNow
+}: any) {
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            // Show sticky bar after scrolling 400px
+            setIsVisible(window.scrollY > 400);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    if (!isVisible) return null;
+
+    return (
+        <div className="mobile-sticky-actions lg:hidden">
+            <div className="sticky-actions-container">
+                <div className="sticky-quantity">
+                    <button className="sticky-qty-btn" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1}>-</button>
+                    <span className="sticky-qty-value">{quantity}</span>
+                    <button className="sticky-qty-btn" onClick={() => handleQuantityChange(1)}>+</button>
+                </div>
+                <button
+                    className="sticky-btn-add"
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart || !inStock}
+                >
+                    {isAddingToCart ? <span className="loading-spinner-small" /> : 'Thêm giỏ'}
+                </button>
+                <button
+                    className="sticky-btn-buy"
+                    onClick={handleBuyNow}
+                    disabled={!inStock}
+                >
+                    Mua ngay
+                </button>
             </div>
         </div>
     );

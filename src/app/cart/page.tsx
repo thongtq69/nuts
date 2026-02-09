@@ -34,51 +34,43 @@ export default function CartPage() {
                     </div>
                 ) : (
                     <div className="cart-layout">
-                        <div className="cart-items">
-                            <table className="cart-table">
-                                <thead>
-                                    <tr>
-                                        <th>Sản phẩm</th>
-                                        <th>Giá</th>
-                                        <th>Số lượng</th>
-                                        <th>Tạm tính</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {cartItems.map((item) => (
-                                        <tr key={item.id}>
-                                            <td className="product-col">
-                                                <img src={item.image} alt={item.name} />
-                                                <span>{item.name}</span>
-                                            </td>
-                                            <td>
+                        <div className="cart-items-container">
+                            {cartItems.map((item) => (
+                                <div key={item.id} className="cart-item-card">
+                                    <div className="cart-item-image">
+                                        <img src={item.image} alt={item.name} />
+                                    </div>
+                                    <div className="cart-item-info">
+                                        <h4 className="cart-item-name">{item.name}</h4>
+                                        <div className="cart-item-prices">
+                                            {item.isAgent && item.originalPrice !== getItemPrice(item) ? (
                                                 <div className="price-display">
-                                                    {item.isAgent && item.originalPrice !== getItemPrice(item) ? (
-                                                        <>
-                                                            <span className="original-price-strikethrough">{formatPrice(item.originalPrice)}₫</span>
-                                                            <span className="agent-price">{formatPrice(getItemPrice(item))}₫</span>
-                                                        </>
-                                                    ) : (
-                                                        <span>{formatPrice(item.originalPrice)}₫</span>
-                                                    )}
+                                                    <span className="original-price-strikethrough">{formatPrice(item.originalPrice)}₫</span>
+                                                    <span className="agent-price">{formatPrice(getItemPrice(item))}₫</span>
                                                 </div>
-                                            </td>
-                                            <td>
-                                                <div className="qty-control">
-                                                    <button onClick={() => updateQuantity(item.id, -1)}>-</button>
-                                                    <span>{item.quantity}</span>
-                                                    <button onClick={() => updateQuantity(item.id, 1)}>+</button>
-                                                </div>
-                                            </td>
-                                            <td className="subtotal">{formatPrice(getItemPrice(item) * item.quantity)}₫</td>
-                                            <td>
-                                                <button onClick={() => removeFromCart(item.id)} className="remove-btn">×</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            ) : (
+                                                <span className="item-price">{formatPrice(item.originalPrice)}₫</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="cart-item-quantity">
+                                        <div className="qty-control">
+                                            <button onClick={() => updateQuantity(item.id, -1)} disabled={item.quantity <= 1}>-</button>
+                                            <span className="qty-value">{item.quantity}</span>
+                                            <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+                                        </div>
+                                    </div>
+                                    <div className="cart-item-subtotal">
+                                        <span className="subtotal-label md:hidden">Tạm tính: </span>
+                                        <span className="subtotal-value">{formatPrice(getItemPrice(item) * item.quantity)}₫</span>
+                                    </div>
+                                    <button onClick={() => removeFromCart(item.id)} className="cart-item-remove" aria-label="Xóa sản phẩm">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M18 6L6 18M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            ))}
                         </div>
 
                         <div className="cart-summary">
