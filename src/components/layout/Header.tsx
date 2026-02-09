@@ -160,8 +160,16 @@ export default function Header() {
                     <div className="flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-8">
                         {/* Mobile Row: Logo & Actions */}
                         <div className="w-full flex items-center justify-between lg:w-auto">
-                            <Link href="/" className="shrink-0">
-                                <img src="/assets/logo.png" alt="Go Nuts Logo" className="h-10 md:h-20 w-auto" />
+                            <Link href="/" className="shrink-0 flex items-center gap-3 md:gap-4 group">
+                                <img src="/assets/logo.png" alt="Go Nuts Logo" className="h-10 md:h-16 lg:h-20 w-auto transition-transform duration-300 group-hover:scale-105" />
+                                <div className="flex flex-col justify-center border-l-2 border-[#9C7044]/20 pl-3 md:pl-4">
+                                    <span className="text-[10px] md:text-[13px] font-black text-[#3C2A1A] leading-tight uppercase tracking-[0.1em]">
+                                        Nuts for our nuts
+                                    </span>
+                                    <span className="text-[8px] md:text-[11px] font-bold text-[#9C7044] leading-tight mt-0.5 md:mt-1 italic opacity-80">
+                                        Nuts for your health
+                                    </span>
+                                </div>
                             </Link>
 
                             {/* Mobile Icons - Right side */}
