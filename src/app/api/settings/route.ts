@@ -48,7 +48,7 @@ export async function GET() {
                 siteName: 'Go Nuts Vietnam',
                 businessLicense: '0123xxxxxx',
                 workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
-                productsBannerUrl: '/assets/images/slide1.jpg',
+                productsBannerUrl: '/assets/images/promotion.png',
                 productsBannerEnabled: true,
                 homePromoBannerUrl: '/assets/images/promotion.png',
                 homePromoBannerTitle: "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN",
@@ -67,6 +67,12 @@ export async function GET() {
             settings.homePromoBannerButtonText = 'ĐĂNG KÝ NGAY';
             settings.homePromoBannerTitle = "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN";
             settings.homePromoBannerNote = '*Áp dụng cho đơn hàng từ 300.000đ';
+            await settings.save();
+        }
+
+        // Forced cleanup of old banner images
+        if (settings.productsBannerUrl === '/assets/images/slide1.jpg') {
+            settings.productsBannerUrl = '/assets/images/promotion.png';
             await settings.save();
         }
 

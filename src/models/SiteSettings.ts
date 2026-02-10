@@ -100,7 +100,7 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         workingHours: { type: String, default: 'Thứ 2 - Thứ 7: 8:00 - 17:30' },
 
         // Products Page Banner
-        productsBannerUrl: { type: String, default: '/assets/images/slide1.jpg' },
+        productsBannerUrl: { type: String, default: '/assets/images/promotion.png' },
         productsBannerEnabled: { type: Boolean, default: true },
 
         // Home Page Large Promo Banner
