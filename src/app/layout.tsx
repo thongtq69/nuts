@@ -12,8 +12,31 @@ const titillium = Titillium_Web({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://gonuts.vn"),
   title: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
   description: "Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam",
+  openGraph: {
+    title: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
+    description: "Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam",
+    url: "https://gonuts.vn",
+    siteName: "Go Nuts",
+    images: [
+      {
+        url: "/assets/images/promotion.png",
+        width: 1200,
+        height: 630,
+        alt: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
+      },
+    ],
+    locale: "vi_VN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
+    description: "Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam",
+    images: ["/assets/images/promotion.png"],
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
