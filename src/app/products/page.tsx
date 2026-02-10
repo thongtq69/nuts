@@ -1,6 +1,24 @@
+import { Metadata } from "next";
 import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
 import ProductList from '@/components/products/ProductList';
+
+export const metadata: Metadata = {
+    title: "Tất cả sản phẩm | Go Nuts",
+    description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
+    openGraph: {
+        title: "Tất cả sản phẩm | Go Nuts",
+        description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
+        images: [
+            {
+                url: "/assets/images/promotion.png",
+                width: 1200,
+                height: 630,
+                alt: "Go Nuts Products",
+            },
+        ],
+    },
+};
 
 export const dynamic = 'force-dynamic';
 

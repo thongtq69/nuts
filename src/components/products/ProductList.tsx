@@ -24,7 +24,7 @@ export default function ProductList({ products }: ProductListProps) {
     const searchParams = useSearchParams();
     const [sortOption, setSortOption] = useState('default');
     const [settings, setSettings] = useState<SiteSettings>({
-        productsBannerUrl: '/assets/images/slide1.jpg',
+        productsBannerUrl: '/assets/images/promotion.png',
         productsBannerEnabled: true
     });
 
@@ -36,7 +36,7 @@ export default function ProductList({ products }: ProductListProps) {
                 if (res.ok) {
                     const data = await res.json();
                     setSettings({
-                        productsBannerUrl: data.productsBannerUrl || '/assets/images/slide1.jpg',
+                        productsBannerUrl: data.productsBannerUrl || '/assets/images/promotion.png',
                         productsBannerEnabled: data.productsBannerEnabled !== false
                     });
                 }
@@ -119,7 +119,7 @@ export default function ProductList({ products }: ProductListProps) {
                     {settings.productsBannerEnabled && (
                         <div className="product-banner">
                             <img
-                                src={settings.productsBannerUrl || '/assets/images/slide1.jpg'}
+                                src={settings.productsBannerUrl || '/assets/images/promotion.png'}
                                 alt="Shop Banner"
                                 className="banner-img"
                                 onError={(e) => {
