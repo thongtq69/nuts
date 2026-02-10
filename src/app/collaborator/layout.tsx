@@ -42,7 +42,7 @@ export default function CollaboratorLayout({
         if (!loading) {
             if (!user) {
                 router.push('/login');
-            } else if (user.role !== 'staff' && user.roleType !== 'collaborator' && user.role !== 'admin') {
+            } else if (user.role !== 'staff' && user.roleType !== 'collaborator' && user.role !== 'admin' && user.role !== 'sale') {
                 router.push('/');
             } else {
                 setIsAuthorized(true);

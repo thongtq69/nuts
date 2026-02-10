@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
         // Create JWT Token
         const token = jwt.sign(
-            { id: user._id, role: user.role },
+            { id: user._id, role: user.role, roleType: user.roleType },
             process.env.JWT_SECRET || 'fallback_secret_change_me',
             { expiresIn: '30d' }
         );

@@ -105,16 +105,27 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    if (path.startsWith('/agent') || path.startsWith('/staff')) {
+    if (path.startsWith('/agent') || path.startsWith('/staff') || path.startsWith('/collaborator')) {
         if (!token) {
             return NextResponse.redirect(new URL('/login', request.url));
         }
         try {
             const { payload } = await jwtVerify(token, jwtSecret);
             const role = payload.role as string;
-            const allowedRoles = ['sale', 'staff', 'admin'];
-            if (!allowedRoles.includes(role)) {
-                return NextResponse.redirect(new URL('/', request.url));
+            const roleType = payload.roleType as string;
+            
+            // For collaborator routes, allow: admin, staff, sale, or roleType === 'collaborator'
+            if (path.startsWith('/collaborator')) {
+                const isAllowed = role === 'admin' || role === 'staff' || role === 'sale' || roleType === 'collaborator';
+                if (!isAllowed) {
+                    return NextResponse.redirect(new URL('/', request.url));
+                }
+            } else {
+                // For agent/staff routes
+                const allowedRoles = ['sale', 'staff', 'admin'];
+                if (!allowedRoles.includes(role)) {
+                    return NextResponse.redirect(new URL('/', request.url));
+                }
             }
         } catch (e) {
             return NextResponse.redirect(new URL('/login', request.url));
