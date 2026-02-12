@@ -13,6 +13,7 @@ import { IProduct } from '@/models/Product';
 
 interface ProductListProps {
     products: IProduct[];
+    initialSettings?: SiteSettings;
 }
 
 interface SiteSettings {
@@ -20,10 +21,10 @@ interface SiteSettings {
     productsBannerEnabled?: boolean;
 }
 
-export default function ProductList({ products }: ProductListProps) {
+export default function ProductList({ products, initialSettings }: ProductListProps) {
     const searchParams = useSearchParams();
     const [sortOption, setSortOption] = useState('default');
-    const [settings, setSettings] = useState<SiteSettings>({
+    const [settings, setSettings] = useState<SiteSettings>(initialSettings || {
         productsBannerUrl: '/assets/images/promotion.png',
         productsBannerEnabled: true
     });

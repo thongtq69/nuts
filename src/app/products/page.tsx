@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
+import SiteSettings, { ISiteSettings } from '@/models/SiteSettings';
 import ProductList from '@/components/products/ProductList';
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-// Direct database query for server-side rendering (more reliable than API call)
+// Direct database query for server-side rendering
 async function getProducts(): Promise<IProduct[]> {
     try {
         await dbConnect();
@@ -42,7 +43,30 @@ async function getProducts(): Promise<IProduct[]> {
     }
 }
 
+async function getSiteSettings(): Promise<Partial<ISiteSettings>> {
+    try {
+        await dbConnect();
+        const settings = await SiteSettings.findOne().sort({ updatedAt: -1 }).lean();
+        if (settings) {
+            return {
+                productsBannerUrl: settings.productsBannerUrl,
+                productsBannerEnabled: settings.productsBannerEnabled
+            };
+        }
+    } catch (error) {
+        console.error('❌ Error fetching site settings:', error);
+    }
+    return {
+        productsBannerUrl: '/assets/images/promotion.png',
+        productsBannerEnabled: true
+    };
+}
+
 export default async function ProductsPage() {
-    const products = await getProducts();
-    return <ProductList products={products} />;
+    const [products, settings] = await Promise.all([
+        getProducts(),
+        getSiteSettings()
+    ]);
+
+    return <ProductList products={products} initialSettings={settings} />;
 }
