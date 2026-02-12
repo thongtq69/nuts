@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     siteName: "Go Nuts",
     images: [
       {
-        url: "/assets/images/promotion.png",
+        url: "https://gonuts.vn/assets/images/promotion.png?v=2",
         width: 1200,
         height: 630,
         alt: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
     description: "Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam",
-    images: ["/assets/images/promotion.png"],
+    images: ["https://gonuts.vn/assets/images/promotion.png?v=2"],
   },
   icons: {
     icon: [

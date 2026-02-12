@@ -12,12 +12,18 @@ export const metadata: Metadata = {
         description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
         images: [
             {
-                url: "/assets/images/promotion.png",
+                url: "https://gonuts.vn/assets/images/promotion.png?v=2",
                 width: 1200,
                 height: 630,
                 alt: "Go Nuts Products",
             },
         ],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Tất cả sản phẩm | Go Nuts",
+        description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
+        images: ["https://gonuts.vn/assets/images/promotion.png?v=2"],
     },
 };
 
