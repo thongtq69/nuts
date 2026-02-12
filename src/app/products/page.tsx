@@ -4,28 +4,35 @@ import Product, { IProduct } from '@/models/Product';
 import SiteSettings, { ISiteSettings } from '@/models/SiteSettings';
 import ProductList from '@/components/products/ProductList';
 
-export const metadata: Metadata = {
-    title: "Tất cả sản phẩm | Go Nuts",
-    description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
-    openGraph: {
+export async function generateMetadata(): Promise<Metadata> {
+    const settings = await getSiteSettings();
+    const bannerUrl = (settings.productsBannerUrl?.startsWith('http')
+        ? settings.productsBannerUrl
+        : `https://gonuts.vn${settings.productsBannerUrl}`) || "https://res.cloudinary.com/du6no35fj/image/upload/v1770576812/gonuts/banners/products_banner_1770576809653.png";
+
+    return {
         title: "Tất cả sản phẩm | Go Nuts",
         description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
-        images: [
-            {
-                url: "https://gonuts.vn/assets/images/gonuts-banner-member.png?v=5",
-                width: 1200,
-                height: 630,
-                alt: "Go Nuts Products",
-            },
-        ],
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "Tất cả sản phẩm | Go Nuts",
-        description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
-        images: ["https://gonuts.vn/assets/images/gonuts-banner-member.png?v=5"],
-    },
-};
+        openGraph: {
+            title: "Tất cả sản phẩm | Go Nuts",
+            description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
+            images: [
+                {
+                    url: `${bannerUrl}${bannerUrl.includes('?') ? '&' : '?'}v=10`,
+                    width: 1200,
+                    height: 630,
+                    alt: "Go Nuts Products",
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: "Tất cả sản phẩm | Go Nuts",
+            description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
+            images: [`${bannerUrl}${bannerUrl.includes('?') ? '&' : '?'}v=10`],
+        },
+    };
+}
 
 export const dynamic = 'force-dynamic';
 
