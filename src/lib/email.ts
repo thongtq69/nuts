@@ -67,9 +67,7 @@ const getBaseUrl = () => {
 };
 
 const BASE_URL = getBaseUrl();
-const LOGO_URL = BASE_URL.includes('localhost')
-    ? 'https://gonuts.vn/assets/logo.png'
-    : `${BASE_URL}/assets/logo.png`;
+const LOGO_URL = `${BASE_URL}/assets/logo.png`;
 const HOTLINE_PHONE = process.env.HOTLINE_PHONE || '096 118 5753';
 
 // Email Templates
