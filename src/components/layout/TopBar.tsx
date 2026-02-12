@@ -15,8 +15,11 @@ export default function TopBar() {
                     <div className="top-bar-left">
                         <span className="hotline">Hotline: {settings?.hotline || '090xxxxxxx'}</span>
                         {settings?.zaloLink && (
-                            <a href={settings.zaloLink} className="zalo-link" target="_blank" rel="noopener noreferrer">
-                                <img src="/assets/images/Zalo.svg" alt="Zalo" className="zalo-icon" />
+                            <a href={settings.zaloLink} className="zalo-link" target="_blank" rel="noopener noreferrer" title="Chat qua Zalo">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="zalo-icon" style={{ display: 'block' }}>
+                                    <path d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0Z" fill="#0068FF" />
+                                    <path d="M17 16H7V15.5L13.5 8.5H7V7H17V7.5L10.5 14.5H17V16Z" fill="white" />
+                                </svg>
                             </a>
                         )}
                     </div>
