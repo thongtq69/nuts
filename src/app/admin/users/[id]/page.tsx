@@ -23,7 +23,9 @@ import {
     Users,
     TrendingUp,
     Clock,
-    Loader2
+    Loader2,
+    Link as LinkIcon,
+    Copy
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
@@ -43,6 +45,10 @@ interface UserDetail {
     dateOfBirth?: string;
     gender?: string;
     isActive: boolean;
+    // Affiliate/Staff Info
+    referralCode?: string;
+    staffCode?: string;
+    saleType?: 'agent' | 'collaborator' | null;
     // Statistics
     totalOrders: number;
     totalSpent: number;
@@ -60,6 +66,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     const toast = useToast();
     const confirm = useConfirm();
     const prompt = usePrompt();
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         params.then(({ id }) => {
@@ -228,8 +235,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                         onClick={handleToggleActive}
                         disabled={updating}
                         className={`px-4 py-2 rounded-lg font-medium transition-all ${user.isActive
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
                     >
                         {user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
@@ -440,6 +447,80 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                             )}
                         </div>
                     </div>
+
+                    {/* Affiliate/Staff Referral Link Section */}
+                    {(user.role === 'sale' || user.role === 'staff') && (
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <LinkIcon size={20} className="text-brand" />
+                                Thông tin giới thiệu
+                            </h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Mã định danh</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono font-bold text-lg bg-slate-100 px-3 py-1 rounded-lg">
+                                                {user.role === 'staff' ? user.staffCode : user.referralCode}
+                                                {!(user.role === 'staff' ? user.staffCode : user.referralCode) && 'Chưa có mã'}
+                                            </span>
+                                            {(user.role === 'staff' ? user.staffCode : user.referralCode) && (
+                                                <button
+                                                    onClick={() => {
+                                                        const code = user.role === 'staff' ? user.staffCode : user.referralCode;
+                                                        if (code) {
+                                                            navigator.clipboard.writeText(code);
+                                                            toast.success('Đã sao chép mã', 'Mã giới thiệu đã được lưu vào bộ nhớ tạm.');
+                                                        }
+                                                    }}
+                                                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-brand"
+                                                    title="Sao chép mã"
+                                                >
+                                                    <Copy size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Link giới thiệu khách hàng</p>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                readOnly
+                                                value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${user.role === 'staff' ? (user.staffCode || user.referralCode) : user.referralCode}`}
+                                                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm font-mono text-slate-600 truncate"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const code = user.role === 'staff' ? (user.staffCode || user.referralCode) : user.referralCode;
+                                                    if (code) {
+                                                        const link = `${window.location.origin}?ref=${code}`;
+                                                        navigator.clipboard.writeText(link);
+                                                        setCopied(true);
+                                                        toast.success('Đã sao chép link', 'Link giới thiệu đã được lưu vào bộ nhớ tạm.');
+                                                        setTimeout(() => setCopied(false), 2000);
+                                                    }
+                                                }}
+                                                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${copied
+                                                    ? 'bg-green-100 text-green-700 border border-green-200'
+                                                    : 'bg-brand text-white hover:bg-brand-dark'
+                                                    }`}
+                                            >
+                                                {copied ? 'Đã sao!' : 'Sao chép'}
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            * Khách hàng đặt hàng qua link này sẽ được ghi nhận doanh số cho {user.role === 'staff' ? 'Nhân viên' : 'Đại lý'}.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Sidebar - Thống kê */}
@@ -503,8 +584,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                         <div className="text-right">
                                             <p className="font-bold text-sm">{new Intl.NumberFormat('vi-VN').format(order.total)}đ</p>
                                             <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                    order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                                        'bg-blue-100 text-blue-700'
+                                                order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                                    'bg-blue-100 text-blue-700'
                                                 }`}>
                                                 {order.status}
                                             </span>
