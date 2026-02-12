@@ -48,9 +48,9 @@ export async function GET() {
                 siteName: 'Go Nuts Vietnam',
                 businessLicense: '0123xxxxxx',
                 workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
-                productsBannerUrl: '/assets/images/promotion.png',
+                productsBannerUrl: '/assets/images/gonuts-banner-member.png',
                 productsBannerEnabled: true,
-                homePromoBannerUrl: '/assets/images/promotion.png',
+                homePromoBannerUrl: '/assets/images/gonuts-banner-member.png',
                 homePromoBannerTitle: "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN",
                 homePromoBannerButtonText: 'ĐĂNG KÝ NGAY',
                 homePromoBannerButtonLink: '/register',
@@ -72,7 +72,7 @@ export async function GET() {
 
         // Forced cleanup of old banner images
         if (settings.productsBannerUrl === '/assets/images/slide1.jpg') {
-            settings.productsBannerUrl = '/assets/images/promotion.png';
+            settings.productsBannerUrl = '/assets/images/gonuts-banner-member.png';
             await settings.save();
         }
 

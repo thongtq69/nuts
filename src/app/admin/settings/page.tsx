@@ -86,9 +86,9 @@ export default function AdminSettingsPage() {
             { title: 'Đảm bảo chất lượng', description: 'Sản phẩm chính hãng 100%', icon: 'shield', enabled: true }
         ],
         supportHotline: '096 118 5753',
-        productsBannerUrl: '/assets/images/promotion.png',
+        productsBannerUrl: '/assets/images/gonuts-banner-member.png',
         productsBannerEnabled: true,
-        homePromoBannerUrl: '/assets/images/promotion.png',
+        homePromoBannerUrl: '/assets/images/gonuts-banner-member.png',
         homePromoBannerTitle: "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN",
         homePromoBannerButtonText: 'ĐĂNG KÝ NGAY',
         homePromoBannerButtonLink: '/register',
@@ -510,7 +510,7 @@ export default function AdminSettingsPage() {
                                 value={settings.productsBannerUrl}
                                 onChange={e => setSettings(prev => ({ ...prev, productsBannerUrl: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
-                                placeholder="/assets/images/promotion.png"
+                                placeholder="/assets/images/gonuts-banner-member.png"
                             />
                         </div>
 
@@ -524,7 +524,7 @@ export default function AdminSettingsPage() {
                                         alt="Products Banner Preview"
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
-                                            (e.target as HTMLImageElement).src = '/assets/images/promotion.png';
+                                            (e.target as HTMLImageElement).src = '/assets/images/gonuts-banner-member.png';
                                         }}
                                     />
                                     <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">

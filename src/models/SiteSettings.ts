@@ -100,11 +100,11 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         workingHours: { type: String, default: 'Thứ 2 - Thứ 7: 8:00 - 17:30' },
 
         // Products Page Banner
-        productsBannerUrl: { type: String, default: '/assets/images/promotion.png' },
+        productsBannerUrl: { type: String, default: '/assets/images/gonuts-banner-member.png' },
         productsBannerEnabled: { type: Boolean, default: true },
 
         // Home Page Large Promo Banner
-        homePromoBannerUrl: { type: String, default: '/assets/images/promotion.png' },
+        homePromoBannerUrl: { type: String, default: '/assets/images/gonuts-banner-member.png' },
         homePromoBannerTitle: { type: String, default: "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN" },
         homePromoBannerButtonText: { type: String, default: 'ĐĂNG KÝ NGAY' },
         homePromoBannerButtonLink: { type: String, default: '/register' },

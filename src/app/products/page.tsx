@@ -12,7 +12,7 @@ export const metadata: Metadata = {
         description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
         images: [
             {
-                url: "https://gonuts.vn/assets/images/promotion.png?v=2",
+                url: "https://gonuts.vn/assets/images/gonuts-banner-member.png?v=5",
                 width: 1200,
                 height: 630,
                 alt: "Go Nuts Products",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: "Tất cả sản phẩm | Go Nuts",
         description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
-        images: ["https://gonuts.vn/assets/images/promotion.png?v=2"],
+        images: ["https://gonuts.vn/assets/images/gonuts-banner-member.png?v=5"],
     },
 };
 
@@ -63,7 +63,7 @@ async function getSiteSettings(): Promise<Partial<ISiteSettings>> {
         console.error('❌ Error fetching site settings:', error);
     }
     return {
-        productsBannerUrl: '/assets/images/promotion.png',
+        productsBannerUrl: '/assets/images/gonuts-banner-member.png',
         productsBannerEnabled: true
     };
 }
