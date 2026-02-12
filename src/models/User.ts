@@ -58,6 +58,8 @@ export interface IUser {
     performance?: IUserPerformance;
     lastPromotionAt?: Date;
     consecutiveMonthsInTier?: number;
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -153,7 +155,9 @@ const UserSchema: Schema<IUser> = new Schema(
         commissionSettings: { type: UserCommissionSettingsSchema, default: { tier: 'bronze' } },
         performance: { type: UserPerformanceSchema, default: {} },
         lastPromotionAt: { type: Date },
-        consecutiveMonthsInTier: { type: Number, default: 0 }
+        consecutiveMonthsInTier: { type: Number, default: 0 },
+        resetPasswordToken: { type: String },
+        resetPasswordExpires: { type: Date }
     },
     {
         timestamps: true,

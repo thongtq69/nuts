@@ -5,7 +5,8 @@ import { sendPasswordResetEmail } from '@/lib/email';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
-const resetTokenStore = new Map<string, { userId: string; expires: number }>();
+// Use database for persistent tokens instead of in-memory Map
+// const resetTokenStore = new Map<string, { userId: string; expires: number }>();
 
 export async function POST(req: Request) {
     try {
@@ -24,10 +25,10 @@ export async function POST(req: Request) {
 
         const resetToken = crypto.randomBytes(32).toString('hex');
 
-        resetTokenStore.set(resetToken, {
-            userId: user._id.toString(),
-            expires: Date.now() + 60 * 60 * 1000
-        });
+        // Save token to database
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        await user.save();
 
         await sendPasswordResetEmail(email, resetToken);
 
@@ -51,30 +52,24 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ message: 'Token và mật khẩu mới là bắt buộc' }, { status: 400 });
         }
 
-        const stored = resetTokenStore.get(token);
-
-        if (!stored) {
-            return NextResponse.json({ message: 'Token không hợp lệ' }, { status: 400 });
-        }
-
-        if (Date.now() > stored.expires) {
-            resetTokenStore.delete(token);
-            return NextResponse.json({ message: 'Token đã hết hạn' }, { status: 400 });
-        }
-
-        const user = await User.findById(stored.userId);
+        // Find user with valid token and not expired
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
 
         if (!user) {
-            return NextResponse.json({ message: 'Người dùng không tồn tại' }, { status: 404 });
+            return NextResponse.json({ message: 'Token không hợp lệ hoặc đã hết hạn' }, { status: 400 });
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
         user.password = hashedPassword;
+        // Clear reset token fields
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
         await user.save();
-
-        resetTokenStore.delete(token);
 
         return NextResponse.json({
             message: 'Mật khẩu đã được đặt lại thành công',
