@@ -58,15 +58,17 @@ async function createTransporter() {
 // Base URL for links and assets
 const getBaseUrl = () => {
     if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
+
+    // Fallback to production domain
+    if (process.env.NODE_ENV === 'production') {
+        return 'https://gonuts.vn';
+    }
+
     if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
     if (process.env.NEXT_PUBLIC_VERCEL_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
 
-    // Production fallback - specific to this project
-    if (process.env.NODE_ENV === 'production') {
-        return 'https://nuts-mocha-tau.vercel.app';
-    }
-
-    return 'http://localhost:3000';
+    // Default to production domain for emails to ensure links work
+    return 'https://gonuts.vn';
 };
 
 const BASE_URL = getBaseUrl();
