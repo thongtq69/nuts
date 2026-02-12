@@ -57,17 +57,12 @@ async function createTransporter() {
 
 // Base URL for links and assets
 const getBaseUrl = () => {
-    if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
-
-    // Fallback to production domain
-    if (process.env.NODE_ENV === 'production') {
-        return 'https://gonuts.vn';
+    // If we have a public base URL and it's NOT localhost, use it
+    if (process.env.NEXT_PUBLIC_BASE_URL && !process.env.NEXT_PUBLIC_BASE_URL.includes('localhost')) {
+        return process.env.NEXT_PUBLIC_BASE_URL;
     }
 
-    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-    if (process.env.NEXT_PUBLIC_VERCEL_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
-
-    // Default to production domain for emails to ensure links work
+    // Default to production domain for emails to ensure links work reliably
     return 'https://gonuts.vn';
 };
 
