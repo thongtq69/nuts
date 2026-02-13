@@ -36,27 +36,78 @@ export async function POST(req: Request) {
         }
 
         /**
-         * Standard Bank Request Body usually includes:
-         * - transactionId: string
-         * - amount: number
-         * - description: string (Contains Order ID / Reference)
-         * - transactionDate: string
-         * - accountName/Number: string
+         * ACB sends webhook in multiple formats:
+         * 
+         * FORMAT 1 - Real ACB Webhook (production):
+         * {
+         *   "requestMeta": { "clientRequestId": "...", "checksum": "..." },
+         *   "requests": [{
+         *     "requestMeta": { "requestType": "NOTIFICATION", "requestCode": "TRANSACTION_UPDATE" },
+         *     "requestParams": {
+         *       "transactions": [{
+         *         "transactionStatus": "COMPLETED",
+         *         "transactionCode": 3281,
+         *         "amount": 372200,
+         *         "transactionContent": "THANH TOAN DON HANG GO9D5C03",
+         *         "debitOrCredit": "credit",
+         *         ...
+         *       }],
+         *       "pagination": { ... }
+         *     }
+         *   }]
+         * }
+         * 
+         * FORMAT 2 - Simple/Test format:
+         * { "tranId": "...", "tranAmount": 372200, "tranContent": "..." }
+         * 
+         * FORMAT 3 - Developer Portal sandbox:
+         * { "requestParameters": { "transactionAmount": 372200, "description": "..." } }
          */
 
-        // Adjust these based on ACB's actual request schema
-        // Support both direct fields and nested requestParameters (from ACB Developer Portal)
-        const params = body.requestParameters || {};
-        const transactionId = body.transactionId || body.referenceCode || body.tranId || body.requestTrace || params.requestTrace || params.referenceCode;
-        const amount = Number(body.amount || body.tranAmount || params.transactionAmount || params.amount || params.tranAmount || 0);
-        const description = body.description || body.tranContent || params.description || params.tranContent || body.content || '';
+        let transactionId = '';
+        let amount = 0;
+        let description = '';
+
+        // FORMAT 1: Real ACB Webhook (deeply nested)
+        if (body.requests && Array.isArray(body.requests) && body.requests.length > 0) {
+            const request = body.requests[0];
+            const transactions = request?.requestParams?.transactions;
+            if (transactions && Array.isArray(transactions) && transactions.length > 0) {
+                const txn = transactions[0];
+                transactionId = String(txn.transactionCode || body.requestMeta?.clientRequestId || '');
+                amount = Number(txn.amount || 0);
+                description = txn.transactionContent || '';
+                console.log(`📦 ACB Format 1 (Real Webhook) detected. TxnCode: ${transactionId}, Amount: ${amount}, Content: "${description}"`);
+            }
+        }
+
+        // FORMAT 2: Simple/Test format
+        if (!description) {
+            transactionId = body.transactionId || body.referenceCode || body.tranId || body.requestTrace || '';
+            amount = Number(body.amount || body.tranAmount || 0);
+            description = body.description || body.tranContent || body.content || '';
+            if (description) {
+                console.log(`📦 ACB Format 2 (Simple) detected. TxnId: ${transactionId}, Amount: ${amount}, Content: "${description}"`);
+            }
+        }
+
+        // FORMAT 3: Developer Portal sandbox (requestParameters)
+        if (!description && body.requestParameters) {
+            const params = body.requestParameters;
+            transactionId = body.requestTrace || params.requestTrace || params.referenceCode || '';
+            amount = Number(params.transactionAmount || params.amount || params.tranAmount || 0);
+            description = params.description || params.tranContent || '';
+            if (description) {
+                console.log(`📦 ACB Format 3 (Dev Portal) detected. TxnId: ${transactionId}, Amount: ${amount}, Content: "${description}"`);
+            }
+        }
 
         if (!description) {
-            console.error('❌ ACB Callback: Missing description in payload.');
+            console.error('❌ ACB Callback: Could not extract description from any known format. Body keys:', Object.keys(body));
             return NextResponse.json({
                 "timestamp": new Date().toISOString(),
-                "responseCode": "00000001", // Custom error code
-                "message": "Missing description",
+                "responseCode": "00000001",
+                "message": "Missing description - unrecognized payload format",
                 "responseBody": {
                     "index": 0,
                     "referenceCode": transactionId || "none"
