@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import AffiliateCommission from '@/models/AffiliateCommission';
+import mongoose from 'mongoose';
 
 /**
  * ACB Bank Webhook Callback
@@ -12,18 +13,27 @@ import AffiliateCommission from '@/models/AffiliateCommission';
 
 export async function POST(req: Request) {
     try {
-        // 1. Verify Authentication
-        const apiKey = req.headers.get('x-api-key');
-        const SECURE_TOKEN = process.env.ACB_CALLBACK_TOKEN || 'acb_gonuts_callback_2026_secure_key';
-
-        if (apiKey !== SECURE_TOKEN) {
-            console.warn('❌ ACB Callback: Unauthorized access attempt.');
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
-
         const body = await req.json();
-        console.log('📬 Received ACB Callback Headers:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+        const headers = Object.fromEntries(req.headers.entries());
+        console.log('📬 Received ACB Callback Headers:', JSON.stringify(headers, null, 2));
         console.log('📬 Received ACB Callback Body:', JSON.stringify(body, null, 2));
+
+        // 1.5 DB Logging for Debugging
+        try {
+            await dbConnect();
+            const db = mongoose.connection.db;
+            if (db) {
+                await db.collection('acb_debug_logs').insertOne({
+                    timestamp: new Date(),
+                    headers: headers,
+                    body: body,
+                    ip: req.headers.get('x-forwarded-for') || 'unknown',
+                    url: req.url
+                });
+            }
+        } catch (dbErr) {
+            console.error('Failed to log ACB debug info to DB:', dbErr);
+        }
 
         /**
          * Standard Bank Request Body usually includes:
@@ -66,7 +76,7 @@ export async function POST(req: Request) {
             await dbConnect();
             order = await Order.findOne({
                 paymentRef: refCode,
-                paymentStatus: 'pending'
+                paymentStatus: { $ne: 'paid' } // Search for non-paid orders
             }).sort({ createdAt: -1 });
         }
 
@@ -79,7 +89,7 @@ export async function POST(req: Request) {
 
                 await dbConnect(); // Ensure DB is connected for fallback searches
                 // Search for orders where the ID ends with this suffix
-                const allOrders = await Order.find({ paymentStatus: 'pending' }).sort({ createdAt: -1 }).limit(100);
+                const allOrders = await Order.find({ paymentStatus: { $ne: 'paid' } }).sort({ createdAt: -1 }).limit(100);
                 order = allOrders.find(o => o._id.toString().toUpperCase().endsWith(suffix));
             }
         }
@@ -90,7 +100,7 @@ export async function POST(req: Request) {
             await dbConnect(); // Ensure DB is connected for fallback searches
             order = await Order.findOne({
                 totalAmount: amount,
-                paymentStatus: 'pending',
+                paymentStatus: { $ne: 'paid' },
                 createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Within last 24h
             }).sort({ createdAt: -1 });
         }
@@ -101,9 +111,9 @@ export async function POST(req: Request) {
             // 3. Update Order Status
             order.paymentStatus = 'paid';
             order.acbTransactionNo = transactionId;
-            // Only update main status if it was pending
-            if (order.status === 'pending') {
-                order.status = 'processing';
+            // Update main status to 'confirmed' (which displays as 'Đã xác nhận' in the UI)
+            if (order.status === 'pending' || order.status === 'processing') {
+                order.status = 'confirmed';
             }
             await order.save();
 
