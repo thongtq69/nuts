@@ -22,7 +22,8 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        console.log('📬 Received ACB Callback:', JSON.stringify(body, null, 2));
+        console.log('📬 Received ACB Callback Headers:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+        console.log('📬 Received ACB Callback Body:', JSON.stringify(body, null, 2));
 
         /**
          * Standard Bank Request Body usually includes:
@@ -34,9 +35,11 @@ export async function POST(req: Request) {
          */
 
         // Adjust these based on ACB's actual request schema
-        const transactionId = body.transactionId || body.referenceCode || body.tranId;
-        const amount = Number(body.amount || body.tranAmount);
-        const description = body.description || body.tranContent || '';
+        // Support both direct fields and nested requestParameters (from ACB Developer Portal)
+        const params = body.requestParameters || {};
+        const transactionId = body.transactionId || body.referenceCode || body.tranId || body.requestTrace || params.requestTrace || params.referenceCode;
+        const amount = Number(body.amount || body.tranAmount || params.transactionAmount || params.amount || params.tranAmount || 0);
+        const description = body.description || body.tranContent || params.description || params.tranContent || body.content || '';
 
         if (!description) {
             console.error('❌ ACB Callback: Missing description in payload.');
