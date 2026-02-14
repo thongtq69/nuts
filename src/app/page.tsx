@@ -92,6 +92,7 @@ export default async function Home() {
 
   return (
     <main>
+      <h1 className="sr-only">Go Nuts - Hạt dinh dưỡng, Trái cây sấy & Thực phẩm sạch từ nông dân Việt Nam</h1>
       <Header />
       <Navbar />
       <ErrorBoundary>
@@ -117,3 +118,4 @@ export default async function Home() {
     </main>
   );
 }
+

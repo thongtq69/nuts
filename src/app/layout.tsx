@@ -3,6 +3,7 @@ import { Titillium_Web } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/components/Providers';
 import ProductDebugInfo from '@/components/debug/ProductDebugInfo';
+import { OrganizationJsonLd, WebSiteJsonLd, LocalBusinessJsonLd } from '@/components/seo/JsonLd';
 
 const titillium = Titillium_Web({
   weight: ["200", "300", "400", "600", "700", "900"],
@@ -13,11 +14,43 @@ const titillium = Titillium_Web({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://gonuts.vn"),
-  title: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
-  description: "Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam",
+  title: {
+    default: "Go Nuts - Hạt dinh dưỡng, Thực phẩm sạch từ nông dân Việt Nam",
+    template: "%s | Go Nuts",
+  },
+  description: "Go Nuts - Cửa hàng hạt dinh dưỡng, trái cây sấy, thực phẩm sạch từ 5000+ nông dân Việt Nam. Giao hàng toàn quốc, cam kết 100% tự nhiên.",
+  keywords: [
+    "hạt dinh dưỡng",
+    "thực phẩm sạch",
+    "trái cây sấy",
+    "hạt macadamia",
+    "hạt óc chó",
+    "hạt hạnh nhân",
+    "hạt điều",
+    "combo quà tặng",
+    "Go Nuts",
+    "gonuts",
+    "thực phẩm dinh dưỡng",
+    "nông sản Việt Nam",
+    "mua hạt dinh dưỡng online",
+    "hạt dinh dưỡng giá tốt",
+    "hạt mix tổng hợp",
+    "snack healthy",
+  ],
+  authors: [{ name: "Go Nuts", url: "https://gonuts.vn" }],
+  creator: "Go Nuts",
+  publisher: "Go Nuts",
+  formatDetection: {
+    telephone: true,
+    email: true,
+    address: true,
+  },
+  alternates: {
+    canonical: "https://gonuts.vn",
+  },
   openGraph: {
-    title: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
-    description: "Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam",
+    title: "Go Nuts - Hạt dinh dưỡng, Thực phẩm sạch từ nông dân Việt Nam",
+    description: "Cửa hàng hạt dinh dưỡng, trái cây sấy, thực phẩm sạch từ 5000+ nông dân Việt Nam. Giao hàng toàn quốc.",
     url: "https://gonuts.vn",
     siteName: "Go Nuts",
     images: [
@@ -25,7 +58,7 @@ export const metadata: Metadata = {
         url: "https://gonuts.vn/assets/images/gonuts-banner-member.png?v=5",
         width: 1200,
         height: 630,
-        alt: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
+        alt: "Go Nuts - Hạt dinh dưỡng, Thực phẩm sạch",
       },
     ],
     locale: "vi_VN",
@@ -33,8 +66,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Go Nuts - Thực phẩm sạch, dinh dưỡng",
-    description: "Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam",
+    title: "Go Nuts - Hạt dinh dưỡng, Thực phẩm sạch",
+    description: "Cửa hàng hạt dinh dưỡng, trái cây sấy, thực phẩm sạch từ 5000+ nông dân Việt Nam. Giao hàng toàn quốc.",
     images: ["https://gonuts.vn/assets/images/gonuts-banner-member.png?v=5"],
   },
   icons: {
@@ -54,6 +87,25 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Go Nuts',
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    // Để trang web xuất hiện trên Google, bạn hãy:
+    // 1. Truy cập https://search.google.com/search-console
+    // 2. Thêm domain gonuts.vn
+    // 3. Lấy mã xác thực (google-site-verification) và dán vào bên dưới:
+    google: '8v1_6fcPtr0f5v1X5Of7_WMLITdVKJBCru84nbbuOhg',
+    // facebook: 'your-facebook-domain-verification',
+  },
 };
 
 export default function RootLayout({
@@ -64,6 +116,9 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={titillium.variable}>
+        <OrganizationJsonLd />
+        <WebSiteJsonLd />
+        <LocalBusinessJsonLd />
         <Providers>
           {children}
           {process.env.NODE_ENV === 'development' && <ProductDebugInfo />}
