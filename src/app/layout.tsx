@@ -116,19 +116,25 @@ export const metadata: Metadata = {
   },
 };
 
+import LunarNewYearEffect from '@/components/effects/LunarNewYearEffect';
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" suppressHydrationWarning>
-      <body className={titillium.variable}>
-        <OrganizationJsonLd />
-        <WebSiteJsonLd />
-        <LocalBusinessJsonLd />
+    <html lang="vi" className={`${titillium.variable} font-sans`} suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
+      <body>
         <Providers>
+          <OrganizationJsonLd />
+          <WebSiteJsonLd />
+          <LocalBusinessJsonLd />
           {children}
+          <LunarNewYearEffect />
           {process.env.NODE_ENV === 'development' && <ProductDebugInfo />}
         </Providers>
       </body>

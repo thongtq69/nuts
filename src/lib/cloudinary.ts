@@ -33,7 +33,7 @@ export async function uploadToCloudinary(
 ): Promise<CloudinaryUploadResult> {
     try {
         console.log('📤 Uploading to Cloudinary...');
-        
+
         const uploadOptions: any = {
             resource_type: 'auto',
             quality: 'auto:good',
@@ -55,7 +55,7 @@ export async function uploadToCloudinary(
         );
 
         console.log('✅ Cloudinary upload successful:', result.public_id);
-        
+
         return {
             public_id: result.public_id,
             secure_url: result.secure_url,
@@ -81,9 +81,9 @@ export async function uploadToCloudinary(
 export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
     try {
         console.log('🗑️ Deleting from Cloudinary:', publicId);
-        
+
         const result = await cloudinary.uploader.destroy(publicId);
-        
+
         if (result.result === 'ok') {
             console.log('✅ Cloudinary delete successful');
             return true;

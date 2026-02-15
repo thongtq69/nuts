@@ -6,14 +6,14 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
     try {
         console.log('📤 Upload API: Starting upload process...');
-        
+
         const formData = await request.formData();
         const file = formData.get('file') as File;
         const folder = formData.get('folder') as string || 'gonuts';
         const type = formData.get('type') as string || 'general';
 
         if (!file) {
-            return NextResponse.json({ 
+            return NextResponse.json({
                 error: 'No file provided',
                 message: 'Please select a file to upload'
             }, { status: 400 });
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
         console.error('❌ Upload API Error:', error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Upload failed',
             message: error.message,
             timestamp: new Date().toISOString()
@@ -72,12 +72,12 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         console.log('📤 Upload API: Starting base64 upload...');
-        
+
         const body = await request.json();
         const { imageData, folder = 'gonuts', type = 'cropped', filename } = body;
 
         if (!imageData) {
-            return NextResponse.json({ 
+            return NextResponse.json({
                 error: 'No image data provided',
                 message: 'Please provide base64 image data'
             }, { status: 400 });
@@ -113,7 +113,7 @@ export async function PUT(request: NextRequest) {
 
     } catch (error: any) {
         console.error('❌ Base64 Upload API Error:', error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Upload failed',
             message: error.message,
             timestamp: new Date().toISOString()
