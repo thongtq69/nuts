@@ -116,7 +116,7 @@ export const metadata: Metadata = {
   },
 };
 
-import LunarNewYearEffect from '@/components/effects/LunarNewYearEffect';
+
 import Script from 'next/script';
 
 export default function RootLayout({
@@ -150,7 +150,7 @@ export default function RootLayout({
           <WebSiteJsonLd />
           <LocalBusinessJsonLd />
           {children}
-          <LunarNewYearEffect />
+
           {process.env.NODE_ENV === 'development' && <ProductDebugInfo />}
         </Providers>
       </body>
