@@ -117,6 +117,7 @@ export const metadata: Metadata = {
 };
 
 import LunarNewYearEffect from '@/components/effects/LunarNewYearEffect';
+import Script from 'next/script';
 
 export default function RootLayout({
   children,
@@ -129,6 +130,21 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body>
+        {/* Google Analytics - G-KGQP8YG0B5 */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-KGQP8YG0B5"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-KGQP8YG0B5');
+          `}
+        </Script>
+
         <Providers>
           <OrganizationJsonLd />
           <WebSiteJsonLd />
