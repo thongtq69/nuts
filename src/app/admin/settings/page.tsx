@@ -18,11 +18,9 @@ import {
     Shield,
     RefreshCw,
     Package,
-    ImageIcon,
-    Crop
+    ImageIcon
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import ImageCropper from '@/components/admin/ImageCropper';
 
 interface ProductFeature {
     title: string;
@@ -97,8 +95,6 @@ export default function AdminSettingsPage() {
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [showCropper, setShowCropper] = useState(false);
-    const [cropperImageUrl, setCropperImageUrl] = useState('');
     const [uploadingBanner, setUploadingBanner] = useState(false);
     const [bannerType, setBannerType] = useState<'products' | 'homePromo'>('products');
     const toast = useToast();
@@ -148,78 +144,25 @@ export default function AdminSettingsPage() {
         if (!file) return;
 
         setBannerType(type);
-
-        // Kiểm tra tỉ lệ ảnh
-        const img = new Image();
-        img.onload = async () => {
-            const aspectRatio = img.naturalWidth / img.naturalHeight;
-            const targetRatio = type === 'products' ? 3 : 2;
-
-            // Nếu tỉ lệ không đúng (cho phép sai lệch 15%), mở cropper
-            if (Math.abs(aspectRatio - targetRatio) > 0.15) {
-                setCropperImageUrl(URL.createObjectURL(file));
-                setShowCropper(true);
-            } else {
-                // Tỉ lệ đúng, upload trực tiếp
-                await uploadBannerFile(file);
-            }
-        };
-        img.onerror = () => {
-            toast.error('Không thể đọc file ảnh', 'Vui lòng chọn file ảnh hợp lệ.');
-        };
-        img.src = URL.createObjectURL(file);
-    };
-
-    // Upload banner file to Cloudinary
-    const uploadBannerFile = async (file: File | null, croppedImageUrl?: string) => {
         setUploadingBanner(true);
+
         try {
-            let imageData: string | FormData;
-            let isBase64 = false;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', 'gonuts/banners');
+            formData.append('type', 'products_banner');
 
-            if (croppedImageUrl) {
-                // Sử dụng ảnh đã crop (base64)
-                imageData = croppedImageUrl;
-                isBase64 = true;
-            } else if (file) {
-                // Upload file trực tiếp
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('folder', 'gonuts/banners');
-                formData.append('type', 'products_banner');
-                imageData = formData;
-            } else {
-                throw new Error('No file or image data provided');
-            }
-
-            let result;
-            if (isBase64) {
-                // Upload base64 (ảnh đã crop)
-                const response = await fetch('/api/upload', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageData: imageData,
-                        folder: 'gonuts/banners',
-                        type: 'products_banner',
-                        filename: 'cropped'
-                    }),
-                });
-                result = await response.json();
-            } else {
-                // Upload file
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: imageData as FormData,
-                });
-                result = await response.json();
-            }
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
 
             if (result.success) {
                 const newUrl = result.data.url;
                 setSettings(prev => ({
                     ...prev,
-                    [bannerType === 'products' ? 'productsBannerUrl' : 'homePromoBannerUrl']: newUrl
+                    [type === 'products' ? 'productsBannerUrl' : 'homePromoBannerUrl']: newUrl
                 }));
                 toast.success('Upload ảnh thành công');
             } else {
@@ -230,20 +173,7 @@ export default function AdminSettingsPage() {
             toast.error('Lỗi khi upload ảnh', 'Vui lòng thử lại.');
         } finally {
             setUploadingBanner(false);
-            setShowCropper(false);
-            setCropperImageUrl('');
         }
-    };
-
-    // Handle cropped image
-    const handleCroppedImage = (croppedImageUrl: string) => {
-        uploadBannerFile(null, croppedImageUrl);
-    };
-
-    // Handle cropper cancel
-    const handleCropperCancel = () => {
-        setShowCropper(false);
-        setCropperImageUrl('');
     };
 
     if (loading) {
@@ -460,9 +390,6 @@ export default function AdminSettingsPage() {
                                 <span className="font-medium">💡 Khuyến nghị:</span>
                                 <span>Tỉ lệ 3:1 (VD: 1200x400px) để hiển thị tốt nhất</span>
                             </div>
-                            <div className="text-brand text-xs mt-1">
-                                Ảnh sẽ được tự động cắt và điều chỉnh về đúng tỉ lệ
-                            </div>
                         </div>
 
                         {/* Upload Button */}
@@ -485,21 +412,6 @@ export default function AdminSettingsPage() {
                                 />
                             </label>
 
-                            {settings.productsBannerUrl && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setBannerType('products');
-                                        setCropperImageUrl(settings.productsBannerUrl);
-                                        setShowCropper(true);
-                                    }}
-                                    className="px-4 py-3 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark font-medium rounded-lg border-2 border-brand-light/50 transition-all flex items-center gap-2"
-                                    disabled={uploadingBanner}
-                                >
-                                    <Crop size={18} />
-                                    <span>Chỉnh sửa</span>
-                                </button>
-                            )}
                         </div>
 
                         {/* URL Input */}
@@ -627,20 +539,6 @@ export default function AdminSettingsPage() {
                                 />
                             </label>
 
-                            {settings.homePromoBannerUrl && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setBannerType('homePromo');
-                                        setCropperImageUrl(settings.homePromoBannerUrl);
-                                        setShowCropper(true);
-                                    }}
-                                    className="px-4 py-3 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark font-medium rounded-lg border-2 border-brand-light/50 transition-all flex items-center gap-2"
-                                >
-                                    <Crop size={18} />
-                                    <span>Cắt ảnh</span>
-                                </button>
-                            )}
                         </div>
 
                         {/* Image Preview */}
@@ -802,15 +700,6 @@ export default function AdminSettingsPage() {
                 </div>
             </div>
 
-            {/* Image Cropper Modal */}
-            {showCropper && cropperImageUrl && (
-                <ImageCropper
-                    imageUrl={cropperImageUrl}
-                    onCrop={handleCroppedImage}
-                    onCancel={handleCropperCancel}
-                    aspectRatio={bannerType === 'products' ? 3 : 2}
-                />
-            )}
         </div>
     );
 }

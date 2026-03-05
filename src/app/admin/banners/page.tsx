@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Image as ImageIcon, Plus, Edit2, Trash2, Eye, EyeOff, Link as LinkIcon, X, ArrowUpDown, TrendingUp, Crop } from 'lucide-react';
-import ImageCropper from '@/components/admin/ImageCropper';
+import { Image as ImageIcon, Plus, Edit2, Trash2, Eye, EyeOff, Link as LinkIcon, X, ArrowUpDown, TrendingUp } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 
@@ -19,9 +18,6 @@ export default function AdminBannersPage() {
     const [banners, setBanners] = useState<Banner[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [showCropper, setShowCropper] = useState(false);
-    const [cropperImageUrl, setCropperImageUrl] = useState('');
-    const [showCropperMessage, setShowCropperMessage] = useState(false);
     const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
     const [formData, setFormData] = useState({
         title: '',
@@ -147,64 +143,32 @@ export default function AdminBannersPage() {
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Kiểm tra tỉ lệ ảnh
-            const img = new Image();
-            img.onload = async () => {
-                const aspectRatio = img.naturalWidth / img.naturalHeight;
-                const targetRatio = 3; // 3:1
+            try {
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', file);
+                uploadFormData.append('folder', 'gonuts/banners');
+                uploadFormData.append('type', 'banner');
 
-                // Nếu tỉ lệ không đúng (cho phép sai lệch 5%), mở cropper
-                if (Math.abs(aspectRatio - targetRatio) > 0.15) {
-                    setCropperImageUrl(URL.createObjectURL(file));
-                    setShowCropper(true);
-                    setShowCropperMessage(true);
-                    setTimeout(() => setShowCropperMessage(false), 3000);
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: uploadFormData,
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('✅ Banner uploaded to Cloudinary:', result.data.url);
+                    setFormData({ ...formData, imageUrl: result.data.url });
+                    toast.success('Upload thành công', 'Ảnh đã được tải lên.');
                 } else {
-                    // Tỉ lệ đúng, upload trực tiếp lên Cloudinary
-                    try {
-                        const uploadFormData = new FormData();
-                        uploadFormData.append('file', file);
-                        uploadFormData.append('folder', 'gonuts/banners');
-                        uploadFormData.append('type', 'banner');
-
-                        const response = await fetch('/api/upload', {
-                            method: 'POST',
-                            body: uploadFormData,
-                        });
-
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            console.log('✅ Banner uploaded to Cloudinary:', result.data.url);
-                            setFormData({ ...formData, imageUrl: result.data.url });
-                        } else {
-                            console.error('❌ Upload failed:', result.message);
-                            toast.error('Upload thất bại', result.message || 'Vui lòng thử lại.');
-                        }
-                    } catch (error) {
-                        console.error('❌ Error uploading banner:', error);
-                        toast.error('Lỗi khi upload banner', 'Vui lòng thử lại.');
-                    }
+                    console.error('❌ Upload failed:', result.message);
+                    toast.error('Upload thất bại', result.message || 'Vui lòng thử lại.');
                 }
-            };
-            img.onerror = () => {
-                toast.error('Không thể đọc file ảnh', 'Vui lòng chọn file ảnh hợp lệ.');
-            };
-            img.src = URL.createObjectURL(file);
+            } catch (error) {
+                console.error('❌ Error uploading banner:', error);
+                toast.error('Lỗi khi upload banner', 'Vui lòng thử lại.');
+            }
         }
-    };
-
-    // Handle cropped image
-    const handleCroppedImage = (croppedImageUrl: string) => {
-        setFormData({ ...formData, imageUrl: croppedImageUrl });
-        setShowCropper(false);
-        setCropperImageUrl('');
-    };
-
-    // Handle cropper cancel
-    const handleCropperCancel = () => {
-        setShowCropper(false);
-        setCropperImageUrl('');
     };
 
     if (loading) {
@@ -432,15 +396,12 @@ export default function AdminBannersPage() {
                                             <span className="font-medium">💡 Khuyến nghị:</span>
                                             <span>Tỉ lệ 3:1 (VD: 2000x667px) để hiển thị tốt nhất</span>
                                         </div>
-                                        <div className="text-brand text-xs mt-1">
-                                            Ảnh sẽ được tự động cắt và điều chỉnh về đúng tỉ lệ
-                                        </div>
                                     </div>
 
                                     {/* Upload Button */}
                                     <div className="flex gap-3">
                                         <label className="flex-1 cursor-pointer">
-                                                <div className="flex items-center justify-center gap-2 px-4 py-3 bg-brand/10 hover:bg-brand/20 text-brand font-medium rounded-lg border-2 border-brand/20 transition-all">
+                                            <div className="flex items-center justify-center gap-2 px-4 py-3 bg-brand/10 hover:bg-brand/20 text-brand font-medium rounded-lg border-2 border-brand/20 transition-all">
                                                 <ImageIcon size={18} />
                                                 <span>Chọn ảnh từ thiết bị</span>
                                             </div>
@@ -452,19 +413,6 @@ export default function AdminBannersPage() {
                                             />
                                         </label>
 
-                                        {formData.imageUrl && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setCropperImageUrl(formData.imageUrl);
-                                                    setShowCropper(true);
-                                                }}
-                                                className="px-4 py-3 bg-brand-light/30 hover:bg-brand-light/50 text-brand-dark font-medium rounded-lg border-2 border-brand-light/50 transition-all flex items-center gap-2"
-                                            >
-                                                <Crop size={18} />
-                                                <span>Chỉnh sửa</span>
-                                            </button>
-                                        )}
                                     </div>
 
                                     {/* URL Input */}
@@ -567,23 +515,6 @@ export default function AdminBannersPage() {
                 </div>
             )}
 
-            {/* Auto-cropper notification */}
-            {showCropperMessage && (
-                <div className="fixed top-4 right-4 z-40 bg-brand text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in">
-                    <Crop className="w-5 h-5" />
-                    <span className="font-medium">Ảnh sẽ được tự động cắt về tỉ lệ 3:1</span>
-                </div>
-            )}
-
-            {/* Image Cropper Modal */}
-            {showCropper && cropperImageUrl && (
-                <ImageCropper
-                    imageUrl={cropperImageUrl}
-                    onCrop={handleCroppedImage}
-                    onCancel={handleCropperCancel}
-                    aspectRatio={3}
-                />
-            )}
         </div>
     );
 }
