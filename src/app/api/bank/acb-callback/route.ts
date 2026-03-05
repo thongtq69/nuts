@@ -11,9 +11,25 @@ import mongoose from 'mongoose';
  * Auth: x-api-key header
  */
 
+export async function GET(req: Request) {
+    return NextResponse.json({
+        message: "ACB Webhook endpoint is active",
+        status: "success",
+        timestamp: new Date().toISOString()
+    });
+}
+
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
+        let body: any = {};
+        try {
+            const rawBody = await req.text();
+            if (rawBody) {
+                body = JSON.parse(rawBody);
+            }
+        } catch (e) {
+            console.warn('⚠️ ACB Callback: Failed to parse JSON body or body is empty');
+        }
         const headers = Object.fromEntries(req.headers.entries());
         console.log('📬 Received ACB Callback Headers:', JSON.stringify(headers, null, 2));
         console.log('📬 Received ACB Callback Body:', JSON.stringify(body, null, 2));
@@ -103,14 +119,14 @@ export async function POST(req: Request) {
         }
 
         if (!description) {
-            console.error('❌ ACB Callback: Could not extract description from any known format. Body keys:', Object.keys(body));
+            console.warn('⚠️ ACB Callback: No description found. Treating as ping/validation request.');
             return NextResponse.json({
                 "timestamp": new Date().toISOString(),
-                "responseCode": "00000001",
-                "message": "Missing description - unrecognized payload format",
+                "responseCode": "00000000", // Return success for portal validation
+                "message": "Webhook validation successful",
                 "responseBody": {
                     "index": 0,
-                    "referenceCode": transactionId || "none"
+                    "referenceCode": transactionId || "ping"
                 }
             });
         }
