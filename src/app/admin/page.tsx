@@ -73,7 +73,12 @@ async function getStats() {
     }));
 
     const productAggregation = await Order.aggregate([
-        { $match: { status: { $in: ['completed', 'paid'] } } },
+        {
+            $match: {
+                status: { $in: ['completed', 'paid'] },
+                orderType: { $ne: 'membership' } // Loại bỏ "Gói Hội Viên" khỏi biểu đồ
+            }
+        },
         { $unwind: "$items" },
         {
             $group: {
@@ -116,14 +121,14 @@ async function getStats() {
 // ========================================
 
 // Stat Card với touch target lớn, readable text
-function StatCard({ 
-    title, 
-    value, 
-    change, 
+function StatCard({
+    title,
+    value,
+    change,
     trend,
     icon: Icon,
-    color 
-}: { 
+    color
+}: {
     title: string;
     value: string | number;
     change?: string;
@@ -147,11 +152,10 @@ function StatCard({
                     <Icon className="w-7 h-7" />
                 </div>
                 {change && (
-                    <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${
-                        trend === 'up' ? 'bg-emerald-100 text-emerald-700' :
-                        trend === 'down' ? 'bg-red-100 text-red-700' :
-                        'bg-slate-100 text-slate-600'
-                    }`}>
+                    <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${trend === 'up' ? 'bg-emerald-100 text-emerald-700' :
+                            trend === 'down' ? 'bg-red-100 text-red-700' :
+                                'bg-slate-100 text-slate-600'
+                        }`}>
                         <TrendIcon className="w-4 h-4" />
                         {change}
                     </div>
@@ -168,7 +172,7 @@ function StatCard({
 // Quick Action Button - Touch target 48px+
 function QuickAction({ icon: Icon, label, href }: { icon: any; label: string; href: string }) {
     return (
-        <Link 
+        <Link
             href={href}
             className="flex flex-col items-center justify-center gap-3 p-6 bg-white border border-slate-200 rounded-2xl hover:border-amber-400 hover:shadow-md transition-all group min-h-[140px]"
         >
@@ -268,7 +272,7 @@ export default async function AdminDashboard() {
                 {/* Decorative circles */}
                 <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/4" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/5 rounded-full translate-y-1/2 -translate-x-1/4" />
-                
+
                 <div className="relative">
                     <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-5 h-5 text-amber-400" />
@@ -284,14 +288,14 @@ export default async function AdminDashboard() {
                         )}
                     </p>
                     <div className="flex items-center gap-3 mt-6">
-                        <Link 
+                        <Link
                             href="/admin/orders"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold rounded-xl transition-colors"
                         >
                             Xem đơn hàng
                             <ArrowRight className="w-5 h-5" />
                         </Link>
-                        <Link 
+                        <Link
                             href="/"
                             target="_blank"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-colors"
@@ -384,7 +388,7 @@ export default async function AdminDashboard() {
                 <div className="lg:col-span-2">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-slate-900">Đơn hàng gần đây</h3>
-                        <Link 
+                        <Link
                             href="/admin/orders"
                             className="text-base font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1"
                         >

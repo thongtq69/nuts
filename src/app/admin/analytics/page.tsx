@@ -45,6 +45,8 @@ async function getAnalyticsData() {
     const lastMonthUsers = await User.countDocuments({ createdAt: { $gte: startOfLastMonth, $lt: startOfCurrentMonth } });
     const userGrowth = lastMonthUsers === 0 ? 100 : ((currentMonthUsers - lastMonthUsers) / lastMonthUsers) * 100;
 
+    const orderGrowth = lastMonthOrders.length === 0 ? 100 : ((currentMonthOrders.length - lastMonthOrders.length) / lastMonthOrders.length) * 100;
+
     // Total counts
     const totalOrders = await Order.countDocuments();
     const totalProducts = await Product.countDocuments();
@@ -79,7 +81,12 @@ async function getAnalyticsData() {
 
     // Top Products
     const productAggregation = await Order.aggregate([
-        { $match: { status: { $in: ['completed', 'delivered', 'shipped', 'paid'] } } },
+        {
+            $match: {
+                status: { $in: ['completed', 'delivered', 'shipped', 'paid'] },
+                orderType: { $ne: 'membership' } // Loại bỏ "Gói Hội Viên" (Memberships) khỏi danh sách
+            }
+        },
         { $unwind: "$items" },
         {
             $group: {
@@ -111,6 +118,7 @@ async function getAnalyticsData() {
         currentMonthUsers,
         userGrowth,
         totalOrders,
+        orderGrowth,
         totalProducts,
         activeProducts,
         revenueData,
@@ -170,7 +178,7 @@ export default async function AnalyticsPage() {
                 <StatCard
                     title="Tổng số đơn hàng"
                     value={data.totalOrders}
-                    growth={5.2} // Giả lập mức tăng trưởng trung bình
+                    growth={data.orderGrowth}
                     icon={ShoppingCart}
                 />
                 <StatCard
