@@ -10,6 +10,7 @@ import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { sendOrderConfirmationEmail } from '@/lib/email';
+import { reconcileAcbPayments } from '@/lib/acb-payments';
 
 async function getUserId() {
     try {
@@ -252,6 +253,14 @@ export async function POST(req: Request) {
             isAgentOrder: isAgent,
             paymentRef: body.paymentReference
         });
+
+        if (paymentMethod === 'banking' && body.paymentReference) {
+            try {
+                await reconcileAcbPayments({ daysBack: 1, pageSize: 100 });
+            } catch (reconcileErr) {
+                console.error('ACB reconciliation after order creation failed:', reconcileErr);
+            }
+        }
 
         // Cập nhật tồn kho sau khi đặt hàng thành công
         for (const item of processedItems) {
