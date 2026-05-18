@@ -102,12 +102,12 @@ export async function POST(req: Request) {
             }
 
             return NextResponse.json({
-                ...acbResponse(body, "00000000", "Webhook validation successful", "ping", 1),
+                ...acbResponse(body, "99999999", "Missing transaction payload", "missing_payload", 0),
                 "reconciliation": reconciliation ? {
                     "applied": reconciliation.applied,
                     "checkedDates": reconciliation.checkedDates
                 } : undefined
-            });
+            }, { status: 422 });
         }
 
         const results = [];
