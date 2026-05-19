@@ -37,7 +37,6 @@ export default function CheckoutPage() {
     const [isVoucherApplied, setIsVoucherApplied] = useState(false);
 
     const [paymentMethod, setPaymentMethod] = useState('banking');
-    const [isBankConfirmed, setIsBankConfirmed] = useState(false);
     const [paymentReference, setPaymentReference] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -552,7 +551,7 @@ export default function CheckoutPage() {
                                         🔔 Hướng dẫn thanh toán
                                     </h4>
                                     <p className="text-sm text-amber-700 leading-relaxed mb-4">
-                                        Vui lòng thực hiện chuyển khoản vào số tài khoản bên dưới với <strong>đúng số tiền</strong> và <strong>nội dung chuyển khoản</strong>. Sau khi chuyển tiền xong, tích vào ô xác nhận để hoàn tất đặt hàng. Hệ thống sẽ xử lý đơn ngay khi nhận được tiền.
+                                        Vui lòng chuyển khoản với <strong>đúng số tiền</strong> và <strong>đúng nội dung chuyển khoản</strong>. Sau khi hoàn tất đặt hàng, hệ thống sẽ tự động xác nhận khi nhận được tiền từ ACB.
                                     </p>
 
                                     <BankInfoDisplay
@@ -561,17 +560,8 @@ export default function CheckoutPage() {
                                         customerName={formData.name}
                                     />
 
-                                    <div className="mt-6 flex items-start gap-3 p-4 bg-white rounded-lg border border-amber-300">
-                                        <input
-                                            type="checkbox"
-                                            id="confirm-bank"
-                                            className="mt-1 w-5 h-5 accent-brand cursor-pointer"
-                                            checked={isBankConfirmed}
-                                            onChange={(e) => setIsBankConfirmed(e.target.checked)}
-                                        />
-                                        <label htmlFor="confirm-bank" className="text-sm font-semibold text-slate-700 cursor-pointer">
-                                            Tôi xác nhận đã chuyển khoản thành công số tiền trên cho Gonuts.
-                                        </label>
+                                    <div className="mt-6 p-4 bg-white rounded-lg border border-emerald-200 text-sm text-emerald-700 font-semibold">
+                                        Đơn hàng sẽ tự chuyển sang đã xác nhận khi hệ thống ghi nhận giao dịch khớp số tiền và nội dung chuyển khoản.
                                     </div>
                                 </div>
                             </div>
@@ -795,9 +785,9 @@ export default function CheckoutPage() {
                             <button
                                 className="place-order-btn"
                                 onClick={handlePlaceOrder}
-                                disabled={isProcessing || (paymentMethod === 'banking' && !isBankConfirmed)}
+                                disabled={isProcessing}
                             >
-                                {isProcessing ? 'Đang xử lý...' : (paymentMethod === 'banking' ? 'Xác nhận đã chuyển khoản' : 'Thanh toán')}
+                                {isProcessing ? 'Đang xử lý...' : (paymentMethod === 'banking' ? 'Hoàn tất đặt hàng' : 'Thanh toán')}
                             </button>
 
                             <div className="security-note">
