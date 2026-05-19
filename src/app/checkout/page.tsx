@@ -65,6 +65,8 @@ interface BankPaymentModalData {
     paymentReference: string;
     customerName: string;
     orderCode: string;
+    customerEmail?: string;
+    customerPhone?: string;
 }
 
 interface OrderCreateResponse {
@@ -290,6 +292,25 @@ export default function CheckoutPage() {
         note: ''
     });
 
+    const getBankPendingUrl = (paymentData: BankPaymentModalData) => {
+        const params = new URLSearchParams({
+            order: paymentData.orderCode,
+            ref: paymentData.paymentReference,
+            amount: paymentData.amount.toString(),
+        });
+
+        if (paymentData.customerName) params.set('name', paymentData.customerName);
+        if (paymentData.customerEmail) params.set('email', paymentData.customerEmail);
+        if (paymentData.customerPhone) params.set('phone', paymentData.customerPhone);
+
+        return `/checkout/bank-pending?${params.toString()}`;
+    };
+
+    const goToBankPending = () => {
+        if (!bankPaymentModal) return;
+        router.push(getBankPendingUrl(bankPaymentModal));
+    };
+
     useEffect(() => {
         if (user) {
             setFormData(prev => ({
@@ -386,7 +407,9 @@ export default function CheckoutPage() {
                     amount: total,
                     paymentReference: data?.paymentRef || paymentReference,
                     customerName: formData.name,
-                    orderCode
+                    orderCode,
+                    customerEmail: formData.email.trim() || undefined,
+                    customerPhone: formData.phone.trim() || undefined,
                 });
                 clearCart();
                 toast.success('Đã tạo đơn hàng', 'Vui lòng quét QR để hoàn tất chuyển khoản.');
@@ -835,7 +858,7 @@ export default function CheckoutPage() {
                                 className="payment-modal-close"
                                 type="button"
                                 aria-label="Đóng"
-                                onClick={() => router.push('/checkout/success')}
+                                onClick={goToBankPending}
                             >
                                 ✕
                             </button>
@@ -848,11 +871,11 @@ export default function CheckoutPage() {
                             />
                         </div>
                         <div className="payment-modal-note">
-                            Hệ thống sẽ tự xác nhận đơn khi nhận được giao dịch khớp số tiền và nội dung chuyển khoản.
+                            Đơn hàng đang ở trạng thái chờ thanh toán. Hệ thống chỉ tự xác nhận sau khi nhận được giao dịch khớp số tiền và nội dung chuyển khoản.
                         </div>
                         <div className="payment-modal-actions">
-                            <button type="button" onClick={() => router.push('/checkout/success')}>
-                                Hoàn tất
+                            <button type="button" onClick={goToBankPending}>
+                                Tôi đã lưu thông tin thanh toán
                             </button>
                         </div>
                     </div>

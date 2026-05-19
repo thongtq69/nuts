@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { useToast } from '@/context/ToastContext';
+import { useSearchParams } from 'next/navigation';
 import { Search, Package, Clock, CheckCircle, Truck, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface OrderItem {
@@ -47,10 +48,11 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
     cancelled: { label: 'Đã hủy', color: 'bg-red-100 text-red-700', icon: XCircle },
 };
 
-export default function TraCuuDonHangPage() {
+function TraCuuDonHangContent() {
     const toast = useToast();
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
+    const searchParams = useSearchParams();
+    const [email, setEmail] = useState(searchParams.get('email') || '');
+    const [phone, setPhone] = useState(searchParams.get('phone') || '');
     const [isLoading, setIsLoading] = useState(false);
     const [orders, setOrders] = useState<Order[]>([]);
     const [hasSearched, setHasSearched] = useState(false);
@@ -93,9 +95,10 @@ export default function TraCuuDonHangPage() {
             } else {
                 toast.info('Không tìm thấy', 'Không có đơn hàng nào với thông tin này');
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Search error:', error);
-            toast.error('Lỗi tra cứu', error.message || 'Vui lòng thử lại sau');
+            const message = error instanceof Error ? error.message : 'Vui lòng thử lại sau';
+            toast.error('Lỗi tra cứu', message);
             setOrders([]);
         } finally {
             setIsLoading(false);
@@ -355,5 +358,28 @@ export default function TraCuuDonHangPage() {
                 }
             `}</style>
         </main>
+    );
+}
+
+function LoadingFallback() {
+    return (
+        <main>
+            <Header />
+            <Navbar />
+            <div className="container">
+                <div className="max-w-3xl mx-auto py-16 text-center text-gray-500 font-semibold">
+                    Đang tải trang tra cứu...
+                </div>
+            </div>
+            <Footer />
+        </main>
+    );
+}
+
+export default function TraCuuDonHangPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <TraCuuDonHangContent />
+        </Suspense>
     );
 }

@@ -1,10 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { INotification } from '@/models/Notification'; // We might need to omit server-only types if INotification imports mongoose. 
-// Actually INotification imports mongoose in the model file, which is not good for client.
-// Let's define a CleanNotification interface locally or in a shared types file. 
-// For now, I'll define it here to avoid import issues with mongoose in client components.
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 export interface NotificationItem {
     _id: string;
@@ -27,24 +24,41 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
+    const { user, loading: authLoading } = useAuth();
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const canFetchNotifications = user?.role === 'admin' || user?.role === 'staff';
 
-    const fetchNotifications = async () => {
+    const clearNotifications = () => {
+        setNotifications([]);
+        setUnreadCount(0);
+        setLoading(false);
+    };
+
+    const fetchNotifications = useCallback(async () => {
+        if (!canFetchNotifications) {
+            clearNotifications();
+            return;
+        }
+
         try {
             const res = await fetch('/api/admin/notifications?limit=20');
             if (res.ok) {
                 const data = await res.json();
                 setNotifications(data.notifications);
                 setUnreadCount(data.unreadCount);
+            } else if (res.status === 401 || res.status === 403) {
+                clearNotifications();
+            } else {
+                throw new Error(`Notification request failed with status ${res.status}`);
             }
         } catch (error) {
             console.error('Failed to fetch notifications', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [canFetchNotifications]);
 
     const markAsRead = async (id: string) => {
         try {
@@ -58,16 +72,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error('Failed to mark notification as read', error);
             // Revert on error could be implemented here
-            fetchNotifications();
+            await fetchNotifications();
         }
     };
 
     useEffect(() => {
+        if (authLoading) return;
+
         fetchNotifications();
-        // Poll every 30 seconds
+        if (!canFetchNotifications) return;
+
         const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [authLoading, canFetchNotifications, fetchNotifications]);
 
     return (
         <NotificationContext.Provider value={{ notifications, unreadCount, loading, markAsRead, refresh: fetchNotifications }}>

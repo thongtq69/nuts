@@ -74,13 +74,19 @@ export default function Footer() {
                 <div className="footer-grid">
                     {/* Company Info */}
                     <div className="footer-col company-info footer-company">
-                        <img src={currentSettings.logoUrl} alt="Go Nuts" className="footer-logo" />
+                        <img
+                            src={currentSettings.logoUrl}
+                            alt="Go Nuts"
+                            className="footer-logo"
+                            onError={(event) => {
+                                event.currentTarget.src = '/assets/logo.png';
+                            }}
+                        />
                         <p className="company-name">{currentSettings.siteName}</p>
                         <p className="footer-address">Địa chỉ: {currentSettings.address}</p>
                         <p className="footer-contact">Số điện thoại: {currentSettings.hotline}</p>
                         <p className="footer-contact">Email: {currentSettings.email}</p>
                         <p className="license footer-license">Số giấy phép kinh doanh: {currentSettings.businessLicense || '0123xxxxxx'}</p>
-                        <img src="/assets/images/bct.png" alt="Bộ Công Thương" className="bct-logo" />
                     </div>
 
                     {/* Menu */}
