@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Titillium_Web } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/components/Providers';
@@ -89,7 +89,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/site.webmanifest',
-  themeColor: '#9C7043',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -114,6 +113,10 @@ export const metadata: Metadata = {
     google: '8v1_6fcPtr0f5v1X5Of7_WMLITdVKJBCru84nbbuOhg',
     // facebook: 'your-facebook-domain-verification',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#9C7043',
 };
 
 
