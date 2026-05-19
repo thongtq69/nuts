@@ -26,6 +26,53 @@ interface Ward {
     name: string;
 }
 
+interface Voucher {
+    _id: string;
+    code: string;
+    discountType: 'percent' | 'fixed' | string;
+    discountValue: number;
+    maxDiscount?: number;
+    minOrderValue: number;
+    expiresAt: string;
+    isUsed: boolean;
+}
+
+interface ShippingTier {
+    minWeight: number;
+    maxWeight: number;
+    basePrice?: number;
+    extraPricePerKg?: number;
+    isDirectMultiplier?: boolean;
+}
+
+interface ShippingZone {
+    provinceNames: string[];
+    tiers: ShippingTier[];
+}
+
+interface ShippingConfig {
+    zones: ShippingZone[];
+    fuelSurchargePercent?: number;
+    vatPercent?: number;
+}
+
+interface SiteSettings {
+    freeShippingThreshold?: number;
+}
+
+interface BankPaymentModalData {
+    amount: number;
+    paymentReference: string;
+    customerName: string;
+    orderCode: string;
+}
+
+interface OrderCreateResponse {
+    _id?: string;
+    paymentRef?: string;
+    message?: string;
+}
+
 export default function CheckoutPage() {
     const router = useRouter();
     const { cartItems, cartTotal, originalTotal, savingsTotal, clearCart, getItemPrice } = useCart();
@@ -39,8 +86,9 @@ export default function CheckoutPage() {
     const [paymentMethod, setPaymentMethod] = useState('banking');
     const [paymentReference, setPaymentReference] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [bankPaymentModal, setBankPaymentModal] = useState<BankPaymentModalData | null>(null);
 
-    const [vouchers, setVouchers] = useState<any[]>([]);
+    const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [loadingVouchers, setLoadingVouchers] = useState(false);
     const [showVoucherModal, setShowVoucherModal] = useState(false);
     const [manualVoucherCode, setManualVoucherCode] = useState('');
@@ -52,14 +100,14 @@ export default function CheckoutPage() {
     const [selectedDistrict, setSelectedDistrict] = useState('');
     const [selectedWard, setSelectedWard] = useState('');
     const [addressError, setAddressError] = useState('');
-    const [shippingConfig, setShippingConfig] = useState<any>(null);
-    const [siteSettings, setSiteSettings] = useState<any>(null);
+    const [shippingConfig, setShippingConfig] = useState<ShippingConfig | null>(null);
+    const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
 
     useEffect(() => {
         if (user) {
             setLoadingVouchers(true);
             fetch('/api/user/vouchers')
-                .then(res => res.json())
+                .then(res => res.json() as Promise<Voucher[]>)
                 .then(data => {
                     if (Array.isArray(data)) {
                         setVouchers(data.filter(v => !v.isUsed && new Date(v.expiresAt) > new Date()));
@@ -72,13 +120,13 @@ export default function CheckoutPage() {
 
         // Fetch shipping config
         fetch('/api/admin/shipping')
-            .then(res => res.json())
+            .then(res => res.json() as Promise<ShippingConfig>)
             .then(data => setShippingConfig(data))
             .catch(err => console.error('Error fetching shipping config:', err));
 
         // Fetch site settings for free shipping threshold
         fetch('/api/settings')
-            .then(res => res.json())
+            .then(res => res.json() as Promise<SiteSettings>)
             .then(data => setSiteSettings(data))
             .catch(err => console.error('Error fetching settings:', err));
     }, [user]);
@@ -123,7 +171,7 @@ export default function CheckoutPage() {
                     toast.error('Lỗi tải quận/huyện', 'Không thể tải danh sách quận/huyện. Vui lòng thử lại.');
                 });
         }
-    }, [selectedProvince]);
+    }, [selectedProvince, toast]);
 
     useEffect(() => {
         if (selectedDistrict) {
@@ -145,7 +193,7 @@ export default function CheckoutPage() {
                     toast.error('Lỗi tải phường/xã', 'Không thể tải danh sách phường/xã. Vui lòng thử lại.');
                 });
         }
-    }, [selectedDistrict]);
+    }, [selectedDistrict, toast]);
 
     useEffect(() => {
         if (cartItems.length === 0) {
@@ -173,7 +221,7 @@ export default function CheckoutPage() {
         const provinceName = provinces.find(p => p.code.toString() === selectedProvince)?.name;
         if (!provinceName) return DEFAULT_FEE;
 
-        const zone = shippingConfig.zones.find((z: any) =>
+        const zone = shippingConfig.zones.find((z) =>
             z.provinceNames.some((p: string) => p.includes(provinceName) || provinceName.includes(p))
         );
 
@@ -186,7 +234,7 @@ export default function CheckoutPage() {
 
         // Match logic: Find the first tier where weight is less than or equal to its maxWeight
         // This handles gaps automatically (e.g. 2.5kg falls into 3-30kg tier if 0-2kg is too light)
-        let tier = sortedTiers.find((t: any) => totalWeight <= t.maxWeight);
+        let tier = sortedTiers.find((t) => totalWeight <= t.maxWeight);
 
         // If still not found (weight exceeds all maxWeights), use the last tier
         if (!tier && sortedTiers.length > 0) {
@@ -261,33 +309,6 @@ export default function CheckoutPage() {
         }
     }, [paymentMethod, paymentReference]);
 
-    const handleApplyVoucher = async () => {
-        if (!voucherCode) return;
-        setVoucherError('');
-        try {
-            const res = await fetch('/api/vouchers/apply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: voucherCode, orderValue: subtotal })
-            });
-            const data = await res.json();
-            if (res.ok && data.valid) {
-                setAppliedDiscount(data.discountAmount);
-                setIsVoucherApplied(true);
-                toast.success(
-                    'Áp dụng voucher thành công',
-                    `Giảm ${new Intl.NumberFormat('vi-VN').format(data.discountAmount)}đ`
-                );
-            } else {
-                setVoucherError(data.message || 'Mã không hợp lệ');
-                setAppliedDiscount(0);
-                setIsVoucherApplied(false);
-            }
-        } catch (e) {
-            setVoucherError('Lỗi khi kiểm tra mã');
-        }
-    };
-
     const handlePlaceOrder = async () => {
         if (isProcessing) return;
 
@@ -353,17 +374,31 @@ export default function CheckoutPage() {
                 body: JSON.stringify(orderData),
             });
 
-            const data = await res.json();
+            const data = await res.json() as OrderCreateResponse;
 
             if (!res.ok) {
                 throw new Error(data.message || 'Đặt hàng thất bại');
             }
 
+            if (paymentMethod === 'banking') {
+                const orderCode = data?._id ? data._id.toString().slice(-6).toUpperCase() : paymentReference;
+                setBankPaymentModal({
+                    amount: total,
+                    paymentReference: data?.paymentRef || paymentReference,
+                    customerName: formData.name,
+                    orderCode
+                });
+                clearCart();
+                toast.success('Đã tạo đơn hàng', 'Vui lòng quét QR để hoàn tất chuyển khoản.');
+                return;
+            }
+
             clearCart();
             router.push('/checkout/success');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            toast.error('Đặt hàng thất bại', error.message || 'Vui lòng thử lại.');
+            const message = error instanceof Error ? error.message : 'Vui lòng thử lại.';
+            toast.error('Đặt hàng thất bại', message);
         } finally {
             setIsProcessing(false);
         }
@@ -550,19 +585,9 @@ export default function CheckoutPage() {
                                     <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
                                         🔔 Hướng dẫn thanh toán
                                     </h4>
-                                    <p className="text-sm text-amber-700 leading-relaxed mb-4">
-                                        Vui lòng chuyển khoản với <strong>đúng số tiền</strong> và <strong>đúng nội dung chuyển khoản</strong>. Sau khi hoàn tất đặt hàng, hệ thống sẽ tự động xác nhận khi nhận được tiền từ ACB.
+                                    <p className="text-sm text-amber-700 leading-relaxed">
+                                        Sau khi điền đủ thông tin và bấm thanh toán, hệ thống sẽ tạo đơn hàng và mở mã QR chuyển khoản. Đơn hàng tự xác nhận khi ACB ghi nhận giao dịch khớp số tiền và nội dung chuyển khoản.
                                     </p>
-
-                                    <BankInfoDisplay
-                                        amount={subtotal + shippingFee - appliedDiscount}
-                                        description={paymentReference}
-                                        customerName={formData.name}
-                                    />
-
-                                    <div className="mt-6 p-4 bg-white rounded-lg border border-emerald-200 text-sm text-emerald-700 font-semibold">
-                                        Đơn hàng sẽ tự chuyển sang đã xác nhận khi hệ thống ghi nhận giao dịch khớp số tiền và nội dung chuyển khoản.
-                                    </div>
                                 </div>
                             </div>
                         )}
@@ -679,7 +704,7 @@ export default function CheckoutPage() {
                                                         } else {
                                                             setVoucherError(data.message || 'Mã không hợp lệ');
                                                         }
-                                                    } catch (e) {
+                                                    } catch {
                                                         setVoucherError('Lỗi khi kiểm tra mã');
                                                     }
                                                 }}
@@ -787,7 +812,7 @@ export default function CheckoutPage() {
                                 onClick={handlePlaceOrder}
                                 disabled={isProcessing}
                             >
-                                {isProcessing ? 'Đang xử lý...' : (paymentMethod === 'banking' ? 'Hoàn tất đặt hàng' : 'Thanh toán')}
+                                {isProcessing ? 'Đang xử lý...' : 'Thanh toán'}
                             </button>
 
                             <div className="security-note">
@@ -797,6 +822,42 @@ export default function CheckoutPage() {
                     </div>
                 </div>
             </div>
+
+            {bankPaymentModal && (
+                <div className="payment-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="bank-payment-title">
+                    <div className="payment-modal">
+                        <div className="payment-modal-header">
+                            <div>
+                                <h3 id="bank-payment-title">Thanh toán chuyển khoản</h3>
+                                <p>Đơn #{bankPaymentModal.orderCode}</p>
+                            </div>
+                            <button
+                                className="payment-modal-close"
+                                type="button"
+                                aria-label="Đóng"
+                                onClick={() => router.push('/checkout/success')}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="payment-modal-body">
+                            <BankInfoDisplay
+                                amount={bankPaymentModal.amount}
+                                description={bankPaymentModal.paymentReference}
+                                customerName={bankPaymentModal.customerName}
+                            />
+                        </div>
+                        <div className="payment-modal-note">
+                            Hệ thống sẽ tự xác nhận đơn khi nhận được giao dịch khớp số tiền và nội dung chuyển khoản.
+                        </div>
+                        <div className="payment-modal-actions">
+                            <button type="button" onClick={() => router.push('/checkout/success')}>
+                                Hoàn tất
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Footer />
 
@@ -941,6 +1002,87 @@ export default function CheckoutPage() {
                 margin-top: 15px;
                 font-size: 13px;
                 color: #666;
+            }
+
+            .payment-modal-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 1200;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: rgba(17, 24, 39, 0.55);
+            }
+            .payment-modal {
+                width: min(720px, 100%);
+                max-height: min(92vh, 900px);
+                overflow-y: auto;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 25px 60px rgba(17, 24, 39, 0.25);
+            }
+            .payment-modal-header {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 16px;
+                padding: 20px 24px;
+                border-bottom: 1px solid #eee;
+            }
+            .payment-modal-header h3 {
+                margin: 0;
+                font-size: 22px;
+                font-weight: 700;
+                color: #1f2937;
+            }
+            .payment-modal-header p {
+                margin: 6px 0 0;
+                color: #6b7280;
+                font-weight: 600;
+            }
+            .payment-modal-close {
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid #e5e7eb;
+                border-radius: 50%;
+                background: #fff;
+                color: #374151;
+                cursor: pointer;
+            }
+            .payment-modal-body {
+                padding: 24px;
+            }
+            .payment-modal-note {
+                margin: 0 24px 20px;
+                padding: 14px 16px;
+                border: 1px solid #bbf7d0;
+                border-radius: 8px;
+                background: #f0fdf4;
+                color: #166534;
+                font-size: 14px;
+                font-weight: 600;
+            }
+            .payment-modal-actions {
+                padding: 0 24px 24px;
+                display: flex;
+                justify-content: flex-end;
+            }
+            .payment-modal-actions button {
+                min-width: 150px;
+                padding: 13px 20px;
+                border: none;
+                border-radius: 6px;
+                background: #9C7043;
+                color: white;
+                font-weight: 700;
+                cursor: pointer;
+            }
+            .payment-modal-actions button:hover {
+                background: #7d5a36;
             }
 
             /* Voucher Section Styles */
@@ -1252,6 +1394,30 @@ export default function CheckoutPage() {
                     left: 0;
                     right: 0;
                     max-width: 100%;
+                }
+                .payment-modal-overlay {
+                    align-items: flex-end;
+                    padding: 0;
+                }
+                .payment-modal {
+                    width: 100%;
+                    max-height: 92vh;
+                    border-radius: 12px 12px 0 0;
+                }
+                .payment-modal-header {
+                    padding: 18px;
+                }
+                .payment-modal-body {
+                    padding: 18px;
+                }
+                .payment-modal-note {
+                    margin: 0 18px 18px;
+                }
+                .payment-modal-actions {
+                    padding: 0 18px 18px;
+                }
+                .payment-modal-actions button {
+                    width: 100%;
                 }
                 .savings-row {
                     display: flex;
