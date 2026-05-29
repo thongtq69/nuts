@@ -93,7 +93,7 @@ export async function POST(req: Request) {
 
         const transactions = extractAcbTransactions(body);
         if (transactions.length === 0) {
-            console.warn('⚠️ ACB Callback: No transactions found. Treating as validation/ping and running reconciliation.');
+            console.warn('⚠️ ACB Callback: No transactions found. Accepting callback and running reconciliation.');
             let reconciliation = null;
             try {
                 reconciliation = await reconcileAcbPayments({ daysBack: 1, pageSize: 100 });
@@ -102,12 +102,19 @@ export async function POST(req: Request) {
             }
 
             return NextResponse.json({
-                ...acbResponse(body, "99999999", "Missing transaction payload", "missing_payload", 0),
+                ...acbResponse(
+                    body,
+                    "00000000",
+                    reconciliation?.applied ? "Accepted empty callback; reconciliation applied" : "Accepted empty callback",
+                    reconciliation?.applied ? "reconciled" : "empty_callback",
+                    0
+                ),
+                "missingPayload": true,
                 "reconciliation": reconciliation ? {
                     "applied": reconciliation.applied,
                     "checkedDates": reconciliation.checkedDates
                 } : undefined
-            }, { status: 422 });
+            });
         }
 
         const results = [];
