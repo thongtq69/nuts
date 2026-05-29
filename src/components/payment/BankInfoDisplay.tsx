@@ -10,7 +10,7 @@ interface BankInfoProps {
     amount?: number;
     description?: string;
     compact?: boolean;
-    customerName?: string; // Tên khách hàng để hiển thị trong nội dung CK
+    customerName?: string;
 }
 
 const BANK_INFO = {
@@ -64,55 +64,13 @@ export default function BankInfoDisplay({
     qrCodeUrl,
     amount,
     description,
-    compact = false,
-    customerName
+    compact = false
 }: BankInfoProps) {
     const [copied, setCopied] = useState<string | null>(null);
 
-    // Hàm loại bỏ dấu tiếng Việt
-    const removeVietnameseTones = (str: string): string => {
-        str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
-        str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
-        str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
-        str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
-        str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
-        str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
-        str = str.replace(/đ/g, 'd');
-        str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, 'A');
-        str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, 'E');
-        str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, 'I');
-        str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, 'O');
-        str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, 'U');
-        str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, 'Y');
-        str = str.replace(/Đ/g, 'D');
-        return str;
-    };
-
-    // Hàm chuẩn hóa tên cho nội dung chuyển khoản
-    const normalizeName = (name: string): string => {
-        // Loại bỏ dấu tiếng Việt
-        let normalized = removeVietnameseTones(name);
-        // Thay dấu cách bằng gạch dưới
-        normalized = normalized.replace(/\s+/g, '_');
-        // Loại bỏ ký tự đặc biệt, chỉ giữ lại chữ cái, số và gạch dưới
-        normalized = normalized.replace(/[^a-zA-Z0-9_]/g, '');
-        return normalized.toUpperCase();
-    };
-
-    // Tạo nội dung chuyển khoản đầy đủ: Tên KH + Mã đơn hàng
+    // Nội dung QR chỉ dùng mã thanh toán để ngân hàng không nối tên khách vào mã đơn.
     const generateTransferContent = () => {
-        let content = description || '';
-        if (customerName && customerName.trim()) {
-            // Chuẩn hóa tên khách hàng (bỏ dấu, thay space = _)
-            const normalizedName = normalizeName(customerName.trim());
-            
-            // Lấy họ tên đầy đủ (tối đa 25 ký tự để vừa với giới hạn nội dung CK)
-            const fullName = normalizedName.substring(0, 25);
-            
-            // Format: GOXXXX_HO_TEN_DAY_DU
-            content = `${content}_${fullName}`.trim();
-        }
-        // Giới hạn độ dài nội dung CK theo quy định ngân hàng (thường 50-140 ký tự)
+        const content = description || '';
         return content.substring(0, 50);
     };
 

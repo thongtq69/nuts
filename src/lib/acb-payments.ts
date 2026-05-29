@@ -131,7 +131,7 @@ function parseTransaction(txn: any, fallback: any = {}): ParsedAcbTransaction {
 }
 
 export function extractPaymentRef(description: string): string | null {
-    const match = description.match(/\bGO[A-Z0-9]{6,12}\b/i);
+    const match = description.match(/GO[A-Z0-9]{6}/i);
     return match ? match[0].toUpperCase() : null;
 }
 
