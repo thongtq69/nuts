@@ -68,6 +68,10 @@ function sameAccount(account?: string): boolean {
     return account.replace(/\D/g, '') === DEFAULT_ACCOUNT.replace(/\D/g, '');
 }
 
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function parseTransaction(txn: any, fallback: any = {}): ParsedAcbTransaction {
     const attributes = txn.transactionEntityAttribute || txn.transactionEntityAttributes || {};
     const transactionId = firstString(
@@ -409,5 +413,72 @@ export async function reconcileAcbPayments(options: {
         checkedDates: dates,
         results,
         applied: results.filter((result) => result.applied).length,
+    };
+}
+
+export async function reconcileAcbPaymentRef(
+    paymentRef: string,
+    options: {
+        accountNumber?: string;
+        daysBack?: number;
+        pageSize?: number;
+    } = {}
+) {
+    const normalizedRef = paymentRef.trim().toUpperCase();
+    if (!/^GO[A-Z0-9]{6,12}$/i.test(normalizedRef)) {
+        throw new Error('Invalid payment reference');
+    }
+
+    const accountNumber = options.accountNumber || DEFAULT_ACCOUNT;
+    if (!accountNumber) {
+        throw new Error('Missing ACB account number');
+    }
+
+    await dbConnect();
+    const pendingOrder = await Order.findOne({
+        paymentRef: new RegExp(`^${escapeRegExp(normalizedRef)}$`, 'i'),
+        paymentMethod: 'banking',
+        paymentStatus: { $ne: 'paid' },
+    }).select('paymentRef totalAmount').lean();
+
+    if (!pendingOrder) {
+        return {
+            paymentRef: normalizedRef,
+            checkedDates: [] as string[],
+            results: [] as AcbApplyResult[],
+            applied: 0,
+            reason: 'order_not_found_or_already_paid',
+        };
+    }
+
+    const results: AcbApplyResult[] = [];
+    const dates = dateRangeForReconcile(options.daysBack || 1);
+
+    for (const date of dates) {
+        const history = await getAcbTransactionHistory({
+            accountNumber,
+            fromDate: date,
+            toDate: date,
+            page: 1,
+            size: options.pageSize || 100,
+        });
+
+        const transactions = history.responseData?.transactions || [];
+        for (const rawTxn of transactions) {
+            const txn = normalizeHistoryTransaction(rawTxn);
+            const txnPaymentRef = extractPaymentRef(txn.description);
+            if (txnPaymentRef !== normalizedRef) continue;
+            results.push(await applyAcbTransactionToOrder(txn, 'reconcile'));
+        }
+
+        if (results.some((result) => result.applied)) break;
+    }
+
+    return {
+        paymentRef: normalizedRef,
+        checkedDates: dates,
+        results,
+        applied: results.filter((result) => result.applied).length,
+        reason: results.length ? 'matched_history' : 'transaction_not_found',
     };
 }
