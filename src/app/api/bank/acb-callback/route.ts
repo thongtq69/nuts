@@ -17,7 +17,7 @@ export const maxDuration = 60;
  */
 
 const FAST_RECONCILE_INTERVAL_MS = 5_000;
-const FAST_RECONCILE_ATTEMPTS = 8;
+const FAST_RECONCILE_ATTEMPTS = 11;
 
 export async function GET() {
     return NextResponse.json({
@@ -156,18 +156,17 @@ export async function POST(req: Request) {
 
         const transactions = extractAcbTransactions(body);
         if (transactions.length === 0) {
-            console.warn('⚠️ ACB Callback: No transactions found. Scheduling immediate reconciliation and fast retries.');
+            console.warn('⚠️ ACB Callback: No transactions found. Accepting callback and scheduling internal reconciliation.');
             after(runFastReconciliation);
 
             return NextResponse.json(
                 acbResponse(
                     body,
-                    "99999999",
-                    "Missing transaction payload",
-                    "empty_callback",
+                    "00000000",
+                    "Accepted empty callback; reconciliation scheduled",
+                    "empty_callback_accepted",
                     0
-                ),
-                { status: 400 }
+                )
             );
         }
 

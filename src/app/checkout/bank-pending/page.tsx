@@ -31,16 +31,13 @@ function BankPendingContent() {
 
         let active = true;
         let timeoutId: ReturnType<typeof setTimeout> | undefined;
-        let attempts = 0;
-        const maxAttempts = 240;
 
         const scheduleNext = (delayMs: number) => {
-            if (!active || attempts >= maxAttempts) return;
+            if (!active) return;
             timeoutId = setTimeout(checkPaymentStatus, delayMs);
         };
 
         const checkPaymentStatus = async () => {
-            attempts += 1;
             setAutoCheckStatus('checking');
 
             try {
