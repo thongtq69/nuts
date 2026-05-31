@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import { reconcileAcbPaymentRef } from '@/lib/acb-payments';
+import mongoose from 'mongoose';
+import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -18,6 +20,19 @@ function noStoreJson(data: unknown, init?: ResponseInit) {
     const headers = new Headers(init?.headers);
     headers.set('Cache-Control', 'no-store, max-age=0');
     return NextResponse.json(data, { ...init, headers });
+}
+
+async function saveReconciliationLog(entry: Record<string, unknown>) {
+    try {
+        const db = mongoose.connection.db;
+        if (!db) return;
+        await db.collection('acb_reconciliation_logs').insertOne({
+            timestamp: new Date(),
+            ...entry,
+        });
+    } catch (error) {
+        console.error('ACB reconciliation log write failed:', error);
+    }
 }
 
 export async function GET(req: Request) {
@@ -48,6 +63,16 @@ export async function GET(req: Request) {
         return noStoreJson({ error: 'amount_mismatch' }, { status: 400 });
     }
 
+    const pollId = randomUUID();
+    const startedAt = Date.now();
+    console.log('ACB targeted reconciliation poll started:', JSON.stringify({
+        pollId,
+        order: orderCodeFromId(order._id),
+        paymentRef,
+        expectedAmount: Number(order.totalAmount),
+        paymentStatusBefore: order.paymentStatus,
+    }));
+
     let reconciliation:
         | Awaited<ReturnType<typeof reconcileAcbPaymentRef>>
         | { error: string }
@@ -66,6 +91,23 @@ export async function GET(req: Request) {
     const latestOrder = await Order.findById(order._id)
         .select('_id paymentRef paymentStatus status totalAmount acbTransactionNo')
         .lean();
+
+    const reconciliationLog = {
+        event: 'payment_status_poll',
+        pollId,
+        orderId: String(order._id),
+        order: orderCodeFromId(order._id),
+        paymentRef,
+        expectedAmount: Number(order.totalAmount),
+        paymentStatusBefore: order.paymentStatus,
+        paymentStatusAfter: latestOrder?.paymentStatus || order.paymentStatus,
+        statusAfter: latestOrder?.status || order.status,
+        acbTransactionNo: latestOrder?.acbTransactionNo || order.acbTransactionNo || null,
+        durationMs: Date.now() - startedAt,
+        reconciliation,
+    };
+    await saveReconciliationLog(reconciliationLog);
+    console.log('ACB targeted reconciliation poll completed:', JSON.stringify(reconciliationLog));
 
     return noStoreJson({
         order: orderCodeFromId(order._id),

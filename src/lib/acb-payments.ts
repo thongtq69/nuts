@@ -389,6 +389,11 @@ export async function reconcileAcbPayments(options: {
     const pendingRefSet = new Set(pendingRefs.map((order: any) => String(order.paymentRef).toUpperCase()));
     const results: AcbApplyResult[] = [];
     const dates = dateRangeForReconcile(options.daysBack || 1);
+    const historyChecks: Array<{
+        date: string;
+        transactionCount: number;
+        matchingPendingRefs: string[];
+    }> = [];
 
     for (const date of dates) {
         const history = await getAcbTransactionHistory({
@@ -400,17 +405,25 @@ export async function reconcileAcbPayments(options: {
         });
 
         const transactions = history.responseData?.transactions || [];
+        const matchingPendingRefs = new Set<string>();
         for (const rawTxn of transactions) {
             const txn = normalizeHistoryTransaction(rawTxn);
             const paymentRef = extractPaymentRef(txn.description);
             if (!paymentRef || !pendingRefSet.has(paymentRef)) continue;
+            matchingPendingRefs.add(paymentRef);
             results.push(await applyAcbTransactionToOrder(txn, 'reconcile'));
         }
+        historyChecks.push({
+            date,
+            transactionCount: transactions.length,
+            matchingPendingRefs: Array.from(matchingPendingRefs),
+        });
     }
 
     return {
         pendingRefs: pendingRefs.length,
         checkedDates: dates,
+        historyChecks,
         results,
         applied: results.filter((result) => result.applied).length,
     };
@@ -453,6 +466,11 @@ export async function reconcileAcbPaymentRef(
 
     const results: AcbApplyResult[] = [];
     const dates = dateRangeForReconcile(options.daysBack || 1);
+    const historyChecks: Array<{
+        date: string;
+        transactionCount: number;
+        matchingTransactions: number;
+    }> = [];
 
     for (const date of dates) {
         const history = await getAcbTransactionHistory({
@@ -464,12 +482,19 @@ export async function reconcileAcbPaymentRef(
         });
 
         const transactions = history.responseData?.transactions || [];
+        let matchingTransactions = 0;
         for (const rawTxn of transactions) {
             const txn = normalizeHistoryTransaction(rawTxn);
             const txnPaymentRef = extractPaymentRef(txn.description);
             if (txnPaymentRef !== normalizedRef) continue;
+            matchingTransactions += 1;
             results.push(await applyAcbTransactionToOrder(txn, 'reconcile'));
         }
+        historyChecks.push({
+            date,
+            transactionCount: transactions.length,
+            matchingTransactions,
+        });
 
         if (results.some((result) => result.applied)) break;
     }
@@ -477,6 +502,7 @@ export async function reconcileAcbPaymentRef(
     return {
         paymentRef: normalizedRef,
         checkedDates: dates,
+        historyChecks,
         results,
         applied: results.filter((result) => result.applied).length,
         reason: results.length ? 'matched_history' : 'transaction_not_found',

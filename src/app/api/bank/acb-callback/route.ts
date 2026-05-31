@@ -6,6 +6,7 @@ import {
 } from '@/lib/acb-payments';
 import dbConnect from '@/lib/db';
 import mongoose from 'mongoose';
+import { randomUUID } from 'crypto';
 
 export const maxDuration = 60;
 
@@ -104,14 +105,47 @@ function wait(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function runFastReconciliation() {
+async function saveReconciliationLog(entry: Record<string, unknown>) {
+    try {
+        await dbConnect();
+        const db = mongoose.connection.db;
+        if (!db) return;
+        await db.collection('acb_reconciliation_logs').insertOne({
+            timestamp: new Date(),
+            ...entry,
+        });
+    } catch (error) {
+        console.error('ACB reconciliation log write failed:', error);
+    }
+}
+
+async function runFastReconciliation(callbackId: string) {
     for (let attempt = 1; attempt <= FAST_RECONCILE_ATTEMPTS; attempt += 1) {
         if (attempt > 1) await wait(FAST_RECONCILE_INTERVAL_MS);
+        const startedAt = Date.now();
         try {
             const reconciliation = await reconcileAcbPayments({ daysBack: 1, pageSize: 100 });
-            console.log(`🔁 ACB fast reconciliation attempt ${attempt}/${FAST_RECONCILE_ATTEMPTS}: ${reconciliation.applied} payment(s) applied`);
+            const logEntry = {
+                event: 'empty_callback_fast_reconciliation',
+                callbackId,
+                attempt,
+                maxAttempts: FAST_RECONCILE_ATTEMPTS,
+                durationMs: Date.now() - startedAt,
+                reconciliation,
+            };
+            await saveReconciliationLog(logEntry);
+            console.log('ACB fast reconciliation completed:', JSON.stringify(logEntry));
             if (reconciliation.applied > 0) return;
         } catch (error) {
+            const message = error instanceof Error ? error.message : 'reconcile_failed';
+            await saveReconciliationLog({
+                event: 'empty_callback_fast_reconciliation',
+                callbackId,
+                attempt,
+                maxAttempts: FAST_RECONCILE_ATTEMPTS,
+                durationMs: Date.now() - startedAt,
+                error: message,
+            });
             console.error(`ACB fast reconciliation attempt ${attempt}/${FAST_RECONCILE_ATTEMPTS} failed:`, error);
         }
     }
@@ -119,6 +153,7 @@ async function runFastReconciliation() {
 
 export async function POST(req: Request) {
     try {
+        const callbackId = randomUUID();
         let body: Record<string, unknown> = {};
         let rawBody = '';
         let parseError = '';
@@ -142,6 +177,7 @@ export async function POST(req: Request) {
             if (db) {
                 await db.collection('acb_debug_logs').insertOne({
                     timestamp: new Date(),
+                    callbackId,
                     headers: headers,
                     body: body,
                     rawBodyLength: rawBody.length,
@@ -157,7 +193,7 @@ export async function POST(req: Request) {
         const transactions = extractAcbTransactions(body);
         if (transactions.length === 0) {
             console.warn('⚠️ ACB Callback: No transactions found. Accepting callback and scheduling internal reconciliation.');
-            after(runFastReconciliation);
+            after(() => runFastReconciliation(callbackId));
 
             return NextResponse.json(
                 acbResponse(
