@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import {
     applyAcbTransactionToOrder,
     extractAcbTransactions,
@@ -7,12 +7,17 @@ import {
 import dbConnect from '@/lib/db';
 import mongoose from 'mongoose';
 
+export const maxDuration = 60;
+
 /**
  * ACB Bank Webhook Callback
  * Protocol: POST
  * URL: https://gonuts.vn/api/bank/acb-callback
  * Auth: x-api-key header
  */
+
+const FAST_RECONCILE_INTERVAL_MS = 5_000;
+const FAST_RECONCILE_ATTEMPTS = 8;
 
 export async function GET() {
     return NextResponse.json({
@@ -39,9 +44,31 @@ function formatAcbDateTime(date = new Date()) {
     return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}.000+0700`;
 }
 
-function acbResponse(body: Record<string, unknown>, responseCode: string, responseMessage: string, referenceCode: string, index = 1) {
+function getNestedString(value: unknown, path: string[]): string | null {
+    let current: unknown = value;
+    for (const key of path) {
+        if (!current || typeof current !== 'object' || !(key in current)) return null;
+        current = (current as Record<string, unknown>)[key];
+    }
+    return typeof current === 'string' && current.trim() ? current.trim() : null;
+}
+
+function callbackReferenceCode(body: Record<string, unknown>, fallback: string): string {
+    return (
+        getNestedString(body, ['requestTrace']) ||
+        getNestedString(body, ['masterMeta', 'clientRequestId']) ||
+        getNestedString(body, ['requestParameters', 'masterMeta', 'clientRequestId']) ||
+        fallback
+    );
+}
+
+function isQrStyleNotification(body: Record<string, unknown>): boolean {
+    return Boolean(body.requestParameters || body.requestTrace);
+}
+
+function qrCallbackResponse(body: Record<string, unknown>, responseCode: string, responseMessage: string, referenceCode: string, index = 1) {
     return {
-        requestTrace: typeof body.requestTrace === 'string' ? body.requestTrace : referenceCode,
+        requestTrace: callbackReferenceCode(body, referenceCode),
         responseDateTime: formatAcbDateTime(),
         responseStatus: {
             responseCode,
@@ -49,9 +76,45 @@ function acbResponse(body: Record<string, unknown>, responseCode: string, respon
         },
         responseBody: {
             index,
-            referenceCode,
+            referenceCode: callbackReferenceCode(body, referenceCode),
         },
     };
+}
+
+function realtimeCallbackResponse(body: Record<string, unknown>, responseCode: string, message: string, referenceCode: string, index = 1) {
+    return {
+        timestamp: new Date().toISOString(),
+        responseCode,
+        message,
+        responseBody: {
+            index,
+            referenceCode: callbackReferenceCode(body, referenceCode),
+        },
+    };
+}
+
+function acbResponse(body: Record<string, unknown>, responseCode: string, responseMessage: string, referenceCode: string, index = 1) {
+    if (isQrStyleNotification(body)) {
+        return qrCallbackResponse(body, responseCode, responseMessage, referenceCode, index);
+    }
+    return realtimeCallbackResponse(body, responseCode, responseMessage, referenceCode, index);
+}
+
+function wait(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function runFastReconciliation() {
+    for (let attempt = 1; attempt <= FAST_RECONCILE_ATTEMPTS; attempt += 1) {
+        if (attempt > 1) await wait(FAST_RECONCILE_INTERVAL_MS);
+        try {
+            const reconciliation = await reconcileAcbPayments({ daysBack: 1, pageSize: 100 });
+            console.log(`🔁 ACB fast reconciliation attempt ${attempt}/${FAST_RECONCILE_ATTEMPTS}: ${reconciliation.applied} payment(s) applied`);
+            if (reconciliation.applied > 0) return;
+        } catch (error) {
+            console.error(`ACB fast reconciliation attempt ${attempt}/${FAST_RECONCILE_ATTEMPTS} failed:`, error);
+        }
+    }
 }
 
 export async function POST(req: Request) {
@@ -93,28 +156,19 @@ export async function POST(req: Request) {
 
         const transactions = extractAcbTransactions(body);
         if (transactions.length === 0) {
-            console.warn('⚠️ ACB Callback: No transactions found. Accepting callback and running reconciliation.');
-            let reconciliation = null;
-            try {
-                reconciliation = await reconcileAcbPayments({ daysBack: 1, pageSize: 100 });
-            } catch (reconcileErr) {
-                console.error('ACB reconciliation after empty callback failed:', reconcileErr);
-            }
+            console.warn('⚠️ ACB Callback: No transactions found. Scheduling immediate reconciliation and fast retries.');
+            after(runFastReconciliation);
 
-            return NextResponse.json({
-                ...acbResponse(
+            return NextResponse.json(
+                acbResponse(
                     body,
-                    "00000000",
-                    reconciliation?.applied ? "Accepted empty callback; reconciliation applied" : "Accepted empty callback",
-                    reconciliation?.applied ? "reconciled" : "empty_callback",
+                    "99999999",
+                    "Missing transaction payload",
+                    "empty_callback",
                     0
                 ),
-                "missingPayload": true,
-                "reconciliation": reconciliation ? {
-                    "applied": reconciliation.applied,
-                    "checkedDates": reconciliation.checkedDates
-                } : undefined
-            });
+                { status: 400 }
+            );
         }
 
         const results = [];
@@ -129,16 +183,15 @@ export async function POST(req: Request) {
         }
 
         // 4. Mandatory Response Body as per ACB requirements
-        return NextResponse.json({
-            ...acbResponse(
+        return NextResponse.json(
+            acbResponse(
                 body,
                 "00000000",
                 "Success",
                 results.find((result) => result.transactionId)?.transactionId || "processed",
                 results.length || 1
-            ),
-            "results": results
-        });
+            )
+        );
 
     } catch (error) {
         console.error('🔥 ACB Callback Error:', error);

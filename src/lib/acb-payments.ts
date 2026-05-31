@@ -147,7 +147,7 @@ export function extractAcbTransactions(body: any): ParsedAcbTransaction[] {
             if (Array.isArray(nestedTransactions)) {
                 for (const txn of nestedTransactions) {
                     transactions.push(parseTransaction(txn, {
-                        clientRequestId: body.requestMeta?.clientRequestId || request?.requestMeta?.clientRequestId,
+                        clientRequestId: body.masterMeta?.clientRequestId || body.requestMeta?.clientRequestId || request?.requestMeta?.clientRequestId,
                         requestTrace: body.requestTrace,
                     }));
                 }
