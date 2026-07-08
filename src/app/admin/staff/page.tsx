@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-    Users, Plus, Edit2, Copy, Trash2, X, Loader2, ChevronRight,
-    UserCheck, Shield, Settings, Check, AlertCircle, TrendingUp
+    Users, Plus, Copy, Trash2, X, Loader2, ChevronRight,
+    UserCheck, Shield, TrendingUp
 } from 'lucide-react';
 import { Pagination } from '@/components/admin/ui/Pagination';
 import { SearchInput } from '@/components/admin/ui/SearchInput';
-import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
+import { ExportButton, ExportColumn } from '@/components/admin/ui/ExportButton';
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
-import { Button } from '@/components/admin/ui/Button';
-import { ROLE_DEFINITIONS, PERMISSION_GROUPS, type Permission } from '@/constants/permissions';
+import { ROLE_DEFINITIONS, PERMISSION_GROUPS, type Permission, type RoleType } from '@/constants/permissions';
 import { useToast } from '@/context/ToastContext';
 
 interface Staff {
@@ -29,11 +28,29 @@ interface Staff {
 }
 
 const ROLE_OPTIONS = Object.entries(ROLE_DEFINITIONS).map(([value, def]) => ({
-    value,
+    value: value as RoleType,
     label: def.name,
     description: def.description,
     color: def.color
 }));
+
+interface StaffCreateResponse {
+    message?: string;
+    staff?: {
+        staffCode?: string;
+    };
+}
+
+async function readStaffResponse(res: Response): Promise<StaffCreateResponse> {
+    const text = await res.text();
+    if (!text) return {};
+
+    try {
+        return JSON.parse(text) as StaffCreateResponse;
+    } catch {
+        return { message: text };
+    }
+}
 
 export default function AdminStaffPage() {
     const [staffList, setStaffList] = useState<Staff[]>([]);
@@ -63,7 +80,7 @@ export default function AdminStaffPage() {
         phone: '',
         password: '',
         staffCode: '',
-        roleType: 'sales' as 'admin' | 'manager' | 'sales' | 'support' | 'warehouse' | 'accountant' | 'collaborator' | 'viewer'
+        roleType: 'sales' as RoleType
     });
 
     const fetchStaff = useCallback(async () => {
@@ -89,24 +106,36 @@ export default function AdminStaffPage() {
         e.preventDefault();
         try {
             setCreating(true);
+            const payload = {
+                name: newStaff.name.trim(),
+                email: newStaff.email.trim().toLowerCase(),
+                phone: newStaff.phone.trim(),
+                password: newStaff.password,
+                staffCode: newStaff.staffCode.trim().toUpperCase(),
+                roleType: newStaff.roleType
+            };
+
             const res = await fetch('/api/admin/staff', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newStaff)
+                body: JSON.stringify(payload)
             });
 
-            const data = await res.json();
+            const data = await readStaffResponse(res);
             if (res.ok) {
-                toast.success('Tạo nhân viên thành công', `Mã: ${data.staff.staffCode}`);
+                toast.success('Tạo nhân viên thành công', `Mã: ${data.staff?.staffCode || payload.staffCode}`);
                 setShowModal(false);
                 setNewStaff({ name: '', email: '', phone: '', password: '', staffCode: '', roleType: 'sales' });
                 fetchStaff();
             } else {
-                toast.error('Lỗi tạo nhân viên', data.message || 'Vui lòng thử lại.');
+                toast.error('Lỗi tạo nhân viên', data.message || `Không tạo được nhân viên (HTTP ${res.status}).`);
             }
         } catch (error) {
             console.error('Error creating staff:', error);
-            toast.error('Lỗi khi tạo nhân viên', 'Vui lòng thử lại.');
+            toast.error(
+                'Lỗi khi tạo nhân viên',
+                error instanceof Error ? error.message : 'Vui lòng thử lại.'
+            );
         } finally {
             setCreating(false);
         }
@@ -323,6 +352,13 @@ export default function AdminStaffPage() {
                     </div>
                 </div>
             </div>
+
+            <SearchInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Tìm nhân viên theo tên, email, mã hoặc vai trò..."
+                className="max-w-xl"
+            />
 
 
 
@@ -548,7 +584,7 @@ export default function AdminStaffPage() {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Vai trò</label>
                                 <select
                                     value={newStaff.roleType}
-                                    onChange={(e) => setNewStaff({ ...newStaff, roleType: e.target.value as any })}
+                                    onChange={(e) => setNewStaff({ ...newStaff, roleType: e.target.value as RoleType })}
                                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                                 >
                                     {ROLE_OPTIONS.map(opt => (

@@ -6,6 +6,64 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 
+const STAFF_ROLE_TYPES = ['admin', 'manager', 'sales', 'support', 'warehouse', 'accountant', 'collaborator', 'viewer'] as const;
+type StaffRoleType = (typeof STAFF_ROLE_TYPES)[number];
+
+function escapeRegex(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeStaffPayload(payload: Record<string, unknown>) {
+    const requestedRoleType = typeof payload.roleType === 'string' ? payload.roleType : 'sales';
+    const roleType = STAFF_ROLE_TYPES.includes(requestedRoleType as StaffRoleType)
+        ? requestedRoleType as StaffRoleType
+        : 'sales';
+
+    return {
+        name: typeof payload.name === 'string' ? payload.name.trim() : '',
+        email: typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '',
+        phone: typeof payload.phone === 'string' ? payload.phone.trim() : '',
+        password: typeof payload.password === 'string' ? payload.password : '',
+        staffCode: typeof payload.staffCode === 'string' ? payload.staffCode.trim().toUpperCase() : '',
+        roleType
+    };
+}
+
+function getDuplicateStaffMessage(error: unknown) {
+    if (!error || typeof error !== 'object') return null;
+
+    const maybeMongoError = error as {
+        code?: unknown;
+        keyPattern?: Record<string, unknown>;
+        keyValue?: Record<string, unknown>;
+    };
+
+    if (maybeMongoError.code !== 11000) return null;
+
+    const keyPattern = maybeMongoError.keyPattern || {};
+    if ('email' in keyPattern) return 'Email đã tồn tại';
+    if ('staffCode' in keyPattern || 'referralCode' in keyPattern) return 'Mã nhân viên đã tồn tại';
+
+    return 'Thông tin nhân viên đã tồn tại';
+}
+
+function isDatabaseQuotaError(error: unknown) {
+    if (!error || typeof error !== 'object') return false;
+
+    const maybeMongoError = error as {
+        code?: unknown;
+        codeName?: unknown;
+        message?: unknown;
+    };
+
+    return (
+        maybeMongoError.code === 8000 &&
+        maybeMongoError.codeName === 'AtlasError' &&
+        typeof maybeMongoError.message === 'string' &&
+        maybeMongoError.message.toLowerCase().includes('space quota')
+    );
+}
+
 // Helper to check if user is admin
 async function isAdmin() {
     try {
@@ -13,7 +71,7 @@ async function isAdmin() {
         const token = cookieStore.get('token')?.value;
         if (!token) return false;
 
-        const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me') as { role?: string };
         return decoded.role === 'admin';
     } catch {
         return false;
@@ -41,7 +99,7 @@ export async function GET() {
                 const collaborators = await User.find({
                     parentStaff: staff._id,
                     affiliateLevel: 'collaborator'
-                } as any).select('_id');
+                }).select('_id');
 
                 const collaboratorIds = collaborators.map(c => c._id);
 
@@ -86,20 +144,49 @@ export async function POST(req: Request) {
         }
 
         await dbConnect();
-        const { name, email, phone, password, staffCode, roleType = 'sales' } = await req.json();
+
+        let rawPayload: unknown;
+        try {
+            rawPayload = await req.json();
+        } catch {
+            return NextResponse.json({ message: 'Dữ liệu gửi lên không hợp lệ' }, { status: 400 });
+        }
+
+        const { name, email, phone, password, staffCode, roleType } = normalizeStaffPayload(
+            rawPayload && typeof rawPayload === 'object' ? rawPayload as Record<string, unknown> : {}
+        );
 
         if (!name || !email || !password || !staffCode) {
             return NextResponse.json({ message: 'Thiếu thông tin bắt buộc' }, { status: 400 });
         }
 
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return NextResponse.json({ message: 'Email không hợp lệ' }, { status: 400 });
+        }
+
+        if (!/^[A-Z0-9_-]{3,30}$/.test(staffCode)) {
+            return NextResponse.json(
+                { message: 'Mã nhân viên chỉ gồm chữ, số, gạch ngang hoặc gạch dưới' },
+                { status: 400 }
+            );
+        }
+
         // Check if email already exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({
+            email: { $regex: `^${escapeRegex(email)}$`, $options: 'i' }
+        });
         if (existingUser) {
             return NextResponse.json({ message: 'Email đã tồn tại' }, { status: 400 });
         }
 
-        // Check if staff code already exists
-        const existingCode = await User.findOne({ staffCode });
+        // Staff code is also used as referralCode, so both fields must be free.
+        const codeRegex = { $regex: `^${escapeRegex(staffCode)}$`, $options: 'i' };
+        const existingCode = await User.findOne({
+            $or: [
+                { staffCode: codeRegex },
+                { referralCode: codeRegex }
+            ]
+        });
         if (existingCode) {
             return NextResponse.json({ message: 'Mã nhân viên đã tồn tại' }, { status: 400 });
         }
@@ -115,12 +202,12 @@ export async function POST(req: Request) {
             password: hashedPassword,
             role: 'staff',
             affiliateLevel: 'staff',
-            staffCode: staffCode.toUpperCase(),
-            referralCode: staffCode.toUpperCase(),
+            staffCode,
+            referralCode: staffCode,
             walletBalance: 0,
             totalCommission: 0,
             collaboratorCount: 0,
-            roleType: roleType
+            roleType
         });
 
         return NextResponse.json({
@@ -134,6 +221,19 @@ export async function POST(req: Request) {
         }, { status: 201 });
     } catch (error) {
         console.error('Create staff error:', error);
+
+        const duplicateMessage = getDuplicateStaffMessage(error);
+        if (duplicateMessage) {
+            return NextResponse.json({ message: duplicateMessage }, { status: 409 });
+        }
+
+        if (isDatabaseQuotaError(error)) {
+            return NextResponse.json(
+                { message: 'Dung lượng database đã đầy, MongoDB đang chặn tạo dữ liệu mới. Vui lòng dọn dữ liệu hoặc nâng cấp dung lượng trước khi tạo nhân viên.' },
+                { status: 507 }
+            );
+        }
+
         return NextResponse.json(
             { message: 'Lỗi khi tạo nhân viên' },
             { status: 500 }
@@ -164,7 +264,7 @@ export async function DELETE(req: Request) {
         await User.deleteMany({
             parentStaff: staff._id,
             affiliateLevel: 'collaborator'
-        } as any);
+        });
 
         // Delete the staff
         await User.findByIdAndDelete(staffId);
