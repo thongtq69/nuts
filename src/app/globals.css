@@ -5017,7 +5017,7 @@ a[class*="from-orange"] {
   overflow-wrap: break-word !important;
   word-break: normal !important;
   word-wrap: break-word !important;
-  white-space: normal !important;
+  white-space: pre-line !important;
   hyphens: none !important;
   -webkit-hyphens: none !important;
   -ms-hyphens: none !important;

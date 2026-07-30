@@ -29,6 +29,8 @@ export async function GET(request: Request) {
         }
         if (linked === 'true' || linked === '1') {
             filter.isLinkedProduct = true;
+        } else if (linked === 'false' || linked === '0') {
+            filter.isLinkedProduct = { $ne: true };
         }
         if (linkedCategory) {
             filter.isLinkedProduct = true;

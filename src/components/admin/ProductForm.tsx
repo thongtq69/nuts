@@ -28,7 +28,13 @@ import {
 } from 'lucide-react';
 import { RichTextEditor } from './ui';
 import TagInput from './TagInput';
-import { PRODUCT_CATEGORIES } from '@/constants/product-categories';
+import { getProductCategoryLabel, PRODUCT_CATEGORIES } from '@/constants/product-categories';
+
+interface ProductCategoryOption {
+    value: string;
+    label: string;
+    isDefault?: boolean;
+}
 
 interface ProductFormProps {
     initialData?: any;
@@ -36,11 +42,6 @@ interface ProductFormProps {
 }
 
 type TabType = 'basic' | 'images' | 'inventory' | 'seo';
-
-const CATEGORIES = [
-    { value: '', label: 'Chọn danh mục' },
-    ...PRODUCT_CATEGORIES,
-];
 
 const BADGE_COLORS = [
     { value: '', label: 'Không có', class: '' },
@@ -62,6 +63,12 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [allTags, setAllTags] = useState<string[]>([]);
     const [linkedCategories, setLinkedCategories] = useState<string[]>([]);
+    const [productCategories, setProductCategories] = useState<ProductCategoryOption[]>(
+        PRODUCT_CATEGORIES.map(category => ({ ...category, isDefault: true })),
+    );
+    const [categoryInput, setCategoryInput] = useState(
+        getProductCategoryLabel(initialData.category) || initialData.category || '',
+    );
 
     const [formData, setFormData] = useState({
         // Basic Info
@@ -134,6 +141,21 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
             .catch(() => setLinkedCategories([]));
     }, []);
 
+    useEffect(() => {
+        fetch('/api/product-categories')
+            .then(res => res.ok ? res.json() : [])
+            .then(data => {
+                if (!Array.isArray(data)) return;
+                setProductCategories(data);
+                const currentCategory = String(initialData.category || '');
+                if (currentCategory) {
+                    const selected = data.find(category => category.value === currentCategory);
+                    if (selected) setCategoryInput(selected.label);
+                }
+            })
+            .catch(() => undefined);
+    }, [initialData.category]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -142,6 +164,19 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: Number(value) || 0 }));
+    };
+
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setCategoryInput(value);
+        const selected = productCategories.find(category =>
+            category.label.toLocaleLowerCase('vi') === value.trim().toLocaleLowerCase('vi') ||
+            category.value.toLocaleLowerCase('vi') === value.trim().toLocaleLowerCase('vi')
+        );
+        setFormData(previous => ({
+            ...previous,
+            category: selected?.value || value,
+        }));
     };
 
     const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,6 +264,12 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
             return;
         }
 
+        if (!categoryInput.trim()) {
+            setActiveTab('basic');
+            toast.error('Thiếu danh mục', 'Vui lòng chọn hoặc nhập tên danh mục.');
+            return;
+        }
+
         if (Number(formData.vipMaxDiscount) < 0) {
             setActiveTab('basic');
             toast.error('Giới hạn VIP không hợp lệ', 'Số tiền giảm tối đa không được nhỏ hơn 0.');
@@ -240,9 +281,36 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         try {
             const method = isEdit ? 'PUT' : 'POST';
             const url = isEdit ? `/api/products/${initialData._id || initialData.id}` : '/api/products';
+            const normalizedCategoryInput = categoryInput.trim().replace(/\s+/g, ' ');
+            let selectedCategory = productCategories.find(category =>
+                category.label.toLocaleLowerCase('vi') === normalizedCategoryInput.toLocaleLowerCase('vi') ||
+                category.value.toLocaleLowerCase('vi') === normalizedCategoryInput.toLocaleLowerCase('vi')
+            );
+
+            if (!selectedCategory) {
+                const categoryResponse = await fetch('/api/product-categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: normalizedCategoryInput }),
+                });
+                const categoryResult = await categoryResponse.json();
+                if (!categoryResponse.ok) {
+                    throw new Error(categoryResult.error || 'Không thể lưu danh mục mới');
+                }
+                selectedCategory = categoryResult;
+                setProductCategories(previous => (
+                    previous.some(category => category.value === categoryResult.value)
+                        ? previous
+                        : [...previous, categoryResult]
+                ));
+            }
+            if (!selectedCategory?.value) {
+                throw new Error('Không thể xác định danh mục sản phẩm');
+            }
 
             const processedData = {
                 ...formData,
+                category: selectedCategory.value,
                 tags: formData.tags,
                 currentPrice: Number(formData.currentPrice),
                 originalPrice: Number(formData.originalPrice),
@@ -377,7 +445,9 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         </span>
                                     )}
                                     <h2 className="text-2xl font-bold">{formData.name || 'Tên sản phẩm'}</h2>
-                                    <p className="text-slate-400 mt-1">{CATEGORIES.find(c => c.value === formData.category)?.label || 'Chưa chọn danh mục'}</p>
+                                    <p className="text-slate-400 mt-1">
+                                        {productCategories.find(category => category.value === formData.category)?.label || categoryInput || 'Chưa chọn danh mục'}
+                                    </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-3xl font-bold text-brand-light">
@@ -518,19 +588,24 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Danh mục <span className="text-red-500">*</span>
                                     </label>
-                                    <select
+                                    <input
+                                        type="text"
                                         name="category"
-                                        value={formData.category}
-                                        onChange={handleChange}
+                                        list="product-category-options"
+                                        value={categoryInput}
+                                        onChange={handleCategoryChange}
                                         required
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all appearance-none"
-                                    >
-                                        {CATEGORIES.map(cat => (
-                                            <option key={cat.value} value={cat.value}>
-                                                {cat.label}
-                                            </option>
+                                        placeholder="Chọn hoặc nhập danh mục mới"
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                                    />
+                                    <datalist id="product-category-options">
+                                        {productCategories.map(category => (
+                                            <option key={category.value} value={category.label} />
                                         ))}
-                                    </select>
+                                    </datalist>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        Chọn danh mục đã có hoặc nhập tên mới; danh mục mới sẽ được lưu khi lưu sản phẩm.
+                                    </p>
                                 </div>
 
                                 {/* Linked product classification */}

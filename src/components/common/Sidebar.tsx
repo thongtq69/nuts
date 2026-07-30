@@ -2,12 +2,25 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { PRODUCT_CATEGORIES } from '@/constants/product-categories';
 
 export default function Sidebar() {
     const searchParams = useSearchParams();
     const selectedCategory = searchParams.get('category') || '';
     const isLinkedProductsPage = searchParams.get('linked') === '1';
+    const [categories, setCategories] = useState(
+        PRODUCT_CATEGORIES.map(category => ({ ...category, isDefault: true })),
+    );
+
+    useEffect(() => {
+        fetch('/api/product-categories')
+            .then(response => response.ok ? response.json() : [])
+            .then(data => {
+                if (Array.isArray(data)) setCategories(data);
+            })
+            .catch(() => undefined);
+    }, []);
 
     return (
         <aside className="sidebar">
@@ -23,7 +36,7 @@ export default function Sidebar() {
                             Tất cả sản phẩm
                         </Link>
                     </li>
-                    {PRODUCT_CATEGORIES.map(category => (
+                    {categories.map(category => (
                         <li key={category.value}>
                             <Link
                                 href={`/products?category=${encodeURIComponent(category.value)}`}

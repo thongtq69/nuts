@@ -10,7 +10,7 @@ import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { IProduct } from '@/models/Product';
-import { getProductCategoryLabel } from '@/constants/product-categories';
+import { getProductCategoryLabel, PRODUCT_CATEGORIES } from '@/constants/product-categories';
 
 interface ProductListProps {
     products: IProduct[];
@@ -29,6 +29,9 @@ export default function ProductList({ products, initialSettings }: ProductListPr
         productsBannerUrl: '/assets/images/gonuts-banner-member.png',
         productsBannerEnabled: true
     });
+    const [productCategories, setProductCategories] = useState(
+        PRODUCT_CATEGORIES.map(category => ({ ...category, isDefault: true })),
+    );
 
     // Fetch settings on mount
     useEffect(() => {
@@ -49,10 +52,21 @@ export default function ProductList({ products, initialSettings }: ProductListPr
         fetchSettings();
     }, []);
 
+    useEffect(() => {
+        fetch('/api/product-categories')
+            .then(response => response.ok ? response.json() : [])
+            .then(data => {
+                if (Array.isArray(data)) setProductCategories(data);
+            })
+            .catch(() => undefined);
+    }, []);
+
     // Get sort parameter from URL
     const urlSort = searchParams.get('sort');
     const selectedCategory = searchParams.get('category');
-    const selectedCategoryLabel = getProductCategoryLabel(selectedCategory);
+    const selectedCategoryLabel = productCategories.find(
+        category => category.value === selectedCategory
+    )?.label || getProductCategoryLabel(selectedCategory) || selectedCategory;
     const isLinkedProductsPage = searchParams.get('linked') === '1';
     const linkedCategory = searchParams.get('linkedCategory')?.trim() || '';
     const linkedCategories = useMemo(() => Array.from(new Set(
@@ -77,8 +91,11 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             if (linkedCategory) {
                 filtered = filtered.filter(product => product.linkedCategory === linkedCategory);
             }
-        } else if (selectedCategory) {
-            filtered = filtered.filter(product => product.category === selectedCategory);
+        } else {
+            filtered = filtered.filter(product => !product.isLinkedProduct);
+            if (selectedCategory) {
+                filtered = filtered.filter(product => product.category === selectedCategory);
+            }
         }
 
         // Filter by URL sort parameter

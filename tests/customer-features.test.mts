@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { normalizeProductPayload, ProductPayloadError } from '../src/lib/product-payload.ts';
 import { describeProductPersistenceError } from '../src/lib/product-persistence-error.ts';
 import { PRODUCT_CATEGORIES, getProductCategoryLabel } from '../src/constants/product-categories.ts';
+import { normalizeMenuName } from '../src/lib/menu-name.ts';
+import { cleanHTMLContent } from '../src/lib/textUtils.ts';
 import { calculateVoucherDiscount } from '../src/lib/voucher-discount.ts';
 
 test('VIP 30% on 200,000đ is capped at 50,000đ for the product', () => {
@@ -145,4 +147,13 @@ test('the storefront and product form share the same icon-free categories', () =
         new Set(PRODUCT_CATEGORIES.map(category => category.value)).size,
         PRODUCT_CATEGORIES.length,
     );
+});
+
+test('new category names are normalized before they are saved', () => {
+    assert.equal(normalizeMenuName('  Đông   trùng hạ thảo  '), 'Đông trùng hạ thảo');
+});
+
+test('short product descriptions preserve an intentional VAT line break', () => {
+    const description = 'Đông Trùng Hạ Thảo khô 300mg.\nGiá bán đã bao gồm VAT';
+    assert.equal(cleanHTMLContent(description), description);
 });
