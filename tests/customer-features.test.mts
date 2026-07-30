@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeProductPayload, ProductPayloadError } from '../src/lib/product-payload.ts';
+import { describeProductPersistenceError } from '../src/lib/product-persistence-error.ts';
 import { calculateVoucherDiscount } from '../src/lib/voucher-discount.ts';
 
 test('VIP 30% on 200,000đ is capped at 50,000đ for the product', () => {
@@ -96,4 +97,21 @@ test('a negative per-product VIP limit is rejected', () => {
         }),
         ProductPayloadError,
     );
+});
+
+test('database quota errors are translated into a useful admin message', () => {
+    const error = new Error(
+        'you are over your space quota, using 513 MB of 512 MB. Writes are blocked on your cluster',
+    );
+    const result = describeProductPersistenceError(error, 'create');
+
+    assert.equal(result.status, 507);
+    assert.match(result.message, /Cơ sở dữ liệu đã đầy/);
+});
+
+test('duplicate product errors return a conflict instead of a generic failure', () => {
+    const result = describeProductPersistenceError({ code: 11000 }, 'create');
+
+    assert.equal(result.status, 409);
+    assert.match(result.message, /đã tồn tại/);
 });

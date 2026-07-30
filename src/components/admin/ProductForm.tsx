@@ -273,7 +273,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 router.refresh();
             } else {
                 const error = await res.json();
-                throw new Error(error.message || 'Lưu thất bại');
+                throw new Error(error.message || error.error || 'Lưu thất bại');
             }
         } catch (error: any) {
             toast.error('Lỗi', error.message || 'Không thể lưu sản phẩm');

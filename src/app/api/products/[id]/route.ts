@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
+import { describeProductPersistenceError } from '@/lib/product-persistence-error';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -25,9 +26,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         return NextResponse.json(product);
     } catch (error) {
         if (error instanceof ProductPayloadError) {
-            return NextResponse.json({ error: error.message }, { status: 400 });
+            return NextResponse.json({ error: error.message, message: error.message }, { status: 400 });
         }
-        return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
+        console.error('Failed to update product:', error);
+        const details = describeProductPersistenceError(error, 'update');
+        return NextResponse.json({
+            error: 'Failed to update product',
+            message: details.message,
+        }, { status: details.status });
     }
 }
 
@@ -75,10 +81,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return NextResponse.json(updatedProduct);
     } catch (error: any) {
         if (error instanceof ProductPayloadError) {
-            return NextResponse.json({ error: error.message }, { status: 400 });
+            return NextResponse.json({ error: error.message, message: error.message }, { status: 400 });
         }
         console.error('❌ Error updating product:', error);
-        return NextResponse.json({ error: 'Failed to update product', message: error.message }, { status: 500 });
+        const details = describeProductPersistenceError(error, 'update');
+        return NextResponse.json({
+            error: 'Failed to update product',
+            message: details.message,
+        }, { status: details.status });
     }
 }
 

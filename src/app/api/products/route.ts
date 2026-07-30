@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
+import { describeProductPersistenceError } from '@/lib/product-persistence-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,8 +68,13 @@ export async function POST(request: Request) {
         return NextResponse.json(product, { status: 201 });
     } catch (error) {
         if (error instanceof ProductPayloadError) {
-            return NextResponse.json({ error: error.message }, { status: 400 });
+            return NextResponse.json({ error: error.message, message: error.message }, { status: 400 });
         }
-        return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+        console.error('Failed to create product:', error);
+        const details = describeProductPersistenceError(error, 'create');
+        return NextResponse.json({
+            error: 'Failed to create product',
+            message: details.message,
+        }, { status: details.status });
     }
 }
