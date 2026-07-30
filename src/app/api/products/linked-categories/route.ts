@@ -12,10 +12,19 @@ export async function GET() {
             linkedCategory: { $type: 'string', $ne: '' },
         });
 
+        const normalizedCategories = new Map<string, string>();
+        categories.forEach((category) => {
+            const normalized = String(category).trim().replace(/\s+/g, ' ');
+            if (normalized) {
+                const key = normalized.toLocaleLowerCase('vi');
+                if (!normalizedCategories.has(key)) {
+                    normalizedCategories.set(key, normalized);
+                }
+            }
+        });
+
         return NextResponse.json(
-            categories
-                .map((category) => String(category).trim())
-                .filter(Boolean)
+            Array.from(normalizedCategories.values())
                 .sort((a, b) => a.localeCompare(b, 'vi'))
         );
     } catch (error) {

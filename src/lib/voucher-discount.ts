@@ -50,6 +50,21 @@ export function calculateVoucherDiscount({
         }, 0);
     } else {
         discount = normalizedValue;
+
+        if (applyProductCaps) {
+            const maximumDiscountAcrossProducts = items.reduce((total, item) => {
+                const unitPrice = Math.max(0, Number(item.unitPrice) || 0);
+                const quantity = Math.max(0, Math.floor(Number(item.quantity) || 0));
+                const productCap = Math.max(0, Number(item.vipMaxDiscount) || 0);
+                const maximumUnitDiscount = productCap > 0
+                    ? Math.min(unitPrice, productCap)
+                    : unitPrice;
+
+                return total + maximumUnitDiscount * quantity;
+            }, 0);
+
+            discount = Math.min(discount, maximumDiscountAcrossProducts);
+        }
     }
 
     const normalizedVoucherCap = Math.max(0, Number(voucherMaxDiscount) || 0);

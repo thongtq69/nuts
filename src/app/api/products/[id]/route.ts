@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
+import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -18,11 +19,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     try {
         const { id } = await params;
         await dbConnect();
-        const body = await request.json();
+        const body = normalizeProductPayload(await request.json());
         const product = await Product.findByIdAndUpdate(id, body, { new: true, runValidators: true });
         if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
         return NextResponse.json(product);
     } catch (error) {
+        if (error instanceof ProductPayloadError) {
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
         return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
     }
 }
@@ -51,7 +55,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             };
         } else {
             // Update thông thường
-            updateOperation = body;
+            const touchesClassification =
+                'isLinkedProduct' in body ||
+                'linkedCategory' in body ||
+                'vipMaxDiscount' in body;
+            updateOperation = touchesClassification
+                ? normalizeProductPayload({ ...product.toObject(), ...body })
+                : body;
         }
 
         const updatedProduct = await Product.findByIdAndUpdate(
@@ -64,6 +74,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         
         return NextResponse.json(updatedProduct);
     } catch (error: any) {
+        if (error instanceof ProductPayloadError) {
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
         console.error('❌ Error updating product:', error);
         return NextResponse.json({ error: 'Failed to update product', message: error.message }, { status: 500 });
     }

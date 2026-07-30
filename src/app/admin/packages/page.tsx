@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
     Tag,
     CheckCircle,
@@ -547,6 +548,21 @@ export default function AdminPackagesPage() {
 
                         {/* Multiple Vouchers Configuration */}
                         <div className="mt-6">
+                            <div className="mb-5 flex flex-col gap-3 rounded-xl border-2 border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <h3 className="font-bold text-amber-900">Giới hạn giảm VIP theo từng sản phẩm</h3>
+                                    <p className="mt-1 text-sm leading-5 text-amber-800">
+                                        Nhập số tiền giảm tối đa cho mỗi đơn vị sản phẩm tại trang quản lý sản phẩm.
+                                        Hệ thống sẽ tự lấy mức thấp hơn giữa ưu đãi của gói VIP và giới hạn của sản phẩm.
+                                    </p>
+                                </div>
+                                <Link
+                                    href="/admin/products"
+                                    className="shrink-0 rounded-lg bg-amber-600 px-4 py-2.5 text-center text-sm font-bold text-white transition-colors hover:bg-amber-700"
+                                >
+                                    Cấu hình từng sản phẩm
+                                </Link>
+                            </div>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                     <Percent className="text-brand" size={20} />
@@ -640,9 +656,8 @@ export default function AdminPackagesPage() {
                                             </div>
                                         </div>
                                         <p className="mt-3 text-xs leading-5 text-slate-500">
-                                            “Giảm tối đa” ở đây là giới hạn cho toàn voucher. Với voucher VIP theo phần trăm,
-                                            hệ thống còn áp dụng giới hạn riêng của từng sản phẩm tại trang quản lý sản phẩm,
-                                            sau đó lấy mức giảm thấp hơn để tính tiền.
+                                            “Giảm tối đa” ở đây là giới hạn cho toàn voucher. Hệ thống còn áp dụng giới hạn
+                                            riêng trên mỗi đơn vị sản phẩm, sau đó lấy mức giảm thấp hơn để tính tiền.
                                         </p>
                                     </div>
                                 ))}

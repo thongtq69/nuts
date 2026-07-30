@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
+import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
         const category = searchParams.get('category');
         const query = searchParams.get('q');
         const linked = searchParams.get('linked');
-        const linkedCategory = searchParams.get('linkedCategory');
+        const linkedCategory = searchParams.get('linkedCategory')?.trim();
 
         let filter: any = {};
         if (category) {
@@ -61,10 +62,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         await dbConnect();
-        const body = await request.json();
+        const body = normalizeProductPayload(await request.json());
         const product = await Product.create(body);
         return NextResponse.json(product, { status: 201 });
     } catch (error) {
+        if (error instanceof ProductPayloadError) {
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
         return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
     }
 }

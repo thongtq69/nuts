@@ -227,6 +227,19 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
 
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
+
+        if (formData.isLinkedProduct && !formData.linkedCategory.trim()) {
+            setActiveTab('basic');
+            toast.error('Thiếu danh mục con', 'Vui lòng nhập submenu cho sản phẩm liên kết.');
+            return;
+        }
+
+        if (Number(formData.vipMaxDiscount) < 0) {
+            setActiveTab('basic');
+            toast.error('Giới hạn VIP không hợp lệ', 'Số tiền giảm tối đa không được nhỏ hơn 0.');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -489,7 +502,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                 <div>
                                     <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
                                         <Crown size={16} className="text-amber-500" />
-                                        Giảm VIP tối đa / 1 sản phẩm
+                                        Giảm tối đa từ gói VIP / mỗi đơn vị
                                     </label>
                                     <input
                                         type="number"
@@ -501,7 +514,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                                     />
                                     <p className="text-xs text-slate-500 mt-1">
-                                        Nhập 0 nếu không giới hạn. Ví dụ giá 200.000đ, VIP giảm 30%, giới hạn 50.000đ thì khách trả 150.000đ.
+                                        Áp dụng riêng cho voucher từ gói VIP. Nhập 0 nếu không giới hạn. Ví dụ giá 200.000đ, VIP giảm 30%, giới hạn 50.000đ thì khách trả 150.000đ.
                                     </p>
                                 </div>
 
@@ -552,7 +565,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     {formData.isLinkedProduct && (
                                         <div className="mt-4">
                                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                                Danh mục con <span className="text-red-500">*</span>
+                                                Submenu sản phẩm liên kết <span className="text-red-500">*</span>
                                             </label>
                                             <input
                                                 type="text"

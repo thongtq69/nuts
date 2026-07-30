@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { requireAdminAuth, getAuthUser, hasPermission } from '@/lib/auth-permissions';
+import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
 
 // DELETE - Xóa sản phẩm (Admin only)
 export async function DELETE(
@@ -125,7 +126,7 @@ export async function PUT(
 
         await dbConnect();
         const { id } = await params;
-        const body = await request.json();
+        const body = normalizeProductPayload(await request.json());
 
         const product = await Product.findByIdAndUpdate(
             id,
@@ -148,6 +149,12 @@ export async function PUT(
             }
         });
     } catch (error: any) {
+        if (error instanceof ProductPayloadError) {
+            return NextResponse.json(
+                { message: error.message },
+                { status: 400 }
+            );
+        }
         console.error('Error updating product:', error);
         return NextResponse.json(
             { message: 'Lỗi khi cập nhật sản phẩm', error: error.message },
