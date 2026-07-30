@@ -35,3 +35,17 @@ export const PRODUCT_CATEGORIES = sortProductCategoriesAlphabetically(
 export function getProductCategoryLabel(value?: string | null) {
     return PRODUCT_CATEGORIES.find(category => category.value === value)?.label;
 }
+
+export function getCategoryValuesWithProducts(
+    products: readonly {
+        category?: string | null;
+        isLinkedProduct?: boolean;
+    }[],
+) {
+    return Array.from(new Set(
+        products
+            .filter(product => !product.isLinkedProduct)
+            .map(product => product.category?.trim())
+            .filter((category): category is string => Boolean(category)),
+    ));
+}

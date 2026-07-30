@@ -10,7 +10,11 @@ import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { IProduct } from '@/models/Product';
-import { getProductCategoryLabel, PRODUCT_CATEGORIES } from '@/constants/product-categories';
+import {
+    getCategoryValuesWithProducts,
+    getProductCategoryLabel,
+    PRODUCT_CATEGORIES,
+} from '@/constants/product-categories';
 import {
     isProductPriceInRanges,
     ProductPriceRange,
@@ -81,6 +85,10 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             .map(product => product.linkedCategory!.trim())
             .filter(Boolean)
     )).sort((a, b) => a.localeCompare(b, 'vi')), [products]);
+    const availableCategoryValues = useMemo(
+        () => getCategoryValuesWithProducts(products),
+        [products],
+    );
 
     useEffect(() => {
         if (urlSort && urlSort !== sortOption) {
@@ -204,6 +212,7 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                 <Sidebar
                     selectedPriceRanges={selectedPriceRanges}
                     onPriceRangeChange={handlePriceRangeChange}
+                    availableCategoryValues={availableCategoryValues}
                 />
 
                 <div className="product-content">

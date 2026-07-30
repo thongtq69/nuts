@@ -12,11 +12,13 @@ import {
 interface SidebarProps {
     selectedPriceRanges: readonly ProductPriceRange[];
     onPriceRangeChange: (range: ProductPriceRange, checked: boolean) => void;
+    availableCategoryValues: readonly string[];
 }
 
 export default function Sidebar({
     selectedPriceRanges,
     onPriceRangeChange,
+    availableCategoryValues,
 }: SidebarProps) {
     const searchParams = useSearchParams();
     const selectedCategory = searchParams.get('category') || '';
@@ -34,6 +36,11 @@ export default function Sidebar({
             .catch(() => undefined);
     }, []);
 
+    const availableCategorySet = new Set(availableCategoryValues);
+    const visibleCategories = categories.filter(category =>
+        availableCategorySet.has(category.value)
+    );
+
     return (
         <aside className="sidebar">
             <div className="sidebar-section">
@@ -48,7 +55,7 @@ export default function Sidebar({
                             Tất cả sản phẩm
                         </Link>
                     </li>
-                    {categories.map(category => (
+                    {visibleCategories.map(category => (
                         <li key={category.value}>
                             <Link
                                 href={`/products?category=${encodeURIComponent(category.value)}`}

@@ -4,6 +4,7 @@ import { normalizeProductPayload, ProductPayloadError } from '../src/lib/product
 import { describeProductPersistenceError } from '../src/lib/product-persistence-error.ts';
 import {
     PRODUCT_CATEGORIES,
+    getCategoryValuesWithProducts,
     getProductCategoryLabel,
     sortProductCategoriesAlphabetically,
 } from '../src/constants/product-categories.ts';
@@ -186,6 +187,18 @@ test('product categories use English alphabetical order without Vietnamese accen
         categories.map(category => category.label),
         ['Áo quà tặng', 'Bánh', 'Đông Trùng Hạ Thảo', 'Yến Sào'],
     );
+});
+
+test('the storefront only shows categories containing regular products', () => {
+    const categoryValues = getCategoryValuesWithProducts([
+        { category: 'Nuts', isLinkedProduct: false },
+        { category: 'Nuts', isLinkedProduct: false },
+        { category: 'Berries', isLinkedProduct: true },
+        { category: '  Snacks  ' },
+        { category: '' },
+    ]);
+
+    assert.deepEqual(categoryValues, ['Nuts', 'Snacks']);
 });
 
 test('new category names are normalized before they are saved', () => {
