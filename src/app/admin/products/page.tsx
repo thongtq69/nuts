@@ -61,7 +61,9 @@ export default function AdminProductsPage() {
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [searchQuery, setSearchQuery] = useState('');
-    const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock' | 'low_stock'>('all');
+    const [productFilter, setProductFilter] = useState<
+        'all' | 'linked' | 'in_stock' | 'out_of_stock' | 'low_stock'
+    >('all');
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
     const [updatingStock, setUpdatingStock] = useState<string | null>(null);
 
@@ -70,6 +72,7 @@ export default function AdminProductsPage() {
     const inStockCount = products.filter(p => p.stockStatus === 'in_stock').length;
     const outOfStockCount = products.filter(p => p.stockStatus === 'out_of_stock').length;
     const lowStockCount = products.filter(p => p.stockStatus === 'low_stock').length;
+    const linkedProductCount = products.filter(p => p.isLinkedProduct).length;
 
     const fetchProducts = useCallback(async () => {
         try {
@@ -167,8 +170,10 @@ export default function AdminProductsPage() {
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             product.linkedCategory?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStock = stockFilter === 'all' || product.stockStatus === stockFilter;
-        return matchesSearch && matchesStock;
+        const matchesFilter = productFilter === 'all'
+            || (productFilter === 'linked' && product.isLinkedProduct)
+            || product.stockStatus === productFilter;
+        return matchesSearch && matchesFilter;
     });
 
     if (loading) {
@@ -306,20 +311,21 @@ export default function AdminProductsPage() {
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
                         {([
                             { key: 'all', label: 'Tất cả', count: totalProducts },
+                            { key: 'linked', label: 'Sản phẩm liên kết', count: linkedProductCount },
                             { key: 'in_stock', label: 'Còn hàng', count: inStockCount },
                             { key: 'low_stock', label: 'Sắp hết', count: lowStockCount },
                             { key: 'out_of_stock', label: 'Hết hàng', count: outOfStockCount },
                         ] as const).map((filter) => (
                             <button
                                 key={filter.key}
-                                onClick={() => setStockFilter(filter.key)}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${stockFilter === filter.key
+                                onClick={() => setProductFilter(filter.key)}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${productFilter === filter.key
                                     ? 'bg-brand text-white shadow-md shadow-brand/20'
                                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
                                     }`}
                             >
                                 {filter.label}
-                                <span className={`ml-2 px-1.5 py-0.5 rounded-md text-xs ${stockFilter === filter.key ? 'bg-white/20' : 'bg-slate-200'
+                                <span className={`ml-2 px-1.5 py-0.5 rounded-md text-xs ${productFilter === filter.key ? 'bg-white/20' : 'bg-slate-200'
                                     }`}>
                                     {filter.count}
                                 </span>
