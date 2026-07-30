@@ -4,7 +4,10 @@ import { verifyToken } from '@/lib/auth';
 import { normalizeMenuName } from '@/lib/menu-name';
 import Product from '@/models/Product';
 import ProductCategory from '@/models/ProductCategory';
-import { PRODUCT_CATEGORIES } from '@/constants/product-categories';
+import {
+    PRODUCT_CATEGORIES,
+    sortProductCategoriesAlphabetically,
+} from '@/constants/product-categories';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +55,9 @@ export async function GET() {
             }
         }
 
-        return NextResponse.json(Array.from(categories.values()));
+        return NextResponse.json(
+            sortProductCategoriesAlphabetically(Array.from(categories.values())),
+        );
     } catch (error) {
         console.error('Failed to fetch product categories:', error);
         return NextResponse.json({ error: 'Không thể tải danh mục sản phẩm' }, { status: 500 });

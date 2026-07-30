@@ -28,7 +28,11 @@ import {
 } from 'lucide-react';
 import { RichTextEditor } from './ui';
 import TagInput from './TagInput';
-import { getProductCategoryLabel, PRODUCT_CATEGORIES } from '@/constants/product-categories';
+import {
+    getProductCategoryLabel,
+    PRODUCT_CATEGORIES,
+    sortProductCategoriesAlphabetically,
+} from '@/constants/product-categories';
 
 interface ProductCategoryOption {
     value: string;
@@ -301,7 +305,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 setProductCategories(previous => (
                     previous.some(category => category.value === categoryResult.value)
                         ? previous
-                        : [...previous, categoryResult]
+                        : sortProductCategoriesAlphabetically([...previous, categoryResult])
                 ));
             }
             if (!selectedCategory?.value) {

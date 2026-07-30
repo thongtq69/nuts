@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeProductPayload, ProductPayloadError } from '../src/lib/product-payload.ts';
 import { describeProductPersistenceError } from '../src/lib/product-persistence-error.ts';
-import { PRODUCT_CATEGORIES, getProductCategoryLabel } from '../src/constants/product-categories.ts';
+import {
+    PRODUCT_CATEGORIES,
+    getProductCategoryLabel,
+    sortProductCategoriesAlphabetically,
+} from '../src/constants/product-categories.ts';
 import { normalizeMenuName } from '../src/lib/menu-name.ts';
 import { cleanHTMLContent } from '../src/lib/textUtils.ts';
 import { calculateVoucherDiscount } from '../src/lib/voucher-discount.ts';
@@ -161,12 +165,26 @@ test('duplicate product errors return a conflict instead of a generic failure', 
 test('the storefront and product form share the same icon-free categories', () => {
     assert.deepEqual(
         PRODUCT_CATEGORIES.map(category => category.label),
-        ['Hũ đựng', 'Túi đựng', 'Các loại hạt', 'Quả mọng', 'Hạt giống', 'Trái cây sấy', 'Đồ ăn vặt'],
+        ['Các loại hạt', 'Đồ ăn vặt', 'Hạt giống', 'Hũ đựng', 'Quả mọng', 'Trái cây sấy', 'Túi đựng'],
     );
     assert.equal(getProductCategoryLabel('Dried Fruits'), 'Trái cây sấy');
     assert.equal(
         new Set(PRODUCT_CATEGORIES.map(category => category.value)).size,
         PRODUCT_CATEGORIES.length,
+    );
+});
+
+test('product categories use English alphabetical order without Vietnamese accents', () => {
+    const categories = sortProductCategoriesAlphabetically([
+        { label: 'Yến Sào' },
+        { label: 'Đông Trùng Hạ Thảo' },
+        { label: 'Bánh' },
+        { label: 'Áo quà tặng' },
+    ]);
+
+    assert.deepEqual(
+        categories.map(category => category.label),
+        ['Áo quà tặng', 'Bánh', 'Đông Trùng Hạ Thảo', 'Yến Sào'],
     );
 });
 
