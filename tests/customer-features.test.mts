@@ -6,6 +6,27 @@ import { PRODUCT_CATEGORIES, getProductCategoryLabel } from '../src/constants/pr
 import { normalizeMenuName } from '../src/lib/menu-name.ts';
 import { cleanHTMLContent } from '../src/lib/textUtils.ts';
 import { calculateVoucherDiscount } from '../src/lib/voucher-discount.ts';
+import { isProductPriceInRanges } from '../src/lib/product-price-filter.ts';
+
+test('product price ranges use non-overlapping storefront boundaries', () => {
+    assert.equal(isProductPriceInRanges(99_999, ['under-100k']), true);
+    assert.equal(isProductPriceInRanges(100_000, ['under-100k']), false);
+    assert.equal(isProductPriceInRanges(100_000, ['100k-300k']), true);
+    assert.equal(isProductPriceInRanges(300_000, ['100k-300k']), false);
+    assert.equal(isProductPriceInRanges(300_000, ['300k-500k']), true);
+    assert.equal(isProductPriceInRanges(500_000, ['300k-500k']), true);
+    assert.equal(isProductPriceInRanges(500_000, ['over-500k']), false);
+    assert.equal(isProductPriceInRanges(500_001, ['over-500k']), true);
+});
+
+test('selecting multiple product price ranges combines their results', () => {
+    const selectedRanges = ['under-100k', 'over-500k'] as const;
+
+    assert.equal(isProductPriceInRanges(50_000, selectedRanges), true);
+    assert.equal(isProductPriceInRanges(175_000, selectedRanges), false);
+    assert.equal(isProductPriceInRanges(691_200, selectedRanges), true);
+    assert.equal(isProductPriceInRanges(175_000, []), true);
+});
 
 test('VIP 30% on 200,000đ is capped at 50,000đ for the product', () => {
     const discount = calculateVoucherDiscount({

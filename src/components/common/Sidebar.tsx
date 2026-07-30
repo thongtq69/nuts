@@ -4,8 +4,20 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PRODUCT_CATEGORIES } from '@/constants/product-categories';
+import {
+    PRODUCT_PRICE_RANGES,
+    ProductPriceRange,
+} from '@/lib/product-price-filter';
 
-export default function Sidebar() {
+interface SidebarProps {
+    selectedPriceRanges: readonly ProductPriceRange[];
+    onPriceRangeChange: (range: ProductPriceRange, checked: boolean) => void;
+}
+
+export default function Sidebar({
+    selectedPriceRanges,
+    onPriceRangeChange,
+}: SidebarProps) {
     const searchParams = useSearchParams();
     const selectedCategory = searchParams.get('category') || '';
     const isLinkedProductsPage = searchParams.get('linked') === '1';
@@ -53,10 +65,16 @@ export default function Sidebar() {
             <div className="sidebar-section">
                 <h3 className="sidebar-title">Khoảng giá</h3>
                 <div className="price-filter">
-                    <label><input type="checkbox" /> Dưới 100k</label>
-                    <label><input type="checkbox" /> 100k - 300k</label>
-                    <label><input type="checkbox" /> 300k - 500k</label>
-                    <label><input type="checkbox" /> Trên 500k</label>
+                    {PRODUCT_PRICE_RANGES.map(range => (
+                        <label key={range.value}>
+                            <input
+                                type="checkbox"
+                                checked={selectedPriceRanges.includes(range.value)}
+                                onChange={event => onPriceRangeChange(range.value, event.target.checked)}
+                            />
+                            {' '}{range.label}
+                        </label>
+                    ))}
                 </div>
             </div>
         </aside>

@@ -11,6 +11,10 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { IProduct } from '@/models/Product';
 import { getProductCategoryLabel, PRODUCT_CATEGORIES } from '@/constants/product-categories';
+import {
+    isProductPriceInRanges,
+    ProductPriceRange,
+} from '@/lib/product-price-filter';
 
 interface ProductListProps {
     products: IProduct[];
@@ -25,6 +29,7 @@ interface SiteSettings {
 export default function ProductList({ products, initialSettings }: ProductListProps) {
     const searchParams = useSearchParams();
     const [sortOption, setSortOption] = useState('default');
+    const [selectedPriceRanges, setSelectedPriceRanges] = useState<ProductPriceRange[]>([]);
     const [settings, setSettings] = useState<SiteSettings>(initialSettings || {
         productsBannerUrl: '/assets/images/gonuts-banner-member.png',
         productsBannerEnabled: true
@@ -98,6 +103,10 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             }
         }
 
+        filtered = filtered.filter(product =>
+            isProductPriceInRanges(product.currentPrice, selectedPriceRanges)
+        );
+
         // Filter by URL sort parameter
         if (urlSort === 'bestselling') {
             filtered = filtered.filter(product =>
@@ -124,7 +133,27 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             default:
                 return filtered;
         }
-    }, [products, selectedCategory, urlSort, sortOption, isLinkedProductsPage, linkedCategory]);
+    }, [
+        products,
+        selectedCategory,
+        urlSort,
+        sortOption,
+        isLinkedProductsPage,
+        linkedCategory,
+        selectedPriceRanges,
+    ]);
+
+    const handlePriceRangeChange = (range: ProductPriceRange, checked: boolean) => {
+        setSelectedPriceRanges(currentRanges => {
+            if (checked) {
+                return currentRanges.includes(range)
+                    ? currentRanges
+                    : [...currentRanges, range];
+            }
+
+            return currentRanges.filter(currentRange => currentRange !== range);
+        });
+    };
 
     // Get page title based on URL sort parameter
     const getPageTitle = () => {
@@ -171,7 +200,10 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             <Breadcrumb items={getBreadcrumbItems()} />
 
             <div className="container product-page-container">
-                <Sidebar />
+                <Sidebar
+                    selectedPriceRanges={selectedPriceRanges}
+                    onPriceRangeChange={handlePriceRangeChange}
+                />
 
                 <div className="product-content">
                     {settings.productsBannerEnabled && (
