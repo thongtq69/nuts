@@ -10,6 +10,7 @@ import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { IProduct } from '@/models/Product';
+import { getProductCategoryLabel } from '@/constants/product-categories';
 
 interface ProductListProps {
     products: IProduct[];
@@ -50,6 +51,8 @@ export default function ProductList({ products, initialSettings }: ProductListPr
 
     // Get sort parameter from URL
     const urlSort = searchParams.get('sort');
+    const selectedCategory = searchParams.get('category');
+    const selectedCategoryLabel = getProductCategoryLabel(selectedCategory);
 
     useEffect(() => {
         if (urlSort && urlSort !== sortOption) {
@@ -60,6 +63,10 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     // Filter and sort products based on URL parameters and sort option
     const filteredAndSortedProducts = useMemo(() => {
         let filtered = [...products];
+
+        if (selectedCategory) {
+            filtered = filtered.filter(product => product.category === selectedCategory);
+        }
 
         // Filter by URL sort parameter
         if (urlSort === 'bestselling') {
@@ -87,10 +94,11 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             default:
                 return filtered;
         }
-    }, [products, urlSort, sortOption]);
+    }, [products, selectedCategory, urlSort, sortOption]);
 
     // Get page title based on URL sort parameter
     const getPageTitle = () => {
+        if (selectedCategoryLabel) return selectedCategoryLabel;
         if (urlSort === 'bestselling') return 'Sản phẩm bán chạy';
         if (urlSort === 'newest') return 'Sản phẩm mới';
         return 'Sản phẩm';
@@ -99,6 +107,13 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     // Get breadcrumb items based on URL sort parameter
     const getBreadcrumbItems = () => {
         const baseItems = [{ label: 'Trang chủ', href: '/' }];
+        if (selectedCategoryLabel) {
+            return [
+                ...baseItems,
+                { label: 'Sản phẩm', href: '/products' },
+                { label: selectedCategoryLabel },
+            ];
+        }
         if (urlSort === 'bestselling') {
             return [...baseItems, { label: 'Sản phẩm bán chạy' }];
         }

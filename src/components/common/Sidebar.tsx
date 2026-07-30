@@ -1,15 +1,38 @@
 'use client';
 
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { PRODUCT_CATEGORIES } from '@/constants/product-categories';
+
 export default function Sidebar() {
+    const searchParams = useSearchParams();
+    const selectedCategory = searchParams.get('category') || '';
+
     return (
         <aside className="sidebar">
             <div className="sidebar-section">
                 <h3 className="sidebar-title">Danh mục</h3>
                 <ul className="sidebar-list">
-                    <li><a href="#">Tất cả sản phẩm</a></li>
-                    <li><a href="#">Hạt dinh dưỡng</a></li>
-                    <li><a href="#">Trái cây sấy</a></li>
-                    <li><a href="#">Combo quà tặng</a></li>
+                    <li>
+                        <Link
+                            href="/products"
+                            aria-current={!selectedCategory ? 'page' : undefined}
+                            className={!selectedCategory ? 'font-semibold text-[#9C7044]' : ''}
+                        >
+                            Tất cả sản phẩm
+                        </Link>
+                    </li>
+                    {PRODUCT_CATEGORIES.map(category => (
+                        <li key={category.value}>
+                            <Link
+                                href={`/products?category=${encodeURIComponent(category.value)}`}
+                                aria-current={selectedCategory === category.value ? 'page' : undefined}
+                                className={selectedCategory === category.value ? 'font-semibold text-[#9C7044]' : ''}
+                            >
+                                {category.label}
+                            </Link>
+                        </li>
+                    ))}
                 </ul>
             </div>
 

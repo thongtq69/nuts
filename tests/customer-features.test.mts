@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeProductPayload, ProductPayloadError } from '../src/lib/product-payload.ts';
 import { describeProductPersistenceError } from '../src/lib/product-persistence-error.ts';
+import { PRODUCT_CATEGORIES, getProductCategoryLabel } from '../src/constants/product-categories.ts';
 import { calculateVoucherDiscount } from '../src/lib/voucher-discount.ts';
 
 test('VIP 30% on 200,000đ is capped at 50,000đ for the product', () => {
@@ -99,4 +100,16 @@ test('duplicate product errors return a conflict instead of a generic failure', 
 
     assert.equal(result.status, 409);
     assert.match(result.message, /đã tồn tại/);
+});
+
+test('the storefront and product form share the same icon-free categories', () => {
+    assert.deepEqual(
+        PRODUCT_CATEGORIES.map(category => category.label),
+        ['Hũ đựng', 'Túi đựng', 'Các loại hạt', 'Quả mọng', 'Hạt giống', 'Trái cây sấy', 'Đồ ăn vặt'],
+    );
+    assert.equal(getProductCategoryLabel('Dried Fruits'), 'Trái cây sấy');
+    assert.equal(
+        new Set(PRODUCT_CATEGORIES.map(category => category.value)).size,
+        PRODUCT_CATEGORIES.length,
+    );
 });

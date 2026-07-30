@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { RichTextEditor } from './ui';
 import TagInput from './TagInput';
+import { PRODUCT_CATEGORIES } from '@/constants/product-categories';
 
 interface ProductFormProps {
     initialData?: any;
@@ -37,13 +38,7 @@ type TabType = 'basic' | 'images' | 'inventory' | 'seo';
 
 const CATEGORIES = [
     { value: '', label: 'Chọn danh mục' },
-    { value: 'Jars', label: 'Hũ đựng', icon: '🫙' },
-    { value: 'Bags', label: 'Túi đựng', icon: '🛍️' },
-    { value: 'Nuts', label: 'Các loại hạt', icon: '🥜' },
-    { value: 'Berries', label: 'Quả mọng', icon: '🫐' },
-    { value: 'Seeds', label: 'Hạt giống', icon: '🌱' },
-    { value: 'Dried Fruits', label: 'Trái cây sấy', icon: '🍎' },
-    { value: 'Snacks', label: 'Đồ ăn vặt', icon: '🍿' },
+    ...PRODUCT_CATEGORIES,
 ];
 
 const BADGE_COLORS = [
@@ -514,7 +509,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     >
                                         {CATEGORIES.map(cat => (
                                             <option key={cat.value} value={cat.value}>
-                                                {cat.icon} {cat.label}
+                                                {cat.label}
                                             </option>
                                         ))}
                                     </select>
