@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Calendar, ArrowRight, Tag } from 'lucide-react';
+import { Calendar, ArrowRight } from 'lucide-react';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 
 interface Blog {
     _id: string;
@@ -22,10 +23,10 @@ export default function LatestNews() {
         const fetchBlogs = async () => {
             try {
                 // Fetch only first 3 published blogs
-                const res = await fetch('/api/blogs?published=true');
+                const res = await fetch('/api/blogs?published=true&summary=true&limit=3');
                 if (res.ok) {
                     const data = await res.json();
-                    setBlogs(data.slice(0, 3));
+                    setBlogs(data);
                 }
             } catch (error) {
                 console.error('Error fetching latest blogs:', error);
@@ -73,8 +74,12 @@ export default function LatestNews() {
                             <div className="relative aspect-[16/10] overflow-hidden">
                                 {item.coverImage ? (
                                     <img
-                                        src={item.coverImage}
+                                        src={getOptimizedCloudinaryUrl(item.coverImage, 'f_auto,q_auto,w_800,c_limit')}
                                         alt={item.title}
+                                        width={800}
+                                        height={500}
+                                        loading="lazy"
+                                        decoding="async"
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
                                 ) : (

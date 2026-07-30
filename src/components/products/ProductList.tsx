@@ -15,6 +15,7 @@ import {
     isProductPriceInRanges,
     ProductPriceRange,
 } from '@/lib/product-price-filter';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 
 interface ProductListProps {
     products: IProduct[];
@@ -209,8 +210,14 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                     {settings.productsBannerEnabled && (
                         <div className="product-banner">
                             <img
-                                src={settings.productsBannerUrl || '/assets/images/gonuts-banner-member.png'}
+                                src={getOptimizedCloudinaryUrl(
+                                    settings.productsBannerUrl || '/assets/images/gonuts-banner-member.png',
+                                    'f_auto,q_auto,w_1600,c_limit',
+                                )}
                                 alt="Shop Banner"
+                                width={1600}
+                                height={533}
+                                decoding="async"
                                 className="banner-img"
                                 onError={(e) => {
                                     e.currentTarget.style.display = 'none';

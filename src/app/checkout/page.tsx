@@ -470,7 +470,7 @@ export default function CheckoutPage() {
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]} />
 
             <div className="container">
-                <h1>Thanh toán</h1>
+                <h1 className="checkout-title">Thanh toán</h1>
 
                 <div className="checkout-layout">
                     {/* Left Column: Shipping Info */}
@@ -1410,8 +1410,12 @@ export default function CheckoutPage() {
                 .checkout-layout {
                     grid-template-columns: 1fr;
                 }
+                .form-group-row {
+                    grid-template-columns: 1fr;
+                    gap: 0;
+                }
                 .order-summary-section {
-                    order: -1; 
+                    order: initial;
                 }
                 .voucher-modal {
                     max-height: 90vh;

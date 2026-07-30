@@ -93,6 +93,14 @@ body {
   color: var(--color-text-dark);
   background-color: var(--color-white);
   line-height: 1.5;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
 }
 
 @layer base {
@@ -318,7 +326,11 @@ body {
 /* Responsive cho mobile */
 @media (max-width: 768px) {
   .slide {
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 3 / 1;
+  }
+
+  .slide img {
+    object-fit: contain;
   }
 
   .slider-dots {
@@ -6481,5 +6493,464 @@ a[class*="from-orange"] {
 
   .tab-btn.active {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* ========================================
+   Mobile storefront hardening
+   ======================================== */
+@media (max-width: 992px) {
+  .product-page-container {
+    gap: 16px;
+    padding-top: 16px;
+  }
+
+  .sidebar {
+    padding: 14px;
+  }
+
+  .sidebar-list,
+  .price-filter {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .sidebar-list li,
+  .price-filter label {
+    min-width: 0;
+  }
+
+  .sidebar-list a,
+  .price-filter label {
+    display: flex;
+    min-height: 42px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    overflow-wrap: anywhere;
+  }
+
+  .price-filter input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  main,
+  header,
+  nav,
+  footer,
+  section {
+    max-width: 100%;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .products-grid-6,
+  .products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .products-grid-6 > *,
+  .products-grid > * {
+    min-width: 0;
+  }
+
+  .product-card {
+    min-width: 0;
+    border-radius: 10px;
+  }
+
+  .product-image {
+    padding: 8px;
+  }
+
+  .product-info {
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .product-title {
+    min-width: 0;
+    margin: 0 0 6px;
+    font-size: 13px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .current-price {
+    font-size: 14px;
+    color: #7d5a36;
+  }
+
+  .original-price {
+    font-size: 12px;
+  }
+
+  .btn-choose {
+    min-height: 40px;
+    padding: 8px 6px;
+    background: #7d5a36;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .pager-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .product-banner {
+    margin-bottom: 16px;
+  }
+
+  .banner-img {
+    aspect-ratio: 3 / 1;
+    object-fit: contain;
+    background: #fff;
+  }
+
+  .page-header {
+    margin-bottom: 14px;
+  }
+
+  .page-title {
+    font-size: 26px;
+    line-height: 1.2;
+  }
+
+  .sort-bar {
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .sort-bar > span {
+    width: 100%;
+  }
+
+  .sort-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+  }
+
+  .subscriptions-hero,
+  .subscriptions-section {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .subscriptions-hero > div {
+    width: 100%;
+    max-width: 100%;
+    padding: 40px 20px;
+  }
+
+  .subscriptions-hero h1 {
+    font-size: 40px;
+    overflow-wrap: anywhere;
+  }
+
+  .subscriptions-hero p {
+    max-width: 100%;
+    font-size: 17px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .welcome-voucher-card {
+    gap: 18px;
+  }
+
+  .footer {
+    padding: 28px 0 14px;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "company"
+      "menu"
+      "products"
+      "newsletter";
+    gap: 22px;
+  }
+
+  .footer-logo {
+    width: 64px;
+    height: auto;
+    margin-bottom: 8px;
+  }
+
+  .footer-company .company-name,
+  .footer-address,
+  .footer-contact,
+  .footer-license,
+  .footer-links a {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .footer-company .footer-address {
+    display: block;
+    overflow: visible;
+  }
+
+  .footer-company .footer-contact + .footer-contact {
+    display: block;
+    margin-left: 0;
+  }
+
+  .footer-menu .footer-title,
+  .footer-products .footer-title,
+  .footer-newsletter .footer-title {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .footer-menu .footer-links,
+  .footer-products .footer-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+  }
+
+  .newsletter-form {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    margin-bottom: 14px;
+  }
+
+  .newsletter-form input {
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px 0 0 10px;
+    font-size: 14px;
+  }
+
+  .btn-submit {
+    min-width: 64px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 0 10px 10px 0;
+    font-size: 14px;
+  }
+
+  .social-title {
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .social-icons {
+    gap: 10px;
+  }
+
+  .social-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .social-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .footer-bottom {
+    margin-top: 22px;
+    padding-top: 12px;
+  }
+
+  .footer-bottom p {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-page-container {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .sidebar-list,
+  .price-filter {
+    gap: 7px;
+  }
+
+  .sidebar-list a,
+  .price-filter label {
+    min-height: 44px;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .product-title {
+    font-size: 12px;
+  }
+
+  .current-price {
+    font-size: 13px;
+  }
+
+  .btn-choose {
+    min-height: 40px;
+    font-size: 11px;
+  }
+
+  .footer {
+    padding: 24px 0 12px;
+  }
+}
+
+/* Checkout styles live globally so the form is already usable before hydration. */
+.checkout-title {
+  margin: 0 0 30px;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+  gap: 50px;
+  margin-bottom: 80px;
+}
+
+.checkout-layout .checkout-form-section,
+.checkout-layout .order-summary-section {
+  min-width: 0;
+}
+
+.checkout-layout .section-header {
+  display: block;
+  margin: 0 0 20px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.checkout-layout .section-header.mt-4 {
+  margin-top: 40px;
+}
+
+.checkout-layout .form-group {
+  min-width: 0;
+  margin-bottom: 20px;
+}
+
+.checkout-layout .form-group-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.checkout-layout .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.checkout-layout .form-group input,
+.checkout-layout .form-group select,
+.checkout-layout .form-group textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+
+.checkout-layout .form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.checkout-layout .form-group input:focus,
+.checkout-layout .form-group select:focus,
+.checkout-layout .form-group textarea:focus {
+  outline: 2px solid rgba(156, 112, 68, 0.25);
+  border-color: #9c7044;
+}
+
+.checkout-layout .payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.checkout-layout .payment-option {
+  display: flex;
+  min-height: 50px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.checkout-layout .payment-option.active {
+  border-color: #9c7044;
+  background: #fffdf9;
+}
+
+.checkout-layout .order-summary-box {
+  padding: 30px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #f9f9f9;
+}
+
+@media (max-width: 768px) {
+  .checkout-title {
+    margin: 8px 0 20px;
+    font-size: 28px;
+  }
+
+  .checkout-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    margin-bottom: 48px;
+  }
+
+  .checkout-layout .order-summary-section {
+    order: initial !important;
+  }
+
+  .checkout-layout .form-group-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0;
+  }
+
+  .checkout-layout .section-header {
+    font-size: 18px;
+  }
+
+  .checkout-layout .order-summary-box {
+    padding: 20px;
   }
 }

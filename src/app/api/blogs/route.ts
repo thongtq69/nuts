@@ -9,15 +9,30 @@ export async function GET(req: Request) {
         await dbConnect();
         const { searchParams } = new URL(req.url);
         const published = searchParams.get('published');
+        const summaryOnly = searchParams.get('summary') === 'true';
+        const requestedLimit = Number.parseInt(searchParams.get('limit') || '', 10);
+        const limit = Number.isFinite(requestedLimit)
+            ? Math.min(Math.max(requestedLimit, 1), 100)
+            : 0;
 
-        const filter: any = {};
+        const filter: { isPublished?: boolean } = {};
         if (published === 'true') {
             filter.isPublished = true;
         }
 
-        const blogs = await Blog.find(filter).sort({ createdAt: -1 }).lean();
+        let query = Blog.find(filter).sort({ createdAt: -1 });
 
-        return NextResponse.json(blogs.map((blog: any) => ({
+        if (summaryOnly) {
+            query = query.select('-content');
+        }
+
+        if (limit > 0) {
+            query = query.limit(limit);
+        }
+
+        const blogs = await query.lean();
+
+        return NextResponse.json(blogs.map((blog) => ({
             ...blog,
             _id: blog._id.toString(),
         })));

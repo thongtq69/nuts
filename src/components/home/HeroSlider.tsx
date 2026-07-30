@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 
 interface Banner {
     _id: string;
@@ -105,8 +106,13 @@ export default function HeroSlider() {
                             {slide.link ? (
                                 <a href={slide.link} target="_blank" rel="noopener noreferrer">
                                     <img 
-                                        src={slide.imageUrl} 
+                                        src={getOptimizedCloudinaryUrl(slide.imageUrl, 'f_auto,q_auto,w_1920,c_limit')}
                                         alt={slide.title}
+                                        width={1920}
+                                        height={640}
+                                        loading={index === 0 ? 'eager' : 'lazy'}
+                                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                                        decoding="async"
                                         onError={(e) => {
                                             console.error(`Failed to load banner image: ${slide.imageUrl}`);
                                             e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"%3E%3Crect fill="%23f1f5f9" width="1200" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="24"%3EBanner không tải được%3C/text%3E%3C/svg%3E';
@@ -115,8 +121,13 @@ export default function HeroSlider() {
                                 </a>
                             ) : (
                                 <img 
-                                    src={slide.imageUrl} 
+                                    src={getOptimizedCloudinaryUrl(slide.imageUrl, 'f_auto,q_auto,w_1920,c_limit')}
                                     alt={slide.title}
+                                    width={1920}
+                                    height={640}
+                                    loading={index === 0 ? 'eager' : 'lazy'}
+                                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                                    decoding="async"
                                     onError={(e) => {
                                         console.error(`Failed to load banner image: ${slide.imageUrl}`);
                                         e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"%3E%3Crect fill="%23f1f5f9" width="1200" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="24"%3EBanner không tải được%3C/text%3E%3C/svg%3E';

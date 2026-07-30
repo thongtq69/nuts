@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Calendar, ArrowRight, Tag } from 'lucide-react';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 
 interface Blog {
     _id: string;
@@ -44,7 +45,7 @@ export default function NewsPage() {
 
     const fetchBlogs = async () => {
         try {
-            const res = await fetch('/api/blogs?published=true');
+            const res = await fetch('/api/blogs?published=true&summary=true');
             if (res.ok) {
                 const data = await res.json();
                 setBlogs(data);
@@ -128,8 +129,12 @@ export default function NewsPage() {
                                     <div className="relative aspect-[16/10] overflow-hidden">
                                         {item.coverImage ? (
                                             <img
-                                                src={item.coverImage}
+                                                src={getOptimizedCloudinaryUrl(item.coverImage, 'f_auto,q_auto,w_900,c_limit')}
                                                 alt={item.title}
+                                                width={900}
+                                                height={563}
+                                                loading="lazy"
+                                                decoding="async"
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                             />
                                         ) : (

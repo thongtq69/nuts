@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 
 interface PromoBannerSettings {
     homePromoBannerUrl: string;
@@ -62,7 +63,14 @@ export default function LargePromoBanner() {
                         <p className="promo-note">{settings.homePromoBannerNote}</p>
                     </div>
                     <div className="promo-banner-image">
-                        <img src={settings.homePromoBannerUrl} alt="Promotion Banner" />
+                        <img
+                            src={getOptimizedCloudinaryUrl(settings.homePromoBannerUrl, 'f_auto,q_auto,w_1400,c_limit')}
+                            alt="Promotion Banner"
+                            width={1400}
+                            height={700}
+                            loading="lazy"
+                            decoding="async"
+                        />
                     </div>
                 </div>
             </div>

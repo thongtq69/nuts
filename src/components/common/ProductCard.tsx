@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCart, CartItem } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 
 interface ProductCardProps {
     id: string | number;
@@ -88,8 +89,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <Link href={`/products/${id}`}>
                 <div className="product-image">
                     <img
-                        src={image}
+                        src={getOptimizedCloudinaryUrl(image, 'f_auto,q_auto,w_500,c_limit')}
                         alt={name}
+                        width={500}
+                        height={500}
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                             console.error(`Failed to load product image: ${image}`);
                             e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23f1f5f9" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="16"%3EKhông có ảnh%3C/text%3E%3C/svg%3E';

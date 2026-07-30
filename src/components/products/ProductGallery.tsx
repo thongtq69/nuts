@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
 
 interface ProductGalleryProps {
     images: string[];
@@ -22,6 +22,14 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
 
     const activeImage = validImages[activeIndex] || validImages[0];
 
+    const handlePrev = useCallback(() => {
+        setActiveIndex((prev) => (prev === 0 ? validImages.length - 1 : prev - 1));
+    }, [validImages.length]);
+
+    const handleNext = useCallback(() => {
+        setActiveIndex((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
+    }, [validImages.length]);
+
     // Reset active index when images change
     useEffect(() => {
         setActiveIndex(0);
@@ -41,15 +49,7 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [activeIndex, validImages.length]);
-
-    const handlePrev = useCallback(() => {
-        setActiveIndex((prev) => (prev === 0 ? validImages.length - 1 : prev - 1));
-    }, [validImages.length]);
-
-    const handleNext = useCallback(() => {
-        setActiveIndex((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
-    }, [validImages.length]);
+    }, [handleNext, handlePrev]);
 
     // Touch handlers for swipe
     const handleTouchStart = (e: React.TouchEvent) => {
@@ -111,8 +111,12 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
                     } : undefined}
                 >
                     <img
-                        src={activeImage}
+                        src={getOptimizedCloudinaryUrl(activeImage, 'f_auto,q_auto,w_1200,c_limit')}
                         alt={`${productName} - ${activeIndex + 1}`}
+                        width={1200}
+                        height={1200}
+                        fetchPriority="high"
+                        decoding="async"
                         onError={handleImageError}
                         className="main-product-image"
                         draggable={false}
@@ -175,8 +179,12 @@ export default function ProductGallery({ images, productName = 'Product' }: Prod
                                     aria-label={`View image ${index + 1}`}
                                 >
                                     <img
-                                        src={img}
+                                        src={getOptimizedCloudinaryUrl(img, 'f_auto,q_auto,w_240,c_limit')}
                                         alt={`${productName} thumbnail ${index + 1}`}
+                                        width={240}
+                                        height={240}
+                                        loading="lazy"
+                                        decoding="async"
                                         onError={handleImageError}
                                         draggable={false}
                                     />
