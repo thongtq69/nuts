@@ -35,6 +35,7 @@ interface Product {
     originalPrice?: number;
     category?: string;
     isLinkedProduct?: boolean;
+    linkedMenuCategory?: string;
     linkedCategory?: string;
     vipMaxDiscount?: number;
     image: string;
@@ -500,7 +501,7 @@ export default function AdminProductsPage() {
                                                     </span>
                                                     {product.isLinkedProduct && (
                                                         <span className="inline-flex px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-semibold">
-                                                            Liên kết · {product.linkedCategory || 'Chưa có mục con'}
+                                                            Liên kết · {[product.linkedMenuCategory, product.linkedCategory].filter(Boolean).join(' › ') || 'Chưa phân loại'}
                                                         </span>
                                                     )}
                                                 </div>
@@ -637,7 +638,7 @@ export default function AdminProductsPage() {
                                     </p>
                                     {product.isLinkedProduct && (
                                         <p className="text-xs font-semibold text-blue-700 mb-3">
-                                            Sản phẩm liên kết · {product.linkedCategory || 'Chưa có mục con'}
+                                            Sản phẩm liên kết · {[product.linkedMenuCategory, product.linkedCategory].filter(Boolean).join(' › ') || 'Chưa phân loại'}
                                         </p>
                                     )}
 

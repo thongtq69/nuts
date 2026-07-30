@@ -28,7 +28,8 @@ import {
     Mail,
     X,
     ChevronRight,
-    Truck
+    Truck,
+    FolderTree
 } from 'lucide-react';
 
 
@@ -45,6 +46,7 @@ const menuSections = [
         items: [
             { href: '/admin/orders', icon: ShoppingBag, label: 'Đơn hàng' },
             { href: '/admin/products', icon: Package, label: 'Sản phẩm' },
+            { href: '/admin/linked-product-categories', icon: FolderTree, label: 'Danh mục liên kết' },
             { href: '/admin/vouchers', icon: Ticket, label: 'Voucher' },
         ],
     },

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeProductPayload, ProductPayloadError } from '../src/lib/product-payload.ts';
 import { describeProductPersistenceError } from '../src/lib/product-persistence-error.ts';
+import { createLinkedMenuSlug, normalizeLinkedMenuName } from '../src/lib/linked-product-menu.ts';
 import { calculateVoucherDiscount } from '../src/lib/voucher-discount.ts';
 
 test('VIP 30% on 200,000đ is capped at 50,000đ for the product', () => {
@@ -67,26 +68,34 @@ test('fixed VIP vouchers also respect the total of product limits', () => {
     assert.equal(discount, 70_000);
 });
 
-test('a linked product must have a submenu', () => {
+test('a linked product must select both a managed category and submenu', () => {
     assert.throws(
         () => normalizeProductPayload({
             isLinkedProduct: true,
-            linkedCategory: '   ',
+            linkedMenuCategoryId: 'category-id',
+            linkedMenuSubmenuId: '',
             vipMaxDiscount: 50_000,
         }),
         ProductPayloadError,
     );
 });
 
-test('submenu names are normalized and the VIP limit is rounded', () => {
+test('managed linked menu ids are preserved and the VIP limit is rounded', () => {
     const product = normalizeProductPayload({
         isLinkedProduct: true,
-        linkedCategory: '  Táo   đỏ  ',
+        linkedMenuCategoryId: 'category-id',
+        linkedMenuSubmenuId: 'submenu-id',
         vipMaxDiscount: 50_000.4,
     });
 
-    assert.equal(product.linkedCategory, 'Táo đỏ');
+    assert.equal(product.linkedMenuCategoryId, 'category-id');
+    assert.equal(product.linkedMenuSubmenuId, 'submenu-id');
     assert.equal(product.vipMaxDiscount, 50_000);
+});
+
+test('linked menu names and Vietnamese slugs are normalized', () => {
+    assert.equal(normalizeLinkedMenuName('  Thực   phẩm khô  '), 'Thực phẩm khô');
+    assert.equal(createLinkedMenuSlug('Táo đỏ'), 'tao-do');
 });
 
 test('a negative per-product VIP limit is rejected', () => {

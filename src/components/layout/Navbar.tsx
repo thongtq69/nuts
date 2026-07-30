@@ -7,17 +7,26 @@ import { usePathname } from 'next/navigation';
 interface NavItem {
     href: string;
     label: string;
-    children?: Array<{ href: string; label: string }>;
+    children?: NavItem[];
+}
+
+interface LinkedProductCategory {
+    _id: string;
+    name: string;
+    submenus: Array<{
+        _id: string;
+        name: string;
+    }>;
 }
 
 export default function Navbar() {
     const pathname = usePathname();
     const [, setForceUpdate] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [linkedCategories, setLinkedCategories] = useState<string[]>([]);
+    const [linkedCategories, setLinkedCategories] = useState<LinkedProductCategory[]>([]);
 
     useEffect(() => {
-        fetch('/api/products/linked-categories')
+        fetch('/api/linked-product-categories')
             .then(res => res.ok ? res.json() : [])
             .then(data => setLinkedCategories(Array.isArray(data) ? data : []))
             .catch(() => setLinkedCategories([]));
@@ -97,8 +106,12 @@ export default function Navbar() {
             href: '/products?linked=1',
             label: 'Sản phẩm liên kết',
             children: linkedCategories.map(category => ({
-                href: `/products?linked=1&linkedCategory=${encodeURIComponent(category)}`,
-                label: category
+                href: `/products?linked=1&linkedMenuCategory=${category._id}`,
+                label: category.name,
+                children: category.submenus.map(submenu => ({
+                    href: `/products?linked=1&linkedMenuCategory=${category._id}&linkedMenuSubmenu=${submenu._id}`,
+                    label: submenu.name,
+                })),
             }))
         },
         { href: '/subscriptions', label: 'Gói VIP' },
@@ -153,13 +166,34 @@ export default function Navbar() {
                                             Tất cả
                                         </Link>
                                         {item.children?.map(child => (
-                                            <Link
-                                                key={child.href}
-                                                href={child.href}
-                                                className="block px-4 py-2.5 text-sm text-slate-600 hover:bg-[#9C7044]/5 hover:text-[#9C7044]"
-                                            >
-                                                {child.label}
-                                            </Link>
+                                            <div key={child.href} className="group/flyout relative">
+                                                <Link
+                                                    href={child.href}
+                                                    className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-[#9C7044]/5 hover:text-[#9C7044]"
+                                                >
+                                                    <span>{child.label}</span>
+                                                    {!!child.children?.length && <span aria-hidden>›</span>}
+                                                </Link>
+                                                {!!child.children?.length && (
+                                                    <div className="invisible absolute left-full top-0 min-w-52 rounded-xl border border-slate-100 bg-white py-2 opacity-0 shadow-xl transition-all duration-200 group-hover/flyout:visible group-hover/flyout:opacity-100">
+                                                        <Link
+                                                            href={child.href}
+                                                            className="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-[#9C7044]/5 hover:text-[#9C7044]"
+                                                        >
+                                                            Tất cả {child.label}
+                                                        </Link>
+                                                        {child.children.map(submenu => (
+                                                            <Link
+                                                                key={submenu.href}
+                                                                href={submenu.href}
+                                                                className="block px-4 py-2.5 text-sm text-slate-600 hover:bg-[#9C7044]/5 hover:text-[#9C7044]"
+                                                            >
+                                                                {submenu.label}
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 )}
@@ -187,15 +221,44 @@ export default function Navbar() {
                                     </Link>
                                     {!!item.children?.length && (
                                         <div className="ml-6 border-l border-slate-200">
-                                            {item.children?.map(child => (
-                                                <Link
-                                                    key={child.href}
-                                                    href={child.href}
-                                                    className="block px-6 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#9C7044]"
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                >
-                                                    {child.label}
-                                                </Link>
+                                            {item.children.map(child => (
+                                                <div key={child.href}>
+                                                    {child.children?.length ? (
+                                                        <details>
+                                                            <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#9C7044]">
+                                                                {child.label}
+                                                                <span aria-hidden>⌄</span>
+                                                            </summary>
+                                                            <div className="ml-4 border-l border-slate-100">
+                                                                <Link
+                                                                    href={child.href}
+                                                                    className="block px-6 py-2 text-xs font-semibold text-slate-600 hover:text-[#9C7044]"
+                                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                                >
+                                                                    Tất cả {child.label}
+                                                                </Link>
+                                                                {child.children.map(submenu => (
+                                                                    <Link
+                                                                        key={submenu.href}
+                                                                        href={submenu.href}
+                                                                        className="block px-6 py-2 text-sm text-slate-500 hover:bg-slate-50 hover:text-[#9C7044]"
+                                                                        onClick={() => setIsMobileMenuOpen(false)}
+                                                                    >
+                                                                        {submenu.label}
+                                                                    </Link>
+                                                                ))}
+                                                            </div>
+                                                        </details>
+                                                    ) : (
+                                                        <Link
+                                                            href={child.href}
+                                                            className="block px-6 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#9C7044]"
+                                                            onClick={() => setIsMobileMenuOpen(false)}
+                                                        >
+                                                            {child.label}
+                                                        </Link>
+                                                    )}
+                                                </div>
                                             ))}
                                         </div>
                                     )}

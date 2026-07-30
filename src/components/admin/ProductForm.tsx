@@ -29,6 +29,17 @@ import {
 import { RichTextEditor } from './ui';
 import TagInput from './TagInput';
 
+interface LinkedProductSubmenuOption {
+    _id: string;
+    name: string;
+}
+
+interface LinkedProductCategoryOption {
+    _id: string;
+    name: string;
+    submenus: LinkedProductSubmenuOption[];
+}
+
 interface ProductFormProps {
     initialData?: any;
     isEdit?: boolean;
@@ -66,7 +77,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const [previewMode, setPreviewMode] = useState(false);
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [allTags, setAllTags] = useState<string[]>([]);
-    const [linkedCategories, setLinkedCategories] = useState<string[]>([]);
+    const [linkedMenuCategories, setLinkedMenuCategories] = useState<LinkedProductCategoryOption[]>([]);
 
     const [formData, setFormData] = useState({
         // Basic Info
@@ -75,6 +86,13 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         originalPrice: initialData.originalPrice || 0,
         category: initialData.category || '',
         isLinkedProduct: initialData.isLinkedProduct || false,
+        linkedMenuCategoryId: initialData.linkedMenuCategoryId
+            ? String(initialData.linkedMenuCategoryId)
+            : '',
+        linkedMenuSubmenuId: initialData.linkedMenuSubmenuId
+            ? String(initialData.linkedMenuSubmenuId)
+            : '',
+        linkedMenuCategory: initialData.linkedMenuCategory || '',
         linkedCategory: initialData.linkedCategory || '',
         vipMaxDiscount: initialData.vipMaxDiscount || 0,
         shortDescription: initialData.shortDescription || '',
@@ -133,10 +151,10 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     }, []);
 
     useEffect(() => {
-        fetch('/api/products/linked-categories')
+        fetch('/api/linked-product-categories')
             .then(res => res.ok ? res.json() : [])
-            .then(data => setLinkedCategories(Array.isArray(data) ? data : []))
-            .catch(() => setLinkedCategories([]));
+            .then(data => setLinkedMenuCategories(Array.isArray(data) ? data : []))
+            .catch(() => setLinkedMenuCategories([]));
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -228,9 +246,15 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
 
-        if (formData.isLinkedProduct && !formData.linkedCategory.trim()) {
+        if (
+            formData.isLinkedProduct &&
+            (!formData.linkedMenuCategoryId || !formData.linkedMenuSubmenuId)
+        ) {
             setActiveTab('basic');
-            toast.error('Thiếu danh mục con', 'Vui lòng nhập submenu cho sản phẩm liên kết.');
+            toast.error(
+                'Thiếu phân loại liên kết',
+                'Vui lòng chọn đầy đủ danh mục và submenu cho sản phẩm liên kết.',
+            );
             return;
         }
 
@@ -251,7 +275,6 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 tags: formData.tags,
                 currentPrice: Number(formData.currentPrice),
                 originalPrice: Number(formData.originalPrice),
-                linkedCategory: formData.isLinkedProduct ? formData.linkedCategory.trim() : '',
                 vipMaxDiscount: Number(formData.vipMaxDiscount),
                 stock: Number(formData.stock),
                 soldCount: Number(formData.soldCount),
@@ -547,7 +570,10 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                             onChange={(event) => setFormData(prev => ({
                                                 ...prev,
                                                 isLinkedProduct: event.target.checked,
-                                                linkedCategory: event.target.checked ? prev.linkedCategory : ''
+                                                linkedMenuCategoryId: event.target.checked ? prev.linkedMenuCategoryId : '',
+                                                linkedMenuSubmenuId: event.target.checked ? prev.linkedMenuSubmenuId : '',
+                                                linkedMenuCategory: event.target.checked ? prev.linkedMenuCategory : '',
+                                                linkedCategory: event.target.checked ? prev.linkedCategory : '',
                                             }))}
                                             className="mt-1 h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
                                         />
@@ -563,27 +589,67 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     </label>
 
                                     {formData.isLinkedProduct && (
-                                        <div className="mt-4">
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                                Submenu sản phẩm liên kết <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="linkedCategory"
-                                                list="linked-product-categories"
-                                                value={formData.linkedCategory}
-                                                onChange={handleChange}
-                                                required
-                                                placeholder="VD: Bánh, Kẹo, Táo đỏ"
-                                                className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
-                                            />
-                                            <datalist id="linked-product-categories">
-                                                {linkedCategories.map(category => (
-                                                    <option key={category} value={category} />
-                                                ))}
-                                            </datalist>
-                                            <p className="text-xs text-slate-500 mt-1">
-                                                Có thể chọn danh mục đã có hoặc nhập tên mới; menu con sẽ được tạo tự động.
+                                        <div className="mt-4 space-y-4">
+                                            <div className="grid gap-4 md:grid-cols-2">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                        Danh mục liên kết <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        name="linkedMenuCategoryId"
+                                                        value={formData.linkedMenuCategoryId}
+                                                        onChange={(event) => setFormData(previous => ({
+                                                            ...previous,
+                                                            linkedMenuCategoryId: event.target.value,
+                                                            linkedMenuSubmenuId: '',
+                                                        }))}
+                                                        required
+                                                        className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                                    >
+                                                        <option value="">Chọn danh mục lớn</option>
+                                                        {linkedMenuCategories.map(category => (
+                                                            <option key={category._id} value={category._id}>
+                                                                {category.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                        Submenu <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        name="linkedMenuSubmenuId"
+                                                        value={formData.linkedMenuSubmenuId}
+                                                        onChange={handleChange}
+                                                        required
+                                                        disabled={!formData.linkedMenuCategoryId}
+                                                        className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all disabled:cursor-not-allowed disabled:bg-slate-100"
+                                                    >
+                                                        <option value="">Chọn submenu</option>
+                                                        {linkedMenuCategories
+                                                            .find(category => category._id === formData.linkedMenuCategoryId)
+                                                            ?.submenus.map(submenu => (
+                                                                <option key={submenu._id} value={submenu._id}>
+                                                                    {submenu.name}
+                                                                </option>
+                                                            ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            {linkedMenuCategories.length === 0 && (
+                                                <p className="text-sm text-amber-700">
+                                                    Chưa có danh mục liên kết.{' '}
+                                                    <a
+                                                        href="/admin/linked-product-categories"
+                                                        className="font-semibold underline"
+                                                    >
+                                                        Tạo danh mục và submenu trước
+                                                    </a>.
+                                                </p>
+                                            )}
+                                            <p className="text-xs text-slate-500">
+                                                Danh mục và submenu được quản lý riêng để menu website luôn gọn và thống nhất.
                                             </p>
                                         </div>
                                     )}

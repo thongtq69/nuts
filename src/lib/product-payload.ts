@@ -13,12 +13,11 @@ export function normalizeProductPayload(payload: unknown): Record<string, unknow
     const input = payload as Record<string, unknown>;
     const normalized: Record<string, unknown> = { ...input };
     const isLinkedProduct = input.isLinkedProduct === true;
-    const linkedCategory = typeof input.linkedCategory === 'string'
-        ? input.linkedCategory.trim().replace(/\s+/g, ' ')
-        : '';
+    const linkedMenuCategoryId = String(input.linkedMenuCategoryId || '').trim();
+    const linkedMenuSubmenuId = String(input.linkedMenuSubmenuId || '').trim();
 
-    if (isLinkedProduct && !linkedCategory) {
-        throw new ProductPayloadError('Sản phẩm liên kết phải có danh mục con');
+    if (isLinkedProduct && (!linkedMenuCategoryId || !linkedMenuSubmenuId)) {
+        throw new ProductPayloadError('Sản phẩm liên kết phải chọn đầy đủ danh mục và submenu');
     }
 
     const rawVipMaxDiscount = input.vipMaxDiscount ?? 0;
@@ -29,7 +28,10 @@ export function normalizeProductPayload(payload: unknown): Record<string, unknow
     }
 
     normalized.isLinkedProduct = isLinkedProduct;
-    normalized.linkedCategory = isLinkedProduct ? linkedCategory : '';
+    normalized.linkedMenuCategoryId = isLinkedProduct ? linkedMenuCategoryId : undefined;
+    normalized.linkedMenuSubmenuId = isLinkedProduct ? linkedMenuSubmenuId : undefined;
+    normalized.linkedMenuCategory = isLinkedProduct ? normalized.linkedMenuCategory : '';
+    normalized.linkedCategory = isLinkedProduct ? normalized.linkedCategory : '';
     normalized.vipMaxDiscount = Math.round(vipMaxDiscount);
 
     return normalized;

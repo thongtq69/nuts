@@ -21,6 +21,15 @@ interface SiteSettings {
     productsBannerEnabled?: boolean;
 }
 
+interface LinkedMenuCategory {
+    _id: string;
+    name: string;
+    submenus: Array<{
+        _id: string;
+        name: string;
+    }>;
+}
+
 export default function ProductList({ products, initialSettings }: ProductListProps) {
     const searchParams = useSearchParams();
     const [sortOption, setSortOption] = useState('default');
@@ -28,6 +37,7 @@ export default function ProductList({ products, initialSettings }: ProductListPr
         productsBannerUrl: '/assets/images/gonuts-banner-member.png',
         productsBannerEnabled: true
     });
+    const [linkedMenuCategories, setLinkedMenuCategories] = useState<LinkedMenuCategory[]>([]);
 
     // Fetch settings on mount
     useEffect(() => {
@@ -48,17 +58,24 @@ export default function ProductList({ products, initialSettings }: ProductListPr
         fetchSettings();
     }, []);
 
+    useEffect(() => {
+        fetch('/api/linked-product-categories')
+            .then(response => response.ok ? response.json() : [])
+            .then(data => setLinkedMenuCategories(Array.isArray(data) ? data : []))
+            .catch(() => setLinkedMenuCategories([]));
+    }, []);
+
     // Get sort parameter from URL
     const urlSort = searchParams.get('sort');
     const isLinkedProductsPage = searchParams.get('linked') === '1';
-    const linkedCategory = searchParams.get('linkedCategory')?.trim() || '';
-
-    const linkedCategories = useMemo(() => Array.from(new Set(
-        products
-            .filter(product => product.isLinkedProduct && product.linkedCategory)
-            .map(product => product.linkedCategory!.trim())
-            .filter(Boolean)
-    )).sort((a, b) => a.localeCompare(b, 'vi')), [products]);
+    const linkedMenuCategoryId = searchParams.get('linkedMenuCategory')?.trim() || '';
+    const linkedMenuSubmenuId = searchParams.get('linkedMenuSubmenu')?.trim() || '';
+    const selectedLinkedCategory = linkedMenuCategories.find(
+        category => category._id === linkedMenuCategoryId
+    );
+    const selectedLinkedSubmenu = selectedLinkedCategory?.submenus.find(
+        submenu => submenu._id === linkedMenuSubmenuId
+    );
 
     useEffect(() => {
         if (urlSort && urlSort !== sortOption) {
@@ -72,8 +89,15 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             isLinkedProductsPage ? product.isLinkedProduct : !product.isLinkedProduct
         );
 
-        if (isLinkedProductsPage && linkedCategory) {
-            filtered = filtered.filter(product => product.linkedCategory === linkedCategory);
+        if (isLinkedProductsPage && linkedMenuCategoryId) {
+            filtered = filtered.filter(
+                product => String(product.linkedMenuCategoryId || '') === linkedMenuCategoryId
+            );
+        }
+        if (isLinkedProductsPage && linkedMenuSubmenuId) {
+            filtered = filtered.filter(
+                product => String(product.linkedMenuSubmenuId || '') === linkedMenuSubmenuId
+            );
         }
 
         // Filter by URL sort parameter
@@ -102,11 +126,19 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             default:
                 return filtered;
         }
-    }, [products, urlSort, sortOption, isLinkedProductsPage, linkedCategory]);
+    }, [
+        products,
+        urlSort,
+        sortOption,
+        isLinkedProductsPage,
+        linkedMenuCategoryId,
+        linkedMenuSubmenuId,
+    ]);
 
     // Get page title based on URL sort parameter
     const getPageTitle = () => {
-        if (isLinkedProductsPage && linkedCategory) return linkedCategory;
+        if (isLinkedProductsPage && selectedLinkedSubmenu) return selectedLinkedSubmenu.name;
+        if (isLinkedProductsPage && selectedLinkedCategory) return selectedLinkedCategory.name;
         if (isLinkedProductsPage) return 'Sản phẩm liên kết';
         if (urlSort === 'bestselling') return 'Sản phẩm bán chạy';
         if (urlSort === 'newest') return 'Sản phẩm mới';
@@ -117,11 +149,15 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     const getBreadcrumbItems = () => {
         const baseItems = [{ label: 'Trang chủ', href: '/' }];
         if (isLinkedProductsPage) {
-            if (linkedCategory) {
+            if (selectedLinkedCategory) {
                 return [
                     ...baseItems,
                     { label: 'Sản phẩm liên kết', href: '/products?linked=1' },
-                    { label: linkedCategory }
+                    ...(selectedLinkedSubmenu ? [{
+                        label: selectedLinkedCategory.name,
+                        href: `/products?linked=1&linkedMenuCategory=${selectedLinkedCategory._id}`,
+                    }] : []),
+                    { label: selectedLinkedSubmenu?.name || selectedLinkedCategory.name }
                 ];
             }
             return [...baseItems, { label: 'Sản phẩm liên kết' }];
@@ -162,8 +198,10 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                         <h1 className="page-title">{getPageTitle()}</h1>
                         {isLinkedProductsPage && (
                             <p className="page-description">
-                                {linkedCategory
-                                    ? `Các sản phẩm liên kết thuộc mục ${linkedCategory}`
+                                {selectedLinkedSubmenu
+                                    ? `Các sản phẩm liên kết thuộc submenu ${selectedLinkedSubmenu.name}`
+                                    : selectedLinkedCategory
+                                        ? `Các sản phẩm liên kết thuộc danh mục ${selectedLinkedCategory.name}`
                                     : 'Khám phá các sản phẩm liên kết được Go Nuts tuyển chọn'}
                             </p>
                         )}
@@ -175,31 +213,60 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                         )}
                     </div>
 
-                    {isLinkedProductsPage && linkedCategories.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-5">
-                            <Link
-                                href="/products?linked=1"
-                                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
-                                    !linkedCategory
-                                        ? 'bg-[#9C7044] text-white border-[#9C7044]'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
-                                }`}
-                            >
-                                Tất cả
-                            </Link>
-                            {linkedCategories.map(category => (
+                    {isLinkedProductsPage && linkedMenuCategories.length > 0 && (
+                        <div className="mb-5 space-y-3">
+                            <div className="flex flex-wrap gap-2">
                                 <Link
-                                    key={category}
-                                    href={`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`}
+                                    href="/products?linked=1"
                                     className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
-                                        linkedCategory === category
+                                        !linkedMenuCategoryId
                                             ? 'bg-[#9C7044] text-white border-[#9C7044]'
                                             : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
                                     }`}
                                 >
-                                    {category}
+                                    Tất cả
                                 </Link>
-                            ))}
+                                {linkedMenuCategories.map(category => (
+                                    <Link
+                                        key={category._id}
+                                        href={`/products?linked=1&linkedMenuCategory=${category._id}`}
+                                        className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+                                            linkedMenuCategoryId === category._id
+                                                ? 'bg-[#9C7044] text-white border-[#9C7044]'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
+                                        }`}
+                                    >
+                                        {category.name}
+                                    </Link>
+                                ))}
+                            </div>
+                            {!!selectedLinkedCategory?.submenus.length && (
+                                <div className="flex flex-wrap gap-2 rounded-xl bg-slate-50 p-3">
+                                    <Link
+                                        href={`/products?linked=1&linkedMenuCategory=${selectedLinkedCategory._id}`}
+                                        className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                                            !linkedMenuSubmenuId
+                                                ? 'bg-white text-[#9C7044] shadow-sm'
+                                                : 'text-slate-600 hover:bg-white'
+                                        }`}
+                                    >
+                                        Tất cả {selectedLinkedCategory.name}
+                                    </Link>
+                                    {selectedLinkedCategory.submenus.map(submenu => (
+                                        <Link
+                                            key={submenu._id}
+                                            href={`/products?linked=1&linkedMenuCategory=${selectedLinkedCategory._id}&linkedMenuSubmenu=${submenu._id}`}
+                                            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                                                linkedMenuSubmenuId === submenu._id
+                                                    ? 'bg-white text-[#9C7044] shadow-sm'
+                                                    : 'text-slate-600 hover:bg-white'
+                                            }`}
+                                        >
+                                            {submenu.name}
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 

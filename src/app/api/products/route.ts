@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
 import { describeProductPersistenceError } from '@/lib/product-persistence-error';
+import { resolveLinkedProductSelection } from '@/lib/linked-product-selection';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,8 @@ export async function GET(request: Request) {
         const query = searchParams.get('q');
         const linked = searchParams.get('linked');
         const linkedCategory = searchParams.get('linkedCategory')?.trim();
+        const linkedMenuCategory = searchParams.get('linkedMenuCategory')?.trim();
+        const linkedMenuSubmenu = searchParams.get('linkedMenuSubmenu')?.trim();
 
         let filter: any = {};
         if (category) {
@@ -35,6 +38,14 @@ export async function GET(request: Request) {
         if (linkedCategory) {
             filter.isLinkedProduct = true;
             filter.linkedCategory = linkedCategory;
+        }
+        if (linkedMenuCategory) {
+            filter.isLinkedProduct = true;
+            filter.linkedMenuCategoryId = linkedMenuCategory;
+        }
+        if (linkedMenuSubmenu) {
+            filter.isLinkedProduct = true;
+            filter.linkedMenuSubmenuId = linkedMenuSubmenu;
         }
 
         console.log('🔍 Products API: Query filter:', filter);
@@ -63,7 +74,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         await dbConnect();
-        const body = normalizeProductPayload(await request.json());
+        const normalizedBody = normalizeProductPayload(await request.json());
+        const body = await resolveLinkedProductSelection(normalizedBody);
         const product = await Product.create(body);
         return NextResponse.json(product, { status: 201 });
     } catch (error) {
