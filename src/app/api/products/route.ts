@@ -15,6 +15,8 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const category = searchParams.get('category');
         const query = searchParams.get('q');
+        const linked = searchParams.get('linked');
+        const linkedCategory = searchParams.get('linkedCategory');
 
         let filter: any = {};
         if (category) {
@@ -22,6 +24,15 @@ export async function GET(request: Request) {
         }
         if (query) {
             filter.name = { $regex: query, $options: 'i' };
+        }
+        if (linked === 'true' || linked === '1') {
+            filter.isLinkedProduct = true;
+        } else if (linked === 'false' || linked === '0') {
+            filter.isLinkedProduct = { $ne: true };
+        }
+        if (linkedCategory) {
+            filter.isLinkedProduct = true;
+            filter.linkedCategory = linkedCategory;
         }
 
         console.log('🔍 Products API: Query filter:', filter);

@@ -101,6 +101,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                 inStock={product.stockStatus !== 'out_of_stock'}
                                 tags={product.tags}
                                 weight={product.weight}
+                                vipMaxDiscount={product.vipMaxDiscount}
                             />
                         </div>
                     </div>

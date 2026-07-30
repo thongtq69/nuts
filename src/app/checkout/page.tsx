@@ -281,6 +281,42 @@ export default function CheckoutPage() {
     const shippingFee = calculateShippingFee();
     const total = subtotal + shippingFee - appliedDiscount;
 
+    const applyVoucherCode = async (code: string) => {
+        if (!code) return;
+
+        setVoucherCode(code);
+        setVoucherError('');
+
+        try {
+            const res = await fetch('/api/vouchers/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code,
+                    orderValue: subtotal,
+                    items: cartItems.map(item => ({
+                        productId: item.id,
+                        unitPrice: getItemPrice(item),
+                        quantity: item.quantity
+                    }))
+                })
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.valid) {
+                throw new Error(data.message || 'Mã không hợp lệ');
+            }
+
+            setAppliedDiscount(Number(data.discountAmount) || 0);
+            setIsVoucherApplied(true);
+            setShowVoucherModal(false);
+        } catch (error: unknown) {
+            setVoucherError(error instanceof Error ? error.message : 'Lỗi khi kiểm tra mã');
+            setIsVoucherApplied(false);
+            setAppliedDiscount(0);
+        }
+    };
+
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
@@ -708,28 +744,9 @@ export default function CheckoutPage() {
                                             />
                                             <button
                                                 className="voucher-apply-btn"
-                                                onClick={async () => {
-                                                    if (!manualVoucherCode) return;
-                                                    setVoucherCode(manualVoucherCode);
-                                                    setVoucherError('');
-                                                    try {
-                                                        const res = await fetch('/api/vouchers/apply', {
-                                                            method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({ code: manualVoucherCode, orderValue: subtotal })
-                                                        });
-                                                        const data = await res.json();
-                                                        if (res.ok && data.valid) {
-                                                            setAppliedDiscount(data.discountAmount);
-                                                            setIsVoucherApplied(true);
-                                                            setShowVoucherModal(false);
-                                                            setManualVoucherCode('');
-                                                        } else {
-                                                            setVoucherError(data.message || 'Mã không hợp lệ');
-                                                        }
-                                                    } catch {
-                                                        setVoucherError('Lỗi khi kiểm tra mã');
-                                                    }
+                                                onClick={() => {
+                                                    applyVoucherCode(manualVoucherCode);
+                                                    setManualVoucherCode('');
                                                 }}
                                                 disabled={!manualVoucherCode}
                                             >
@@ -759,20 +776,7 @@ export default function CheckoutPage() {
                                                                 className={`voucher-card ${canApply ? '' : 'disabled'}`}
                                                                 onClick={() => {
                                                                     if (canApply) {
-                                                                        setVoucherCode(voucher.code);
-                                                                        let discount = 0;
-                                                                        if (voucher.discountType === 'percent') {
-                                                                            discount = Math.floor(subtotal * voucher.discountValue / 100);
-                                                                            if (voucher.maxDiscount && discount > voucher.maxDiscount) {
-                                                                                discount = voucher.maxDiscount;
-                                                                            }
-                                                                        } else {
-                                                                            discount = voucher.discountValue;
-                                                                        }
-                                                                        setAppliedDiscount(discount);
-                                                                        setIsVoucherApplied(true);
-                                                                        setVoucherError('');
-                                                                        setShowVoucherModal(false);
+                                                                        applyVoucherCode(voucher.code);
                                                                     }
                                                                 }}
                                                             >

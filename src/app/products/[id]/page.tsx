@@ -17,9 +17,20 @@ async function getProduct(id: string) {
     return { ...product, id: product._id.toString(), _id: product._id.toString() } as unknown as IProduct;
 }
 
-async function getRelatedProducts(currentId: string) {
+async function getRelatedProducts(
+    currentId: string,
+    isLinkedProduct = false,
+    linkedCategory?: string
+) {
     await dbConnect();
-    const products = await Product.find({ _id: { $ne: currentId } }).limit(4).lean();
+    const filter: any = {
+        _id: { $ne: currentId },
+        isLinkedProduct: isLinkedProduct ? true : { $ne: true }
+    };
+    if (isLinkedProduct && linkedCategory) {
+        filter.linkedCategory = linkedCategory;
+    }
+    const products = await Product.find(filter).limit(4).lean();
     return products.map((p: any) => ({ ...p, id: p._id.toString(), _id: p._id.toString() })) as unknown as IProduct[];
 }
 
@@ -84,7 +95,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         notFound();
     }
 
-    const relatedProducts = await getRelatedProducts(id);
+    const relatedProducts = await getRelatedProducts(
+        id,
+        Boolean(product.isLinkedProduct),
+        product.linkedCategory
+    );
     const productUrl = `${BASE_URL}/products/${id}`;
 
     const availabilityMap: Record<string, 'InStock' | 'OutOfStock' | 'LimitedAvailability'> = {

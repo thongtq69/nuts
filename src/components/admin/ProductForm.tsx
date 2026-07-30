@@ -22,7 +22,9 @@ import {
     Grid3X3,
     Settings,
     BarChart3,
-    Wallet
+    Wallet,
+    Link2,
+    Crown
 } from 'lucide-react';
 import { RichTextEditor } from './ui';
 import TagInput from './TagInput';
@@ -64,6 +66,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const [previewMode, setPreviewMode] = useState(false);
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [allTags, setAllTags] = useState<string[]>([]);
+    const [linkedCategories, setLinkedCategories] = useState<string[]>([]);
 
     const [formData, setFormData] = useState({
         // Basic Info
@@ -71,6 +74,9 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         currentPrice: initialData.currentPrice || 0,
         originalPrice: initialData.originalPrice || 0,
         category: initialData.category || '',
+        isLinkedProduct: initialData.isLinkedProduct || false,
+        linkedCategory: initialData.linkedCategory || '',
+        vipMaxDiscount: initialData.vipMaxDiscount || 0,
         shortDescription: initialData.shortDescription || '',
         description: initialData.description || '',
         tags: initialData.tags || [],
@@ -124,6 +130,13 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
             }
         };
         fetchTags();
+    }, []);
+
+    useEffect(() => {
+        fetch('/api/products/linked-categories')
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setLinkedCategories(Array.isArray(data) ? data : []))
+            .catch(() => setLinkedCategories([]));
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -225,6 +238,8 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 tags: formData.tags,
                 currentPrice: Number(formData.currentPrice),
                 originalPrice: Number(formData.originalPrice),
+                linkedCategory: formData.isLinkedProduct ? formData.linkedCategory.trim() : '',
+                vipMaxDiscount: Number(formData.vipMaxDiscount),
                 stock: Number(formData.stock),
                 soldCount: Number(formData.soldCount),
                 weight: Number(formData.weight),
@@ -470,6 +485,26 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     )}
                                 </div>
 
+                                {/* VIP discount cap per product */}
+                                <div>
+                                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                                        <Crown size={16} className="text-amber-500" />
+                                        Giảm VIP tối đa / 1 sản phẩm
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="vipMaxDiscount"
+                                        value={formData.vipMaxDiscount}
+                                        onChange={handleNumberChange}
+                                        min="0"
+                                        placeholder="VD: 50000"
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        Nhập 0 nếu không giới hạn. Ví dụ giá 200.000đ, VIP giảm 30%, giới hạn 50.000đ thì khách trả 150.000đ.
+                                    </p>
+                                </div>
+
                                 {/* Category */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -488,6 +523,57 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+
+                                {/* Linked product classification */}
+                                <div className="lg:col-span-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isLinkedProduct}
+                                            onChange={(event) => setFormData(prev => ({
+                                                ...prev,
+                                                isLinkedProduct: event.target.checked,
+                                                linkedCategory: event.target.checked ? prev.linkedCategory : ''
+                                            }))}
+                                            className="mt-1 h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span>
+                                            <span className="flex items-center gap-2 font-semibold text-slate-800">
+                                                <Link2 size={16} className="text-blue-600" />
+                                                Sản phẩm liên kết
+                                            </span>
+                                            <span className="mt-1 block text-xs text-slate-500">
+                                                Sản phẩm sẽ xuất hiện trong khu vực “Sản phẩm liên kết” trên website.
+                                            </span>
+                                        </span>
+                                    </label>
+
+                                    {formData.isLinkedProduct && (
+                                        <div className="mt-4">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                Danh mục con <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="linkedCategory"
+                                                list="linked-product-categories"
+                                                value={formData.linkedCategory}
+                                                onChange={handleChange}
+                                                required
+                                                placeholder="VD: Bánh, Kẹo, Táo đỏ"
+                                                className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                            />
+                                            <datalist id="linked-product-categories">
+                                                {linkedCategories.map(category => (
+                                                    <option key={category} value={category} />
+                                                ))}
+                                            </datalist>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                Có thể chọn danh mục đã có hoặc nhập tên mới; menu con sẽ được tạo tự động.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* SKU */}

@@ -14,6 +14,8 @@ export interface IProduct {
     shortDescription?: string;
     images?: string[];
     category?: string;
+    isLinkedProduct?: boolean;
+    linkedCategory?: string;
     tags?: string[];
     buttonColor?: string;
     priceColor?: string;
@@ -24,6 +26,7 @@ export interface IProduct {
     sku?: string;
     soldCount?: number;
     weight?: number; // In kg
+    vipMaxDiscount?: number; // Maximum VIP voucher discount per unit; 0 means unlimited
     sortOrder?: number;
     createdAt?: Date;
     updatedAt?: Date;
@@ -55,6 +58,8 @@ const ProductSchema: Schema<IProduct> = new Schema(
         shortDescription: { type: String },
         images: { type: [String] },
         category: { type: String },
+        isLinkedProduct: { type: Boolean, default: false, index: true },
+        linkedCategory: { type: String, trim: true, default: '' },
         tags: { type: [String] },
         buttonColor: { type: String },
         priceColor: { type: String },
@@ -69,6 +74,7 @@ const ProductSchema: Schema<IProduct> = new Schema(
         sku: { type: String },
         soldCount: { type: Number, default: 0 },
         weight: { type: Number, default: 0.5 },
+        vipMaxDiscount: { type: Number, default: 0, min: 0 },
         sortOrder: { type: Number, default: 0 }
     },
     {

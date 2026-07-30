@@ -18,13 +18,14 @@ interface ProductCardProps {
     bulkPricing?: { minQuantity: number; discountPercent: number }[];
     stockStatus?: 'in_stock' | 'out_of_stock' | 'low_stock';
     weight?: number;
+    vipMaxDiscount?: number;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
     id, image, name, currentPrice, originalPrice,
     badgeText, badgeColor, buttonColor, priceColor,
     agentPrice, bulkPricing, stockStatus = 'in_stock',
-    weight
+    weight, vipMaxDiscount
 }) => {
     const { addToCart } = useCart();
     const toast = useToast();
@@ -69,7 +70,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
             quantity: 1,
             agentPrice: agentP,
             bulkPricing,
-            weight
+            weight,
+            vipMaxDiscount
         };
 
         addToCart(item);

@@ -4,10 +4,24 @@ import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
+interface NavItem {
+    href: string;
+    label: string;
+    children?: Array<{ href: string; label: string }>;
+}
+
 export default function Navbar() {
     const pathname = usePathname();
-    const [forceUpdate, setForceUpdate] = useState(0);
+    const [, setForceUpdate] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [linkedCategories, setLinkedCategories] = useState<string[]>([]);
+
+    useEffect(() => {
+        fetch('/api/products/linked-categories')
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setLinkedCategories(Array.isArray(data) ? data : []))
+            .catch(() => setLinkedCategories([]));
+    }, []);
 
     useEffect(() => {
         let lastUrl = window.location.href;
@@ -49,42 +63,44 @@ export default function Navbar() {
         };
     }, [pathname]);
 
-    const getCurrentSort = () => {
-        if (typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('sort');
-        }
-        return null;
-    };
-
     const isActive = (path: string) => {
         if (path === '/') return pathname === '/';
 
-        const currentSort = getCurrentSort();
+        const currentParams = typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search)
+            : new URLSearchParams();
 
         if (path.includes('?')) {
             const [basePath, queryString] = path.split('?');
             if (pathname === basePath) {
                 const expectedParams = new URLSearchParams(queryString);
-                const expectedSort = expectedParams.get('sort');
-
-                return currentSort === expectedSort;
+                return Array.from(expectedParams.entries()).every(
+                    ([key, value]) => currentParams.get(key) === value
+                );
             }
             return false;
         }
 
         if (path === '/products') {
-            return pathname === '/products' && !currentSort;
+            return pathname === '/products' && currentParams.toString() === '';
         }
 
         return pathname.startsWith(path);
     };
 
-    const navItems = [
+    const navItems: NavItem[] = [
         { href: '/', label: 'Trang chủ' },
         { href: '/products?sort=bestselling', label: 'Sản phẩm bán chạy' },
         { href: '/products?sort=newest', label: 'Sản phẩm mới' },
         { href: '/products', label: 'Tất cả sản phẩm' },
+        {
+            href: '/products?linked=1',
+            label: 'Sản phẩm liên kết',
+            children: linkedCategories.map(category => ({
+                href: `/products?linked=1&linkedCategory=${encodeURIComponent(category)}`,
+                label: category
+            }))
+        },
         { href: '/subscriptions', label: 'Gói VIP' },
         { href: '/agent', label: 'Đại lý' },
         { href: '/news', label: 'Tin tức' },
@@ -119,10 +135,34 @@ export default function Navbar() {
                                         : 'text-slate-600 hover:text-[#9C7044]'
                                         }`}
                                 >
-                                    {item.label}
+                                    <span className="inline-flex items-center gap-1.5">
+                                        {item.label}
+                                        {!!item.children?.length && (
+                                            <span className="text-[10px] transition-transform group-hover:rotate-180">▼</span>
+                                        )}
+                                    </span>
                                     <span className={`absolute bottom-0 left-0 h-0.5 bg-[#9C7044] transition-all duration-300 ${isActive(item.href) ? 'w-full' : 'w-0 group-hover:w-full'
                                         }`}></span>
                                 </Link>
+                                {!!item.children?.length && (
+                                    <div className="absolute left-1/2 top-full min-w-52 -translate-x-1/2 rounded-b-xl border border-slate-100 bg-white py-2 shadow-xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
+                                        <Link
+                                            href={item.href}
+                                            className="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-[#9C7044]/5 hover:text-[#9C7044]"
+                                        >
+                                            Tất cả
+                                        </Link>
+                                        {item.children?.map(child => (
+                                            <Link
+                                                key={child.href}
+                                                href={child.href}
+                                                className="block px-4 py-2.5 text-sm text-slate-600 hover:bg-[#9C7044]/5 hover:text-[#9C7044]"
+                                            >
+                                                {child.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -145,6 +185,20 @@ export default function Navbar() {
                                     >
                                         {item.label}
                                     </Link>
+                                    {!!item.children?.length && (
+                                        <div className="ml-6 border-l border-slate-200">
+                                            {item.children?.map(child => (
+                                                <Link
+                                                    key={child.href}
+                                                    href={child.href}
+                                                    className="block px-6 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#9C7044]"
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                >
+                                                    {child.label}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
                                 </li>
                             ))}
                         </ul>

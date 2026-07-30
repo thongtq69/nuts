@@ -14,6 +14,7 @@ export interface CartItem {
     bulkPricing?: { minQuantity: number; discountPercent: number }[];
     isAgent: boolean;
     weight?: number; // In kg
+    vipMaxDiscount?: number;
 }
 
 interface CartContextType {
@@ -110,7 +111,8 @@ function normalizeStoredCartItem(raw: any): CartItem | null {
         agentPrice: raw.agentPrice !== undefined ? parseStoredPrice(raw.agentPrice) : undefined,
         bulkPricing: Array.isArray(raw.bulkPricing) ? raw.bulkPricing : undefined,
         isAgent: Boolean(raw.isAgent),
-        weight: typeof raw.weight === 'number' ? raw.weight : 0.5
+        weight: typeof raw.weight === 'number' ? raw.weight : 0.5,
+        vipMaxDiscount: typeof raw.vipMaxDiscount === 'number' ? raw.vipMaxDiscount : 0
     };
 }
 

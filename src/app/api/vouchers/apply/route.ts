@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import UserVoucher from '@/models/UserVoucher';
+import Product from '@/models/Product';
 import { verifyToken } from '@/lib/auth';
+import { calculateVoucherDiscount, type VoucherDiscountItem } from '@/lib/voucher-discount';
 
 export async function POST(req: Request) {
     try {
@@ -14,9 +16,9 @@ export async function POST(req: Request) {
         // If logged in, check ownership. If guest, maybe restricted?
         // Requirement implies these are "My Vouchers" from packages/registration. So ownership check is good.
 
-        const { code, orderValue } = await req.json();
+        const { code, orderValue, items } = await req.json();
 
-        if (!code || orderValue === undefined) {
+        if (!code || (orderValue === undefined && !Array.isArray(items))) {
             return NextResponse.json({ message: 'Missing code or order value' }, { status: 400 });
         }
 
@@ -36,25 +38,53 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Mã giảm giá không thuộc về bạn' }, { status: 403 });
         }
 
-        if (voucher.minOrderValue > 0 && orderValue < voucher.minOrderValue) {
+        let discountItems: VoucherDiscountItem[] = [];
+
+        if (Array.isArray(items) && items.length > 0) {
+            const productIds = items
+                .map(item => item.productId)
+                .filter(Boolean);
+            const products = await Product.find({ _id: { $in: productIds } })
+                .select('_id vipMaxDiscount')
+                .lean();
+            const productCaps = new Map(
+                products.map(product => [
+                    product._id.toString(),
+                    Number(product.vipMaxDiscount) || 0
+                ])
+            );
+
+            discountItems = items.map(item => ({
+                unitPrice: Math.max(0, Number(item.unitPrice) || 0),
+                quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
+                vipMaxDiscount: productCaps.get(String(item.productId)) || 0
+            }));
+        } else {
+            discountItems = [{
+                unitPrice: Math.max(0, Number(orderValue) || 0),
+                quantity: 1,
+                vipMaxDiscount: 0
+            }];
+        }
+
+        const effectiveOrderValue = discountItems.reduce(
+            (total, item) => total + item.unitPrice * item.quantity,
+            0
+        );
+
+        if (voucher.minOrderValue > 0 && effectiveOrderValue < voucher.minOrderValue) {
             return NextResponse.json({
                 message: `Đơn hàng tối thiểu để áp dụng mã này là ${voucher.minOrderValue.toLocaleString()}đ`
             }, { status: 400 });
         }
 
-        // Calculate Discount
-        let discountAmount = 0;
-        if (voucher.discountType === 'percent') {
-            discountAmount = orderValue * (voucher.discountValue / 100);
-            if (voucher.maxDiscount > 0) {
-                discountAmount = Math.min(discountAmount, voucher.maxDiscount);
-            }
-        } else {
-            discountAmount = voucher.discountValue;
-        }
-
-        // Ensure discount doesn't exceed order value
-        discountAmount = Math.min(discountAmount, orderValue);
+        const discountAmount = calculateVoucherDiscount({
+            discountType: voucher.discountType,
+            discountValue: voucher.discountValue,
+            voucherMaxDiscount: voucher.maxDiscount,
+            items: discountItems,
+            applyProductCaps: voucher.source === 'package'
+        });
 
         // Return valid logic
         return NextResponse.json({

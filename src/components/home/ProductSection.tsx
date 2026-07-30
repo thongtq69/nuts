@@ -16,6 +16,7 @@ interface Product {
     priceColor?: string;
     stockStatus?: 'in_stock' | 'out_of_stock' | 'low_stock';
     weight?: number;
+    vipMaxDiscount?: number;
 }
 
 interface ProductSectionProps {
@@ -114,6 +115,7 @@ export default function ProductSection({ title, products, variant = 'six' }: Pro
                                 priceColor={product.priceColor}
                                 stockStatus={product.stockStatus}
                                 weight={product.weight}
+                                vipMaxDiscount={product.vipMaxDiscount}
                             />
                         ))}
                     </div>

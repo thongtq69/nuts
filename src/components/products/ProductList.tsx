@@ -50,6 +50,15 @@ export default function ProductList({ products, initialSettings }: ProductListPr
 
     // Get sort parameter from URL
     const urlSort = searchParams.get('sort');
+    const isLinkedProductsPage = searchParams.get('linked') === '1';
+    const linkedCategory = searchParams.get('linkedCategory')?.trim() || '';
+
+    const linkedCategories = useMemo(() => Array.from(new Set(
+        products
+            .filter(product => product.isLinkedProduct && product.linkedCategory)
+            .map(product => product.linkedCategory!.trim())
+            .filter(Boolean)
+    )).sort((a, b) => a.localeCompare(b, 'vi')), [products]);
 
     useEffect(() => {
         if (urlSort && urlSort !== sortOption) {
@@ -59,15 +68,21 @@ export default function ProductList({ products, initialSettings }: ProductListPr
 
     // Filter and sort products based on URL parameters and sort option
     const filteredAndSortedProducts = useMemo(() => {
-        let filtered = [...products];
+        let filtered = products.filter(product =>
+            isLinkedProductsPage ? product.isLinkedProduct : !product.isLinkedProduct
+        );
+
+        if (isLinkedProductsPage && linkedCategory) {
+            filtered = filtered.filter(product => product.linkedCategory === linkedCategory);
+        }
 
         // Filter by URL sort parameter
         if (urlSort === 'bestselling') {
-            filtered = products.filter(product =>
+            filtered = filtered.filter(product =>
                 product.tags && product.tags.includes('best-seller')
             );
         } else if (urlSort === 'newest') {
-            filtered = products.filter(product =>
+            filtered = filtered.filter(product =>
                 product.tags && product.tags.includes('new')
             );
         }
@@ -87,10 +102,12 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             default:
                 return filtered;
         }
-    }, [products, urlSort, sortOption]);
+    }, [products, urlSort, sortOption, isLinkedProductsPage, linkedCategory]);
 
     // Get page title based on URL sort parameter
     const getPageTitle = () => {
+        if (isLinkedProductsPage && linkedCategory) return linkedCategory;
+        if (isLinkedProductsPage) return 'Sản phẩm liên kết';
         if (urlSort === 'bestselling') return 'Sản phẩm bán chạy';
         if (urlSort === 'newest') return 'Sản phẩm mới';
         return 'Sản phẩm';
@@ -99,6 +116,16 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     // Get breadcrumb items based on URL sort parameter
     const getBreadcrumbItems = () => {
         const baseItems = [{ label: 'Trang chủ', href: '/' }];
+        if (isLinkedProductsPage) {
+            if (linkedCategory) {
+                return [
+                    ...baseItems,
+                    { label: 'Sản phẩm liên kết', href: '/products?linked=1' },
+                    { label: linkedCategory }
+                ];
+            }
+            return [...baseItems, { label: 'Sản phẩm liên kết' }];
+        }
         if (urlSort === 'bestselling') {
             return [...baseItems, { label: 'Sản phẩm bán chạy' }];
         }
@@ -133,6 +160,13 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                     {/* Page Title */}
                     <div className="page-header">
                         <h1 className="page-title">{getPageTitle()}</h1>
+                        {isLinkedProductsPage && (
+                            <p className="page-description">
+                                {linkedCategory
+                                    ? `Các sản phẩm liên kết thuộc mục ${linkedCategory}`
+                                    : 'Khám phá các sản phẩm liên kết được Go Nuts tuyển chọn'}
+                            </p>
+                        )}
                         {urlSort === 'bestselling' && (
                             <p className="page-description">Những sản phẩm được yêu thích và bán chạy nhất</p>
                         )}
@@ -140,6 +174,34 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                             <p className="page-description">Sản phẩm mới nhất vừa được cập nhật</p>
                         )}
                     </div>
+
+                    {isLinkedProductsPage && linkedCategories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-5">
+                            <Link
+                                href="/products?linked=1"
+                                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+                                    !linkedCategory
+                                        ? 'bg-[#9C7044] text-white border-[#9C7044]'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
+                                }`}
+                            >
+                                Tất cả
+                            </Link>
+                            {linkedCategories.map(category => (
+                                <Link
+                                    key={category}
+                                    href={`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`}
+                                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+                                        linkedCategory === category
+                                            ? 'bg-[#9C7044] text-white border-[#9C7044]'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
+                                    }`}
+                                >
+                                    {category}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="sort-bar">
                         <span>Hiển thị 1–{filteredAndSortedProducts.length} trong {filteredAndSortedProducts.length} kết quả</span>
@@ -172,6 +234,7 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                                     priceColor={product.priceColor}
                                     stockStatus={product.stockStatus}
                                     weight={product.weight}
+                                    vipMaxDiscount={product.vipMaxDiscount}
                                 />
                             ))
                         ) : (

@@ -3,7 +3,7 @@ import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import User from '@/models/User';
 import Product from '@/models/Product';
-import UserVoucher from '@/models/UserVoucher';
+import UserVoucher, { type IUserVoucher } from '@/models/UserVoucher';
 import VoucherRewardRule from '@/models/VoucherRewardRule';
 import AffiliateSettings from '@/models/AffiliateSettings';
 import AffiliateCommission from '@/models/AffiliateCommission';
@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { reconcileAcbPayments } from '@/lib/acb-payments';
+import { calculateVoucherDiscount, type VoucherDiscountItem } from '@/lib/voucher-discount';
 
 async function getUserId() {
     try {
@@ -34,6 +35,11 @@ interface OrderItem {
     image?: string;
     isAgent?: boolean;
 }
+
+type VoucherForOrder = Pick<
+    IUserVoucher,
+    'discountType' | 'discountValue' | 'maxDiscount' | 'minOrderValue' | 'source'
+>;
 
 function calculateFinalPrice(
     product: any,
@@ -115,6 +121,7 @@ export async function POST(req: Request) {
 
         let discountAmount = 0;
         let appliedVoucherId = undefined;
+        let voucherToApply: VoucherForOrder | null = null;
 
         if (voucherCode) {
             const voucher = await UserVoucher.findOne({ code: voucherCode, isUsed: false });
@@ -128,9 +135,11 @@ export async function POST(req: Request) {
                 return NextResponse.json({ message: 'Voucher không thuộc về bạn' }, { status: 400 });
             }
             appliedVoucherId = voucher._id;
+            voucherToApply = voucher;
         }
 
         const processedItems: OrderItem[] = [];
+        const voucherDiscountItems: VoucherDiscountItem[] = [];
         let itemsTotal = 0;
         let totalOriginalAmount = 0;
         let totalAgentSavings = 0;
@@ -153,7 +162,7 @@ export async function POST(req: Request) {
                 }, { status: 400 });
             }
 
-            const { finalPrice, discountAmount: itemDiscount, discountType } = calculateFinalPrice(
+            const { finalPrice, discountAmount: itemDiscount } = calculateFinalPrice(
                 product,
                 item.quantity,
                 isAgent,
@@ -166,22 +175,31 @@ export async function POST(req: Request) {
                 originalPrice: product.currentPrice,
                 isAgent
             });
+            voucherDiscountItems.push({
+                unitPrice: finalPrice,
+                quantity: item.quantity,
+                vipMaxDiscount: product.vipMaxDiscount || 0
+            });
 
             itemsTotal += finalPrice * item.quantity;
             totalOriginalAmount += product.currentPrice * item.quantity;
             totalAgentSavings += itemDiscount * item.quantity;
         }
 
-        if (voucherCode) {
-            const voucher = await UserVoucher.findById(appliedVoucherId);
-            if (voucher) {
-                const voucherValue = voucher.discountType === 'percent'
-                    ? Math.round(itemsTotal * (voucher.discountValue / 100))
-                    : voucher.discountValue;
-
-                const maxDiscount = voucher.maxDiscount > 0 ? voucher.maxDiscount : voucherValue;
-                discountAmount = Math.min(voucherValue, maxDiscount);
+        if (voucherToApply) {
+            if (voucherToApply.minOrderValue > 0 && itemsTotal < voucherToApply.minOrderValue) {
+                return NextResponse.json({
+                    message: `Đơn hàng tối thiểu để áp dụng mã này là ${voucherToApply.minOrderValue.toLocaleString('vi-VN')}đ`
+                }, { status: 400 });
             }
+
+            discountAmount = calculateVoucherDiscount({
+                discountType: voucherToApply.discountType,
+                discountValue: voucherToApply.discountValue,
+                voucherMaxDiscount: voucherToApply.maxDiscount,
+                items: voucherDiscountItems,
+                applyProductCaps: voucherToApply.source === 'package'
+            });
         }
 
         const finalTotal = Math.max(0, itemsTotal + shippingFee - discountAmount);

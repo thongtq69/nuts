@@ -639,6 +639,11 @@ export default function AdminPackagesPage() {
                                                 />
                                             </div>
                                         </div>
+                                        <p className="mt-3 text-xs leading-5 text-slate-500">
+                                            “Giảm tối đa” ở đây là giới hạn cho toàn voucher. Với voucher VIP theo phần trăm,
+                                            hệ thống còn áp dụng giới hạn riêng của từng sản phẩm tại trang quản lý sản phẩm,
+                                            sau đó lấy mức giảm thấp hơn để tính tiền.
+                                        </p>
                                     </div>
                                 ))}
                             </div>

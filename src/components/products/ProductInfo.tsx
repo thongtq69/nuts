@@ -17,6 +17,7 @@ interface ProductInfoProps {
     inStock?: boolean;
     tags?: string[];
     weight?: number;
+    vipMaxDiscount?: number;
 }
 
 export default function ProductInfo({
@@ -29,7 +30,8 @@ export default function ProductInfo({
     sku,
     inStock = true,
     tags = [],
-    weight
+    weight,
+    vipMaxDiscount
 }: ProductInfoProps) {
     const [quantity, setQuantity] = useState(1);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -88,7 +90,8 @@ export default function ProductInfo({
                 image,
                 originalPrice: priceValue,
                 quantity,
-                weight
+                weight,
+                vipMaxDiscount
             });
 
             toast.success('Đã thêm vào giỏ hàng', name);

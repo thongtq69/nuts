@@ -34,6 +34,9 @@ interface Product {
     currentPrice: number;
     originalPrice?: number;
     category?: string;
+    isLinkedProduct?: boolean;
+    linkedCategory?: string;
+    vipMaxDiscount?: number;
     image: string;
     images?: string[];
     stock: number;
@@ -432,9 +435,16 @@ export default function AdminProductsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-4">
-                                                <span className="inline-flex px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">
-                                                    {product.category || 'Chưa phân loại'}
-                                                </span>
+                                                <div className="flex flex-col items-start gap-1.5">
+                                                    <span className="inline-flex px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">
+                                                        {product.category || 'Chưa phân loại'}
+                                                    </span>
+                                                    {product.isLinkedProduct && (
+                                                        <span className="inline-flex px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-semibold">
+                                                            Liên kết · {product.linkedCategory || 'Chưa có mục con'}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-4 py-4 text-right">
                                                 <div className="space-y-1">
@@ -561,6 +571,11 @@ export default function AdminProductsPage() {
                                     <p className="text-sm text-slate-500 mb-3">
                                         {product.category || 'Chưa phân loại'}
                                     </p>
+                                    {product.isLinkedProduct && (
+                                        <p className="text-xs font-semibold text-blue-700 mb-3">
+                                            Sản phẩm liên kết · {product.linkedCategory || 'Chưa có mục con'}
+                                        </p>
+                                    )}
 
                                     <div className="flex items-center justify-between mb-4">
                                         <div>

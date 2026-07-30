@@ -29,7 +29,7 @@ async function getProductsByTag(tag: string, limit = 4) {
       sortParams.soldCount = -1;
     }
 
-    const products = await Product.find({ tags: tag })
+    const products = await Product.find({ tags: tag, isLinkedProduct: { $ne: true } })
       .sort(sortParams as any)
       .limit(limit)
       .lean();
@@ -38,7 +38,7 @@ async function getProductsByTag(tag: string, limit = 4) {
     // If no products found with specific tag, get any products as fallback
     if (products.length === 0) {
       console.log(`⚠️ No products found for tag: ${tag}, getting fallback products`);
-      const fallbackProducts = await Product.find({})
+      const fallbackProducts = await Product.find({ isLinkedProduct: { $ne: true } })
         .sort({ sortOrder: -1, createdAt: -1 } as any)
         .limit(limit)
         .lean();
@@ -62,7 +62,7 @@ async function getProductsByTag(tag: string, limit = 4) {
     // Final fallback: try to get any products
     try {
       await dbConnect();
-      const anyProducts = await Product.find({}).limit(limit).lean();
+      const anyProducts = await Product.find({ isLinkedProduct: { $ne: true } }).limit(limit).lean();
       console.log(`🔄 Fallback: Found ${anyProducts.length} any products`);
 
       return anyProducts.map((p: any) => ({
