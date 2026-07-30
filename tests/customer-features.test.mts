@@ -76,6 +76,39 @@ test('the VIP limit is rounded before the product is persisted', () => {
     assert.equal(product.vipMaxDiscount, 50_000);
 });
 
+test('a linked product requires a submenu', () => {
+    assert.throws(
+        () => normalizeProductPayload({
+            isLinkedProduct: true,
+            linkedCategory: '   ',
+            vipMaxDiscount: 0,
+        }),
+        ProductPayloadError,
+    );
+});
+
+test('a linked product submenu is normalized before persistence', () => {
+    const product = normalizeProductPayload({
+        isLinkedProduct: true,
+        linkedCategory: '  Táo   đỏ  ',
+        vipMaxDiscount: 0,
+    });
+
+    assert.equal(product.isLinkedProduct, true);
+    assert.equal(product.linkedCategory, 'Táo đỏ');
+});
+
+test('a regular product does not retain a linked submenu', () => {
+    const product = normalizeProductPayload({
+        isLinkedProduct: false,
+        linkedCategory: 'Bánh',
+        vipMaxDiscount: 0,
+    });
+
+    assert.equal(product.isLinkedProduct, false);
+    assert.equal(product.linkedCategory, '');
+});
+
 test('a negative per-product VIP limit is rejected', () => {
     assert.throws(
         () => normalizeProductPayload({

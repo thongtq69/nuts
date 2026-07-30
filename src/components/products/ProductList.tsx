@@ -53,6 +53,14 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     const urlSort = searchParams.get('sort');
     const selectedCategory = searchParams.get('category');
     const selectedCategoryLabel = getProductCategoryLabel(selectedCategory);
+    const isLinkedProductsPage = searchParams.get('linked') === '1';
+    const linkedCategory = searchParams.get('linkedCategory')?.trim() || '';
+    const linkedCategories = useMemo(() => Array.from(new Set(
+        products
+            .filter(product => product.isLinkedProduct && product.linkedCategory)
+            .map(product => product.linkedCategory!.trim())
+            .filter(Boolean)
+    )).sort((a, b) => a.localeCompare(b, 'vi')), [products]);
 
     useEffect(() => {
         if (urlSort && urlSort !== sortOption) {
@@ -64,7 +72,12 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     const filteredAndSortedProducts = useMemo(() => {
         let filtered = [...products];
 
-        if (selectedCategory) {
+        if (isLinkedProductsPage) {
+            filtered = filtered.filter(product => product.isLinkedProduct);
+            if (linkedCategory) {
+                filtered = filtered.filter(product => product.linkedCategory === linkedCategory);
+            }
+        } else if (selectedCategory) {
             filtered = filtered.filter(product => product.category === selectedCategory);
         }
 
@@ -94,10 +107,12 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             default:
                 return filtered;
         }
-    }, [products, selectedCategory, urlSort, sortOption]);
+    }, [products, selectedCategory, urlSort, sortOption, isLinkedProductsPage, linkedCategory]);
 
     // Get page title based on URL sort parameter
     const getPageTitle = () => {
+        if (isLinkedProductsPage && linkedCategory) return linkedCategory;
+        if (isLinkedProductsPage) return 'Sản phẩm liên kết';
         if (selectedCategoryLabel) return selectedCategoryLabel;
         if (urlSort === 'bestselling') return 'Sản phẩm bán chạy';
         if (urlSort === 'newest') return 'Sản phẩm mới';
@@ -107,6 +122,16 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     // Get breadcrumb items based on URL sort parameter
     const getBreadcrumbItems = () => {
         const baseItems = [{ label: 'Trang chủ', href: '/' }];
+        if (isLinkedProductsPage) {
+            if (linkedCategory) {
+                return [
+                    ...baseItems,
+                    { label: 'Sản phẩm liên kết', href: '/products?linked=1' },
+                    { label: linkedCategory },
+                ];
+            }
+            return [...baseItems, { label: 'Sản phẩm liên kết' }];
+        }
         if (selectedCategoryLabel) {
             return [
                 ...baseItems,
@@ -148,6 +173,13 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                     {/* Page Title */}
                     <div className="page-header">
                         <h1 className="page-title">{getPageTitle()}</h1>
+                        {isLinkedProductsPage && (
+                            <p className="page-description">
+                                {linkedCategory
+                                    ? `Các sản phẩm liên kết thuộc submenu ${linkedCategory}`
+                                    : 'Khám phá các sản phẩm liên kết được Go Nuts tuyển chọn'}
+                            </p>
+                        )}
                         {urlSort === 'bestselling' && (
                             <p className="page-description">Những sản phẩm được yêu thích và bán chạy nhất</p>
                         )}
@@ -155,6 +187,34 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                             <p className="page-description">Sản phẩm mới nhất vừa được cập nhật</p>
                         )}
                     </div>
+
+                    {isLinkedProductsPage && linkedCategories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-5">
+                            <Link
+                                href="/products?linked=1"
+                                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+                                    !linkedCategory
+                                        ? 'bg-[#9C7044] text-white border-[#9C7044]'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
+                                }`}
+                            >
+                                Tất cả
+                            </Link>
+                            {linkedCategories.map(category => (
+                                <Link
+                                    key={category}
+                                    href={`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`}
+                                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+                                        linkedCategory === category
+                                            ? 'bg-[#9C7044] text-white border-[#9C7044]'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
+                                    }`}
+                                >
+                                    {category}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="sort-bar">
                         <span>Hiển thị 1–{filteredAndSortedProducts.length} trong {filteredAndSortedProducts.length} kết quả</span>

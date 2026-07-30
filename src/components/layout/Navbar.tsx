@@ -14,6 +14,14 @@ export default function Navbar() {
     const pathname = usePathname();
     const [, setForceUpdate] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [linkedCategories, setLinkedCategories] = useState<string[]>([]);
+
+    useEffect(() => {
+        fetch('/api/products/linked-categories')
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setLinkedCategories(Array.isArray(data) ? data : []))
+            .catch(() => setLinkedCategories([]));
+    }, []);
 
     useEffect(() => {
         let lastUrl = window.location.href;
@@ -85,6 +93,14 @@ export default function Navbar() {
         { href: '/products?sort=bestselling', label: 'Sản phẩm bán chạy' },
         { href: '/products?sort=newest', label: 'Sản phẩm mới' },
         { href: '/products', label: 'Tất cả sản phẩm' },
+        {
+            href: '/products?linked=1',
+            label: 'Sản phẩm liên kết',
+            children: linkedCategories.map(category => ({
+                href: `/products?linked=1&linkedCategory=${encodeURIComponent(category)}`,
+                label: category,
+            })),
+        },
         { href: '/subscriptions', label: 'Gói VIP' },
         { href: '/agent', label: 'Đại lý' },
         { href: '/news', label: 'Tin tức' },

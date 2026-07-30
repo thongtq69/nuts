@@ -23,6 +23,7 @@ import {
     Settings,
     BarChart3,
     Wallet,
+    Link2,
     Crown
 } from 'lucide-react';
 import { RichTextEditor } from './ui';
@@ -60,6 +61,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const [previewMode, setPreviewMode] = useState(false);
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [allTags, setAllTags] = useState<string[]>([]);
+    const [linkedCategories, setLinkedCategories] = useState<string[]>([]);
 
     const [formData, setFormData] = useState({
         // Basic Info
@@ -67,6 +69,8 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         currentPrice: initialData.currentPrice || 0,
         originalPrice: initialData.originalPrice || 0,
         category: initialData.category || '',
+        isLinkedProduct: initialData.isLinkedProduct || false,
+        linkedCategory: initialData.linkedCategory || '',
         vipMaxDiscount: initialData.vipMaxDiscount || 0,
         shortDescription: initialData.shortDescription || '',
         description: initialData.description || '',
@@ -121,6 +125,13 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
             }
         };
         fetchTags();
+    }, []);
+
+    useEffect(() => {
+        fetch('/api/products/linked-categories')
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setLinkedCategories(Array.isArray(data) ? data : []))
+            .catch(() => setLinkedCategories([]));
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -212,6 +223,12 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
 
+        if (formData.isLinkedProduct && !formData.linkedCategory.trim()) {
+            setActiveTab('basic');
+            toast.error('Thiếu submenu', 'Vui lòng nhập submenu cho sản phẩm liên kết.');
+            return;
+        }
+
         if (Number(formData.vipMaxDiscount) < 0) {
             setActiveTab('basic');
             toast.error('Giới hạn VIP không hợp lệ', 'Số tiền giảm tối đa không được nhỏ hơn 0.');
@@ -229,6 +246,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 tags: formData.tags,
                 currentPrice: Number(formData.currentPrice),
                 originalPrice: Number(formData.originalPrice),
+                linkedCategory: formData.isLinkedProduct ? formData.linkedCategory.trim() : '',
                 vipMaxDiscount: Number(formData.vipMaxDiscount),
                 stock: Number(formData.stock),
                 soldCount: Number(formData.soldCount),
@@ -513,6 +531,57 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+
+                                {/* Linked product classification */}
+                                <div className="lg:col-span-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isLinkedProduct}
+                                            onChange={(event) => setFormData(previous => ({
+                                                ...previous,
+                                                isLinkedProduct: event.target.checked,
+                                                linkedCategory: event.target.checked ? previous.linkedCategory : '',
+                                            }))}
+                                            className="mt-1 h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span>
+                                            <span className="flex items-center gap-2 font-semibold text-slate-800">
+                                                <Link2 size={16} className="text-blue-600" />
+                                                Sản phẩm liên kết
+                                            </span>
+                                            <span className="mt-1 block text-xs text-slate-500">
+                                                Sản phẩm sẽ xuất hiện trong mục “Sản phẩm liên kết” trên website.
+                                            </span>
+                                        </span>
+                                    </label>
+
+                                    {formData.isLinkedProduct && (
+                                        <div className="mt-4">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                Submenu sản phẩm liên kết <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="linkedCategory"
+                                                list="linked-product-categories"
+                                                value={formData.linkedCategory}
+                                                onChange={handleChange}
+                                                required
+                                                placeholder="VD: Bánh, Kẹo, Táo đỏ"
+                                                className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                            />
+                                            <datalist id="linked-product-categories">
+                                                {linkedCategories.map(category => (
+                                                    <option key={category} value={category} />
+                                                ))}
+                                            </datalist>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                Có thể chọn submenu đã có hoặc nhập tên mới; submenu mới sẽ được tạo tự động khi lưu sản phẩm.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* SKU */}

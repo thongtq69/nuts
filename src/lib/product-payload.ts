@@ -12,6 +12,15 @@ export function normalizeProductPayload(payload: unknown): Record<string, unknow
 
     const input = payload as Record<string, unknown>;
     const normalized: Record<string, unknown> = { ...input };
+    const isLinkedProduct = input.isLinkedProduct === true;
+    const linkedCategory = typeof input.linkedCategory === 'string'
+        ? input.linkedCategory.trim().replace(/\s+/g, ' ')
+        : '';
+
+    if (isLinkedProduct && !linkedCategory) {
+        throw new ProductPayloadError('Sản phẩm liên kết phải có submenu');
+    }
+
     const rawVipMaxDiscount = input.vipMaxDiscount ?? 0;
     const vipMaxDiscount = Number(rawVipMaxDiscount);
 
@@ -19,6 +28,8 @@ export function normalizeProductPayload(payload: unknown): Record<string, unknow
         throw new ProductPayloadError('Giới hạn giảm VIP phải là số tiền không âm');
     }
 
+    normalized.isLinkedProduct = isLinkedProduct;
+    normalized.linkedCategory = isLinkedProduct ? linkedCategory : '';
     normalized.vipMaxDiscount = Math.round(vipMaxDiscount);
 
     return normalized;

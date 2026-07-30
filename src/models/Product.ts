@@ -14,6 +14,8 @@ export interface IProduct {
     shortDescription?: string;
     images?: string[];
     category?: string;
+    isLinkedProduct?: boolean;
+    linkedCategory?: string;
     tags?: string[];
     buttonColor?: string;
     priceColor?: string;
@@ -56,6 +58,8 @@ const ProductSchema: Schema<IProduct> = new Schema(
         shortDescription: { type: String },
         images: { type: [String] },
         category: { type: String },
+        isLinkedProduct: { type: Boolean, default: false, index: true },
+        linkedCategory: { type: String, trim: true, default: '' },
         tags: { type: [String] },
         buttonColor: { type: String },
         priceColor: { type: String },

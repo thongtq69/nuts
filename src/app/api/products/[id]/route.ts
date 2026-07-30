@@ -61,7 +61,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             };
         } else {
             // Update thông thường
-            updateOperation = 'vipMaxDiscount' in body
+            const touchesProductRules =
+                'isLinkedProduct' in body ||
+                'linkedCategory' in body ||
+                'vipMaxDiscount' in body;
+            updateOperation = touchesProductRules
                 ? normalizeProductPayload({ ...product.toObject(), ...body })
                 : body;
         }

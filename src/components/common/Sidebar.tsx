@@ -7,6 +7,7 @@ import { PRODUCT_CATEGORIES } from '@/constants/product-categories';
 export default function Sidebar() {
     const searchParams = useSearchParams();
     const selectedCategory = searchParams.get('category') || '';
+    const isLinkedProductsPage = searchParams.get('linked') === '1';
 
     return (
         <aside className="sidebar">
@@ -16,8 +17,8 @@ export default function Sidebar() {
                     <li>
                         <Link
                             href="/products"
-                            aria-current={!selectedCategory ? 'page' : undefined}
-                            className={!selectedCategory ? 'font-semibold text-[#9C7044]' : ''}
+                            aria-current={!selectedCategory && !isLinkedProductsPage ? 'page' : undefined}
+                            className={!selectedCategory && !isLinkedProductsPage ? 'font-semibold text-[#9C7044]' : ''}
                         >
                             Tất cả sản phẩm
                         </Link>
