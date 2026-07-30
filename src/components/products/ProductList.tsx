@@ -21,15 +21,6 @@ interface SiteSettings {
     productsBannerEnabled?: boolean;
 }
 
-interface LinkedMenuCategory {
-    _id: string;
-    name: string;
-    submenus: Array<{
-        _id: string;
-        name: string;
-    }>;
-}
-
 export default function ProductList({ products, initialSettings }: ProductListProps) {
     const searchParams = useSearchParams();
     const [sortOption, setSortOption] = useState('default');
@@ -37,7 +28,6 @@ export default function ProductList({ products, initialSettings }: ProductListPr
         productsBannerUrl: '/assets/images/gonuts-banner-member.png',
         productsBannerEnabled: true
     });
-    const [linkedMenuCategories, setLinkedMenuCategories] = useState<LinkedMenuCategory[]>([]);
 
     // Fetch settings on mount
     useEffect(() => {
@@ -58,24 +48,8 @@ export default function ProductList({ products, initialSettings }: ProductListPr
         fetchSettings();
     }, []);
 
-    useEffect(() => {
-        fetch('/api/linked-product-categories')
-            .then(response => response.ok ? response.json() : [])
-            .then(data => setLinkedMenuCategories(Array.isArray(data) ? data : []))
-            .catch(() => setLinkedMenuCategories([]));
-    }, []);
-
     // Get sort parameter from URL
     const urlSort = searchParams.get('sort');
-    const isLinkedProductsPage = searchParams.get('linked') === '1';
-    const linkedMenuCategoryId = searchParams.get('linkedMenuCategory')?.trim() || '';
-    const linkedMenuSubmenuId = searchParams.get('linkedMenuSubmenu')?.trim() || '';
-    const selectedLinkedCategory = linkedMenuCategories.find(
-        category => category._id === linkedMenuCategoryId
-    );
-    const selectedLinkedSubmenu = selectedLinkedCategory?.submenus.find(
-        submenu => submenu._id === linkedMenuSubmenuId
-    );
 
     useEffect(() => {
         if (urlSort && urlSort !== sortOption) {
@@ -85,20 +59,7 @@ export default function ProductList({ products, initialSettings }: ProductListPr
 
     // Filter and sort products based on URL parameters and sort option
     const filteredAndSortedProducts = useMemo(() => {
-        let filtered = products.filter(product =>
-            isLinkedProductsPage ? product.isLinkedProduct : !product.isLinkedProduct
-        );
-
-        if (isLinkedProductsPage && linkedMenuCategoryId) {
-            filtered = filtered.filter(
-                product => String(product.linkedMenuCategoryId || '') === linkedMenuCategoryId
-            );
-        }
-        if (isLinkedProductsPage && linkedMenuSubmenuId) {
-            filtered = filtered.filter(
-                product => String(product.linkedMenuSubmenuId || '') === linkedMenuSubmenuId
-            );
-        }
+        let filtered = [...products];
 
         // Filter by URL sort parameter
         if (urlSort === 'bestselling') {
@@ -126,20 +87,10 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             default:
                 return filtered;
         }
-    }, [
-        products,
-        urlSort,
-        sortOption,
-        isLinkedProductsPage,
-        linkedMenuCategoryId,
-        linkedMenuSubmenuId,
-    ]);
+    }, [products, urlSort, sortOption]);
 
     // Get page title based on URL sort parameter
     const getPageTitle = () => {
-        if (isLinkedProductsPage && selectedLinkedSubmenu) return selectedLinkedSubmenu.name;
-        if (isLinkedProductsPage && selectedLinkedCategory) return selectedLinkedCategory.name;
-        if (isLinkedProductsPage) return 'Sản phẩm liên kết';
         if (urlSort === 'bestselling') return 'Sản phẩm bán chạy';
         if (urlSort === 'newest') return 'Sản phẩm mới';
         return 'Sản phẩm';
@@ -148,20 +99,6 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     // Get breadcrumb items based on URL sort parameter
     const getBreadcrumbItems = () => {
         const baseItems = [{ label: 'Trang chủ', href: '/' }];
-        if (isLinkedProductsPage) {
-            if (selectedLinkedCategory) {
-                return [
-                    ...baseItems,
-                    { label: 'Sản phẩm liên kết', href: '/products?linked=1' },
-                    ...(selectedLinkedSubmenu ? [{
-                        label: selectedLinkedCategory.name,
-                        href: `/products?linked=1&linkedMenuCategory=${selectedLinkedCategory._id}`,
-                    }] : []),
-                    { label: selectedLinkedSubmenu?.name || selectedLinkedCategory.name }
-                ];
-            }
-            return [...baseItems, { label: 'Sản phẩm liên kết' }];
-        }
         if (urlSort === 'bestselling') {
             return [...baseItems, { label: 'Sản phẩm bán chạy' }];
         }
@@ -196,15 +133,6 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                     {/* Page Title */}
                     <div className="page-header">
                         <h1 className="page-title">{getPageTitle()}</h1>
-                        {isLinkedProductsPage && (
-                            <p className="page-description">
-                                {selectedLinkedSubmenu
-                                    ? `Các sản phẩm liên kết thuộc submenu ${selectedLinkedSubmenu.name}`
-                                    : selectedLinkedCategory
-                                        ? `Các sản phẩm liên kết thuộc danh mục ${selectedLinkedCategory.name}`
-                                    : 'Khám phá các sản phẩm liên kết được Go Nuts tuyển chọn'}
-                            </p>
-                        )}
                         {urlSort === 'bestselling' && (
                             <p className="page-description">Những sản phẩm được yêu thích và bán chạy nhất</p>
                         )}
@@ -212,63 +140,6 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                             <p className="page-description">Sản phẩm mới nhất vừa được cập nhật</p>
                         )}
                     </div>
-
-                    {isLinkedProductsPage && linkedMenuCategories.length > 0 && (
-                        <div className="mb-5 space-y-3">
-                            <div className="flex flex-wrap gap-2">
-                                <Link
-                                    href="/products?linked=1"
-                                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
-                                        !linkedMenuCategoryId
-                                            ? 'bg-[#9C7044] text-white border-[#9C7044]'
-                                            : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
-                                    }`}
-                                >
-                                    Tất cả
-                                </Link>
-                                {linkedMenuCategories.map(category => (
-                                    <Link
-                                        key={category._id}
-                                        href={`/products?linked=1&linkedMenuCategory=${category._id}`}
-                                        className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
-                                            linkedMenuCategoryId === category._id
-                                                ? 'bg-[#9C7044] text-white border-[#9C7044]'
-                                                : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
-                                        }`}
-                                    >
-                                        {category.name}
-                                    </Link>
-                                ))}
-                            </div>
-                            {!!selectedLinkedCategory?.submenus.length && (
-                                <div className="flex flex-wrap gap-2 rounded-xl bg-slate-50 p-3">
-                                    <Link
-                                        href={`/products?linked=1&linkedMenuCategory=${selectedLinkedCategory._id}`}
-                                        className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                                            !linkedMenuSubmenuId
-                                                ? 'bg-white text-[#9C7044] shadow-sm'
-                                                : 'text-slate-600 hover:bg-white'
-                                        }`}
-                                    >
-                                        Tất cả {selectedLinkedCategory.name}
-                                    </Link>
-                                    {selectedLinkedCategory.submenus.map(submenu => (
-                                        <Link
-                                            key={submenu._id}
-                                            href={`/products?linked=1&linkedMenuCategory=${selectedLinkedCategory._id}&linkedMenuSubmenu=${submenu._id}`}
-                                            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                                                linkedMenuSubmenuId === submenu._id
-                                                    ? 'bg-white text-[#9C7044] shadow-sm'
-                                                    : 'text-slate-600 hover:bg-white'
-                                            }`}
-                                        >
-                                            {submenu.name}
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
 
                     <div className="sort-bar">
                         <span>Hiển thị 1–{filteredAndSortedProducts.length} trong {filteredAndSortedProducts.length} kết quả</span>

@@ -47,8 +47,6 @@ async function getProducts(): Promise<IProduct[]> {
             ...product,
             _id: product._id.toString(),
             id: product._id.toString(),
-            linkedMenuCategoryId: product.linkedMenuCategoryId?.toString(),
-            linkedMenuSubmenuId: product.linkedMenuSubmenuId?.toString(),
             createdAt: product.createdAt?.toISOString(),
             updatedAt: product.updatedAt?.toISOString(),
         }));

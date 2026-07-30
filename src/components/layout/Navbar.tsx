@@ -10,27 +10,10 @@ interface NavItem {
     children?: NavItem[];
 }
 
-interface LinkedProductCategory {
-    _id: string;
-    name: string;
-    submenus: Array<{
-        _id: string;
-        name: string;
-    }>;
-}
-
 export default function Navbar() {
     const pathname = usePathname();
     const [, setForceUpdate] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [linkedCategories, setLinkedCategories] = useState<LinkedProductCategory[]>([]);
-
-    useEffect(() => {
-        fetch('/api/linked-product-categories')
-            .then(res => res.ok ? res.json() : [])
-            .then(data => setLinkedCategories(Array.isArray(data) ? data : []))
-            .catch(() => setLinkedCategories([]));
-    }, []);
 
     useEffect(() => {
         let lastUrl = window.location.href;
@@ -102,18 +85,6 @@ export default function Navbar() {
         { href: '/products?sort=bestselling', label: 'Sản phẩm bán chạy' },
         { href: '/products?sort=newest', label: 'Sản phẩm mới' },
         { href: '/products', label: 'Tất cả sản phẩm' },
-        {
-            href: '/products?linked=1',
-            label: 'Sản phẩm liên kết',
-            children: linkedCategories.map(category => ({
-                href: `/products?linked=1&linkedMenuCategory=${category._id}`,
-                label: category.name,
-                children: category.submenus.map(submenu => ({
-                    href: `/products?linked=1&linkedMenuCategory=${category._id}&linkedMenuSubmenu=${submenu._id}`,
-                    label: submenu.name,
-                })),
-            }))
-        },
         { href: '/subscriptions', label: 'Gói VIP' },
         { href: '/agent', label: 'Đại lý' },
         { href: '/news', label: 'Tin tức' },

@@ -3,7 +3,6 @@ import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
 import { describeProductPersistenceError } from '@/lib/product-persistence-error';
-import { resolveLinkedProductSelection } from '@/lib/linked-product-selection';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -21,8 +20,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     try {
         const { id } = await params;
         await dbConnect();
-        const normalizedBody = normalizeProductPayload(await request.json());
-        const body = await resolveLinkedProductSelection(normalizedBody);
+        const body = normalizeProductPayload(await request.json());
         const product = await Product.findByIdAndUpdate(id, body, { new: true, runValidators: true });
         if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
         return NextResponse.json(product);
@@ -63,16 +61,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             };
         } else {
             // Update thông thường
-            const touchesClassification =
-                'isLinkedProduct' in body ||
-                'linkedMenuCategoryId' in body ||
-                'linkedMenuSubmenuId' in body ||
-                'linkedCategory' in body ||
-                'vipMaxDiscount' in body;
-            updateOperation = touchesClassification
-                ? await resolveLinkedProductSelection(
-                    normalizeProductPayload({ ...product.toObject(), ...body })
-                )
+            updateOperation = 'vipMaxDiscount' in body
+                ? normalizeProductPayload({ ...product.toObject(), ...body })
                 : body;
         }
 

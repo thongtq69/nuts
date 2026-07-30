@@ -14,11 +14,6 @@ export interface IProduct {
     shortDescription?: string;
     images?: string[];
     category?: string;
-    isLinkedProduct?: boolean;
-    linkedMenuCategoryId?: mongoose.Types.ObjectId | string;
-    linkedMenuSubmenuId?: mongoose.Types.ObjectId | string;
-    linkedMenuCategory?: string;
-    linkedCategory?: string;
     tags?: string[];
     buttonColor?: string;
     priceColor?: string;
@@ -61,11 +56,6 @@ const ProductSchema: Schema<IProduct> = new Schema(
         shortDescription: { type: String },
         images: { type: [String] },
         category: { type: String },
-        isLinkedProduct: { type: Boolean, default: false, index: true },
-        linkedMenuCategoryId: { type: Schema.Types.ObjectId, ref: 'LinkedProductCategory', index: true },
-        linkedMenuSubmenuId: { type: Schema.Types.ObjectId, index: true },
-        linkedMenuCategory: { type: String, trim: true, default: '' },
-        linkedCategory: { type: String, trim: true, default: '' },
         tags: { type: [String] },
         buttonColor: { type: String },
         priceColor: { type: String },
