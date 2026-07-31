@@ -127,9 +127,6 @@ export default function Footer() {
                                 <Link href="/products?category=sale">Sản phẩm khuyến mãi</Link>
                             </li>
                             <li>
-                                <Link href="/products">Tất cả sản phẩm</Link>
-                            </li>
-                            <li>
                                 <Link href="/subscriptions">Gói VIP</Link>
                             </li>
                             <li>

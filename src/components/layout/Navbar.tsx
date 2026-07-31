@@ -92,7 +92,6 @@ export default function Navbar() {
         { href: '/', label: 'Trang chủ' },
         { href: '/products?sort=bestselling', label: 'Sản phẩm bán chạy' },
         { href: '/products?sort=newest', label: 'Sản phẩm mới' },
-        { href: '/products', label: 'Tất cả sản phẩm' },
         {
             href: '/products?linked=1',
             label: 'Sản phẩm liên kết',

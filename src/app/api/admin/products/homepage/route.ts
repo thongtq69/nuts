@@ -122,13 +122,17 @@ export async function PATCH(request: Request) {
             );
         }
 
-        await Product.updateMany({}, [
-            {
-                $set: {
-                    [config.field]: { $in: ['$_id', objectIds] },
+        await Product.updateMany(
+            {},
+            [
+                {
+                    $set: {
+                        [config.field]: { $in: ['$_id', objectIds] },
+                    },
                 },
-            },
-        ]);
+            ],
+            { updatePipeline: true },
+        );
 
         return NextResponse.json({
             message: `Đã cập nhật ${config.label} trên trang chủ`,

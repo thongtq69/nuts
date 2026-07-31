@@ -23,6 +23,7 @@ export default function Sidebar({
     const searchParams = useSearchParams();
     const selectedCategory = searchParams.get('category') || '';
     const isLinkedProductsPage = searchParams.get('linked') === '1';
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const [categories, setCategories] = useState(
         PRODUCT_CATEGORIES.map(category => ({ ...category, isDefault: true })),
     );
@@ -42,46 +43,69 @@ export default function Sidebar({
     );
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-section">
-                <h3 className="sidebar-title">Danh mục</h3>
-                <ul className="sidebar-list">
-                    <li>
-                        <Link
-                            href="/products"
-                            aria-current={!selectedCategory && !isLinkedProductsPage ? 'page' : undefined}
-                            className={!selectedCategory && !isLinkedProductsPage ? 'font-semibold text-[#9C7044]' : ''}
-                        >
-                            Tất cả sản phẩm
-                        </Link>
-                    </li>
-                    {visibleCategories.map(category => (
-                        <li key={category.value}>
+        <aside className={`sidebar ${isMobileFilterOpen ? 'mobile-filter-open' : ''}`}>
+            <button
+                type="button"
+                className="mobile-filter-toggle"
+                onClick={() => setIsMobileFilterOpen(open => !open)}
+                aria-expanded={isMobileFilterOpen}
+                aria-controls="product-filter-content"
+            >
+                <span className="mobile-filter-toggle-label">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path d="M4 6h16M7 12h10M10 18h4" />
+                    </svg>
+                    Bộ lọc sản phẩm
+                </span>
+                <span className="mobile-filter-toggle-meta">
+                    {selectedPriceRanges.length > 0 && (
+                        <span>{selectedPriceRanges.length} đã chọn</span>
+                    )}
+                    <span className="mobile-filter-chevron" aria-hidden="true">⌄</span>
+                </span>
+            </button>
+
+            <div id="product-filter-content" className="sidebar-mobile-content">
+                <div className="sidebar-section">
+                    <h3 className="sidebar-title">Danh mục</h3>
+                    <ul className="sidebar-list">
+                        <li>
                             <Link
-                                href={`/products?category=${encodeURIComponent(category.value)}`}
-                                aria-current={selectedCategory === category.value ? 'page' : undefined}
-                                className={selectedCategory === category.value ? 'font-semibold text-[#9C7044]' : ''}
+                                href="/products"
+                                aria-current={!selectedCategory && !isLinkedProductsPage ? 'page' : undefined}
+                                className={!selectedCategory && !isLinkedProductsPage ? 'font-semibold text-[#9C7044]' : ''}
                             >
-                                {category.label}
+                                Tất cả sản phẩm
                             </Link>
                         </li>
-                    ))}
-                </ul>
-            </div>
+                        {visibleCategories.map(category => (
+                            <li key={category.value}>
+                                <Link
+                                    href={`/products?category=${encodeURIComponent(category.value)}`}
+                                    aria-current={selectedCategory === category.value ? 'page' : undefined}
+                                    className={selectedCategory === category.value ? 'font-semibold text-[#9C7044]' : ''}
+                                >
+                                    {category.label}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
 
-            <div className="sidebar-section">
-                <h3 className="sidebar-title">Khoảng giá</h3>
-                <div className="price-filter">
-                    {PRODUCT_PRICE_RANGES.map(range => (
-                        <label key={range.value}>
-                            <input
-                                type="checkbox"
-                                checked={selectedPriceRanges.includes(range.value)}
-                                onChange={event => onPriceRangeChange(range.value, event.target.checked)}
-                            />
-                            {' '}{range.label}
-                        </label>
-                    ))}
+                <div className="sidebar-section">
+                    <h3 className="sidebar-title">Khoảng giá</h3>
+                    <div className="price-filter">
+                        {PRODUCT_PRICE_RANGES.map(range => (
+                            <label key={range.value}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedPriceRanges.includes(range.value)}
+                                    onChange={event => onPriceRangeChange(range.value, event.target.checked)}
+                                />
+                                {' '}{range.label}
+                            </label>
+                        ))}
+                    </div>
                 </div>
             </div>
         </aside>
