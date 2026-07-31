@@ -213,6 +213,7 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                     selectedPriceRanges={selectedPriceRanges}
                     onPriceRangeChange={handlePriceRangeChange}
                     availableCategoryValues={availableCategoryValues}
+                    linkedCategoryValues={linkedCategories}
                 />
 
                 <div className="product-content">

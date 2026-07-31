@@ -13,16 +13,19 @@ interface SidebarProps {
     selectedPriceRanges: readonly ProductPriceRange[];
     onPriceRangeChange: (range: ProductPriceRange, checked: boolean) => void;
     availableCategoryValues: readonly string[];
+    linkedCategoryValues: readonly string[];
 }
 
 export default function Sidebar({
     selectedPriceRanges,
     onPriceRangeChange,
     availableCategoryValues,
+    linkedCategoryValues,
 }: SidebarProps) {
     const searchParams = useSearchParams();
     const selectedCategory = searchParams.get('category') || '';
     const isLinkedProductsPage = searchParams.get('linked') === '1';
+    const selectedLinkedCategory = searchParams.get('linkedCategory')?.trim() || '';
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const [categories, setCategories] = useState(
         PRODUCT_CATEGORIES.map(category => ({ ...category, isDefault: true })),
@@ -86,6 +89,28 @@ export default function Sidebar({
                                     className={selectedCategory === category.value ? 'font-semibold text-[#9C7044]' : ''}
                                 >
                                     {category.label}
+                                </Link>
+                            </li>
+                        ))}
+                        {linkedCategoryValues.length > 0 && (
+                            <li className="sidebar-linked-category">
+                                <Link
+                                    href="/products?linked=1"
+                                    aria-current={isLinkedProductsPage && !selectedLinkedCategory ? 'page' : undefined}
+                                    className={isLinkedProductsPage && !selectedLinkedCategory ? 'font-semibold text-[#9C7044]' : 'font-semibold'}
+                                >
+                                    Sản phẩm liên kết
+                                </Link>
+                            </li>
+                        )}
+                        {linkedCategoryValues.map(category => (
+                            <li key={`linked-${category}`} className="sidebar-linked-submenu-item">
+                                <Link
+                                    href={`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`}
+                                    aria-current={isLinkedProductsPage && selectedLinkedCategory === category ? 'page' : undefined}
+                                    className={isLinkedProductsPage && selectedLinkedCategory === category ? 'font-semibold text-[#9C7044]' : ''}
+                                >
+                                    {category}
                                 </Link>
                             </li>
                         ))}

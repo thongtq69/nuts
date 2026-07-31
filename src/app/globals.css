@@ -784,6 +784,28 @@ video {
   color: var(--color-primary-brown);
 }
 
+.sidebar-linked-category {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-gray-border);
+}
+
+.sidebar-linked-submenu-item a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-left: 12px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.sidebar-linked-submenu-item a::before {
+  content: '↳';
+  flex: 0 0 auto;
+  color: var(--color-primary-brown);
+  font-weight: 700;
+}
+
 .price-filter {
   display: flex;
   flex-direction: column;
@@ -8062,6 +8084,17 @@ a[class*="from-orange"] {
     padding: 8px 9px;
     border: 1px solid #eee7df;
     background: #fcfaf7;
+  }
+
+  .sidebar-mobile-content .sidebar-linked-category {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+    padding-top: 9px;
+  }
+
+  .sidebar-mobile-content .sidebar-linked-submenu-item a {
+    padding-left: 10px;
+    font-size: 11px;
   }
 
   .product-banner {
