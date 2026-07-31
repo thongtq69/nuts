@@ -2,6 +2,7 @@
 
 @theme {
   --font-sans: var(--font-montserrat), sans-serif;
+  --font-mono: var(--font-montserrat), sans-serif;
   --color-brand: #9C7043;
   --color-brand-light: #E3C88D;
   --color-brand-dark: #7d5a36;
@@ -86,6 +87,7 @@
 
 html {
   scroll-behavior: smooth;
+  font-family: var(--font-family);
 }
 
 body {
@@ -102,8 +104,9 @@ button,
 input,
 select,
 textarea,
-option {
-  font-family: inherit;
+option,
+optgroup {
+  font-family: var(--font-family);
 }
 
 b,
@@ -2784,7 +2787,7 @@ a[class*="from-orange"] {
 }
 
 .voucher-code {
-  font-family: monospace;
+  font-family: var(--font-family);
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--color-text-dark);
@@ -2930,7 +2933,7 @@ a[class*="from-orange"] {
 }
 
 .voucher-code-inline {
-  font-family: monospace;
+  font-family: var(--font-family);
   font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--color-text-dark);

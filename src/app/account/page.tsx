@@ -771,7 +771,7 @@ export default function AccountPage() {
                                                                                     {/* Code */}
                                                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                                                                                         <code style={{
-                                                                                            fontFamily: 'monospace',
+                                                                                            fontFamily: 'var(--font-family)',
                                                                                             fontWeight: '700',
                                                                                             fontSize: '14px',
                                                                                             color: isDisabled ? '#9ca3af' : '#1f2937',

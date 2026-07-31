@@ -24,7 +24,7 @@ export default function SetupAdminPage() {
             maxWidth: '600px', 
             margin: '50px auto', 
             padding: '30px',
-            fontFamily: 'system-ui, -apple-system, sans-serif'
+            fontFamily: 'var(--font-family)'
         }}>
             <h1 style={{ marginBottom: '20px' }}>Setup Admin Account</h1>
             

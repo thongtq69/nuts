@@ -352,7 +352,7 @@ export default function BankInfoDisplay({
                     font-weight: 600;
                 }
                 .value.number {
-                    font-family: 'SF Mono', 'Monaco', monospace;
+                    font-family: var(--font-family);
                     font-weight: 600;
                     letter-spacing: 1px;
                 }
@@ -360,7 +360,7 @@ export default function BankInfoDisplay({
                     font-weight: 500;
                 }
                 .value.desc {
-                    font-family: 'SF Mono', 'Monaco', monospace;
+                    font-family: var(--font-family);
                     font-size: 13px;
                     background: #f0f0f0;
                     padding: 4px 8px;

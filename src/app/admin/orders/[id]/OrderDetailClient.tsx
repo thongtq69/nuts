@@ -131,7 +131,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
             <head>
                 <title>Đơn hàng #${order.orderNumber} - Go Nuts</title>
                 <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+                    body { font-family: Montserrat, Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
                     .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #9C7044; padding-bottom: 20px; }
                     .header img { max-width: 100px; height: auto; }
                     .header h1 { color: #9C7044; margin: 10px 0 5px; font-size: 24px; }

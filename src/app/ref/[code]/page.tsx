@@ -42,7 +42,7 @@ export default function RefPage() {
                 minHeight: '100vh',
                 flexDirection: 'column',
                 gap: '16px',
-                fontFamily: 'system-ui, sans-serif'
+                fontFamily: 'var(--font-family)'
             }}>
                 <h1>Link không hợp lệ</h1>
                 <p>Liên kết này đã hết hạn hoặc không tồn tại.</p>
