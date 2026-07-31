@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: var(--font-titillium-web), sans-serif;
   --color-brand: #9C7043;
   --color-brand-light: #E3C88D;
   --color-brand-dark: #7d5a36;
@@ -95,6 +96,23 @@ body {
   line-height: 1.5;
   max-width: 100%;
   overflow-x: clip;
+}
+
+button,
+input,
+select,
+textarea,
+option {
+  font-family: inherit;
+}
+
+b,
+strong {
+  font-weight: 700;
+}
+
+.font-extrabold {
+  font-weight: 900;
 }
 
 img,
@@ -782,28 +800,6 @@ video {
 
 .sidebar-list a:hover {
   color: var(--color-primary-brown);
-}
-
-.sidebar-linked-category {
-  margin-top: 4px;
-  padding-top: 10px;
-  border-top: 1px solid var(--color-gray-border);
-}
-
-.sidebar-linked-submenu-item a {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding-left: 12px;
-  color: #64748b;
-  font-size: 12px;
-}
-
-.sidebar-linked-submenu-item a::before {
-  content: '↳';
-  flex: 0 0 auto;
-  color: var(--color-primary-brown);
-  font-weight: 700;
 }
 
 .price-filter {
@@ -8084,17 +8080,6 @@ a[class*="from-orange"] {
     padding: 8px 9px;
     border: 1px solid #eee7df;
     background: #fcfaf7;
-  }
-
-  .sidebar-mobile-content .sidebar-linked-category {
-    grid-column: 1 / -1;
-    margin-top: 2px;
-    padding-top: 9px;
-  }
-
-  .sidebar-mobile-content .sidebar-linked-submenu-item a {
-    padding-left: 10px;
-    font-size: 11px;
   }
 
   .product-banner {

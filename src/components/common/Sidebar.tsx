@@ -92,19 +92,8 @@ export default function Sidebar({
                                 </Link>
                             </li>
                         ))}
-                        {linkedCategoryValues.length > 0 && (
-                            <li className="sidebar-linked-category">
-                                <Link
-                                    href="/products?linked=1"
-                                    aria-current={isLinkedProductsPage && !selectedLinkedCategory ? 'page' : undefined}
-                                    className={isLinkedProductsPage && !selectedLinkedCategory ? 'font-semibold text-[#9C7044]' : 'font-semibold'}
-                                >
-                                    Sản phẩm liên kết
-                                </Link>
-                            </li>
-                        )}
                         {linkedCategoryValues.map(category => (
-                            <li key={`linked-${category}`} className="sidebar-linked-submenu-item">
+                            <li key={`linked-${category}`}>
                                 <Link
                                     href={`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`}
                                     aria-current={isLinkedProductsPage && selectedLinkedCategory === category ? 'page' : undefined}

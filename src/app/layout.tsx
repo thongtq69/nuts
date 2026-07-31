@@ -7,7 +7,7 @@ import { OrganizationJsonLd, WebSiteJsonLd, LocalBusinessJsonLd } from '@/compon
 
 const titillium = Titillium_Web({
   weight: ["200", "300", "400", "600", "700", "900"],
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-titillium-web",
   display: "swap",
 });
