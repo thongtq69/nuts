@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-titillium-web), sans-serif;
+  --font-sans: var(--font-montserrat), sans-serif;
   --color-brand: #9C7043;
   --color-brand-light: #E3C88D;
   --color-brand-dark: #7d5a36;
@@ -37,7 +37,7 @@
   --color-dark-blue: #333;
 
   /* Typography */
-  --font-family: var(--font-titillium-web), sans-serif;
+  --font-family: var(--font-montserrat), sans-serif;
   --font-size-xs: 12px;
   --font-size-sm: 13px;
   --font-size-base: 14px;

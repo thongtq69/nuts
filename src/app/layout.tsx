@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Titillium_Web } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/components/Providers';
 import ProductDebugInfo from '@/components/debug/ProductDebugInfo';
 import { OrganizationJsonLd, WebSiteJsonLd, LocalBusinessJsonLd } from '@/components/seo/JsonLd';
 
-const titillium = Titillium_Web({
-  weight: ["200", "300", "400", "600", "700", "900"],
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-titillium-web",
+const montserrat = Montserrat({
+  weight: "variable",
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-montserrat",
   display: "swap",
 });
 
@@ -129,7 +129,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${titillium.variable} font-sans`} suppressHydrationWarning>
+    <html lang="vi" className={`${montserrat.variable} font-sans`} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
