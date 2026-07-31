@@ -16,6 +16,10 @@ export interface IProduct {
     category?: string;
     isLinkedProduct?: boolean;
     linkedCategory?: string;
+    showOnHomepageBestSeller?: boolean;
+    showOnHomepageNew?: boolean;
+    showOnHomepagePromo?: boolean;
+    showOnHomepageLinked?: boolean;
     tags?: string[];
     buttonColor?: string;
     priceColor?: string;
@@ -60,6 +64,10 @@ const ProductSchema: Schema<IProduct> = new Schema(
         category: { type: String },
         isLinkedProduct: { type: Boolean, default: false, index: true },
         linkedCategory: { type: String, trim: true, default: '' },
+        showOnHomepageBestSeller: { type: Boolean },
+        showOnHomepageNew: { type: Boolean },
+        showOnHomepagePromo: { type: Boolean },
+        showOnHomepageLinked: { type: Boolean },
         tags: { type: [String] },
         buttonColor: { type: String },
         priceColor: { type: String },

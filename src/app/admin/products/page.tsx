@@ -21,7 +21,8 @@ import {
     Box,
     ArrowUpRight,
     Download,
-    GripVertical
+    GripVertical,
+    Home
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
@@ -198,6 +199,13 @@ export default function AdminProductsPage() {
                     <p className="text-slate-500 mt-1">{totalProducts} sản phẩm trong kho</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <Link
+                        href="/admin/products/homepage"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 font-medium hover:bg-amber-100 hover:border-amber-300 transition-all shadow-sm"
+                    >
+                        <Home className="h-4 w-4" />
+                        Sản phẩm trang chủ
+                    </Link>
                     <Link
                         href="/admin/products/reorder"
                         className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"

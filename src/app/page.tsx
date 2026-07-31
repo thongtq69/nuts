@@ -11,6 +11,7 @@ import LatestNews from '@/components/home/LatestNews';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
+import { HOMEPAGE_SECTION_CONFIG } from '@/lib/homepage-products';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,14 +30,27 @@ async function getProductsByTag(tag: string, limit = 4) {
       sortParams.soldCount = -1;
     }
 
-    const products = await Product.find({ tags: tag, isLinkedProduct: { $ne: true } })
+    const sectionByTag = {
+      'best-seller': HOMEPAGE_SECTION_CONFIG.bestSeller,
+      new: HOMEPAGE_SECTION_CONFIG.new,
+      promo: HOMEPAGE_SECTION_CONFIG.promo,
+    } as const;
+    const sectionConfig = sectionByTag[tag as keyof typeof sectionByTag];
+    const hasHomepageSelection = sectionConfig
+      ? Boolean(await Product.exists({ [sectionConfig.field]: { $exists: true } }))
+      : false;
+    const productFilter = hasHomepageSelection && sectionConfig
+      ? { [sectionConfig.field]: true, isLinkedProduct: { $ne: true } }
+      : { tags: tag, isLinkedProduct: { $ne: true } };
+
+    const products = await Product.find(productFilter)
       .sort(sortParams as any)
       .limit(limit)
       .lean();
     console.log(`✅ Found ${products.length} products for tag: ${tag}`);
 
     // If no products found with specific tag, get any products as fallback
-    if (products.length === 0) {
+    if (products.length === 0 && !hasHomepageSelection) {
       console.log(`⚠️ No products found for tag: ${tag}, getting fallback products`);
       const fallbackProducts = await Product.find({ isLinkedProduct: { $ne: true } })
         .sort({ sortOrder: -1, createdAt: -1 } as any)
@@ -81,7 +95,15 @@ async function getLinkedProducts(limit = 6) {
   try {
     await dbConnect();
 
-    const products = await Product.find({ isLinkedProduct: true })
+    const config = HOMEPAGE_SECTION_CONFIG.linked;
+    const hasHomepageSelection = Boolean(
+      await Product.exists({ [config.field]: { $exists: true } }),
+    );
+    const products = await Product.find(
+      hasHomepageSelection
+        ? { isLinkedProduct: true, [config.field]: true }
+        : { isLinkedProduct: true },
+    )
       .sort({ sortOrder: -1, createdAt: -1 } as any)
       .limit(limit)
       .lean();
@@ -123,16 +145,22 @@ export default async function Home() {
         <HeroSlider />
       </ErrorBoundary>
       <PromotionBanner />
-      <ErrorBoundary>
-        <ProductSection title="Sản phẩm bán chạy" products={bestSellers as any} />
-      </ErrorBoundary>
+      {bestSellers.length > 0 && (
+        <ErrorBoundary>
+          <ProductSection title="Sản phẩm bán chạy" products={bestSellers as any} />
+        </ErrorBoundary>
+      )}
       <LargePromoBanner />
-      <ErrorBoundary>
-        <ProductSection title="Sản phẩm mới" products={newProducts as any} />
-      </ErrorBoundary>
-      <ErrorBoundary>
-        <ProductSection title="Khuyến mãi" products={promotionProducts as any} />
-      </ErrorBoundary>
+      {newProducts.length > 0 && (
+        <ErrorBoundary>
+          <ProductSection title="Sản phẩm mới" products={newProducts as any} />
+        </ErrorBoundary>
+      )}
+      {promotionProducts.length > 0 && (
+        <ErrorBoundary>
+          <ProductSection title="Khuyến mãi" products={promotionProducts as any} />
+        </ErrorBoundary>
+      )}
       {linkedProducts.length > 0 && (
         <ErrorBoundary>
           <ProductSection

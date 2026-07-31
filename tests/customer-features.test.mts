@@ -12,6 +12,35 @@ import { normalizeMenuName } from '../src/lib/menu-name.ts';
 import { cleanHTMLContent } from '../src/lib/textUtils.ts';
 import { calculateVoucherDiscount } from '../src/lib/voucher-discount.ts';
 import { isProductPriceInRanges } from '../src/lib/product-price-filter.ts';
+import {
+    HOMEPAGE_SECTION_CONFIG,
+    HomepageSelectionError,
+    normalizeHomepageSelection,
+} from '../src/lib/homepage-products.ts';
+
+test('homepage product groups keep the requested limits', () => {
+    assert.equal(HOMEPAGE_SECTION_CONFIG.bestSeller.limit, 8);
+    assert.equal(HOMEPAGE_SECTION_CONFIG.new.limit, 8);
+    assert.equal(HOMEPAGE_SECTION_CONFIG.promo.limit, 8);
+    assert.equal(HOMEPAGE_SECTION_CONFIG.linked.limit, 6);
+});
+
+test('homepage product selection removes duplicate ids', () => {
+    assert.deepEqual(
+        normalizeHomepageSelection('linked', ['a', 'a', 'b']).productIds,
+        ['a', 'b'],
+    );
+});
+
+test('homepage product selection rejects more products than the section can display', () => {
+    assert.throws(
+        () => normalizeHomepageSelection(
+            'linked',
+            Array.from({ length: 7 }, (_, index) => `product-${index}`),
+        ),
+        HomepageSelectionError,
+    );
+});
 
 test('product price ranges use non-overlapping storefront boundaries', () => {
     assert.equal(isProductPriceInRanges(99_999, ['under-100k']), true);
