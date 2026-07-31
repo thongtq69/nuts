@@ -108,20 +108,25 @@ export default function Navbar() {
     ];
 
     return (
-        <nav className="bg-white border-b border-slate-100 z-40 relative">
+        <nav className="site-navbar bg-white border-b border-slate-100 z-40 relative">
             <div className="container mx-auto px-4 py-2 lg:py-0">
                 <div className="flex items-center justify-between">
                     {/* Mobile Menu Toggle - Only visible on small screens */}
                     <button
-                        className="lg:hidden p-2 text-[#3C2A1A] hover:bg-slate-50 rounded-lg transition-colors"
+                        className="site-mobile-menu-toggle lg:hidden p-2 text-[#3C2A1A] hover:bg-slate-50 rounded-lg transition-colors"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         aria-label="Toggle menu"
+                        aria-expanded={isMobileMenuOpen}
                     >
-                        <div className="w-6 h-5 relative flex flex-col justify-between">
-                            <span className={`h-0.5 w-full bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`}></span>
-                            <span className={`h-0.5 w-full bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
-                            <span className={`h-0.5 w-full bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
-                        </div>
+                        <span className="flex items-center gap-3">
+                            <span className="w-6 h-5 relative flex flex-col justify-between">
+                                <span className={`h-0.5 w-full bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`}></span>
+                                <span className={`h-0.5 w-full bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
+                                <span className={`h-0.5 w-full bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+                            </span>
+                            <span className="mobile-menu-label">Danh mục</span>
+                        </span>
+                        <span className={`mobile-menu-chevron transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true">⌄</span>
                     </button>
 
                     {/* Desktop Menu */}
@@ -189,7 +194,7 @@ export default function Navbar() {
                     </ul>
 
                     {/* Mobile Menu Items - Slide Down */}
-                    <div className={`
+                    <div className={`site-mobile-menu
                         absolute top-full left-0 w-full bg-white shadow-2xl lg:hidden overflow-hidden transition-all duration-500 ease-in-out z-50
                         ${isMobileMenuOpen ? 'max-h-[80vh] border-t border-slate-100' : 'max-h-0'}
                     `}>

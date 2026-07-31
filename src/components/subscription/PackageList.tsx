@@ -149,7 +149,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
     };
 
     return (
-        <div className="relative group/scroll px-4">
+        <div className="subscription-package-list relative group/scroll px-4">
             {/* Scroll Navigation - Desktop Only */}
             <div className="hidden lg:block">
                 <button
@@ -169,7 +169,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
             {/* Scroll Container - Responsive Layout */}
             <div
                 ref={containerRef}
-                className="flex flex-col lg:flex-row py-16 lg:py-32 gap-16 lg:gap-6 lg:overflow-x-auto lg:snap-x lg:snap-mandatory scrollbar-hide lg:px-12 scroll-smooth items-center lg:items-stretch"
+                className="subscription-package-track flex flex-col lg:flex-row py-16 lg:py-32 gap-16 lg:gap-6 lg:overflow-x-auto lg:snap-x lg:snap-mandatory scrollbar-hide lg:px-12 scroll-smooth items-center lg:items-stretch"
             >
                 {packages.map((pkg, index) => {
                     const theme = cardThemes[index % cardThemes.length];
@@ -191,11 +191,11 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                     return (
                         <div
                             key={pkg._id}
-                            className={`lg:snap-center shrink-0 w-full max-w-[400px] lg:w-[calc(25%-18px)] lg:max-w-[420px] lg:min-w-[320px] flex flex-col transition-all duration-700`}
+                            className={`subscription-package-shell lg:snap-center shrink-0 w-full max-w-[400px] lg:w-[calc(25%-18px)] lg:max-w-[420px] lg:min-w-[320px] flex flex-col transition-all duration-700`}
                         >
                             <div
                                 onClick={() => setSelectedTerms({ name: pkg.name, terms: pkg.terms || pkg.description || 'Đang cập nhật...', theme })}
-                                className={`relative w-full h-auto lg:h-[840px] bg-gradient-to-b ${theme.bg} rounded-[40px] lg:rounded-[48px] border border-white/10 shadow-[0_45px_90px_-20px_rgba(0,0,0,0.2)] flex flex-col transition-all duration-500 overflow-visible cursor-pointer group`}
+                                className={`subscription-package-card relative w-full h-auto lg:h-[840px] bg-gradient-to-b ${theme.bg} rounded-[40px] lg:rounded-[48px] border border-white/10 shadow-[0_45px_90px_-20px_rgba(0,0,0,0.2)] flex flex-col transition-all duration-500 overflow-visible cursor-pointer group`}
                             >
                                 {/* Mascot INTEGRATION */}
                                 <div className="absolute -top-16 lg:-top-20 left-1/2 -translate-x-1/2 w-56 lg:w-72 h-56 lg:h-72 z-20 pointer-events-none transition-transform duration-700 group-hover:scale-105">

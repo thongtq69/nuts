@@ -47,9 +47,9 @@ export default function LatestNews() {
     if (blogs.length === 0) return null;
 
     return (
-        <section className="py-24 bg-white">
+        <section className="latest-news-section py-24 bg-white">
             <div className="container mx-auto px-4">
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+                <div className="latest-news-header flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                     <div>
                         <div className="flex items-center gap-3 mb-4">
                             <div className="h-0.5 w-12 bg-[#9C7044]"></div>
@@ -68,9 +68,9 @@ export default function LatestNews() {
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="latest-news-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {blogs.map((item) => (
-                        <article key={item._id} className="group flex flex-col h-full bg-white rounded-[40px] border border-slate-100 overflow-hidden transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(156,112,68,0.15)] hover:-translate-y-2">
+                        <article key={item._id} className="latest-news-card group flex flex-col h-full bg-white rounded-[40px] border border-slate-100 overflow-hidden transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(156,112,68,0.15)] hover:-translate-y-2">
                             <div className="relative aspect-[16/10] overflow-hidden">
                                 {item.coverImage ? (
                                     <img

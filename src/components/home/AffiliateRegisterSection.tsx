@@ -239,21 +239,66 @@ export default function AffiliateRegisterSection() {
 
                 @media (max-width: 576px) {
                     .affiliate-register-section {
-                        padding: 40px 0;
+                        padding: 32px 0;
                     }
 
                     .affiliate-text h2 {
                         font-size: 24px;
                     }
 
+                    .affiliate-subtitle {
+                        margin-bottom: 22px;
+                        font-size: 14px;
+                    }
+
+                    .affiliate-benefits {
+                        align-items: stretch;
+                        gap: 12px;
+                        margin-bottom: 22px;
+                    }
+
+                    .benefit-item {
+                        flex-direction: row;
+                        align-items: flex-start;
+                        gap: 12px;
+                        padding: 14px;
+                        border: 1px solid #eee8e2;
+                        border-radius: 14px;
+                        background: white;
+                        text-align: left;
+                    }
+
+                    .benefit-icon {
+                        font-size: 23px;
+                    }
+
+                    .affiliate-cta,
+                    .btn-agent,
+                    .coming-soon-ctv {
+                        width: 100%;
+                    }
+
+                    .coming-soon-ctv {
+                        text-align: center;
+                    }
+
                     .stats-card {
-                        flex-direction: column;
-                        gap: 24px;
+                        flex-direction: row;
+                        gap: 8px;
+                        padding: 20px 12px;
                     }
 
                     .stat-divider {
-                        width: 60px;
-                        height: 1px;
+                        width: 1px;
+                        height: 48px;
+                    }
+
+                    .stat-number {
+                        font-size: 22px;
+                    }
+
+                    .stat-label {
+                        font-size: 10px;
                     }
                 }
             `}</style>

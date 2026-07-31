@@ -76,12 +76,12 @@ export default function Header() {
     return (
         <>
             {/* Unified Top Bar - Spacious and Premium */}
-            <div className="bg-[#E3E846] border-b border-black/5 relative z-50">
+            <div className="mobile-topbar bg-[#E3E846] border-b border-black/5 relative z-50">
                 <div className="container mx-auto px-4">
                     {/* Row 1: Hotline & Socials */}
-                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2 md:py-3 text-[11px] md:text-xs font-medium text-[#3C2A1A]">
+                    <div className="mobile-topbar-row flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2 md:py-3 text-[11px] md:text-xs font-medium text-[#3C2A1A]">
                         {/* Left: Hotline & Zalo */}
-                        <div className="flex items-center gap-2 md:gap-3">
+                        <div className="mobile-hotline flex items-center gap-2 md:gap-3">
                             <span className="opacity-90 whitespace-nowrap">Hotline: {settings.hotline}</span>
                             {settings.zaloLink && (
                                 <a href={settings.zaloLink} target="_blank" rel="noopener noreferrer" className="w-9 h-9 md:w-6 md:h-6 hover:scale-110 transition-transform flex items-center justify-center flex-shrink-0" title="Chat qua Zalo" aria-label="Chat Go Nuts qua Zalo">
@@ -94,14 +94,14 @@ export default function Header() {
                         </div>
 
                         {/* Center: Affiliate Links (Mobile Only) */}
-                        <div className="flex lg:hidden items-center gap-2 font-medium text-[9px] opacity-80">
+                        <div className="mobile-affiliate-links flex lg:hidden items-center gap-2 font-medium text-[9px] opacity-80">
                             <button onClick={() => handleAffiliateClick('agent')} className="hover:text-[#9C7044] whitespace-nowrap">Đại lý</button>
                             <span>|</span>
                             <button onClick={() => handleAffiliateClick('collaborator')} className="hover:text-[#9C7044] whitespace-nowrap">CTV</button>
                         </div>
 
                         {/* Right Side: Links & Social Icons */}
-                        <div className="flex w-full sm:w-auto items-center justify-center gap-2 md:gap-4">
+                        <div className="mobile-topbar-right flex w-full sm:w-auto items-center justify-center gap-2 md:gap-4">
                             <div className="hidden lg:flex items-center gap-3 mr-2 font-medium">
                                 <button
                                     onClick={() => handleAffiliateClick('agent')}
@@ -119,7 +119,7 @@ export default function Header() {
                             </div>
 
                             {/* Social Icons Group */}
-                            <div className="flex items-center gap-1.5 md:gap-2">
+                            <div className="mobile-socials flex items-center gap-1.5 md:gap-2">
                                 {settings.facebookUrl && (
                                     <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook Go Nuts" className="w-9 h-9 md:w-6 md:h-6 rounded-full bg-[#9C7044] flex items-center justify-center text-white hover:bg-[#855D36] transition-all shadow-sm flex-shrink-0">
                                         <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
@@ -158,14 +158,14 @@ export default function Header() {
             </div>
 
             {/* Main Header - White with subtle shadow */}
-            <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">
-                <div className="container mx-auto px-4 py-2 md:py-6">
+            <header className="site-main-header bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100">
+                <div className="site-main-header-inner container mx-auto px-4 py-2 md:py-6">
                     <div className="flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-8">
                         {/* Mobile Row: Logo & Actions */}
-                        <div className="w-full flex items-center justify-between lg:w-auto">
-                            <Link href="/" className="shrink-0 flex items-center gap-3 md:gap-4 group">
+                        <div className="site-header-row w-full flex items-center justify-between lg:w-auto">
+                            <Link href="/" className="site-brand shrink-0 flex items-center gap-3 md:gap-4 group">
                                 <img src="/assets/logo.png" alt="Go Nuts Logo" width={80} height={80} className="h-10 md:h-16 lg:h-20 w-auto transition-transform duration-300 group-hover:scale-105" />
-                                <div className="flex flex-col justify-center border-l-2 border-[#9C7044]/20 pl-3 md:pl-4">
+                                <div className="site-brand-copy flex flex-col justify-center border-l-2 border-[#9C7044]/20 pl-3 md:pl-4">
                                     <span className="text-[10px] md:text-[13px] font-black text-[#3C2A1A] leading-tight uppercase tracking-[0.1em]">
                                         Nuts for our nuts
                                     </span>
@@ -176,7 +176,7 @@ export default function Header() {
                             </Link>
 
                             {/* Mobile Icons - Right side */}
-                            <div className="flex items-center gap-4 lg:hidden">
+                            <div className="site-mobile-actions flex items-center gap-4 lg:hidden">
                                 <Link href={user ? "/account" : "/login"} aria-label={user ? 'Tài khoản' : 'Đăng nhập'} className="w-11 h-11 flex items-center justify-center text-[#3C2A1A] hover:bg-slate-50 rounded-full transition-colors">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
@@ -199,8 +199,8 @@ export default function Header() {
                         </div>
 
                         {/* Search Bar - Premium Floating Glass Design */}
-                        <div className="w-full lg:flex-1 max-w-2xl relative group px-2 lg:px-0">
-                            <div className="relative flex items-center bg-white/80 backdrop-blur-md rounded-[22px] border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(156,112,68,0.1)] focus-within:shadow-[0_0_25px_rgba(227,232,70,0.35)] focus-within:border-[#E3E846]/50 transition-all duration-500 overflow-hidden group/search-box">
+                        <div className="site-search w-full lg:flex-1 max-w-2xl relative group px-2 lg:px-0">
+                            <div className="site-search-box relative flex items-center bg-white/80 backdrop-blur-md rounded-[22px] border border-slate-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(156,112,68,0.1)] focus-within:shadow-[0_0_25px_rgba(227,232,70,0.35)] focus-within:border-[#E3E846]/50 transition-all duration-500 overflow-hidden group/search-box">
                                 {/* Search Icon with Animation */}
                                 <div className="pl-5 text-slate-400 group-focus-within/search-box:text-[#9C7044] group-focus-within/search-box:scale-110 transition-all duration-300">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
