@@ -77,17 +77,41 @@ async function getProductsByTag(tag: string, limit = 4) {
   }
 }
 
+async function getLinkedProducts(limit = 6) {
+  try {
+    await dbConnect();
+
+    const products = await Product.find({ isLinkedProduct: true })
+      .sort({ sortOrder: -1, createdAt: -1 } as any)
+      .limit(limit)
+      .lean();
+
+    return products.map((product: any) => ({
+      ...product,
+      id: product._id.toString(),
+      _id: product._id.toString(),
+    })) as unknown as IProduct[];
+  } catch (error: any) {
+    console.error('Failed to fetch linked products for homepage:', error.message);
+    return [];
+  }
+}
+
 export default async function Home() {
   console.log('🏠 Home page: Starting to fetch products...');
 
-  const bestSellers = await getProductsByTag('best-seller', 8);
-  const newProducts = await getProductsByTag('new', 8);
-  const promotionProducts = await getProductsByTag('promo', 8);
+  const [bestSellers, newProducts, promotionProducts, linkedProducts] = await Promise.all([
+    getProductsByTag('best-seller', 8),
+    getProductsByTag('new', 8),
+    getProductsByTag('promo', 8),
+    getLinkedProducts(6),
+  ]);
 
   console.log('🏠 Home page: Products fetched:', {
     bestSellers: bestSellers.length,
     newProducts: newProducts.length,
-    promotionProducts: promotionProducts.length
+    promotionProducts: promotionProducts.length,
+    linkedProducts: linkedProducts.length,
   });
 
   return (
@@ -109,6 +133,16 @@ export default async function Home() {
       <ErrorBoundary>
         <ProductSection title="Khuyến mãi" products={promotionProducts as any} />
       </ErrorBoundary>
+      {linkedProducts.length > 0 && (
+        <ErrorBoundary>
+          <ProductSection
+            title="Sản phẩm liên kết"
+            products={linkedProducts as any}
+            viewMoreHref="/products?linked=1"
+            paginate={false}
+          />
+        </ErrorBoundary>
+      )}
       <FeaturesSection />
       <ErrorBoundary>
         <LatestNews />

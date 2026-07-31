@@ -23,6 +23,8 @@ interface ProductSectionProps {
     title: string;
     products: Product[];
     variant?: 'six' | 'four';
+    viewMoreHref?: string;
+    paginate?: boolean;
 }
 
 function getPageSize(width: number, variant: 'six' | 'four') {
@@ -39,7 +41,13 @@ function getPageSize(width: number, variant: 'six' | 'four') {
     return 2;
 }
 
-export default function ProductSection({ title, products, variant = 'six' }: ProductSectionProps) {
+export default function ProductSection({
+    title,
+    products,
+    variant = 'six',
+    viewMoreHref = '/products',
+    paginate = true,
+}: ProductSectionProps) {
     const [pageSize, setPageSize] = useState(6);
     const [page, setPage] = useState(0);
 
@@ -57,9 +65,11 @@ export default function ProductSection({ title, products, variant = 'six' }: Pro
     }, [pageSize, products.length]);
 
     const visibleProducts = useMemo(() => {
+        if (!paginate) return products;
+
         const start = page * pageSize;
         return products.slice(start, start + pageSize);
-    }, [products, page, pageSize]);
+    }, [products, page, pageSize, paginate]);
 
     const canPrev = page > 0;
     const canNext = page < totalPages - 1;
@@ -70,7 +80,7 @@ export default function ProductSection({ title, products, variant = 'six' }: Pro
                 <div className="section-header">
                     <h2 className="section-title">{title}</h2>
                     <div className="section-actions">
-                        {products.length > pageSize && (
+                        {paginate && products.length > pageSize && (
                             <div className="section-pager" aria-label="Product section pagination">
                                 <button
                                     type="button"
@@ -93,7 +103,7 @@ export default function ProductSection({ title, products, variant = 'six' }: Pro
                                 </button>
                             </div>
                         )}
-                        <Link href="/products" className="view-more">
+                        <Link href={viewMoreHref} className="view-more">
                             Xem thêm
                         </Link>
                     </div>
