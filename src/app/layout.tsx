@@ -55,10 +55,11 @@ export const metadata: Metadata = {
     siteName: "Go Nuts",
     images: [
       {
-        url: "https://gonuts.vn/assets/images/gonuts-banner-member.png?v=5",
+        url: "https://gonuts.vn/og-gonuts-logo.png?v=20260731-1",
         width: 1200,
         height: 630,
-        alt: "Go Nuts - Hạt dinh dưỡng, Thực phẩm sạch",
+        alt: "Logo chính thức Go Nuts",
+        type: "image/png",
       },
     ],
     locale: "vi_VN",
@@ -68,7 +69,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Go Nuts - Hạt dinh dưỡng, Thực phẩm sạch",
     description: "Cửa hàng hạt dinh dưỡng, trái cây sấy, thực phẩm sạch từ 5000+ nông dân Việt Nam. Giao hàng toàn quốc.",
-    images: ["https://gonuts.vn/assets/images/gonuts-banner-member.png?v=5"],
+    images: ["https://gonuts.vn/og-gonuts-logo.png?v=20260731-1"],
   },
   icons: {
     icon: [

@@ -212,7 +212,7 @@ export default function Header() {
                                 <input
                                     type="text"
                                     className="w-full py-2.5 md:py-4 px-4 bg-transparent text-sm md:text-base outline-none font-semibold placeholder:text-slate-400 placeholder:font-medium text-slate-800 z-10"
-                                    placeholder="Bạn đang tìm loại hạt nào hôm nay?..."
+                                    placeholder="Bạn đang tìm sản phẩm nào hôm nay?..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={handleKeyDown}
