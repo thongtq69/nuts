@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
@@ -97,13 +97,6 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const { settings } = useSettings();
     const [scrolled, setScrolled] = useState(false);
-
-    // Close sidebar when route changes on mobile
-    useEffect(() => {
-        if (onClose && isOpen) {
-            onClose();
-        }
-    }, [pathname, isOpen, onClose]);
 
     const isActive = (href: string) => {
         if (href === '/admin') {
@@ -204,7 +197,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
             >
                 {/* Mobile Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-800">
-                    <Link href="/admin" className="flex items-center gap-3">
+                    <Link href="/admin" onClick={onClose} className="flex items-center gap-3">
                         <div className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-xl p-1.5 border border-white/5 overflow-hidden">
                             <img
                                 src={settings?.logoUrl || "/assets/logo.png"}
@@ -240,6 +233,7 @@ export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
                                         <li key={item.href}>
                                             <Link
                                                 href={item.href}
+                                                onClick={onClose}
                                                 className={`
                                                 flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium leading-relaxed
                                                 transition-all duration-200 min-h-[52px]

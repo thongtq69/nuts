@@ -259,6 +259,10 @@ export default function AdminStaffPage() {
     const totalCTV = staffList.reduce((sum, s) => sum + s.collaboratorCount, 0);
     const totalRevenue = staffList.reduce((sum, s) => sum + s.teamRevenue, 0);
 
+    const scrollToStaffList = () => {
+        document.getElementById('staff-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
     const getRoleColor = (roleType: string) => {
         return ROLE_DEFINITIONS[roleType as keyof typeof ROLE_DEFINITIONS]?.color || '#6b7280';
     };
@@ -322,7 +326,12 @@ export default function AdminStaffPage() {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                <button
+                    type="button"
+                    onClick={scrollToStaffList}
+                    className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 text-left cursor-pointer hover:border-brand/40 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    aria-label="Xem danh sách nhân viên"
+                >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center">
                             <UserCheck className="w-5 h-5 text-brand" />
@@ -332,8 +341,13 @@ export default function AdminStaffPage() {
                             <div className="text-sm text-slate-500">Nhân viên</div>
                         </div>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                </button>
+                <button
+                    type="button"
+                    onClick={scrollToStaffList}
+                    className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 text-left cursor-pointer hover:border-brand/40 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    aria-label="Xem nhân viên và cộng tác viên đang quản lý"
+                >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-brand-light/30 flex items-center justify-center">
                             <Users className="w-5 h-5 text-brand-dark" />
@@ -343,8 +357,13 @@ export default function AdminStaffPage() {
                             <div className="text-sm text-slate-500">Tổng CTV</div>
                         </div>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 col-span-2">
+                </button>
+                <button
+                    type="button"
+                    onClick={scrollToStaffList}
+                    className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 col-span-2 text-left cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    aria-label="Xem doanh thu theo từng nhân viên"
+                >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
                             <TrendingUp className="w-5 h-5 text-emerald-600" />
@@ -354,7 +373,7 @@ export default function AdminStaffPage() {
                             <div className="text-sm text-slate-500">Tổng doanh thu từ team</div>
                         </div>
                     </div>
-                </div>
+                </button>
             </div>
 
             <SearchInput
@@ -366,7 +385,7 @@ export default function AdminStaffPage() {
 
 
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div id="staff-list" className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden scroll-mt-24">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-slate-50 border-b border-slate-100">
@@ -419,7 +438,11 @@ export default function AdminStaffPage() {
                                             {startIndex + index + 1}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
+                                            <Link
+                                                href={`/admin/users/${staff.id}`}
+                                                className="flex items-center gap-3 rounded-lg -m-2 p-2 hover:bg-brand/5 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                                                aria-label={`Xem chi tiết nhân viên ${staff.name}`}
+                                            >
                                                 <div className="w-9 h-9 bg-gradient-to-br from-brand to-brand-dark rounded-full flex items-center justify-center text-white font-bold text-sm">
                                                     {staff.name.charAt(0).toUpperCase()}
                                                 </div>
@@ -427,7 +450,7 @@ export default function AdminStaffPage() {
                                                     <div className="font-medium text-slate-800">{staff.name}</div>
                                                     <div className="text-xs text-slate-500">{staff.email}</div>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
@@ -479,9 +502,10 @@ export default function AdminStaffPage() {
                                                 </button>
                                                 <Link
                                                     href={`/admin/users/${staff.id}`}
-                                                    className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-2 text-brand hover:bg-brand/10 rounded-lg transition-colors text-xs font-semibold"
                                                     title="Chi tiết"
                                                 >
+                                                    <span>Chi tiết</span>
                                                     <ChevronRight size={16} />
                                                 </Link>
                                                 <button
