@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
@@ -96,8 +95,6 @@ interface SidebarProps {
 export default function AdminSidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const { settings } = useSettings();
-    const [scrolled, setScrolled] = useState(false);
-
     const isActive = (href: string) => {
         if (href === '/admin') {
             return pathname === '/admin';
