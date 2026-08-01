@@ -1,4 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
+import { DEFAULT_HOME_FEATURES, HomeFeature, HOME_FEATURE_ICONS } from '@/lib/site-features';
 
 export interface IProductFeature {
     title: string;
@@ -32,6 +33,9 @@ export interface ISiteSettings {
     // Free Shipping
     freeShippingThreshold: number;
 
+    // Home Page Features
+    homeFeatures: HomeFeature[];
+
     // Product Features/Commitments
     productFeatures: IProductFeature[];
     supportHotline: string;
@@ -64,6 +68,12 @@ const ProductFeatureSchema = new Schema<IProductFeature>({
     enabled: { type: Boolean, default: true }
 }, { _id: false });
 
+const HomeFeatureSchema = new Schema<HomeFeature>({
+    text: { type: String, required: true, trim: true },
+    icon: { type: String, enum: HOME_FEATURE_ICONS, required: true },
+    enabled: { type: Boolean, default: true }
+}, { _id: false });
+
 const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
     {
         hotline: { type: String, default: '090xxxxxxx' },
@@ -83,6 +93,11 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         ctvRegistrationUrl: { type: String, default: '/agent/register' },
 
         freeShippingThreshold: { type: Number, default: 500000 },
+
+        homeFeatures: {
+            type: [HomeFeatureSchema],
+            default: () => DEFAULT_HOME_FEATURES.map(feature => ({ ...feature }))
+        },
 
         productFeatures: {
             type: [ProductFeatureSchema],

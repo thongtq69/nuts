@@ -21,6 +21,8 @@ import {
     ImageIcon
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { useSettings } from '@/context/SettingsContext';
+import { DEFAULT_HOME_FEATURES, HomeFeature, normalizeHomeFeatures } from '@/lib/site-features';
 
 interface ProductFeature {
     title: string;
@@ -43,6 +45,7 @@ interface SiteSettings {
     agentRegistrationUrl: string;
     ctvRegistrationUrl: string;
     freeShippingThreshold: number;
+    homeFeatures: HomeFeature[];
     logoUrl: string;
     siteName: string;
     businessLicense: string;
@@ -74,6 +77,7 @@ export default function AdminSettingsPage() {
         agentRegistrationUrl: '/agent/register',
         ctvRegistrationUrl: '/agent/register',
         freeShippingThreshold: 2000000,
+        homeFeatures: DEFAULT_HOME_FEATURES.map(feature => ({ ...feature })),
         logoUrl: '/assets/logo.png',
         siteName: 'Go Nuts Vietnam',
         businessLicense: '0123xxxxxx',
@@ -98,6 +102,7 @@ export default function AdminSettingsPage() {
     const [uploadingBanner, setUploadingBanner] = useState(false);
     const [bannerType, setBannerType] = useState<'products' | 'homePromo'>('products');
     const toast = useToast();
+    const { refreshSettings } = useSettings();
 
     useEffect(() => {
         fetchSettings();
@@ -108,7 +113,10 @@ export default function AdminSettingsPage() {
             const res = await fetch('/api/settings', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
-                setSettings(data);
+                setSettings({
+                    ...data,
+                    homeFeatures: normalizeHomeFeatures(data.homeFeatures),
+                });
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
@@ -126,10 +134,19 @@ export default function AdminSettingsPage() {
                 body: JSON.stringify(settings),
             });
 
+            const payload = await res.json();
             if (res.ok) {
+                if (payload.settings) {
+                    setSettings({
+                        ...payload.settings,
+                        homeFeatures: normalizeHomeFeatures(payload.settings.homeFeatures),
+                    });
+                }
+                await refreshSettings();
+                window.localStorage.setItem('gonuts-settings-updated-at', Date.now().toString());
                 toast.success('Đã lưu cài đặt thành công');
             } else {
-                toast.error('Lỗi khi lưu cài đặt', 'Vui lòng thử lại.');
+                toast.error('Lỗi khi lưu cài đặt', payload.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             toast.error('Lỗi kết nối', 'Vui lòng thử lại.');
@@ -602,6 +619,8 @@ export default function AdminSettingsPage() {
                             </label>
                             <input
                                 type="number"
+                                min="0"
+                                step="1000"
                                 value={settings.freeShippingThreshold}
                                 onChange={e => setSettings(prev => ({ ...prev, freeShippingThreshold: parseInt(e.target.value) || 0 }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
@@ -610,7 +629,74 @@ export default function AdminSettingsPage() {
                             <p className="text-xs text-slate-500 mt-1">
                                 Hiện tại: Miễn phí ship cho đơn từ {settings.freeShippingThreshold.toLocaleString()}đ
                             </p>
+                            <p className="text-xs text-amber-700 mt-2">
+                                Ngưỡng này được dùng trực tiếp để tính phí tại trang thanh toán. Phí của đơn chưa đạt ngưỡng được cấu hình tại mục Vận chuyển.
+                            </p>
                         </div>
+                    </div>
+                </div>
+
+                {/* Home Page Features */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+                    <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <Globe className="text-brand" size={20} />
+                        Nội dung cam kết ngoài trang chủ
+                    </h2>
+                    <p className="text-sm text-slate-500 mb-2">
+                        Nội dung đã lưu sẽ xuất hiện tại 4 ô cam kết ở cuối trang chủ.
+                    </p>
+                    <p className="text-sm text-amber-700 mb-4">
+                        Với ô giao hàng, hãy ghi nội dung khớp với ngưỡng miễn phí vận chuyển ở phía trên.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {settings.homeFeatures.map((feature, index) => {
+                            const FeatureIcon = feature.icon === 'truck'
+                                ? Truck
+                                : feature.icon === 'refresh'
+                                    ? RefreshCw
+                                    : feature.icon === 'users'
+                                        ? Users
+                                        : Shield;
+
+                            return (
+                                <div key={`${feature.icon}-${index}`} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <FeatureIcon className="text-brand" size={22} />
+                                        <span className="font-semibold text-slate-700">Ô nội dung {index + 1}</span>
+                                        <label className="flex items-center gap-2 ml-auto">
+                                            <input
+                                                type="checkbox"
+                                                checked={feature.enabled}
+                                                onChange={event => {
+                                                    const homeFeatures = settings.homeFeatures.map((item, itemIndex) =>
+                                                        itemIndex === index ? { ...item, enabled: event.target.checked } : item
+                                                    );
+                                                    setSettings(prev => ({ ...prev, homeFeatures }));
+                                                }}
+                                                className="w-4 h-4 text-brand rounded focus:ring-brand"
+                                            />
+                                            <span className="text-sm text-slate-600">Hiển thị</span>
+                                        </label>
+                                    </div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                                        Nội dung hiển thị
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        value={feature.text}
+                                        onChange={event => {
+                                            const homeFeatures = settings.homeFeatures.map((item, itemIndex) =>
+                                                itemIndex === index ? { ...item, text: event.target.value } : item
+                                            );
+                                            setSettings(prev => ({ ...prev, homeFeatures }));
+                                        }}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm resize-y"
+                                        placeholder="Nhập nội dung hiển thị ngoài trang chủ"
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 

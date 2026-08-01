@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import type { HomeFeature } from '@/lib/site-features';
 
 interface ProductFeature {
     title: string;
@@ -23,12 +24,15 @@ interface Settings {
         youtube?: string;
     };
     productFeatures?: ProductFeature[];
+    homeFeatures?: HomeFeature[];
+    freeShippingThreshold?: number;
     supportHotline?: string;
 }
 
 interface SettingsContextType {
     settings: Settings | null;
     loading: boolean;
+    refreshSettings: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -37,13 +41,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const [settings, setSettings] = useState<Settings | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
-
-    const fetchSettings = async () => {
+    const fetchSettings = useCallback(async () => {
         try {
-            const res = await fetch('/api/settings');
+            const res = await fetch('/api/settings', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setSettings(data);
@@ -67,10 +67,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        void fetchSettings();
+    }, [fetchSettings]);
+
+    useEffect(() => {
+        const handleSettingsUpdated = () => {
+            void fetchSettings();
+        };
+
+        window.addEventListener('storage', handleSettingsUpdated);
+        return () => window.removeEventListener('storage', handleSettingsUpdated);
+    }, [fetchSettings]);
 
     return (
-        <SettingsContext.Provider value={{ settings, loading }}>
+        <SettingsContext.Provider value={{ settings, loading, refreshSettings: fetchSettings }}>
             {children}
         </SettingsContext.Provider>
     );

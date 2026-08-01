@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import SiteSettings from '@/models/SiteSettings';
+import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '@/lib/site-features';
+import { requireAdminAuth } from '@/lib/auth-permissions';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -44,6 +46,7 @@ export async function GET() {
                 agentRegistrationUrl: '/register?type=agent',
                 ctvRegistrationUrl: '/register?type=collaborator',
                 freeShippingThreshold: 500000,
+                homeFeatures: DEFAULT_HOME_FEATURES,
                 logoUrl: '/assets/logo.png',
                 siteName: 'Go Nuts Vietnam',
                 businessLicense: '0123xxxxxx',
@@ -76,7 +79,15 @@ export async function GET() {
             await settings.save();
         }
 
-        return NextResponse.json(settings);
+        const normalizedHomeFeatures = normalizeHomeFeatures(settings.homeFeatures);
+        if (JSON.stringify(settings.homeFeatures) !== JSON.stringify(normalizedHomeFeatures)) {
+            settings.homeFeatures = normalizedHomeFeatures;
+            await settings.save();
+        }
+
+        return NextResponse.json(settings, {
+            headers: { 'Cache-Control': 'no-store, max-age=0' }
+        });
     } catch (error) {
         console.error('Error fetching settings:', error);
         return NextResponse.json({ error: 'Lỗi khi lấy cài đặt' }, { status: 500 });
@@ -86,12 +97,19 @@ export async function GET() {
 // PUT - Cập nhật cài đặt website
 export async function PUT(request: NextRequest) {
     try {
+        const auth = await requireAdminAuth();
+        if (auth.error) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         const { _id, __v, createdAt, updatedAt: bodyUpdatedAt, ...updateData } = await request.json();
         await dbConnect();
 
         // Sanitize updateData - remove any fields that shouldn't be updated or cause issues
         const sanitizedUpdateData = {
             ...updateData,
+            freeShippingThreshold: Math.max(0, Number(updateData.freeShippingThreshold) || 0),
+            homeFeatures: normalizeHomeFeatures(updateData.homeFeatures),
             updatedAt: new Date()
         };
 

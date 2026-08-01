@@ -17,6 +17,27 @@ import {
     HomepageSelectionError,
     normalizeHomepageSelection,
 } from '../src/lib/homepage-products.ts';
+import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '../src/lib/site-features.ts';
+
+test('homepage commitments keep four editable content boxes', () => {
+    assert.equal(DEFAULT_HOME_FEATURES.length, 4);
+    assert.deepEqual(
+        DEFAULT_HOME_FEATURES.map(feature => feature.icon),
+        ['truck', 'refresh', 'shield', 'users'],
+    );
+});
+
+test('homepage commitment content is normalized before saving', () => {
+    const features = normalizeHomeFeatures([
+        { text: '  Miễn phí từ 500.000đ  ', icon: 'truck', enabled: true },
+        { text: 'Đổi trả trong 7 ngày', icon: 'refresh', enabled: false },
+    ]);
+
+    assert.equal(features.length, 4);
+    assert.equal(features[0].text, 'Miễn phí từ 500.000đ');
+    assert.equal(features[1].enabled, false);
+    assert.equal(features[2].text, DEFAULT_HOME_FEATURES[2].text);
+});
 
 test('homepage product groups keep the requested limits', () => {
     assert.equal(HOMEPAGE_SECTION_CONFIG.bestSeller.limit, 8);
