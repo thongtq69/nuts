@@ -1,12 +1,12 @@
-import mongoose, { Schema, Model } from 'mongoose';
+import mongoose, { Schema, Model, Types } from 'mongoose';
 import type { Permission, RoleType } from '@/constants/permissions';
 
 export interface IUserCommissionSettings {
     tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
     personalCommissionRate?: number;
     overrideTeamCommission?: boolean;
-    managerId?: Schema.Types.ObjectId;
-    teamId?: Schema.Types.ObjectId;
+    managerId?: Types.ObjectId;
+    teamId?: Types.ObjectId;
 }
 
 export interface IUserPerformance {
@@ -39,14 +39,14 @@ export interface IUser {
     encodedAffiliateCode?: string;
     walletBalance?: number;
     totalCommission?: number;
-    referrer?: Schema.Types.ObjectId;
+    referrer?: Types.ObjectId;
     commissionRateOverride?: number;
     bankInfo?: {
         bankName: string;
         accountNumber: string;
         accountName: string;
     };
-    parentStaff?: Schema.Types.ObjectId;
+    parentStaff?: Types.ObjectId;
     affiliateLevel?: 'staff' | 'collaborator';
     staffCode?: string;
     collaboratorCount?: number;

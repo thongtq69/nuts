@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { assignStaffIdentity } from '@/lib/staff-identity';
 
 export async function GET(req: Request) {
     try {
@@ -30,6 +31,10 @@ export async function GET(req: Request) {
                     { message: 'User không tồn tại' },
                     { status: 404 }
                 );
+            }
+
+            if (user.role === 'staff' && (!user.staffCode || !user.referralCode)) {
+                await assignStaffIdentity(user);
             }
 
             return NextResponse.json(user);

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Blog from '@/models/Blog';
 import mongoose from 'mongoose';
+import { getAuthUser, requireAdminAuth } from '@/lib/auth-permissions';
 
 export async function GET(
     req: Request,
@@ -22,6 +23,12 @@ export async function GET(
             return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
         }
 
+        const authUser = await getAuthUser();
+        const isOwner = authUser && blog.authorId && blog.authorId.toString() === authUser._id;
+        if (!blog.isPublished && authUser?.role !== 'admin' && !isOwner) {
+            return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
+        }
+
         return NextResponse.json(blog);
     } catch (error) {
         console.error('Error fetching blog:', error);
@@ -34,6 +41,11 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
         const { id } = await params;
         const body = await req.json();
@@ -44,6 +56,17 @@ export async function PATCH(
             if (existingBlog && !existingBlog.isPublished) {
                 body.publishedAt = new Date();
             }
+        }
+
+        const isRejected = body.moderationStatus === 'rejected';
+        body.moderationStatus = isRejected ? 'rejected' : body.isPublished ? 'published' : 'draft';
+        if (body.isPublished) {
+            body.approvedBy = auth.user._id;
+            body.approvedAt = new Date();
+            body.rejectionReason = undefined;
+        } else {
+            body.isPublished = false;
+            body.publishedAt = undefined;
         }
 
         const blog = await Blog.findByIdAndUpdate(id, body, { new: true });
@@ -64,6 +87,11 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
         const { id } = await params;
 

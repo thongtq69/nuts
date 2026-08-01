@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import User from '@/models/User';
+import { findReferrerByCode } from '@/lib/staff-identity';
 import AffiliateSettings from '@/models/AffiliateSettings'; // We might need this for duration
 import { cookies } from 'next/headers';
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Missing refCode' }, { status: 400 });
         }
 
-        const affiliate = await User.findOne({ referralCode: refCode.toUpperCase() });
+        const affiliate = await findReferrerByCode(refCode);
 
         if (!affiliate) {
             return NextResponse.json({ message: 'Invalid refCode' }, { status: 404 });

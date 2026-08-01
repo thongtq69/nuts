@@ -33,6 +33,7 @@ interface Blog {
     category: string;
     coverImage?: string;
     isPublished: boolean;
+    moderationStatus?: 'draft' | 'pending' | 'published' | 'rejected';
     publishedAt?: string;
     views?: number;
     createdAt: string;
@@ -68,7 +69,7 @@ export default function StaffBlogsPage() {
         content: '',
         category: 'Tin tức',
         coverImage: '',
-        isPublished: true
+        isPublished: false
     });
 
     useEffect(() => {
@@ -157,6 +158,7 @@ export default function StaffBlogsPage() {
             if (res.ok) {
                 fetchBlogs();
                 closeModal();
+                toast.success('Đã gửi bài viết', 'Bài viết đã được lưu và đang chờ Admin duyệt trước khi xuất hiện trên website.');
             } else {
                 const data = await res.json();
                 toast.error('Lỗi khi lưu bài viết', data.error || 'Vui lòng thử lại.');
@@ -197,25 +199,6 @@ export default function StaffBlogsPage() {
         }
     };
 
-    const handleTogglePublish = async (blog: Blog) => {
-        try {
-            const res = await fetch('/api/staff/blogs', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: blog._id,
-                    isPublished: !blog.isPublished
-                })
-            });
-
-            if (res.ok) {
-                fetchBlogs();
-            }
-        } catch (error) {
-            console.error('Error toggling publish:', error);
-        }
-    };
-
     const openModal = (blog?: Blog) => {
         if (blog) {
             setEditingBlog(blog);
@@ -235,7 +218,7 @@ export default function StaffBlogsPage() {
                 content: '',
                 category: 'Tin tức',
                 coverImage: '',
-                isPublished: true
+                isPublished: false
             });
         }
         setShowModal(true);
@@ -411,16 +394,17 @@ export default function StaffBlogsPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-5 text-center">
-                                            <button
-                                                onClick={() => handleTogglePublish(blog)}
+                                            <span
                                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${blog.isPublished
-                                                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                                                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : blog.moderationStatus === 'rejected'
+                                                        ? 'bg-red-100 text-red-700'
+                                                        : 'bg-amber-100 text-amber-700'
                                                     }`}
                                             >
                                                 {blog.isPublished ? <Eye size={14} /> : <EyeOff size={14} />}
-                                                {blog.isPublished ? 'Đã đăng' : 'Nháp'}
-                                            </button>
+                                                {blog.isPublished ? 'Đã đăng' : blog.moderationStatus === 'rejected' ? 'Bị từ chối' : 'Chờ Admin duyệt'}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-5 text-center">
                                             <div className="flex items-center justify-center gap-1.5 text-gray-500">
@@ -501,17 +485,10 @@ export default function StaffBlogsPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Trạng thái</label>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, isPublished: !formData.isPublished })}
-                                        className={`w-full px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${formData.isPublished
-                                            ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-200'
-                                            : 'bg-amber-100 text-amber-700 border-2 border-amber-200'
-                                            }`}
-                                    >
-                                        {formData.isPublished ? <Eye size={18} /> : <EyeOff size={18} />}
-                                        {formData.isPublished ? 'Đã đăng' : 'Bản nháp'}
-                                    </button>
+                                    <div className="w-full px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 bg-amber-100 text-amber-700 border-2 border-amber-200">
+                                        <EyeOff size={18} />
+                                        Gửi Admin duyệt sau khi lưu
+                                    </div>
                                 </div>
                             </div>
 

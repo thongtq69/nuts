@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
     Users, Plus, Copy, Trash2, X, Loader2, ChevronRight,
     UserCheck, Shield, TrendingUp
@@ -36,6 +37,8 @@ const ROLE_OPTIONS = Object.entries(ROLE_DEFINITIONS).map(([value, def]) => ({
 
 interface StaffCreateResponse {
     message?: string;
+    emailSent?: boolean;
+    emailMessage?: string;
     staff?: {
         staffCode?: string;
     };
@@ -79,7 +82,6 @@ export default function AdminStaffPage() {
         email: '',
         phone: '',
         password: '',
-        staffCode: '',
         roleType: 'sales' as RoleType
     });
 
@@ -111,7 +113,6 @@ export default function AdminStaffPage() {
                 email: newStaff.email.trim().toLowerCase(),
                 phone: newStaff.phone.trim(),
                 password: newStaff.password,
-                staffCode: newStaff.staffCode.trim().toUpperCase(),
                 roleType: newStaff.roleType
             };
 
@@ -123,9 +124,12 @@ export default function AdminStaffPage() {
 
             const data = await readStaffResponse(res);
             if (res.ok) {
-                toast.success('Tạo nhân viên thành công', `Mã: ${data.staff?.staffCode || payload.staffCode}`);
+                toast.success(
+                    'Tạo nhân viên thành công',
+                    `Mã hệ thống: ${data.staff?.staffCode || 'Đã cấp'}${data.emailSent === false ? ' — Email chưa gửi được' : ' — Đã gửi thông tin đăng nhập qua email'}`
+                );
                 setShowModal(false);
-                setNewStaff({ name: '', email: '', phone: '', password: '', staffCode: '', roleType: 'sales' });
+                setNewStaff({ name: '', email: '', phone: '', password: '', roleType: 'sales' });
                 fetchStaff();
             } else {
                 toast.error('Lỗi tạo nhân viên', data.message || `Không tạo được nhân viên (HTTP ${res.status}).`);
@@ -473,12 +477,13 @@ export default function AdminStaffPage() {
                                                 >
                                                     <Shield size={16} />
                                                 </button>
-                                                <button
+                                                <Link
+                                                    href={`/admin/users/${staff.id}`}
                                                     className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"
                                                     title="Chi tiết"
                                                 >
                                                     <ChevronRight size={16} />
-                                                </button>
+                                                </Link>
                                                 <button
                                                     onClick={() => openDeleteModal(staff.id, staff.name)}
                                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
@@ -533,16 +538,8 @@ export default function AdminStaffPage() {
                         </div>
 
                         <form onSubmit={createStaff} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Mã nhân viên *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={newStaff.staffCode}
-                                    onChange={(e) => setNewStaff({ ...newStaff, staffCode: e.target.value.toUpperCase() })}
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none font-mono"
-                                    placeholder="VD: NV001"
-                                />
+                            <div className="rounded-xl border border-brand-light/60 bg-brand-light/20 px-4 py-3 text-sm text-slate-700">
+                                <span className="font-semibold">Mã nhân viên:</span> hệ thống sẽ tự tạo sau khi lưu (ví dụ NV000001).
                             </div>
 
                             <div>

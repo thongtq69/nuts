@@ -11,6 +11,7 @@ interface PromptDialogProps {
     placeholder?: string;
     confirmText?: string;
     cancelText?: string;
+    inputType?: 'text' | 'password';
     onConfirm: () => void;
     onCancel: () => void;
     onChange: (value: string) => void;
@@ -24,6 +25,7 @@ export default function PromptDialog({
     placeholder,
     confirmText = 'Xác nhận',
     cancelText = 'Hủy',
+    inputType = 'text',
     onConfirm,
     onCancel,
     onChange,
@@ -45,6 +47,7 @@ export default function PromptDialog({
                 <div className="prompt-dialog-body">
                     <p>{description}</p>
                     <input
+                        type={inputType}
                         className="prompt-dialog-input"
                         value={value}
                         placeholder={placeholder}

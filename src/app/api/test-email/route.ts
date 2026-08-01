@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { sendOTPEmail, generateOTP } from '@/lib/email';
+import { requireAdminAuth } from '@/lib/auth-permissions';
 
 export async function GET() {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ success: false, message: auth.error }, { status: 401 });
+        }
+
         const testEmail = process.env.GMAIL_USER;
         
         console.log('=== EMAIL TEST DEBUG ===');
@@ -34,8 +40,7 @@ export async function GET() {
         
         return NextResponse.json({ 
             success: true, 
-            message: `Email đã được gửi đến ${testEmail}`,
-            otp: otp
+            message: `Email kiểm tra đã được gửi đến ${testEmail}`
         });
         
     } catch (error: any) {

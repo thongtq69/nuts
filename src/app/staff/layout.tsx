@@ -24,7 +24,7 @@ const menuItems = [
     { href: '/staff/collaborators', icon: Users, label: 'Cộng tác viên' },
     { href: '/staff/commissions', icon: Wallet, label: 'Hoa hồng' },
     { href: '/staff/orders', icon: ShoppingCart, label: 'Đơn hàng' },
-    { href: '/staff/blogs', icon: FileText, label: 'Quản lý Bài viết' },
+    { href: '/staff/blogs', icon: FileText, label: 'Quản lý Bài viết', permission: 'blogs:create' },
     { href: '/staff/banners', icon: ImageIcon, label: 'Quản lý Banner' },
 ];
 
@@ -182,7 +182,11 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto px-3">
                 <div className="space-y-1">
-                    {menuItems.map((item) => {
+                    {menuItems.filter((item) => {
+                        if (!('permission' in item)) return true;
+                        if (user?.role === 'admin') return true;
+                        return user?.customPermissions?.includes(item.permission);
+                    }).map((item) => {
                         const isActive = pathname === item.href;
                         return (
                             <Link

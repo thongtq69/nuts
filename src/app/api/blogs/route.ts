@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Blog from '@/models/Blog';
+import { getAuthUser, requireAdminAuth } from '@/lib/auth-permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +16,9 @@ export async function GET(req: Request) {
             ? Math.min(Math.max(requestedLimit, 1), 100)
             : 0;
 
+        const authUser = await getAuthUser();
         const filter: { isPublished?: boolean } = {};
-        if (published === 'true') {
+        if (published === 'true' || authUser?.role !== 'admin') {
             filter.isPublished = true;
         }
 
@@ -44,6 +46,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
         const body = await req.json();
 
@@ -62,6 +69,15 @@ export async function POST(req: Request) {
         // Set publishedAt if publishing
         if (body.isPublished && !body.publishedAt) {
             body.publishedAt = new Date();
+        }
+
+        body.author = auth.user.name;
+        body.authorId = auth.user._id;
+        body.authorRole = 'admin';
+        body.moderationStatus = body.isPublished ? 'published' : 'draft';
+        if (body.isPublished) {
+            body.approvedBy = auth.user._id;
+            body.approvedAt = new Date();
         }
 
         const blog = await Blog.create(body);

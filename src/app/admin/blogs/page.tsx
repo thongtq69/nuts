@@ -14,6 +14,7 @@ interface Blog {
     category: string;
     coverImage?: string;
     isPublished: boolean;
+    moderationStatus?: 'draft' | 'pending' | 'published' | 'rejected';
     publishedAt?: string;
     createdAt: string;
 }
@@ -115,6 +116,22 @@ export default function AdminBlogsPage() {
         } catch (error) {
             console.error('Error toggling blog:', error);
         }
+    };
+
+    const handleReject = async (blog: Blog) => {
+        const confirmed = await confirm({
+            title: 'Từ chối bài viết',
+            description: `Từ chối bài viết “${blog.title}”? Nhân viên vẫn có thể chỉnh sửa và gửi duyệt lại.`,
+            confirmText: 'Từ chối',
+            cancelText: 'Hủy',
+        });
+        if (!confirmed) return;
+        const res = await fetch(`/api/blogs/${blog._id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isPublished: false, moderationStatus: 'rejected' }),
+        });
+        if (res.ok) fetchBlogs();
     };
 
     const openModal = async (blog?: Blog) => {
@@ -255,7 +272,7 @@ export default function AdminBlogsPage() {
                                 ) : (
                                     <span className="px-3 py-1 bg-brand-light/50 text-slate-800 text-xs font-semibold rounded-full flex items-center gap-1">
                                         <EyeOff size={12} />
-                                        Nháp
+                                        {blog.moderationStatus === 'pending' ? 'Chờ Admin duyệt' : 'Nháp'}
                                     </span>
                                 )}
                             </div>
@@ -290,8 +307,16 @@ export default function AdminBlogsPage() {
                                         : 'bg-green-100 text-green-700 hover:bg-green-200'
                                         }`}
                                 >
-                                    {blog.isPublished ? 'Ẩn' : 'Xuất bản'}
+                                    {blog.isPublished ? 'Ẩn' : blog.moderationStatus === 'pending' ? 'Duyệt đăng' : 'Xuất bản'}
                                 </button>
+                                {blog.moderationStatus === 'pending' && (
+                                    <button
+                                        onClick={() => handleReject(blog)}
+                                        className="px-3 py-2 rounded-lg font-medium text-sm bg-red-100 text-red-700 hover:bg-red-200"
+                                    >
+                                        Từ chối
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => openModal(blog)}
                                     className="p-2 text-brand hover:bg-brand/10 rounded-lg transition-colors"

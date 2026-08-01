@@ -5,6 +5,10 @@ import Order from '@/models/Order';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
+import { generateNextStaffCode } from '@/lib/staff-identity';
+import { sendAccountCredentialsEmail } from '@/lib/email';
+import type { HydratedDocument } from 'mongoose';
+import type { IUser } from '@/models/User';
 
 const STAFF_ROLE_TYPES = ['admin', 'manager', 'sales', 'support', 'warehouse', 'accountant', 'collaborator', 'viewer'] as const;
 type StaffRoleType = (typeof STAFF_ROLE_TYPES)[number];
@@ -24,7 +28,6 @@ function normalizeStaffPayload(payload: Record<string, unknown>) {
         email: typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '',
         phone: typeof payload.phone === 'string' ? payload.phone.trim() : '',
         password: typeof payload.password === 'string' ? payload.password : '',
-        staffCode: typeof payload.staffCode === 'string' ? payload.staffCode.trim().toUpperCase() : '',
         roleType
     };
 }
@@ -152,23 +155,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Dữ liệu gửi lên không hợp lệ' }, { status: 400 });
         }
 
-        const { name, email, phone, password, staffCode, roleType } = normalizeStaffPayload(
+        const { name, email, phone, password, roleType } = normalizeStaffPayload(
             rawPayload && typeof rawPayload === 'object' ? rawPayload as Record<string, unknown> : {}
         );
 
-        if (!name || !email || !password || !staffCode) {
+        if (!name || !email || !password) {
             return NextResponse.json({ message: 'Thiếu thông tin bắt buộc' }, { status: 400 });
         }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return NextResponse.json({ message: 'Email không hợp lệ' }, { status: 400 });
-        }
-
-        if (!/^[A-Z0-9_-]{3,30}$/.test(staffCode)) {
-            return NextResponse.json(
-                { message: 'Mã nhân viên chỉ gồm chữ, số, gạch ngang hoặc gạch dưới' },
-                { status: 400 }
-            );
         }
 
         // Check if email already exists
@@ -179,36 +175,46 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Email đã tồn tại' }, { status: 400 });
         }
 
-        // Staff code is also used as referralCode, so both fields must be free.
-        const codeRegex = { $regex: `^${escapeRegex(staffCode)}$`, $options: 'i' };
-        const existingCode = await User.findOne({
-            $or: [
-                { staffCode: codeRegex },
-                { referralCode: codeRegex }
-            ]
-        });
-        if (existingCode) {
-            return NextResponse.json({ message: 'Mã nhân viên đã tồn tại' }, { status: 400 });
-        }
-
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create staff user
-        const staff = await User.create({
-            name,
-            email,
-            phone: phone || '',
-            password: hashedPassword,
-            role: 'staff',
-            affiliateLevel: 'staff',
-            staffCode,
-            referralCode: staffCode,
-            walletBalance: 0,
-            totalCommission: 0,
-            collaboratorCount: 0,
-            roleType
-        });
+        // Generate the code automatically. MongoDB's unique indexes remain the
+        // final guard against two administrators creating staff at the same time.
+        let staff: HydratedDocument<IUser> | null = null;
+        for (let attempt = 0; attempt < 20 && !staff; attempt += 1) {
+            const staffCode = await generateNextStaffCode();
+            try {
+                staff = await User.create({
+                    name,
+                    email,
+                    phone: phone || '',
+                    password: hashedPassword,
+                    role: 'staff',
+                    affiliateLevel: 'staff',
+                    staffCode,
+                    referralCode: staffCode,
+                    walletBalance: 0,
+                    totalCommission: 0,
+                    collaboratorCount: 0,
+                    roleType
+                });
+            } catch (error) {
+                const mongoError = error as { code?: number; keyPattern?: Record<string, unknown> };
+                const codeCollision = mongoError.code === 11000 &&
+                    Boolean(mongoError.keyPattern?.staffCode || mongoError.keyPattern?.referralCode);
+                if (!codeCollision) throw error;
+            }
+        }
+
+        if (!staff) throw new Error('Không thể tạo mã nhân viên duy nhất');
+
+        let emailSent = true;
+        try {
+            await sendAccountCredentialsEmail(email, name, password, 'Tài khoản nhân viên');
+        } catch (emailError) {
+            emailSent = false;
+            console.error('Failed to send staff credentials email:', emailError);
+        }
 
         return NextResponse.json({
             message: 'Tạo nhân viên thành công',
@@ -217,7 +223,11 @@ export async function POST(req: Request) {
                 name: staff.name,
                 email: staff.email,
                 staffCode: staff.staffCode
-            }
+            },
+            emailSent,
+            emailMessage: emailSent
+                ? 'Thông tin đăng nhập đã được gửi tới email nhân viên.'
+                : 'Nhân viên đã được tạo nhưng email chưa gửi được. Hãy dùng chức năng cấp lại mật khẩu.'
         }, { status: 201 });
     } catch (error) {
         console.error('Create staff error:', error);

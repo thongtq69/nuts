@@ -4,6 +4,7 @@ import User from '@/models/User';
 import UserVoucher from '@/models/UserVoucher';
 import bcrypt from 'bcryptjs';
 import { sendWelcomeEmail } from '@/lib/email';
+import { findReferrerByCode } from '@/lib/staff-identity';
 
 // Generate unique voucher code
 function generateVoucherCode(): string {
@@ -42,11 +43,17 @@ export async function POST(req: Request) {
         const cookieStore = await cookies();
         const refCode = cookieStore.get('gonuts_ref')?.value;
         let referrerId: any = undefined;
+        let managingStaffId: any = undefined;
 
         if (refCode) {
-            const referrerUser = await User.findOne({ referralCode: refCode });
+            const referrerUser = await findReferrerByCode(refCode);
             if (referrerUser) {
                 referrerId = referrerUser._id;
+                if (referrerUser.role === 'staff' || referrerUser.affiliateLevel === 'staff') {
+                    managingStaffId = referrerUser._id;
+                } else if (referrerUser.parentStaff) {
+                    managingStaffId = referrerUser.parentStaff;
+                }
             }
         }
 
@@ -63,6 +70,10 @@ export async function POST(req: Request) {
             phone,
             welcomeVoucherIssued: false,
             referrer: referrerId || undefined,
+            parentStaff: managingStaffId || undefined,
+            commissionSettings: managingStaffId
+                ? { tier: 'bronze', managerId: managingStaffId }
+                : { tier: 'bronze' },
         };
 
         // If registering as agent/collaborator, set pending status
@@ -76,6 +87,7 @@ export async function POST(req: Request) {
         const user: any = await User.create(userData);
 
         if (user) {
+            let emailSent = false;
             // Create welcome voucher for new user
             const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + 30); // 30 days validity
@@ -100,12 +112,18 @@ export async function POST(req: Request) {
             if (!isAgentOrCollaborator) {
                 try {
                     await sendWelcomeEmail(user.email, user.name, voucherCode);
+                    emailSent = true;
                 } catch (emailError) {
                     console.error('Failed to send welcome email:', emailError);
                 }
             }
 
             let message = 'Đăng ký thành công! Bạn đã nhận được voucher 50.000đ cho đơn hàng đầu tiên từ 300.000đ.';
+            if (!isAgentOrCollaborator) {
+                message += emailSent
+                    ? ' Thông tin tài khoản đã được gửi tới email của bạn.'
+                    : ' Tài khoản đã tạo thành công nhưng email thông báo chưa gửi được; bạn vẫn có thể đăng nhập bằng mật khẩu vừa tạo.';
+            }
             
             if (isAgentOrCollaborator) {
                 message = 'Đăng ký thành công! Tài khoản của bạn đang chờ admin duyệt. Sau khi được duyệt, bạn sẽ nhận được email thông báo và có thể truy cập trang đại lý/CTV.';
@@ -117,6 +135,7 @@ export async function POST(req: Request) {
                 email: user.email,
                 role: user.role,
                 saleApplicationStatus: user.saleApplicationStatus || null,
+                emailSent,
                 message
             }, { status: 201 });
         } else {

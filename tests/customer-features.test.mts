@@ -18,6 +18,12 @@ import {
     normalizeHomepageSelection,
 } from '../src/lib/homepage-products.ts';
 import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '../src/lib/site-features.ts';
+import { formatStaffCode } from '../src/lib/staff-code.ts';
+
+test('staff codes are generated in the required fixed-width sequence', () => {
+    assert.equal(formatStaffCode(1), 'NV000001');
+    assert.equal(formatStaffCode(42), 'NV000042');
+});
 
 test('homepage commitments keep four editable content boxes', () => {
     assert.equal(DEFAULT_HOME_FEATURES.length, 4);

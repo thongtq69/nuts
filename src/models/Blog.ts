@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from 'mongoose';
+import mongoose, { Schema, Model, Types } from 'mongoose';
 
 export interface IBlog {
     _id?: string;
@@ -8,9 +8,15 @@ export interface IBlog {
     content: string;
     coverImage?: string;
     author: string;
+    authorId?: Types.ObjectId;
+    authorRole?: 'admin' | 'staff';
     category: string;
     tags: string[];
     isPublished: boolean;
+    moderationStatus?: 'draft' | 'pending' | 'published' | 'rejected';
+    approvedBy?: Types.ObjectId;
+    approvedAt?: Date;
+    rejectionReason?: string;
     publishedAt?: Date;
     viewCount: number;
     createdAt?: Date;
@@ -25,9 +31,19 @@ const BlogSchema: Schema<IBlog> = new Schema(
         content: { type: String, required: true },
         coverImage: { type: String },
         author: { type: String, default: 'Admin' },
+        authorId: { type: Schema.Types.ObjectId, ref: 'User' },
+        authorRole: { type: String, enum: ['admin', 'staff'], default: 'admin' },
         category: { type: String, required: true },
         tags: [{ type: String }],
         isPublished: { type: Boolean, default: false },
+        moderationStatus: {
+            type: String,
+            enum: ['draft', 'pending', 'published', 'rejected'],
+            default: 'draft'
+        },
+        approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+        approvedAt: { type: Date },
+        rejectionReason: { type: String },
         publishedAt: { type: Date },
         viewCount: { type: Number, default: 0 },
     },
@@ -35,6 +51,9 @@ const BlogSchema: Schema<IBlog> = new Schema(
         timestamps: true,
     }
 );
+
+BlogSchema.index({ authorId: 1, createdAt: -1 });
+BlogSchema.index({ moderationStatus: 1, createdAt: -1 });
 
 const Blog: Model<IBlog> = mongoose.models.Blog || mongoose.model<IBlog>('Blog', BlogSchema);
 

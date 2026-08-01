@@ -25,7 +25,8 @@ import {
     Clock,
     Loader2,
     Link as LinkIcon,
-    Copy
+    Copy,
+    KeyRound
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
@@ -140,6 +141,43 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         }
     };
 
+    const handleSetPassword = async () => {
+        if (!user) return;
+        const password = await prompt({
+            title: 'Cấp mật khẩu đăng nhập',
+            description: `Nhập mật khẩu mới cho ${user.name} (ít nhất 8 ký tự). Hệ thống sẽ gửi thông tin này tới ${user.email}.`,
+            placeholder: 'Mật khẩu mới (ít nhất 8 ký tự)',
+            confirmText: 'Lưu và gửi email',
+            cancelText: 'Hủy',
+            inputType: 'password',
+        });
+
+        if (password === null) return;
+        if (password.length < 8) {
+            toast.warning('Mật khẩu chưa hợp lệ', 'Mật khẩu phải có ít nhất 8 ký tự.');
+            return;
+        }
+
+        setUpdating(true);
+        try {
+            const res = await fetch(`/api/admin/users/${userId}/password`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, sendEmail: true }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success('Đã cấp mật khẩu', data.message);
+            } else {
+                toast.error('Không thể cấp mật khẩu', data.message || 'Vui lòng thử lại.');
+            }
+        } catch {
+            toast.error('Không thể cấp mật khẩu', 'Vui lòng thử lại.');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
     const handleDelete = async () => {
         if (!user) return;
         if (user.role === 'admin') {
@@ -231,6 +269,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleSetPassword}
+                        disabled={updating}
+                        className="px-4 py-2 bg-brand-light/30 text-brand-dark hover:bg-brand-light/50 rounded-lg font-medium transition-all"
+                    >
+                        <KeyRound size={16} className="inline mr-2" />
+                        Cấp mật khẩu
+                    </button>
                     <button
                         onClick={handleToggleActive}
                         disabled={updating}
@@ -491,7 +537,9 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                             <input
                                                 type="text"
                                                 readOnly
-                                                value={`${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${user.role === 'staff' ? (user.staffCode || user.referralCode) : user.referralCode}`}
+                                                value={(user.role === 'staff' ? (user.staffCode || user.referralCode) : user.referralCode)
+                                                    ? `${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${user.role === 'staff' ? (user.staffCode || user.referralCode) : user.referralCode}`
+                                                    : 'Chưa có mã giới thiệu'}
                                                 className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm font-mono text-slate-600 truncate"
                                             />
                                             <button

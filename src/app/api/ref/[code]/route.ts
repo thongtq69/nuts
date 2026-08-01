@@ -24,17 +24,18 @@ export async function GET(
 
         const user = await User.findById(userId);
 
-        if (!user || !user.referralCode) {
+        const referralCode = user?.referralCode || user?.staffCode;
+        if (!user || !referralCode) {
             console.error('User not found or no referral code for id:', userId);
             return NextResponse.redirect(new URL('/', req.url));
         }
 
         const redirectUrl = new URL('/', req.url);
-        redirectUrl.searchParams.set('ref', user.referralCode);
+        redirectUrl.searchParams.set('ref', referralCode);
 
         const response = NextResponse.redirect(redirectUrl);
 
-        response.cookies.set('gonuts_ref', user.referralCode, {
+        response.cookies.set('gonuts_ref', referralCode, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',

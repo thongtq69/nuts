@@ -10,6 +10,7 @@ interface PromptOptions {
     confirmText?: string;
     cancelText?: string;
     defaultValue?: string;
+    inputType?: 'text' | 'password';
 }
 
 type PromptHandler = (options: PromptOptions) => Promise<string | null>;
@@ -51,6 +52,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
                 placeholder={options?.placeholder}
                 confirmText={options?.confirmText}
                 cancelText={options?.cancelText}
+                inputType={options?.inputType}
                 value={value}
                 onChange={setValue}
                 onConfirm={handleConfirm}

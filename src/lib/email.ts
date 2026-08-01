@@ -331,6 +331,10 @@ export async function sendWelcomeEmail(to: string, name: string, voucherCode?: s
                     <h2>🎉 Chào mừng bạn đến với Go Nuts!</h2>
                     <p>Xin chào <strong>${name}</strong>,</p>
                     <p>Cảm ơn bạn đã đăng ký tài khoản tại Go Nuts. Chúng tôi rất vui được chào đón bạn!</p>
+                    <div class="info-box">
+                        <p style="margin: 0;"><strong>Email đăng nhập:</strong> ${to}</p>
+                        <p style="margin: 8px 0 0; color: #666;">Mật khẩu là mật khẩu bạn vừa tạo khi đăng ký. Go Nuts không bao giờ gửi hoặc lưu mật khẩu dạng rõ.</p>
+                    </div>
                     
                     ${voucherCode ? `
                     <div class="otp-box">
@@ -356,6 +360,50 @@ export async function sendWelcomeEmail(to: string, name: string, voucherCode?: s
         from: `"Go Nuts" <${GMAIL_USER}>`,
         to,
         subject: `[Go Nuts] Chào mừng ${name} đến với Go Nuts! 🎉`,
+        html,
+    });
+}
+
+// Send credentials for an account created or reset by an administrator.
+export async function sendAccountCredentialsEmail(
+    to: string,
+    name: string,
+    temporaryPassword: string,
+    accountType: string = 'tài khoản'
+) {
+    const transporter = await createTransporter();
+    const loginUrl = `${BASE_URL}/login`;
+
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>${emailStyles}</head>
+        <body>
+            <div class="container">
+                ${emailHeader}
+                <div class="content">
+                    <h2>Thông tin đăng nhập Go Nuts</h2>
+                    <p>Xin chào <strong>${name}</strong>,</p>
+                    <p>${accountType} của bạn đã được tạo/cập nhật thành công. Vui lòng dùng thông tin sau để đăng nhập:</p>
+                    <div class="info-box">
+                        <p><strong>Email:</strong> ${to}</p>
+                        <p><strong>Mật khẩu tạm thời:</strong> ${temporaryPassword}</p>
+                    </div>
+                    <p>Vì lý do bảo mật, bạn nên đổi mật khẩu ngay sau lần đăng nhập đầu tiên.</p>
+                    <div class="btn-container">
+                        <a href="${loginUrl}" class="btn">Đăng nhập Go Nuts</a>
+                    </div>
+                </div>
+                ${emailFooter}
+            </div>
+        </body>
+        </html>
+    `;
+
+    await transporter.sendMail({
+        from: `"Go Nuts" <${GMAIL_USER}>`,
+        to,
+        subject: '[Go Nuts] Thông tin đăng nhập tài khoản',
         html,
     });
 }
@@ -459,6 +507,7 @@ export default {
     sendOrderConfirmationEmail,
     sendOrderStatusEmail,
     sendWelcomeEmail,
+    sendAccountCredentialsEmail,
     sendPasswordResetEmail,
     sendSaleApprovedEmail,
 };

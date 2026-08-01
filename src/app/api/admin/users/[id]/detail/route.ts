@@ -4,12 +4,19 @@ import User from '@/models/User';
 import Order from '@/models/Order';
 import UserVoucher from '@/models/UserVoucher';
 import UserMembership from '@/models/UserMembership';
+import { requireAdminAuth } from '@/lib/auth-permissions';
+import { assignStaffIdentity } from '@/lib/staff-identity';
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
         const { id } = await params;
 
@@ -17,6 +24,10 @@ export async function GET(
         const user = await User.findById(id);
         if (!user) {
             return NextResponse.json({ error: 'Không tìm thấy người dùng' }, { status: 404 });
+        }
+
+        if (user.role === 'staff' && (!user.staffCode || !user.referralCode)) {
+            await assignStaffIdentity(user);
         }
 
         // Lấy thống kê đơn hàng
