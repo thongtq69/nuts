@@ -398,6 +398,15 @@ export default function StaffDashboard() {
                         />
 
                         <QuickAction
+                            href="/staff/customers"
+                            icon={Users}
+                            title="Khách hàng của tôi"
+                            subtitle="Theo dõi và chăm sóc khách hàng"
+                            color="blue"
+                            variant="outline"
+                        />
+
+                        <QuickAction
                             href="/staff/orders"
                             icon={ShoppingCart}
                             title="Đơn hàng"

@@ -22,6 +22,7 @@ import {
 const menuItems = [
     { href: '/staff', icon: LayoutDashboard, label: 'Tổng quan' },
     { href: '/staff/collaborators', icon: Users, label: 'Cộng tác viên' },
+    { href: '/staff/customers', icon: Users, label: 'Khách hàng của tôi' },
     { href: '/staff/commissions', icon: Wallet, label: 'Hoa hồng' },
     { href: '/staff/orders', icon: ShoppingCart, label: 'Đơn hàng' },
     { href: '/staff/blogs', icon: FileText, label: 'Quản lý Bài viết', permission: 'blogs:create' },
@@ -187,7 +188,7 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                         if (user?.role === 'admin') return true;
                         return user?.customPermissions?.includes(item.permission);
                     }).map((item) => {
-                        const isActive = pathname === item.href;
+                        const isActive = pathname === item.href || (item.href !== '/staff' && pathname.startsWith(`${item.href}/`));
                         return (
                             <Link
                                 key={item.href}

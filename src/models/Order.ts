@@ -43,6 +43,7 @@ export interface IOrder {
     agentSavings?: number;
     isAgentOrder?: boolean;
     paymentRef?: string;
+    membershipActivatedAt?: Date;
     createdAt?: Date;
 }
 
@@ -98,7 +99,8 @@ const OrderSchema: Schema<IOrder> = new Schema(
         originalTotalAmount: { type: Number, default: 0 },
         agentSavings: { type: Number, default: 0 },
         isAgentOrder: { type: Boolean, default: false },
-        paymentRef: { type: String }
+        paymentRef: { type: String },
+        membershipActivatedAt: { type: Date }
     },
     {
         timestamps: true,

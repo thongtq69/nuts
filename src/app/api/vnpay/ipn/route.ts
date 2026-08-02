@@ -39,14 +39,14 @@ export async function GET(req: NextRequest) {
         }
 
         // Check if order already processed
-        if (order.paymentStatus === 'completed') {
+        if (order.paymentStatus === 'paid' || order.paymentStatus === 'completed') {
             return NextResponse.json({ RspCode: '02', Message: 'Order already confirmed' });
         }
 
         // Update order based on response code
         if (rspCode === '00') {
-            order.paymentStatus = 'completed';
-            order.status = 'processing';
+            order.paymentStatus = 'paid';
+            order.status = order.orderType === 'membership' ? 'paid' : 'processing';
             order.vnpayTransactionNo = transactionNo;
             await order.save();
             

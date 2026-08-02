@@ -77,7 +77,13 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
 
 export default function OrderDetailClient({ order }: OrderDetailProps) {
     const router = useRouter();
-    const [currentStatus, setCurrentStatus] = useState(order.status);
+    const membershipOrderFromProps = order.orderType === 'membership' ||
+        order.items.some(item => item.name?.includes('Gói Hội Viên') || item.name?.includes('Gói VIP'));
+    const [currentStatus, setCurrentStatus] = useState(
+        membershipOrderFromProps && ['paid', 'completed'].includes(order.paymentStatus) && !['completed', 'cancelled'].includes(order.status)
+            ? 'paid'
+            : order.status,
+    );
     const [isUpdating, setIsUpdating] = useState(false);
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [adminNote, setAdminNote] = useState('');
@@ -85,8 +91,7 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
     const confirm = useConfirm();
 
     // Check if this is a membership order
-    const isMembershipOrder = order.orderType === 'membership' ||
-        order.items.some(item => item.name?.includes('Gói Hội Viên') || item.name?.includes('Gói VIP'));
+    const isMembershipOrder = membershipOrderFromProps;
 
     const config = statusConfig[currentStatus] || statusConfig.pending;
     const StatusIcon = config.icon;
@@ -109,12 +114,13 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                 body: JSON.stringify({ status: newStatus }),
             });
 
+            const data = await res.json();
             if (res.ok) {
                 setCurrentStatus(newStatus);
                 toast.success('Cập nhật trạng thái thành công');
                 router.refresh();
             } else {
-                toast.error('Lỗi khi cập nhật trạng thái', 'Vui lòng thử lại.');
+                toast.error('Không thể cập nhật trạng thái', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             toast.error('Lỗi kết nối', 'Vui lòng thử lại.');

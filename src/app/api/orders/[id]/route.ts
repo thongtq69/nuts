@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import { verifyToken } from '@/lib/auth';
+import { activateMembershipOrder, MembershipActivationError } from '@/lib/membership-activation';
+import { isConfirmedPaymentStatus } from '@/lib/customer-ownership';
 
 // GET single order
 export async function GET(
@@ -44,8 +46,33 @@ export async function PATCH(
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
 
-        // Update fields
-        if (body.status) order.status = body.status;
+        const isMembershipOrder = order.orderType === 'membership';
+
+        if (isMembershipOrder && body.status === 'completed') {
+            if (!isConfirmedPaymentStatus(order.paymentStatus)) {
+                return NextResponse.json(
+                    { error: 'Chưa xác nhận thanh toán nên không thể hoàn thành hoặc tạo voucher' },
+                    { status: 409 },
+                );
+            }
+
+            const activation = await activateMembershipOrder(String(order._id));
+            const activatedOrder = await Order.findById(order._id);
+            return NextResponse.json({
+                success: true,
+                message: 'Đã hoàn thành và kích hoạt gói hội viên',
+                order: activatedOrder,
+                activation,
+            });
+        }
+
+        // Admin explicitly confirms receipt of payment before activation.
+        if (isMembershipOrder && body.status === 'paid') {
+            order.status = 'paid';
+            order.paymentStatus = 'paid';
+        } else if (body.status) {
+            order.status = body.status;
+        }
         if (body.paymentStatus) order.paymentStatus = body.paymentStatus;
         if (body.shippingInfo) order.shippingInfo = { ...order.shippingInfo, ...body.shippingInfo };
         if (body.note !== undefined) order.note = body.note;
@@ -58,6 +85,9 @@ export async function PATCH(
             order 
         });
     } catch (error) {
+        if (error instanceof MembershipActivationError) {
+            return NextResponse.json({ error: error.message }, { status: error.status });
+        }
         console.error('Update order error:', error);
         return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
     }

@@ -3,20 +3,10 @@ import dbConnect from '@/lib/db';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
 import Order from '@/models/Order';
 import User from '@/models/User';
-import UserVoucher from '@/models/UserVoucher';
 import AffiliateSettings from '@/models/AffiliateSettings';
 import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-
-function generateVoucherCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
-    for (let i = 0; i < 8; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-}
 
 export async function POST(req: Request) {
     try {
@@ -139,25 +129,6 @@ export async function POST(req: Request) {
 
         const order = await Order.create(orderData);
 
-        // Generate vouchers for the user
-        const vouchersToCreate = [];
-        for (let i = 0; i < pkg.voucherQuantity; i++) {
-            vouchersToCreate.push({
-                userId: userId,
-                code: generateVoucherCode(),
-                discountType: pkg.discountType,
-                discountValue: pkg.discountValue,
-                maxDiscount: pkg.maxDiscount,
-                minOrderValue: pkg.minOrderValue,
-                expiresAt: expiresAt,
-                isUsed: false,
-                source: 'package',
-                sourceId: pkg._id
-            });
-        }
-
-        await UserVoucher.insertMany(vouchersToCreate);
-
         // Create Commission Records - Support 2-level system
         const commissionRecords = [];
         if (commissionAmount > 0 && referrerId) {
@@ -219,9 +190,11 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json({
-            message: 'Mua gói thành công!',
+            message: 'Đã tạo yêu cầu mua gói. Voucher chỉ được phát hành sau khi thanh toán được xác nhận.',
             orderId: order._id,
-            vouchersCount: pkg.voucherQuantity
+            vouchersCount: 0,
+            pendingVouchersCount: pkg.voucherQuantity,
+            paymentStatus: order.paymentStatus,
         }, { status: 201 });
 
     } catch (error: any) {

@@ -329,7 +329,7 @@ export async function applyAcbTransactionToOrder(
     order.paymentStatus = 'paid';
     order.acbTransactionNo = txn.transactionId || txn.traceNumber || `${source}_${Date.now()}`;
     if (order.status === 'pending' || order.status === 'processing') {
-        order.status = 'confirmed';
+        order.status = order.orderType === 'membership' ? 'paid' : 'confirmed';
     }
     await order.save();
 

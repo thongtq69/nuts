@@ -14,6 +14,8 @@ export interface IUserVoucher {
     orderId?: mongoose.Types.ObjectId;
     source?: 'package' | 'manual' | 'campaign' | 'order_reward'; // Where did this voucher come from?
     sourceId?: mongoose.Types.ObjectId; // ID of package or campaign
+    sourceOrderId?: mongoose.Types.ObjectId;
+    sourceIndex?: number;
     // Extension fields
     extensionCount?: number;          // Number of times extended
     extensionFee?: number;            // Fee to extend this voucher
@@ -39,6 +41,8 @@ const UserVoucherSchema: Schema<IUserVoucher> = new Schema(
         orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
         source: { type: String, enum: ['package', 'manual', 'campaign', 'order_reward'], default: 'manual' },
         sourceId: { type: Schema.Types.ObjectId }, // e.g., Package ID
+        sourceOrderId: { type: Schema.Types.ObjectId, ref: 'Order' },
+        sourceIndex: { type: Number },
         // Extension fields
         extensionCount: { type: Number, default: 0 },
         extensionFee: { type: Number },
@@ -50,6 +54,11 @@ const UserVoucherSchema: Schema<IUserVoucher> = new Schema(
     {
         timestamps: true,
     }
+);
+
+UserVoucherSchema.index(
+    { sourceOrderId: 1, sourceIndex: 1 },
+    { unique: true, sparse: true },
 );
 
 const UserVoucher: Model<IUserVoucher> = mongoose.models.UserVoucher || mongoose.model<IUserVoucher>('UserVoucher', UserVoucherSchema);

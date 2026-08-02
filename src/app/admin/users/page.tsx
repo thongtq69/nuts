@@ -20,6 +20,12 @@ interface User {
     role: 'user' | 'sale' | 'admin' | 'staff';
     saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
     createdAt: string;
+    managedBy?: {
+        _id: string;
+        name: string;
+        email?: string;
+        staffCode?: string;
+    } | null;
 }
 
 export default function AdminUsersPage() {
@@ -183,6 +189,7 @@ export default function AdminUsersPage() {
         { key: 'name', label: 'Tên' },
         { key: 'email', label: 'Email' },
         { key: 'phone', label: 'Số điện thoại', format: (v) => v || '-' },
+        { key: 'managedBy', label: 'Nhân viên quản lý', format: (v: any) => v?.name ? `${v.name}${v.staffCode ? ` (${v.staffCode})` : ''}` : 'Chưa gắn' },
         {
             key: 'role', label: 'Vai trò', format: (v) =>
                 v === 'admin' ? 'Admin' : v === 'staff' ? 'Nhân viên' : v === 'sale' ? 'Đại lý' : 'Khách hàng'
@@ -286,6 +293,7 @@ export default function AdminUsersPage() {
                                 <th className="px-6 py-4">Tên</th>
                                 <th className="px-6 py-4">Email</th>
                                 <th className="px-6 py-4">SĐT</th>
+                                <th className="px-6 py-4">Nhân viên quản lý</th>
                                 <th className="px-6 py-4 text-center">Vai trò</th>
                                 <th className="px-6 py-4 text-center">Trạng thái</th>
                                 <th className="px-6 py-4">Ngày tham gia</th>
@@ -295,7 +303,7 @@ export default function AdminUsersPage() {
                         <tbody className="divide-y divide-slate-100">
                             {paginatedUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-500 italic">
+                                    <td colSpan={9} className="px-6 py-12 text-center text-slate-500 italic">
                                         Không tìm thấy người dùng nào.
                                     </td>
                                 </tr>
@@ -312,6 +320,18 @@ export default function AdminUsersPage() {
                                         <td className="px-6 py-4 font-semibold text-slate-700">{user.name}</td>
                                         <td className="px-6 py-4 text-slate-600">{user.email}</td>
                                         <td className="px-6 py-4 text-slate-600 font-mono text-xs">{user.phone || '-'}</td>
+                                        <td className="px-6 py-4">
+                                            {user.role === 'user' ? (
+                                                user.managedBy ? (
+                                                    <div>
+                                                        <div className="font-semibold text-slate-700 text-sm">{user.managedBy.name}</div>
+                                                        <div className="text-xs text-[#9C7044] font-mono">{user.managedBy.staffCode || user.managedBy.email || ''}</div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">Chưa gắn nhân viên</span>
+                                                )
+                                            ) : <span className="text-slate-300">—</span>}
+                                        </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide
                                                 ${user.role === 'admin' ? 'bg-red-100 text-red-600' :

@@ -56,6 +56,13 @@ interface UserDetail {
     membershipPackages: any[];
     vouchers: any[];
     recentOrders: any[];
+    managedBy?: {
+        _id: string;
+        name: string;
+        email?: string;
+        phone?: string;
+        staffCode?: string;
+    } | null;
 }
 
 export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -68,6 +75,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     const confirm = useConfirm();
     const prompt = usePrompt();
     const [copied, setCopied] = useState(false);
+    const [activeStat, setActiveStat] = useState<'orders' | 'spent' | 'membership' | 'vouchers'>('orders');
 
     useEffect(() => {
         params.then(({ id }) => {
@@ -390,6 +398,27 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                             </p>
                                         </div>
                                     )}
+
+                                    {user.role === 'user' && (
+                                        <div className="flex items-center gap-3">
+                                            <Users className="text-[#9C7044]" size={18} />
+                                            <div>
+                                                <p className="text-sm text-slate-500">Nhân viên quản lý</p>
+                                                {user.managedBy ? (
+                                                    <div>
+                                                        <Link href={`/admin/users/${user.managedBy._id}`} className="font-semibold text-[#7d5a36] hover:underline">
+                                                            {user.managedBy.name}
+                                                        </Link>
+                                                        <p className="text-xs text-slate-500">
+                                                            {user.managedBy.staffCode || user.managedBy.email || ''}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="font-medium text-slate-400">Chưa gắn với nhân viên</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -581,15 +610,15 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                         </h3>
 
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-3 bg-brand/10 rounded-lg">
+                            <button onClick={() => setActiveStat('orders')} className={`w-full flex items-center justify-between p-3 bg-brand/10 rounded-lg border-2 transition-all ${activeStat === 'orders' ? 'border-brand' : 'border-transparent'}`}>
                                 <div className="flex items-center gap-3">
                                     <ShoppingBag className="text-brand" size={18} />
                                     <span className="text-sm font-medium">Đơn hàng</span>
                                 </div>
                                 <span className="font-bold text-brand">{user.totalOrders}</span>
-                            </div>
+                            </button>
 
-                            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                            <button onClick={() => setActiveStat('spent')} className={`w-full flex items-center justify-between p-3 bg-green-50 rounded-lg border-2 transition-all ${activeStat === 'spent' ? 'border-green-500' : 'border-transparent'}`}>
                                 <div className="flex items-center gap-3">
                                     <CreditCard className="text-green-600" size={18} />
                                     <span className="text-sm font-medium">Tổng chi tiêu</span>
@@ -597,22 +626,45 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                 <span className="font-bold text-green-600">
                                     {new Intl.NumberFormat('vi-VN').format(user.totalSpent)}đ
                                 </span>
-                            </div>
+                            </button>
 
-                            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                            <button onClick={() => setActiveStat('membership')} className={`w-full flex items-center justify-between p-3 bg-purple-50 rounded-lg border-2 transition-all ${activeStat === 'membership' ? 'border-purple-500' : 'border-transparent'}`}>
                                 <div className="flex items-center gap-3">
                                     <Package className="text-purple-600" size={18} />
                                     <span className="text-sm font-medium">Gói hội viên</span>
                                 </div>
                                 <span className="font-bold text-purple-600">{user.membershipPackages.length}</span>
-                            </div>
+                            </button>
 
-                            <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+                            <button onClick={() => setActiveStat('vouchers')} className={`w-full flex items-center justify-between p-3 bg-amber-50 rounded-lg border-2 transition-all ${activeStat === 'vouchers' ? 'border-amber-500' : 'border-transparent'}`}>
                                 <div className="flex items-center gap-3">
                                     <Ticket className="text-amber-600" size={18} />
                                     <span className="text-sm font-medium">Voucher</span>
                                 </div>
                                 <span className="font-bold text-amber-600">{user.vouchers.length}</span>
+                            </button>
+
+                            <div className="border-t border-slate-100 pt-4 mt-4">
+                                {activeStat === 'orders' && (
+                                    <div className="space-y-2">
+                                        <p className="font-semibold text-sm text-slate-700">Đơn hàng gần đây</p>
+                                        {user.recentOrders.length === 0 ? <p className="text-xs text-slate-400">Chưa có đơn hàng.</p> : user.recentOrders.slice(0, 5).map((order: any) => (
+                                            <Link key={order._id} href={`/admin/orders/${order._id}`} className="flex justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs">
+                                                <span>#{order._id.slice(-6).toUpperCase()}</span>
+                                                <strong>{new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0)}đ</strong>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                                {activeStat === 'spent' && (
+                                    <div><p className="text-sm font-semibold text-slate-700">Tổng tiền từ các đơn đã thanh toán</p><p className="text-xl font-bold text-green-600 mt-1">{new Intl.NumberFormat('vi-VN').format(user.totalSpent)}đ</p></div>
+                                )}
+                                {activeStat === 'membership' && (
+                                    <div className="space-y-2"><p className="font-semibold text-sm text-slate-700">Gói hội viên đã kích hoạt</p>{user.membershipPackages.length === 0 ? <p className="text-xs text-slate-400">Chưa có gói đã kích hoạt.</p> : user.membershipPackages.map((item: any) => <div key={item._id} className="p-2 rounded-lg bg-purple-50 text-xs">{item.packageId?.name || item.packageInfo?.name || 'Gói hội viên'}</div>)}</div>
+                                )}
+                                {activeStat === 'vouchers' && (
+                                    <div className="space-y-2"><p className="font-semibold text-sm text-slate-700">Voucher của khách hàng</p>{user.vouchers.length === 0 ? <p className="text-xs text-slate-400">Chưa có voucher.</p> : user.vouchers.slice(0, 10).map((voucher: any) => <div key={voucher._id} className="flex justify-between p-2 rounded-lg bg-amber-50 text-xs"><span className="font-mono font-semibold">{voucher.code}</span><span>{voucher.isUsed ? 'Đã dùng' : 'Chưa dùng'}</span></div>)}</div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -630,7 +682,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                             <p className="text-xs text-slate-500">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-sm">{new Intl.NumberFormat('vi-VN').format(order.total)}đ</p>
+                                            <p className="font-bold text-sm">{new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0)}đ</p>
                                             <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-700' :
                                                 order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                                                     'bg-blue-100 text-blue-700'

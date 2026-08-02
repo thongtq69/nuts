@@ -29,7 +29,8 @@ export async function GET() {
         // Support both new orders with orderType and old orders with package info in items
         const membershipOrders = await Order.find({
             user: userId,
-            status: { $in: ['completed', 'paid', 'delivered'] },
+            status: { $in: ['completed', 'delivered'] },
+            paymentStatus: { $in: ['paid', 'completed'] },
             $or: [
                 { orderType: 'membership' },
                 { 'items.name': { $regex: /Gói Hội Viên/i } },

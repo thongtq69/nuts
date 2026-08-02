@@ -22,6 +22,33 @@ import { formatStaffCode } from '../src/lib/staff-code.ts';
 import { addReferralToPath, normalizeReferralCode } from '../src/lib/referral-attribution.ts';
 import { ROLE_DEFINITIONS } from '../src/constants/permissions.ts';
 import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '../src/lib/home-promotion.ts';
+import {
+    buildManagedCustomerQuery,
+    buildMembershipVoucherCode,
+    isConfirmedPaymentStatus,
+} from '../src/lib/customer-ownership.ts';
+
+test('staff customer scope includes only direct and team referral relationships', () => {
+    const query = buildManagedCustomerQuery('staff-1', ['collab-1']);
+    assert.equal(query.role, 'user');
+    assert.deepEqual(query.$or, [
+        { parentStaff: 'staff-1' },
+        { 'commissionSettings.managerId': 'staff-1' },
+        { referrer: { $in: ['staff-1', 'collab-1'] } },
+    ]);
+});
+
+test('membership vouchers can only be activated after confirmed payment', () => {
+    assert.equal(isConfirmedPaymentStatus('pending'), false);
+    assert.equal(isConfirmedPaymentStatus('failed'), false);
+    assert.equal(isConfirmedPaymentStatus('paid'), true);
+    assert.equal(isConfirmedPaymentStatus('completed'), true);
+});
+
+test('membership voucher codes are stable per order and voucher position', () => {
+    assert.equal(buildMembershipVoucherCode('698abc1234567890', 0), 'VIP3456789001');
+    assert.equal(buildMembershipVoucherCode('698abc1234567890', 1), 'VIP3456789002');
+});
 
 test('staff codes are generated in the required fixed-width sequence', () => {
     assert.equal(formatStaffCode(1), 'NV000001');

@@ -322,7 +322,7 @@ function MembershipCheckoutContent() {
                                     </>
                                 ) : (
                                     <>
-                                        {paymentMethod === 'banking' ? '✅ Xác nhận hoàn tất' : '📦 Xác nhận đăng ký'} - {formatPrice(pkg.price)}đ
+                                        {paymentMethod === 'banking' ? '✅ Gửi yêu cầu xác nhận thanh toán' : '📦 Gửi yêu cầu đăng ký'} - {formatPrice(pkg.price)}đ
                                     </>
                                 )}
                             </button>
@@ -379,7 +379,7 @@ function MembershipCheckoutContent() {
                                         </div>
                                     ) : (
                                         <p className="text-gray-600">
-                                            Gói VIP đã được kích hoạt! Bạn có thể sử dụng voucher ngay bây giờ.
+                                            Yêu cầu đã được ghi nhận. Gói VIP và voucher chỉ được kích hoạt sau khi hệ thống xác nhận đã thanh toán.
                                         </p>
                                     )}
 

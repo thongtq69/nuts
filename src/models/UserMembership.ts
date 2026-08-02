@@ -4,6 +4,7 @@ export interface IUserMembership {
     _id?: string;
     userId: mongoose.Types.ObjectId;
     packageId: mongoose.Types.ObjectId;
+    orderId?: mongoose.Types.ObjectId;
     startDate: Date;
     endDate: Date;
     isActive: boolean;
@@ -16,6 +17,7 @@ const UserMembershipSchema: Schema<IUserMembership> = new Schema(
     {
         userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         packageId: { type: Schema.Types.ObjectId, ref: 'SubscriptionPackage', required: true },
+        orderId: { type: Schema.Types.ObjectId, ref: 'Order', unique: true, sparse: true },
         startDate: { type: Date, required: true },
         endDate: { type: Date, required: true },
         isActive: { type: Boolean, default: true },
