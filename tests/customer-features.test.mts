@@ -19,10 +19,34 @@ import {
 } from '../src/lib/homepage-products.ts';
 import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '../src/lib/site-features.ts';
 import { formatStaffCode } from '../src/lib/staff-code.ts';
+import { addReferralToPath, normalizeReferralCode } from '../src/lib/referral-attribution.ts';
+import { ROLE_DEFINITIONS } from '../src/constants/permissions.ts';
 
 test('staff codes are generated in the required fixed-width sequence', () => {
     assert.equal(formatStaffCode(1), 'NV000001');
     assert.equal(formatStaffCode(42), 'NV000042');
+});
+
+test('staff referral code stays attached to every registration URL', () => {
+    assert.equal(
+        addReferralToPath('/register?type=collaborator', 'nv000001'),
+        '/register?type=collaborator&ref=NV000001',
+    );
+    assert.equal(normalizeReferralCode(' nv000042 '), 'NV000042');
+    assert.equal(normalizeReferralCode('mã không hợp lệ'), '');
+});
+
+test('staff roles do not inherit article publishing rights automatically', () => {
+    for (const [role, definition] of Object.entries(ROLE_DEFINITIONS)) {
+        if (role === 'admin') continue;
+        assert.equal(
+            definition.permissions.some(permission => permission.startsWith('blogs:')),
+            false,
+            `${role} must receive blog permissions explicitly`,
+        );
+    }
+
+    assert.equal(ROLE_DEFINITIONS.admin.permissions.includes('blogs:create'), true);
 });
 
 test('homepage commitments keep four editable content boxes', () => {

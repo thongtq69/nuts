@@ -5,6 +5,7 @@ import UserVoucher from '@/models/UserVoucher';
 import bcrypt from 'bcryptjs';
 import { sendWelcomeEmail } from '@/lib/email';
 import { findReferrerByCode } from '@/lib/staff-identity';
+import { normalizeReferralCode } from '@/lib/referral-attribution';
 
 // Generate unique voucher code
 function generateVoucherCode(): string {
@@ -21,7 +22,7 @@ import { cookies } from 'next/headers';
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const { name, email, password, phone, registerAs } = await req.json();
+        const { name, email, password, phone, registerAs, referralCode } = await req.json();
 
         if (!name || !email || !password) {
             return NextResponse.json(
@@ -41,19 +42,25 @@ export async function POST(req: Request) {
 
         // Check referrer
         const cookieStore = await cookies();
-        const refCode = cookieStore.get('gonuts_ref')?.value;
+        const refCode = normalizeReferralCode(referralCode) ||
+            normalizeReferralCode(cookieStore.get('gonuts_ref')?.value);
         let referrerId: any = undefined;
         let managingStaffId: any = undefined;
 
         if (refCode) {
             const referrerUser = await findReferrerByCode(refCode);
-            if (referrerUser) {
-                referrerId = referrerUser._id;
-                if (referrerUser.role === 'staff' || referrerUser.affiliateLevel === 'staff') {
-                    managingStaffId = referrerUser._id;
-                } else if (referrerUser.parentStaff) {
-                    managingStaffId = referrerUser.parentStaff;
-                }
+            if (!referrerUser) {
+                return NextResponse.json(
+                    { message: 'Mã nhân viên trong link giới thiệu không hợp lệ. Vui lòng xin lại link từ nhân viên.' },
+                    { status: 400 }
+                );
+            }
+
+            referrerId = referrerUser._id;
+            if (referrerUser.role === 'staff' || referrerUser.affiliateLevel === 'staff') {
+                managingStaffId = referrerUser._id;
+            } else if (referrerUser.parentStaff) {
+                managingStaffId = referrerUser.parentStaff;
             }
         }
 

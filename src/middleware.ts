@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { normalizeReferralCode } from '@/lib/referral-attribution';
 
 const jwtSecret = new TextEncoder().encode(
     process.env.JWT_SECRET || 'fallback_secret_change_me'
@@ -46,7 +47,7 @@ function hasPermission(user: any, requiredPermission: string): boolean {
     const roleType = user.roleType;
     
     const rolePermissionMap: Record<string, string[]> = {
-        'manager': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'staff:view', 'collaborators:view', 'affiliate:view', 'vouchers:view', 'banners:view', 'blogs:view', 'reports:view', 'settings:view'],
+        'manager': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'staff:view', 'collaborators:view', 'affiliate:view', 'vouchers:view', 'banners:view', 'reports:view', 'settings:view'],
         'sales': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'collaborators:view', 'affiliate:view', 'vouchers:view'],
         'support': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'vouchers:view'],
         'warehouse': ['dashboard:view', 'products:view', 'orders:view'],
@@ -66,7 +67,16 @@ export async function middleware(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
 
     const { searchParams } = new URL(request.url);
-    const refCode = searchParams.get('ref');
+    const refCode = normalizeReferralCode(searchParams.get('ref'));
+    const storedRefCode = normalizeReferralCode(request.cookies.get('gonuts_ref')?.value);
+
+    // Keep staff attribution visible in the registration URL. This also covers
+    // buttons that navigate to /register without manually forwarding `ref`.
+    if (path === '/register' && !refCode && storedRefCode) {
+        const registrationUrl = request.nextUrl.clone();
+        registrationUrl.searchParams.set('ref', storedRefCode);
+        return NextResponse.redirect(registrationUrl);
+    }
 
     if (refCode) {
         response.cookies.set('gonuts_ref', refCode, {
@@ -74,6 +84,7 @@ export async function middleware(request: NextRequest) {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
+            path: '/',
         });
     }
 

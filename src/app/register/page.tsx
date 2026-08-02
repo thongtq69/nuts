@@ -9,6 +9,7 @@ import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import PasswordInput from '@/components/common/PasswordInput';
 import Link from 'next/link';
+import { normalizeReferralCode } from '@/lib/referral-attribution';
 
 function RegisterForm() {
     const router = useRouter();
@@ -25,6 +26,7 @@ function RegisterForm() {
     const [registerAs, setRegisterAs] = useState<'user' | 'agent' | 'collaborator'>('user');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const referralCode = normalizeReferralCode(searchParams.get('ref'));
 
     useEffect(() => {
         const type = searchParams.get('type');
@@ -55,7 +57,8 @@ function RegisterForm() {
                     email: formData.email,
                     password: formData.password,
                     phone: formData.phone,
-                    registerAs
+                    registerAs,
+                    referralCode
                 }),
             });
 
@@ -88,6 +91,13 @@ function RegisterForm() {
                         </div>
                         <h1>Đăng ký tài khoản</h1>
                         <p className="auth-subtitle">Tạo tài khoản để nhận nhiều ưu đãi</p>
+
+                        {referralCode && (
+                            <div className="referral-notice">
+                                <span>Đăng ký theo nhân viên</span>
+                                <strong>{referralCode}</strong>
+                            </div>
+                        )}
 
                         {error && <div className="error-message">{error}</div>}
 
@@ -205,6 +215,24 @@ function RegisterForm() {
                     grid-template-columns: repeat(3, 1fr);
                     gap: 12px;
                     margin-top: 8px;
+                }
+                .referral-notice {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin: 16px 0;
+                    padding: 12px 14px;
+                    border: 1px solid #e3c88d;
+                    border-radius: 10px;
+                    background: #fffaf0;
+                    color: #5f4329;
+                    font-size: 14px;
+                }
+                .referral-notice strong {
+                    font-family: monospace;
+                    color: #9c7044;
+                    letter-spacing: 0.04em;
                 }
                 .role-option {
                     position: relative;

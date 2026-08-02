@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
@@ -52,6 +54,11 @@ const quillModules = {
 };
 
 export default function StaffBlogsPage() {
+    const router = useRouter();
+    const { loading: authLoading, hasPermission } = useAuth();
+    const canCreateBlog = hasPermission('blogs:create');
+    const canEditBlog = hasPermission('blogs:edit');
+    const canDeleteBlog = hasPermission('blogs:delete');
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -73,8 +80,13 @@ export default function StaffBlogsPage() {
     });
 
     useEffect(() => {
+        if (authLoading) return;
+        if (!canCreateBlog) {
+            router.replace('/staff');
+            return;
+        }
         fetchBlogs();
-    }, []);
+    }, [authLoading, canCreateBlog, router]);
 
     const fetchBlogs = async () => {
         try {
@@ -161,7 +173,7 @@ export default function StaffBlogsPage() {
                 toast.success('Đã gửi bài viết', 'Bài viết đã được lưu và đang chờ Admin duyệt trước khi xuất hiện trên website.');
             } else {
                 const data = await res.json();
-                toast.error('Lỗi khi lưu bài viết', data.error || 'Vui lòng thử lại.');
+                toast.error('Lỗi khi lưu bài viết', data.message || data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error saving blog:', error);
@@ -246,6 +258,14 @@ export default function StaffBlogsPage() {
         draft: blogs.filter(b => !b.isPublished).length,
         views: blogs.reduce((sum, b) => sum + (b.views || 0), 0)
     };
+
+    if (authLoading || !canCreateBlog) {
+        return (
+            <div className="min-h-[320px] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-brand animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 w-full">
@@ -414,20 +434,24 @@ export default function StaffBlogsPage() {
                                         </td>
                                         <td className="px-6 py-5 text-center">
                                             <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => openModal(blog)}
-                                                    className="p-2.5 bg-brand/10 text-brand hover:bg-brand/20 rounded-xl transition-all"
-                                                    title="Chỉnh sửa"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(blog._id)}
-                                                    className="p-2.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-xl transition-all"
-                                                    title="Xóa"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                {canEditBlog && (
+                                                    <button
+                                                        onClick={() => openModal(blog)}
+                                                        className="p-2.5 bg-brand/10 text-brand hover:bg-brand/20 rounded-xl transition-all"
+                                                        title="Chỉnh sửa"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                )}
+                                                {canDeleteBlog && (
+                                                    <button
+                                                        onClick={() => handleDelete(blog._id)}
+                                                        className="p-2.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-xl transition-all"
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

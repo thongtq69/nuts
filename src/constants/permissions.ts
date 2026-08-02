@@ -76,7 +76,20 @@ export type Permission =
     
     // Admin Actions
     | 'admin:super'
-    | 'admin:logs';
+    | 'admin:logs'
+
+    // Commission, KPI & Teams
+    | 'commission:view'
+    | 'commission:edit'
+    | 'commission:approve'
+    | 'commission:pay'
+    | 'kpi:view'
+    | 'kpi:edit'
+    | 'kpi:manage'
+    | 'teams:view'
+    | 'teams:create'
+    | 'teams:edit'
+    | 'teams:delete';
 
 export type RoleType = 'admin' | 'manager' | 'sales' | 'support' | 'warehouse' | 'accountant' | 'collaborator' | 'viewer';
 
@@ -123,7 +136,6 @@ export const ROLE_DEFINITIONS: Record<RoleType, RoleDefinition> = {
             'affiliate:view', 'affiliate:commissions',
             'vouchers:view', 'vouchers:create', 'vouchers:edit', 'vouchers:rewards',
             'banners:view', 'banners:create', 'banners:edit',
-            'blogs:view', 'blogs:create', 'blogs:edit',
             'reports:view', 'reports:export', 'reports:financial',
             'settings:view'
         ],
@@ -216,11 +228,25 @@ export const PERMISSION_GROUPS: Record<string, Permission[]> = {
     'Affiliate': ['affiliate:view', 'affiliate:settings', 'affiliate:commissions', 'affiliate:pay'],
     'Voucher': ['vouchers:view', 'vouchers:create', 'vouchers:edit', 'vouchers:delete', 'vouchers:rewards'],
     'Banner': ['banners:view', 'banners:create', 'banners:edit', 'banners:delete'],
-    'Blog': ['blogs:view', 'blogs:create', 'blogs:edit', 'blogs:delete'],
+    'Bài viết': ['blogs:view', 'blogs:create', 'blogs:edit', 'blogs:delete'],
     'Báo cáo': ['reports:view', 'reports:export', 'reports:financial'],
+    'Hoa hồng': ['commission:view', 'commission:edit', 'commission:approve', 'commission:pay'],
+    'KPI': ['kpi:view', 'kpi:edit', 'kpi:manage'],
+    'Đội nhóm': ['teams:view', 'teams:create', 'teams:edit', 'teams:delete'],
     'Cài đặt': ['settings:view', 'settings:edit', 'settings:site', 'settings:payments'],
     'Admin': ['admin:super', 'admin:logs']
 };
+
+export const PERMISSION_LABELS: Partial<Record<Permission, string>> = {
+    'blogs:view': 'Xem danh sách bài viết của mình',
+    'blogs:create': 'Tạo và gửi bài viết để Admin duyệt',
+    'blogs:edit': 'Chỉnh sửa bài viết của mình',
+    'blogs:delete': 'Xóa bài viết của mình',
+};
+
+export const ALL_PERMISSIONS = Array.from(
+    new Set(Object.values(PERMISSION_GROUPS).flat()),
+) as Permission[];
 
 export function hasPermission(userPermissions: Permission[], requiredPermission: Permission): boolean {
     return userPermissions.includes(requiredPermission) || userPermissions.includes('admin:super');

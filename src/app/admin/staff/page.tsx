@@ -10,7 +10,7 @@ import { Pagination } from '@/components/admin/ui/Pagination';
 import { SearchInput } from '@/components/admin/ui/SearchInput';
 import { ExportButton, ExportColumn } from '@/components/admin/ui/ExportButton';
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
-import { ROLE_DEFINITIONS, PERMISSION_GROUPS, type Permission, type RoleType } from '@/constants/permissions';
+import { ROLE_DEFINITIONS, PERMISSION_GROUPS, PERMISSION_LABELS, type Permission, type RoleType } from '@/constants/permissions';
 import { useToast } from '@/context/ToastContext';
 
 interface Staff {
@@ -884,6 +884,11 @@ export default function AdminStaffPage() {
                             </div>
                         </div>
 
+                        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            Để nhân viên được đăng bài, mở nhóm <strong>Bài viết</strong> và chọn
+                            <strong> “Tạo và gửi bài viết để Admin duyệt”</strong>. Bài của nhân viên chỉ công khai sau khi Admin duyệt.
+                        </div>
+
                         <div className="flex-1 overflow-y-auto space-y-3 pr-2">
                             {Object.entries(PERMISSION_GROUPS).map(([group, permissions]) => (
                                 <div key={group} className="border border-slate-200 rounded-xl overflow-hidden">
@@ -936,7 +941,7 @@ export default function AdminStaffPage() {
                                                             onChange={() => togglePermission(permission)}
                                                             className="w-4 h-4 text-brand rounded border-slate-300 focus:ring-brand"
                                                         />
-                                                        <span className="text-sm text-slate-700">{permission}</span>
+                                                        <span className="text-sm text-slate-700">{PERMISSION_LABELS[permission] || permission}</span>
                                                     </label>
                                                 ))}
                                             </div>

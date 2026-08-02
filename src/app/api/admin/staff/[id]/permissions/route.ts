@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import { requireAdminAuth } from '@/lib/auth-permissions';
+import { ALL_PERMISSIONS, type Permission, type RoleType } from '@/constants/permissions';
+
+const VALID_PERMISSIONS = new Set<Permission>(ALL_PERMISSIONS);
+const VALID_ROLE_TYPES = new Set<RoleType>([
+    'admin', 'manager', 'sales', 'support', 'warehouse', 'accountant', 'collaborator', 'viewer'
+]);
 
 export async function PUT(
     req: Request,
@@ -26,12 +32,18 @@ export async function PUT(
             return NextResponse.json({ message: 'Người dùng này không phải là nhân viên' }, { status: 400 });
         }
 
-        if (roleType) {
+        if (roleType !== undefined) {
+            if (!VALID_ROLE_TYPES.has(roleType)) {
+                return NextResponse.json({ message: 'Vai trò nhân viên không hợp lệ' }, { status: 400 });
+            }
             staff.roleType = roleType;
         }
 
-        if (customPermissions) {
-            staff.customPermissions = customPermissions;
+        if (customPermissions !== undefined) {
+            if (!Array.isArray(customPermissions) || customPermissions.some(permission => !VALID_PERMISSIONS.has(permission))) {
+                return NextResponse.json({ message: 'Danh sách quyền không hợp lệ' }, { status: 400 });
+            }
+            staff.customPermissions = Array.from(new Set(customPermissions));
         }
 
         await staff.save();

@@ -49,31 +49,41 @@ export async function PATCH(
         await dbConnect();
         const { id } = await params;
         const body = await req.json();
-
-        // Set publishedAt if publishing for the first time
-        if (body.isPublished) {
-            const existingBlog = await Blog.findById(id);
-            if (existingBlog && !existingBlog.isPublished) {
-                body.publishedAt = new Date();
-            }
-        }
-
-        const isRejected = body.moderationStatus === 'rejected';
-        body.moderationStatus = isRejected ? 'rejected' : body.isPublished ? 'published' : 'draft';
-        if (body.isPublished) {
-            body.approvedBy = auth.user._id;
-            body.approvedAt = new Date();
-            body.rejectionReason = undefined;
-        } else {
-            body.isPublished = false;
-            body.publishedAt = undefined;
-        }
-
-        const blog = await Blog.findByIdAndUpdate(id, body, { new: true });
+        const blog = await Blog.findById(id);
 
         if (!blog) {
             return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
         }
+
+        if (typeof body.title === 'string') blog.title = body.title.trim();
+        if (typeof body.excerpt === 'string') blog.excerpt = body.excerpt.trim();
+        if (typeof body.content === 'string') blog.content = body.content;
+        if (typeof body.category === 'string') blog.category = body.category.trim();
+        if (typeof body.coverImage === 'string') blog.coverImage = body.coverImage;
+        if (Array.isArray(body.tags)) blog.tags = body.tags.filter((tag: unknown) => typeof tag === 'string');
+
+        const shouldPublish = body.isPublished === true;
+        const shouldReject = body.moderationStatus === 'rejected';
+
+        if (shouldPublish) {
+            blog.isPublished = true;
+            blog.moderationStatus = 'published';
+            blog.approvedBy = new mongoose.Types.ObjectId(auth.user._id);
+            blog.approvedAt = new Date();
+            blog.publishedAt = blog.publishedAt || new Date();
+            blog.rejectionReason = undefined;
+        } else {
+            blog.isPublished = false;
+            blog.moderationStatus = shouldReject ? 'rejected' : 'draft';
+            blog.publishedAt = undefined;
+            blog.approvedBy = undefined;
+            blog.approvedAt = undefined;
+            blog.rejectionReason = shouldReject && typeof body.rejectionReason === 'string'
+                ? body.rejectionReason.trim()
+                : undefined;
+        }
+
+        await blog.save();
 
         return NextResponse.json(blog);
     } catch (error) {

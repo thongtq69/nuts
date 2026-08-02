@@ -63,7 +63,10 @@ export function getUserPermissions(user: AuthenticatedUser): Permission[] {
     }
 
     if (user.role === 'staff' && user.roleType) {
-        const rolePermissions = getDefaultPermissions(user.roleType);
+        // Publishing rights are always granted explicitly per employee by Admin.
+        // They must never be inherited merely from a broad staff role.
+        const rolePermissions = getDefaultPermissions(user.roleType)
+            .filter(permission => !permission.startsWith('blogs:'));
         const customPermissions = user.customPermissions || [];
         return [...new Set([...rolePermissions, ...customPermissions])];
     }

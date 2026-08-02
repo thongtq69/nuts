@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Edit2, Trash2, Eye, EyeOff, Calendar, Tag, X, Image as ImageIcon, TrendingUp } from 'lucide-react';
+import { FileText, Plus, Edit2, Trash2, Eye, EyeOff, Calendar, Tag, X, Image as ImageIcon, TrendingUp, Clock3, UserRound } from 'lucide-react';
 import { useConfirm } from '@/context/ConfirmContext';
+import { useToast } from '@/context/ToastContext';
 import { RichTextEditor } from '@/components/admin/ui';
 
 interface Blog {
@@ -15,6 +16,9 @@ interface Blog {
     coverImage?: string;
     isPublished: boolean;
     moderationStatus?: 'draft' | 'pending' | 'published' | 'rejected';
+    author?: string;
+    authorRole?: 'admin' | 'staff';
+    viewCount?: number;
     publishedAt?: string;
     createdAt: string;
 }
@@ -26,6 +30,7 @@ export default function AdminBlogsPage() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const confirm = useConfirm();
+    const toast = useToast();
     const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
     const [formData, setFormData] = useState({
         title: '',
@@ -36,12 +41,12 @@ export default function AdminBlogsPage() {
         isPublished: false,
     });
 
-    // Mock stats
     const stats = {
         totalBlogs: blogs.length,
         published: blogs.filter(b => b.isPublished).length,
-        draft: blogs.filter(b => !b.isPublished).length,
-        views: 1250
+        pending: blogs.filter(b => b.moderationStatus === 'pending').length,
+        draft: blogs.filter(b => !b.isPublished && b.moderationStatus !== 'pending').length,
+        views: blogs.reduce((sum, blog) => sum + (blog.viewCount || 0), 0)
     };
 
     useEffect(() => {
@@ -52,7 +57,8 @@ export default function AdminBlogsPage() {
         try {
             const res = await fetch('/api/blogs');
             const data = await res.json();
-            setBlogs(data);
+            if (!res.ok) throw new Error(data.error || 'Không thể tải bài viết');
+            setBlogs(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error fetching blogs:', error);
         } finally {
@@ -77,6 +83,10 @@ export default function AdminBlogsPage() {
             if (res.ok) {
                 fetchBlogs();
                 closeModal();
+                toast.success('Đã lưu bài viết');
+            } else {
+                const data = await res.json();
+                toast.error('Lưu bài viết thất bại', data.error || data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error saving blog:', error);
@@ -105,6 +115,15 @@ export default function AdminBlogsPage() {
 
     const handleTogglePublish = async (blog: Blog) => {
         try {
+            if (!blog.isPublished && blog.moderationStatus === 'pending') {
+                const approved = await confirm({
+                    title: 'Duyệt đăng bài viết',
+                    description: `Duyệt bài “${blog.title}” và cho phép hiển thị công khai trên website?`,
+                    confirmText: 'Duyệt đăng',
+                    cancelText: 'Hủy',
+                });
+                if (!approved) return;
+            }
             const res = await fetch(`/api/blogs/${blog._id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -112,6 +131,10 @@ export default function AdminBlogsPage() {
             });
             if (res.ok) {
                 fetchBlogs();
+                toast.success(blog.isPublished ? 'Đã ẩn bài viết' : 'Đã duyệt và đăng bài viết');
+            } else {
+                const data = await res.json();
+                toast.error('Cập nhật thất bại', data.error || data.message || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error toggling blog:', error);
@@ -131,7 +154,13 @@ export default function AdminBlogsPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isPublished: false, moderationStatus: 'rejected' }),
         });
-        if (res.ok) fetchBlogs();
+        if (res.ok) {
+            fetchBlogs();
+            toast.success('Đã từ chối bài viết');
+        } else {
+            const data = await res.json();
+            toast.error('Từ chối thất bại', data.error || data.message || 'Vui lòng thử lại.');
+        }
     };
 
     const openModal = async (blog?: Blog) => {
@@ -195,7 +224,7 @@ export default function AdminBlogsPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
                 <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-brand/30 hover:shadow-lg hover:-translate-y-1 transition-all">
                     <div className="flex items-start justify-between mb-4">
                         <div className="p-3 rounded-xl bg-brand/10">
@@ -217,6 +246,18 @@ export default function AdminBlogsPage() {
                     <div>
                         <h3 className="text-slate-500 text-sm font-medium mb-2">Đã xuất bản</h3>
                         <div className="text-3xl font-bold text-slate-800">{stats.published}</div>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-amber-200 hover:shadow-lg hover:-translate-y-1 transition-all">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="p-3 rounded-xl bg-amber-50">
+                            <Clock3 className="w-6 h-6 text-amber-600" strokeWidth={2} />
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="text-slate-500 text-sm font-medium mb-2">Chờ Admin duyệt</h3>
+                        <div className="text-3xl font-bold text-slate-800">{stats.pending}</div>
                     </div>
                 </div>
 
@@ -270,9 +311,13 @@ export default function AdminBlogsPage() {
                                         Xuất bản
                                     </span>
                                 ) : (
-                                    <span className="px-3 py-1 bg-brand-light/50 text-slate-800 text-xs font-semibold rounded-full flex items-center gap-1">
+                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full flex items-center gap-1 ${blog.moderationStatus === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-brand-light/50 text-slate-800'}`}>
                                         <EyeOff size={12} />
-                                        {blog.moderationStatus === 'pending' ? 'Chờ Admin duyệt' : 'Nháp'}
+                                        {blog.moderationStatus === 'pending'
+                                            ? 'Chờ Admin duyệt'
+                                            : blog.moderationStatus === 'rejected'
+                                                ? 'Đã từ chối'
+                                                : 'Nháp'}
                                     </span>
                                 )}
                             </div>
@@ -287,6 +332,10 @@ export default function AdminBlogsPage() {
                                 <span className="text-xs text-slate-400 flex items-center gap-1">
                                     <Calendar size={12} />
                                     {new Date(blog.createdAt).toLocaleDateString('vi-VN')}
+                                </span>
+                                <span className="text-xs text-slate-400 flex items-center gap-1 min-w-0">
+                                    <UserRound size={12} />
+                                    <span className="truncate">{blog.author || 'Admin'}</span>
                                 </span>
                             </div>
 
