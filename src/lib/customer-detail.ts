@@ -1,4 +1,5 @@
 import Order from '@/models/Order';
+import SubscriptionPackage from '@/models/SubscriptionPackage';
 import User from '@/models/User';
 import UserMembership from '@/models/UserMembership';
 import UserVoucher from '@/models/UserVoucher';
@@ -73,7 +74,11 @@ export async function getCustomerDetail(user: any) {
             .lean(),
         UserMembership.find({ userId: user._id })
             .sort({ createdAt: -1 })
-            .populate('packageId', 'name price')
+            .populate({
+                path: 'packageId',
+                model: SubscriptionPackage,
+                select: 'name price',
+            })
             .select('packageId orderId startDate endDate isActive purchasePrice')
             .lean(),
         resolveManagingStaff(user),
@@ -111,4 +116,3 @@ export async function getCustomerDetail(user: any) {
             : null,
     };
 }
-

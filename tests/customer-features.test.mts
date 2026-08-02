@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { normalizeProductPayload, ProductPayloadError } from '../src/lib/product-payload.ts';
 import { describeProductPersistenceError } from '../src/lib/product-persistence-error.ts';
 import {
@@ -27,6 +28,19 @@ import {
     buildMembershipVoucherCode,
     isConfirmedPaymentStatus,
 } from '../src/lib/customer-ownership.ts';
+
+test('customer detail registers the membership package model on cold starts', async () => {
+    const source = await readFile(
+        new URL('../src/lib/customer-detail.ts', import.meta.url),
+        'utf8',
+    );
+
+    assert.match(
+        source,
+        /import SubscriptionPackage from '@\/models\/SubscriptionPackage';/,
+    );
+    assert.match(source, /model: SubscriptionPackage,/);
+});
 
 test('staff customer scope includes only direct and team referral relationships', () => {
     const query = buildManagedCustomerQuery('staff-1', ['collab-1']);
