@@ -81,8 +81,8 @@ async function isAdmin() {
     }
 }
 
-// GET - List all staff
-export async function GET() {
+// GET - List staff or collaborators managed by staff
+export async function GET(req: Request) {
     try {
         if (!(await isAdmin())) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -94,6 +94,37 @@ export async function GET() {
             role: 'staff',
             affiliateLevel: 'staff'
         }).select('name email phone staffCode roleType customPermissions collaboratorCount walletBalance totalCommission createdAt').sort({ createdAt: -1 });
+
+        const view = new URL(req.url).searchParams.get('view');
+        if (view === 'collaborators') {
+            const staffById = new Map(staffList.map(staff => [staff._id.toString(), staff]));
+            const collaborators = await User.find({
+                parentStaff: { $in: staffList.map(staff => staff._id) },
+                affiliateLevel: 'collaborator'
+            })
+                .select('name email phone referralCode parentStaff walletBalance totalCommission createdAt')
+                .sort({ createdAt: -1 });
+
+            return NextResponse.json(collaborators.map(collaborator => {
+                const parentStaff = collaborator.parentStaff
+                    ? staffById.get(collaborator.parentStaff.toString())
+                    : undefined;
+
+                return {
+                    id: collaborator._id.toString(),
+                    name: collaborator.name,
+                    email: collaborator.email,
+                    phone: collaborator.phone || '',
+                    referralCode: collaborator.referralCode || '',
+                    parentStaffId: collaborator.parentStaff?.toString() || '',
+                    parentStaffName: parentStaff?.name || 'Chưa gắn nhân viên',
+                    parentStaffCode: parentStaff?.staffCode || '',
+                    walletBalance: collaborator.walletBalance || 0,
+                    totalCommission: collaborator.totalCommission || 0,
+                    createdAt: collaborator.createdAt
+                };
+            }));
+        }
 
         // Get stats for each staff
         const staffWithStats = await Promise.all(

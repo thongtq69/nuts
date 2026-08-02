@@ -28,6 +28,22 @@ interface Staff {
     createdAt: string;
 }
 
+interface Collaborator {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    referralCode: string;
+    parentStaffId: string;
+    parentStaffName: string;
+    parentStaffCode: string;
+    walletBalance: number;
+    totalCommission: number;
+    createdAt: string;
+}
+
+type StaffView = 'staff' | 'collaborators' | 'revenue';
+
 const ROLE_OPTIONS = Object.entries(ROLE_DEFINITIONS).map(([value, def]) => ({
     value: value as RoleType,
     label: def.name,
@@ -57,6 +73,8 @@ async function readStaffResponse(res: Response): Promise<StaffCreateResponse> {
 
 export default function AdminStaffPage() {
     const [staffList, setStaffList] = useState<Staff[]>([]);
+    const [collaboratorList, setCollaboratorList] = useState<Collaborator[]>([]);
+    const [activeView, setActiveView] = useState<StaffView>('staff');
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -88,10 +106,15 @@ export default function AdminStaffPage() {
     const fetchStaff = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch('/api/admin/staff');
-            if (res.ok) {
-                const data = await res.json();
-                setStaffList(data);
+            const [staffRes, collaboratorRes] = await Promise.all([
+                fetch('/api/admin/staff'),
+                fetch('/api/admin/staff?view=collaborators')
+            ]);
+            if (staffRes.ok) {
+                setStaffList(await staffRes.json());
+            }
+            if (collaboratorRes.ok) {
+                setCollaboratorList(await collaboratorRes.json());
             }
         } catch (error) {
             console.error('Error fetching staff:', error);
@@ -245,9 +268,25 @@ export default function AdminStaffPage() {
         (s.roleType && ROLE_DEFINITIONS[s.roleType as keyof typeof ROLE_DEFINITIONS]?.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    const totalPages = Math.ceil(filteredStaff.length / pageSize);
+    const filteredCollaborators = collaboratorList.filter(collaborator =>
+        collaborator.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        collaborator.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        collaborator.referralCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        collaborator.parentStaffName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        collaborator.parentStaffCode.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const revenueStaff = [...filteredStaff].sort((a, b) => b.teamRevenue - a.teamRevenue);
+
+    const activeRecordCount = activeView === 'collaborators'
+        ? filteredCollaborators.length
+        : filteredStaff.length;
+
+    const totalPages = Math.ceil(activeRecordCount / pageSize);
     const startIndex = (currentPage - 1) * pageSize;
     const paginatedStaff = filteredStaff.slice(startIndex, startIndex + pageSize);
+    const paginatedCollaborators = filteredCollaborators.slice(startIndex, startIndex + pageSize);
+    const paginatedRevenueStaff = revenueStaff.slice(startIndex, startIndex + pageSize);
 
     useEffect(() => {
         if (currentPage > totalPages && totalPages > 0) {
@@ -256,11 +295,16 @@ export default function AdminStaffPage() {
     }, [totalPages, currentPage]);
 
     const totalStaff = staffList.length;
-    const totalCTV = staffList.reduce((sum, s) => sum + s.collaboratorCount, 0);
+    const totalCTV = collaboratorList.length;
     const totalRevenue = staffList.reduce((sum, s) => sum + s.teamRevenue, 0);
 
-    const scrollToStaffList = () => {
-        document.getElementById('staff-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const selectView = (view: StaffView) => {
+        setActiveView(view);
+        setSearchTerm('');
+        setCurrentPage(1);
+        window.requestAnimationFrame(() => {
+            document.getElementById('staff-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     };
 
     const getRoleColor = (roleType: string) => {
@@ -282,6 +326,21 @@ export default function AdminStaffPage() {
         { key: 'teamRevenue', label: 'Doanh thu team', format: (v) => `${v.toLocaleString('vi-VN')}đ` },
         { key: 'createdAt', label: 'Ngày tạo', format: (v) => v ? new Date(v).toLocaleDateString('vi-VN') : '-' }
     ];
+
+    const collaboratorExportColumns: ExportColumn<Collaborator>[] = [
+        { key: 'referralCode', label: 'Mã CTV' },
+        { key: 'name', label: 'Họ tên' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Số điện thoại', format: (v) => v || '-' },
+        { key: 'parentStaffName', label: 'Nhân viên quản lý' },
+        { key: 'parentStaffCode', label: 'Mã nhân viên' },
+        { key: 'totalCommission', label: 'Tổng hoa hồng', format: (v) => `${v.toLocaleString('vi-VN')}đ` },
+        { key: 'createdAt', label: 'Ngày tham gia', format: (v) => v ? new Date(v).toLocaleDateString('vi-VN') : '-' }
+    ];
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeView, searchTerm]);
 
     return (
         <div className="space-y-6">
@@ -305,16 +364,25 @@ export default function AdminStaffPage() {
                         Quản lý Nhân viên
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        {filteredStaff.length} nhân viên • {totalCTV} CTV • {totalRevenue.toLocaleString('vi-VN')}đ doanh thu team
+                        {totalStaff} nhân viên • {totalCTV} CTV • {totalRevenue.toLocaleString('vi-VN')}đ doanh thu team
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <ExportButton
-                        data={filteredStaff}
-                        columns={exportColumns}
-                        filename="nhan-vien"
-                        disabled={filteredStaff.length === 0}
-                    />
+                    {activeView === 'collaborators' ? (
+                        <ExportButton
+                            data={filteredCollaborators}
+                            columns={collaboratorExportColumns}
+                            filename="cong-tac-vien"
+                            disabled={filteredCollaborators.length === 0}
+                        />
+                    ) : (
+                        <ExportButton
+                            data={activeView === 'revenue' ? revenueStaff : filteredStaff}
+                            columns={exportColumns}
+                            filename={activeView === 'revenue' ? 'doanh-thu-team' : 'nhan-vien'}
+                            disabled={filteredStaff.length === 0}
+                        />
+                    )}
                     <button
                         onClick={() => setShowModal(true)}
                         className="flex items-center gap-2 px-5 py-2.5 bg-brand-light/30 hover:bg-brand-light/50 text-slate-800 font-bold rounded-xl hover:shadow-md transition-all"
@@ -328,8 +396,8 @@ export default function AdminStaffPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                     type="button"
-                    onClick={scrollToStaffList}
-                    className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 text-left cursor-pointer hover:border-brand/40 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    onClick={() => selectView('staff')}
+                    className={`bg-white rounded-xl p-4 shadow-sm border text-left cursor-pointer hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-brand/30 ${activeView === 'staff' ? 'border-brand ring-2 ring-brand/20' : 'border-slate-100 hover:border-brand/40'}`}
                     aria-label="Xem danh sách nhân viên"
                 >
                     <div className="flex items-center gap-3">
@@ -344,8 +412,8 @@ export default function AdminStaffPage() {
                 </button>
                 <button
                     type="button"
-                    onClick={scrollToStaffList}
-                    className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 text-left cursor-pointer hover:border-brand/40 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-brand/30"
+                    onClick={() => selectView('collaborators')}
+                    className={`bg-white rounded-xl p-4 shadow-sm border text-left cursor-pointer hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-brand/30 ${activeView === 'collaborators' ? 'border-brand ring-2 ring-brand/20' : 'border-slate-100 hover:border-brand/40'}`}
                     aria-label="Xem nhân viên và cộng tác viên đang quản lý"
                 >
                     <div className="flex items-center gap-3">
@@ -360,8 +428,8 @@ export default function AdminStaffPage() {
                 </button>
                 <button
                     type="button"
-                    onClick={scrollToStaffList}
-                    className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 col-span-2 text-left cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    onClick={() => selectView('revenue')}
+                    className={`bg-white rounded-xl p-4 shadow-sm border col-span-2 text-left cursor-pointer hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-emerald-200 ${activeView === 'revenue' ? 'border-emerald-400 ring-2 ring-emerald-200' : 'border-slate-100 hover:border-emerald-300'}`}
                     aria-label="Xem doanh thu theo từng nhân viên"
                 >
                     <div className="flex items-center gap-3">
@@ -379,12 +447,14 @@ export default function AdminStaffPage() {
             <SearchInput
                 value={searchTerm}
                 onChange={setSearchTerm}
-                placeholder="Tìm nhân viên theo tên, email, mã hoặc vai trò..."
+                placeholder={activeView === 'collaborators'
+                    ? 'Tìm CTV theo tên, email, mã hoặc nhân viên quản lý...'
+                    : activeView === 'revenue'
+                        ? 'Tìm doanh thu theo tên hoặc mã nhân viên...'
+                        : 'Tìm nhân viên theo tên, email, mã hoặc vai trò...'}
                 className="max-w-xl"
             />
-
-
-
+            {activeView === 'staff' && (
             <div id="staff-list" className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden scroll-mt-24">
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -539,6 +609,131 @@ export default function AdminStaffPage() {
                     isLoading={loading}
                 />
             </div>
+            )}
+
+            {activeView === 'collaborators' && (
+                <div id="staff-list" className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden scroll-mt-24">
+                    <div className="px-6 py-4 border-b border-slate-100">
+                        <h2 className="font-bold text-slate-800">Danh sách cộng tác viên</h2>
+                        <p className="text-sm text-slate-500 mt-1">Hiển thị CTV và nhân viên đang trực tiếp quản lý.</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase w-16">STT</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Cộng tác viên</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Mã CTV</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Nhân viên quản lý</th>
+                                    <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase">Hoa hồng</th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase">Ngày tham gia</th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {loading ? (
+                                    <tr><td colSpan={7} className="px-6 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-brand" /></td></tr>
+                                ) : paginatedCollaborators.length === 0 ? (
+                                    <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-500">{searchTerm ? 'Không tìm thấy cộng tác viên' : 'Chưa có cộng tác viên nào'}</td></tr>
+                                ) : paginatedCollaborators.map((collaborator, index) => (
+                                    <tr key={collaborator.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">{startIndex + index + 1}</td>
+                                        <td className="px-6 py-4">
+                                            <Link href={`/admin/users/${collaborator.id}`} className="block rounded-lg -m-2 p-2 hover:bg-brand/5">
+                                                <div className="font-medium text-slate-800">{collaborator.name}</div>
+                                                <div className="text-xs text-slate-500">{collaborator.email}{collaborator.phone ? ` • ${collaborator.phone}` : ''}</div>
+                                            </Link>
+                                        </td>
+                                        <td className="px-6 py-4"><span className="font-mono text-sm bg-brand/10 text-brand px-2 py-1 rounded font-bold">{collaborator.referralCode || '-'}</span></td>
+                                        <td className="px-6 py-4">
+                                            <div className="font-medium text-slate-800">{collaborator.parentStaffName}</div>
+                                            <div className="text-xs text-slate-500 font-mono">{collaborator.parentStaffCode || '-'}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-bold text-emerald-600">{collaborator.totalCommission.toLocaleString('vi-VN')}đ</td>
+                                        <td className="px-6 py-4 text-center text-sm text-slate-600">{new Date(collaborator.createdAt).toLocaleDateString('vi-VN')}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <Link href={`/admin/users/${collaborator.id}`} className="inline-flex items-center gap-1.5 px-3 py-2 text-brand hover:bg-brand/10 rounded-lg text-xs font-semibold">
+                                                Chi tiết <ChevronRight size={16} />
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalRecords={filteredCollaborators.length}
+                        pageSize={pageSize}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                        isLoading={loading}
+                    />
+                </div>
+            )}
+
+            {activeView === 'revenue' && (
+                <div id="staff-list" className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden scroll-mt-24">
+                    <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h2 className="font-bold text-slate-800">Doanh thu theo team</h2>
+                            <p className="text-sm text-slate-500 mt-1">Tổng hợp đơn hàng và doanh thu của từng nhân viên cùng CTV trực thuộc.</p>
+                        </div>
+                        <div className="text-2xl font-bold text-emerald-600">{totalRevenue.toLocaleString('vi-VN')}đ</div>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase w-16">STT</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase">Nhân viên / Team</th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase">CTV</th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase">Đơn hàng</th>
+                                    <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase">Doanh thu team</th>
+                                    <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase">Hoa hồng NV</th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {loading ? (
+                                    <tr><td colSpan={7} className="px-6 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-emerald-600" /></td></tr>
+                                ) : paginatedRevenueStaff.length === 0 ? (
+                                    <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-500">{searchTerm ? 'Không tìm thấy dữ liệu doanh thu' : 'Chưa có dữ liệu doanh thu team'}</td></tr>
+                                ) : paginatedRevenueStaff.map((staff, index) => (
+                                    <tr key={staff.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-center font-semibold text-slate-500 text-sm">{startIndex + index + 1}</td>
+                                        <td className="px-6 py-4">
+                                            <Link href={`/admin/users/${staff.id}`} className="block rounded-lg -m-2 p-2 hover:bg-emerald-50">
+                                                <div className="font-medium text-slate-800">{staff.name}</div>
+                                                <div className="text-xs text-slate-500 font-mono">{staff.staffCode}</div>
+                                            </Link>
+                                        </td>
+                                        <td className="px-6 py-4 text-center font-semibold text-brand">{staff.collaboratorCount}</td>
+                                        <td className="px-6 py-4 text-center font-semibold text-slate-800">{staff.teamOrders}</td>
+                                        <td className="px-6 py-4 text-right font-bold text-emerald-600">{staff.teamRevenue.toLocaleString('vi-VN')}đ</td>
+                                        <td className="px-6 py-4 text-right font-semibold text-amber-600">{staff.totalCommission.toLocaleString('vi-VN')}đ</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <Link href={`/admin/users/${staff.id}`} className="inline-flex items-center gap-1.5 px-3 py-2 text-brand hover:bg-brand/10 rounded-lg text-xs font-semibold">
+                                                Chi tiết <ChevronRight size={16} />
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalRecords={filteredStaff.length}
+                        pageSize={pageSize}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                        isLoading={loading}
+                    />
+                </div>
+            )}
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
