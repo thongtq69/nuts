@@ -27,7 +27,8 @@ import {
     Mail,
     X,
     ChevronRight,
-    Truck
+    Truck,
+    Calculator
 } from 'lucide-react';
 
 
@@ -52,6 +53,7 @@ const menuSections = [
         items: [
             { href: '/admin/users', icon: Users, label: 'Người dùng' },
             { href: '/admin/staff', icon: UserCheck, label: 'Nhân viên' },
+            { href: '/admin/payroll', icon: Calculator, label: 'Lương & KPI' },
             { href: '/admin/commissions', icon: CreditCard, label: 'Hoa hồng (cũ)' },
             { href: '/admin/packages', icon: Crown, label: 'Gói Hội Viên' },
         ],

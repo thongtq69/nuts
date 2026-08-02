@@ -44,6 +44,11 @@ export interface IOrder {
     isAgentOrder?: boolean;
     paymentRef?: string;
     membershipActivatedAt?: Date;
+    voucherId?: mongoose.Types.ObjectId;
+    voucherCode?: string;
+    voucherSource?: 'package' | 'manual' | 'campaign' | 'order_reward';
+    voucherDiscountAmount?: number;
+    vipSavings?: number;
     createdAt?: Date;
 }
 
@@ -100,7 +105,12 @@ const OrderSchema: Schema<IOrder> = new Schema(
         agentSavings: { type: Number, default: 0 },
         isAgentOrder: { type: Boolean, default: false },
         paymentRef: { type: String },
-        membershipActivatedAt: { type: Date }
+        membershipActivatedAt: { type: Date },
+        voucherId: { type: Schema.Types.ObjectId, ref: 'UserVoucher' },
+        voucherCode: { type: String },
+        voucherSource: { type: String, enum: ['package', 'manual', 'campaign', 'order_reward'] },
+        voucherDiscountAmount: { type: Number, min: 0 },
+        vipSavings: { type: Number, min: 0 },
     },
     {
         timestamps: true,

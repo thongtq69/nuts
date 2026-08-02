@@ -61,6 +61,12 @@ export default function AccountPage() {
     // Membership packages state
     const [membershipPackages, setMembershipPackages] = useState<any[]>([]);
     const [loadingMembership, setLoadingMembership] = useState(false);
+    const [financialSummary, setFinancialSummary] = useState({
+        totalSpent: 0,
+        totalVipSavings: 0,
+        vipSavingsOrderCount: 0,
+    });
+    const [loadingFinancialSummary, setLoadingFinancialSummary] = useState(true);
 
     // Profile form state
     const [profileForm, setProfileForm] = useState<ProfileFormData>({
@@ -160,6 +166,22 @@ export default function AccountPage() {
             fetchMembership();
         }
     }, [user, activeTab]);
+
+    useEffect(() => {
+        if (!user) return;
+        const fetchFinancialSummary = async () => {
+            setLoadingFinancialSummary(true);
+            try {
+                const response = await fetch('/api/user/financial-summary', { cache: 'no-store' });
+                if (response.ok) setFinancialSummary(await response.json());
+            } catch (error) {
+                console.error('Failed to fetch financial summary', error);
+            } finally {
+                setLoadingFinancialSummary(false);
+            }
+        };
+        fetchFinancialSummary();
+    }, [user]);
 
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setProfileForm(prev => ({
@@ -368,6 +390,19 @@ export default function AccountPage() {
 
             <div className="container">
                 <h1 className="page-title">Quản lý tài khoản</h1>
+
+                <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <p className="text-sm text-slate-500">Tổng tiền đã chi tiêu</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900">{loadingFinancialSummary ? 'Đang tính...' : `${financialSummary.totalSpent.toLocaleString('vi-VN')}đ`}</p>
+                        <p className="mt-2 text-xs text-slate-400">Chỉ tính các đơn đã thanh toán hoặc hoàn thành.</p>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+                        <p className="text-sm text-emerald-700">Đã tiết kiệm nhờ gói VIP</p>
+                        <p className="mt-1 text-2xl font-bold text-emerald-800">{loadingFinancialSummary ? 'Đang tính...' : `${financialSummary.totalVipSavings.toLocaleString('vi-VN')}đ`}</p>
+                        <p className="mt-2 text-xs text-emerald-600">Từ {financialSummary.vipSavingsOrderCount} đơn đã sử dụng voucher VIP.</p>
+                    </div>
+                </div>
 
                 <div className="account-layout">
                     {/* Account Sidebar */}

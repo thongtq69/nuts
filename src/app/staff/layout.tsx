@@ -16,7 +16,8 @@ import {
     X,
     ChevronRight,
     FileText,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Calculator
 } from 'lucide-react';
 
 const menuItems = [
@@ -24,6 +25,7 @@ const menuItems = [
     { href: '/staff/collaborators', icon: Users, label: 'Cộng tác viên' },
     { href: '/staff/customers', icon: Users, label: 'Khách hàng của tôi' },
     { href: '/staff/commissions', icon: Wallet, label: 'Hoa hồng' },
+    { href: '/staff/payroll', icon: Calculator, label: 'Lương & KPI của tôi' },
     { href: '/staff/orders', icon: ShoppingCart, label: 'Đơn hàng' },
     { href: '/staff/blogs', icon: FileText, label: 'Quản lý Bài viết', permission: 'blogs:create' },
     { href: '/staff/banners', icon: ImageIcon, label: 'Quản lý Banner' },

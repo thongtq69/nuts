@@ -26,7 +26,8 @@ import {
     Loader2,
     Link as LinkIcon,
     Copy,
-    KeyRound
+    KeyRound,
+    PiggyBank
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
@@ -53,6 +54,9 @@ interface UserDetail {
     // Statistics
     totalOrders: number;
     totalSpent: number;
+    totalVipSavings: number;
+    vipSavingsOrderCount: number;
+    vipSavingsOrders: any[];
     membershipPackages: any[];
     vouchers: any[];
     recentOrders: any[];
@@ -75,7 +79,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     const confirm = useConfirm();
     const prompt = usePrompt();
     const [copied, setCopied] = useState(false);
-    const [activeStat, setActiveStat] = useState<'orders' | 'spent' | 'membership' | 'vouchers'>('orders');
+    const [activeStat, setActiveStat] = useState<'orders' | 'spent' | 'savings' | 'membership' | 'vouchers'>('orders');
 
     useEffect(() => {
         params.then(({ id }) => {
@@ -628,6 +632,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                 </span>
                             </button>
 
+                            <button onClick={() => setActiveStat('savings')} className={`w-full flex items-center justify-between p-3 bg-teal-50 rounded-lg border-2 transition-all ${activeStat === 'savings' ? 'border-teal-500' : 'border-transparent'}`}>
+                                <div className="flex items-center gap-3">
+                                    <PiggyBank className="text-teal-600" size={18} />
+                                    <span className="text-sm font-medium">Tiết kiệm nhờ VIP</span>
+                                </div>
+                                <span className="font-bold text-teal-700">{new Intl.NumberFormat('vi-VN').format(user.totalVipSavings || 0)}đ</span>
+                            </button>
+
                             <button onClick={() => setActiveStat('membership')} className={`w-full flex items-center justify-between p-3 bg-purple-50 rounded-lg border-2 transition-all ${activeStat === 'membership' ? 'border-purple-500' : 'border-transparent'}`}>
                                 <div className="flex items-center gap-3">
                                     <Package className="text-purple-600" size={18} />
@@ -658,6 +670,13 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                 )}
                                 {activeStat === 'spent' && (
                                     <div><p className="text-sm font-semibold text-slate-700">Tổng tiền từ các đơn đã thanh toán</p><p className="text-xl font-bold text-green-600 mt-1">{new Intl.NumberFormat('vi-VN').format(user.totalSpent)}đ</p></div>
+                                )}
+                                {activeStat === 'savings' && (
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-semibold text-slate-700">Tiền khách hàng đã tiết kiệm nhờ gói VIP</p>
+                                        <p className="text-xl font-bold text-teal-700">{new Intl.NumberFormat('vi-VN').format(user.totalVipSavings || 0)}đ</p>
+                                        <p className="text-xs text-slate-500">Từ {user.vipSavingsOrderCount || 0} đơn đã thanh toán có sử dụng voucher VIP.</p>
+                                    </div>
                                 )}
                                 {activeStat === 'membership' && (
                                     <div className="space-y-2"><p className="font-semibold text-sm text-slate-700">Gói hội viên đã kích hoạt</p>{user.membershipPackages.length === 0 ? <p className="text-xs text-slate-400">Chưa có gói đã kích hoạt.</p> : user.membershipPackages.map((item: any) => <div key={item._id} className="p-2 rounded-lg bg-purple-50 text-xs">{item.packageId?.name || item.packageInfo?.name || 'Gói hội viên'}</div>)}</div>

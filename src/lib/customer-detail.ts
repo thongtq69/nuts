@@ -3,6 +3,7 @@ import SubscriptionPackage from '@/models/SubscriptionPackage';
 import User from '@/models/User';
 import UserMembership from '@/models/UserMembership';
 import UserVoucher from '@/models/UserVoucher';
+import { getCustomerFinancialSummary } from '@/lib/customer-financials';
 
 function publicUser(user: any) {
     const object = user.toObject ? user.toObject() : { ...user };
@@ -39,30 +40,8 @@ export async function getCustomerDetail(user: any) {
         ],
     };
 
-    const [orderStats, recentOrders, vouchers, storedMemberships, managingStaff] = await Promise.all([
-        Order.aggregate([
-            { $match: orderMatch },
-            {
-                $group: {
-                    _id: null,
-                    totalOrders: { $sum: 1 },
-                    totalSpent: {
-                        $sum: {
-                            $cond: [
-                                {
-                                    $or: [
-                                        { $in: ['$paymentStatus', ['paid', 'completed']] },
-                                        { $in: ['$status', ['completed', 'delivered']] },
-                                    ],
-                                },
-                                '$totalAmount',
-                                0,
-                            ],
-                        },
-                    },
-                },
-            },
-        ]),
+    const [financialSummary, recentOrders, vouchers, storedMemberships, managingStaff] = await Promise.all([
+        getCustomerFinancialSummary(String(user._id)),
         Order.find(orderMatch)
             .sort({ createdAt: -1 })
             .limit(20)
@@ -97,11 +76,13 @@ export async function getCustomerDetail(user: any) {
             .lean();
     }
 
-    const stats = orderStats[0] || { totalOrders: 0, totalSpent: 0 };
     return {
         ...publicUser(user),
-        totalOrders: stats.totalOrders,
-        totalSpent: stats.totalSpent,
+        totalOrders: financialSummary.totalOrders,
+        totalSpent: financialSummary.totalSpent,
+        totalVipSavings: financialSummary.totalVipSavings,
+        vipSavingsOrderCount: financialSummary.vipSavingsOrderCount,
+        vipSavingsOrders: financialSummary.vipSavingsOrders,
         recentOrders,
         vouchers,
         membershipPackages,

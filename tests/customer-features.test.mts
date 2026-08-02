@@ -23,6 +23,8 @@ import { formatStaffCode } from '../src/lib/staff-code.ts';
 import { addReferralToPath, normalizeReferralCode } from '../src/lib/referral-attribution.ts';
 import { ROLE_DEFINITIONS } from '../src/constants/permissions.ts';
 import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '../src/lib/home-promotion.ts';
+import { calculatePayrollAmounts } from '../src/lib/payroll-formula.ts';
+import { calculateLegacyVipSavings } from '../src/lib/vip-savings.ts';
 import {
     buildManagedCustomerQuery,
     buildMembershipVoucherCode,
@@ -40,6 +42,19 @@ test('customer detail registers the membership package model on cold starts', as
         /import SubscriptionPackage from '@\/models\/SubscriptionPackage';/,
     );
     assert.match(source, /model: SubscriptionPackage,/);
+});
+
+test('staff payroll and customer finance APIs are scoped to the authenticated account', async () => {
+    const [staffPayrollSource, customerFinanceSource, staffCustomerSource] = await Promise.all([
+        readFile(new URL('../src/app/api/staff/payroll/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/user/financial-summary/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/staff/customers/[id]/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(staffPayrollSource, /staffId: auth\.user\._id/);
+    assert.match(staffPayrollSource, /getStaffMonthlyRevenue\(auth\.user\._id/);
+    assert.match(customerFinanceSource, /getCustomerFinancialSummary\(auth\.user\._id\)/);
+    assert.match(staffCustomerSource, /buildManagedCustomerQuery/);
 });
 
 test('staff customer scope includes only direct and team referral relationships', () => {
@@ -62,6 +77,44 @@ test('membership vouchers can only be activated after confirmed payment', () => 
 test('membership voucher codes are stable per order and voucher position', () => {
     assert.equal(buildMembershipVoucherCode('698abc1234567890', 0), 'VIP3456789001');
     assert.equal(buildMembershipVoucherCode('698abc1234567890', 1), 'VIP3456789002');
+});
+
+test('salary is reduced by the missing KPI percentage when KPI is not reached', () => {
+    const payroll = calculatePayrollAmounts({
+        baseSalary: 7_000_000,
+        kpiTarget: 200_000_000,
+        commissionRate: 3,
+        revenue: 180_000_000,
+    });
+
+    assert.equal(payroll.achievementPercentage, 90);
+    assert.equal(payroll.kpiShortfallPercentage, 10);
+    assert.equal(payroll.earnedBaseSalary, 6_300_000);
+    assert.equal(payroll.commissionAmount, 0);
+    assert.equal(payroll.totalSalary, 6_300_000);
+});
+
+test('commission is calculated only on revenue above KPI', () => {
+    const payroll = calculatePayrollAmounts({
+        baseSalary: 7_000_000,
+        kpiTarget: 200_000_000,
+        commissionRate: 3,
+        revenue: 250_000_000,
+    });
+
+    assert.equal(payroll.achievementPercentage, 125);
+    assert.equal(payroll.earnedBaseSalary, 7_000_000);
+    assert.equal(payroll.excessRevenue, 50_000_000);
+    assert.equal(payroll.commissionAmount, 1_500_000);
+    assert.equal(payroll.totalSalary, 8_500_000);
+});
+
+test('legacy VIP savings use the actual voucher reduction after product pricing', () => {
+    assert.equal(calculateLegacyVipSavings({
+        items: [{ price: 200_000, quantity: 1 }],
+        shippingFee: 0,
+        totalAmount: 150_000,
+    }), 50_000);
 });
 
 test('staff codes are generated in the required fixed-width sequence', () => {

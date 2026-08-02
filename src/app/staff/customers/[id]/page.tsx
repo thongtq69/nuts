@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, CreditCard, Loader2, Mail, Package, Phone, ShoppingBag, Ticket, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Calendar, CreditCard, Loader2, Mail, Package, Phone, PiggyBank, ShoppingBag, Ticket, TrendingUp } from 'lucide-react';
 
-type StatKey = 'orders' | 'spent' | 'membership' | 'vouchers';
+type StatKey = 'orders' | 'spent' | 'savings' | 'membership' | 'vouchers';
 
 export default function StaffCustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const [customer, setCustomer] = useState<any>(null);
@@ -34,6 +34,7 @@ export default function StaffCustomerDetailPage({ params }: { params: Promise<{ 
     const statButtons = [
         { key: 'orders' as const, label: 'Đơn hàng', value: customer.totalOrders, icon: ShoppingBag, style: 'bg-blue-50 text-blue-700' },
         { key: 'spent' as const, label: 'Tổng chi tiêu', value: money(customer.totalSpent), icon: CreditCard, style: 'bg-emerald-50 text-emerald-700' },
+        { key: 'savings' as const, label: 'Tiết kiệm nhờ VIP', value: money(customer.totalVipSavings), icon: PiggyBank, style: 'bg-teal-50 text-teal-700' },
         { key: 'membership' as const, label: 'Gói hội viên', value: customer.membershipPackages.length, icon: Package, style: 'bg-purple-50 text-purple-700' },
         { key: 'vouchers' as const, label: 'Voucher', value: customer.vouchers.length, icon: Ticket, style: 'bg-amber-50 text-amber-700' },
     ];
@@ -62,7 +63,7 @@ export default function StaffCustomerDetailPage({ params }: { params: Promise<{ 
 
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-4"><TrendingUp size={19} className="text-emerald-600" /> Thống kê — bấm để xem chi tiết</h3>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                     {statButtons.map(item => (
                         <button key={item.key} onClick={() => setActiveStat(item.key)} className={`rounded-xl p-4 text-left border-2 transition-all ${item.style} ${activeStat === item.key ? 'border-current shadow-sm' : 'border-transparent'}`}>
                             <item.icon size={18} /><p className="text-xs mt-2">{item.label}</p><p className="font-bold text-lg mt-1">{item.value}</p>
@@ -80,6 +81,7 @@ export default function StaffCustomerDetailPage({ params }: { params: Promise<{ 
                         </div>
                     )}
                     {activeStat === 'spent' && <div><h4 className="font-semibold">Tổng chi tiêu đã thanh toán</h4><p className="text-2xl font-bold text-emerald-700 mt-2">{money(customer.totalSpent)}</p></div>}
+                    {activeStat === 'savings' && <div><h4 className="font-semibold">Tiền đã tiết kiệm nhờ gói VIP</h4><p className="text-2xl font-bold text-teal-700 mt-2">{money(customer.totalVipSavings)}</p><p className="text-sm text-slate-500 mt-1">Từ {customer.vipSavingsOrderCount || 0} đơn đã thanh toán có sử dụng voucher VIP.</p></div>}
                     {activeStat === 'membership' && (
                         <div className="space-y-2"><h4 className="font-semibold">Gói hội viên</h4>{customer.membershipPackages.length === 0 ? <p className="text-sm text-slate-500">Chưa có gói đã kích hoạt.</p> : customer.membershipPackages.map((item: any) => <div key={item._id} className="rounded-lg bg-purple-50 p-3 text-sm">{item.packageId?.name || item.packageInfo?.name || 'Gói hội viên'} · {item.endDate ? `Hết hạn ${new Date(item.endDate).toLocaleDateString('vi-VN')}` : money(item.totalAmount)}</div>)}</div>
                     )}
@@ -91,4 +93,3 @@ export default function StaffCustomerDetailPage({ params }: { params: Promise<{ 
         </div>
     );
 }
-

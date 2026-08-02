@@ -269,7 +269,12 @@ export async function POST(req: Request) {
             originalTotalAmount: totalOriginalAmount,
             agentSavings: totalAgentSavings,
             isAgentOrder: isAgent,
-            paymentRef: body.paymentReference
+            paymentRef: body.paymentReference,
+            voucherId: appliedVoucherId,
+            voucherCode: voucherToApply ? voucherCode : undefined,
+            voucherSource: voucherToApply?.source,
+            voucherDiscountAmount: discountAmount,
+            vipSavings: voucherToApply?.source === 'package' ? discountAmount : 0,
         });
 
         if (paymentMethod === 'banking' && body.paymentReference) {
