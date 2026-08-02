@@ -23,6 +23,7 @@ import {
 import { useToast } from '@/context/ToastContext';
 import { useSettings } from '@/context/SettingsContext';
 import { DEFAULT_HOME_FEATURES, HomeFeature, normalizeHomeFeatures } from '@/lib/site-features';
+import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
 
 interface ProductFeature {
     title: string;
@@ -42,6 +43,8 @@ interface SiteSettings {
     tiktokUrl: string;
     promoText: string;
     promoEnabled: boolean;
+    homePromotionText: string;
+    homePromotionEnabled: boolean;
     agentRegistrationUrl: string;
     ctvRegistrationUrl: string;
     freeShippingThreshold: number;
@@ -74,6 +77,8 @@ export default function AdminSettingsPage() {
         tiktokUrl: 'https://tiktok.com/...',
         promoText: 'Giảm giá 8% khi mua hàng từ 899k trở lên với mã "SAVER8"',
         promoEnabled: true,
+        homePromotionText: DEFAULT_HOME_PROMOTION_TEXT,
+        homePromotionEnabled: true,
         agentRegistrationUrl: '/agent/register',
         ctvRegistrationUrl: '/agent/register',
         freeShippingThreshold: 2000000,
@@ -115,6 +120,10 @@ export default function AdminSettingsPage() {
                 const data = await res.json();
                 setSettings({
                     ...data,
+                    homePromotionText: typeof data.homePromotionText === 'string'
+                        ? data.homePromotionText
+                        : DEFAULT_HOME_PROMOTION_TEXT,
+                    homePromotionEnabled: data.homePromotionEnabled !== false,
                     homeFeatures: normalizeHomeFeatures(data.homeFeatures),
                 });
             }
@@ -353,7 +362,7 @@ export default function AdminSettingsPage() {
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                         <Megaphone className="text-brand" size={20} />
-                        Banner khuyến mãi
+                        Banner khuyến mãi trên đầu trang
                     </h2>
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
@@ -377,6 +386,56 @@ export default function AdminSettingsPage() {
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="Giảm giá 8% khi mua hàng từ 899 trở lên..."
                             />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Home announcement strip */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <Megaphone className="text-brand" size={20} />
+                        Dải thông báo dưới banner trang chủ
+                    </h2>
+                    <p className="text-sm text-slate-500 mb-4">
+                        Nội dung nằm ngay dưới banner lớn trên trang chủ, đúng vị trí khách đã đánh dấu.
+                    </p>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="homePromotionEnabled"
+                                checked={settings.homePromotionEnabled}
+                                onChange={event => setSettings(previous => ({
+                                    ...previous,
+                                    homePromotionEnabled: event.target.checked,
+                                }))}
+                                className="w-5 h-5 text-brand rounded focus:ring-brand"
+                            />
+                            <label htmlFor="homePromotionEnabled" className="text-sm font-medium text-slate-700">
+                                Hiển thị dải thông báo này trên trang chủ
+                            </label>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Nội dung dải thông báo
+                            </label>
+                            <textarea
+                                value={settings.homePromotionText}
+                                onChange={event => setSettings(previous => ({
+                                    ...previous,
+                                    homePromotionText: event.target.value.slice(0, 300),
+                                }))}
+                                rows={3}
+                                maxLength={300}
+                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand resize-none"
+                                placeholder={DEFAULT_HOME_PROMOTION_TEXT}
+                            />
+                            <div className="mt-1 text-right text-xs text-slate-400">
+                                {settings.homePromotionText.length}/300 ký tự
+                            </div>
+                        </div>
+                        <div className="rounded-lg border border-[#dbe147] bg-[#f4f64f] px-4 py-3 text-center text-sm font-semibold text-[#3c2a1a]">
+                            {settings.homePromotionText || 'Dải thông báo sẽ được ẩn khi không có nội dung.'}
                         </div>
                     </div>
                 </div>

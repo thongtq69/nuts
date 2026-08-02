@@ -21,6 +21,7 @@ import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '../src/lib/site-fe
 import { formatStaffCode } from '../src/lib/staff-code.ts';
 import { addReferralToPath, normalizeReferralCode } from '../src/lib/referral-attribution.ts';
 import { ROLE_DEFINITIONS } from '../src/constants/permissions.ts';
+import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '../src/lib/home-promotion.ts';
 
 test('staff codes are generated in the required fixed-width sequence', () => {
     assert.equal(formatStaffCode(1), 'NV000001');
@@ -55,6 +56,15 @@ test('homepage commitments keep four editable content boxes', () => {
         DEFAULT_HOME_FEATURES.map(feature => feature.icon),
         ['truck', 'refresh', 'shield', 'users'],
     );
+});
+
+test('the homepage announcement strip keeps an editable normalized value', () => {
+    assert.equal(
+        normalizeHomePromotionText('  Miễn phí vận chuyển từ 500.000đ  '),
+        'Miễn phí vận chuyển từ 500.000đ',
+    );
+    assert.equal(normalizeHomePromotionText(undefined), DEFAULT_HOME_PROMOTION_TEXT);
+    assert.equal(normalizeHomePromotionText('x'.repeat(301)).length, 300);
 });
 
 test('homepage commitment content is normalized before saving', () => {

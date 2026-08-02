@@ -1,5 +1,6 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import { DEFAULT_HOME_FEATURES, HomeFeature, HOME_FEATURE_ICONS } from '@/lib/site-features';
+import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
 
 export interface IProductFeature {
     title: string;
@@ -25,6 +26,10 @@ export interface ISiteSettings {
     // Promo Banner
     promoText: string;
     promoEnabled: boolean;
+
+    // Home Page Announcement Strip (below the hero banner)
+    homePromotionText: string;
+    homePromotionEnabled: boolean;
 
     // Agent/CTV Links
     agentRegistrationUrl: string;
@@ -88,6 +93,8 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
 
         promoText: { type: String, default: 'Giảm giá 8% khi mua hàng từ 899 trở lên với mã "SAVER8"' },
         promoEnabled: { type: Boolean, default: true },
+        homePromotionText: { type: String, default: DEFAULT_HOME_PROMOTION_TEXT, maxlength: 300 },
+        homePromotionEnabled: { type: Boolean, default: true },
 
         agentRegistrationUrl: { type: String, default: '/agent/register' },
         ctvRegistrationUrl: { type: String, default: '/agent/register' },

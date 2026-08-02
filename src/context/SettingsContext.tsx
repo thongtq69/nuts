@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { HomeFeature } from '@/lib/site-features';
+import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
 
 interface ProductFeature {
     title: string;
@@ -17,6 +18,8 @@ interface Settings {
     address?: string;
     logoUrl?: string;
     topBarPromoText?: string;
+    homePromotionText?: string;
+    homePromotionEnabled?: boolean;
     zaloLink?: string;
     socialLinks?: {
         facebook?: string;
@@ -55,6 +58,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                     email: 'info@gonuts.vn',
                     address: 'TP. Hồ Chí Minh, Việt Nam',
                     topBarPromoText: 'Giảm giá 8% khi mua hàng từ 899k trở lên với mã "SAVER8"',
+                    homePromotionText: DEFAULT_HOME_PROMOTION_TEXT,
+                    homePromotionEnabled: true,
                 });
             }
         } catch (error) {
@@ -63,6 +68,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             setSettings({
                 companyName: 'Go Nuts',
                 hotline: '0901234567',
+                homePromotionText: DEFAULT_HOME_PROMOTION_TEXT,
+                homePromotionEnabled: true,
             });
         } finally {
             setLoading(false);

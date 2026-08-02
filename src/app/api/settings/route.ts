@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import SiteSettings from '@/models/SiteSettings';
 import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '@/lib/site-features';
 import { requireAdminAuth } from '@/lib/auth-permissions';
+import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '@/lib/home-promotion';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -43,6 +44,8 @@ export async function GET() {
                 tiktokUrl: 'https://tiktok.com/@gonuts',
                 promoText: 'TẶNG VOUCHER 50.000 VNĐ KHI ĐĂNG KÝ THÀNH VIÊN',
                 promoEnabled: true,
+                homePromotionText: DEFAULT_HOME_PROMOTION_TEXT,
+                homePromotionEnabled: true,
                 agentRegistrationUrl: '/register?type=agent',
                 ctvRegistrationUrl: '/register?type=collaborator',
                 freeShippingThreshold: 500000,
@@ -85,6 +88,12 @@ export async function GET() {
             await settings.save();
         }
 
+        if (typeof settings.homePromotionText !== 'string' || typeof settings.homePromotionEnabled !== 'boolean') {
+            settings.homePromotionText = DEFAULT_HOME_PROMOTION_TEXT;
+            settings.homePromotionEnabled = true;
+            await settings.save();
+        }
+
         return NextResponse.json(settings, {
             headers: { 'Cache-Control': 'no-store, max-age=0' }
         });
@@ -110,6 +119,8 @@ export async function PUT(request: NextRequest) {
             ...updateData,
             freeShippingThreshold: Math.max(0, Number(updateData.freeShippingThreshold) || 0),
             homeFeatures: normalizeHomeFeatures(updateData.homeFeatures),
+            homePromotionText: normalizeHomePromotionText(updateData.homePromotionText),
+            homePromotionEnabled: updateData.homePromotionEnabled !== false,
             updatedAt: new Date()
         };
 
