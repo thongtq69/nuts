@@ -1,7 +1,7 @@
 'use client';
 
 import { cloneElement, useCallback, useEffect, useMemo, useState } from 'react';
-import { Calculator, RefreshCw, Save, Target, TrendingUp, WalletCards, type LucideIcon } from 'lucide-react';
+import { Calculator, Pencil, RefreshCw, Save, Target, TrendingUp, WalletCards, type LucideIcon } from 'lucide-react';
 
 type PayrollStatus = 'draft' | 'finalized' | 'paid';
 
@@ -39,6 +39,7 @@ export default function AdminPayrollPage() {
     const [edits, setEdits] = useState<Record<string, PayrollEdit>>({});
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState<string | null>(null);
+    const [editingIds, setEditingIds] = useState<Record<string, boolean>>({});
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     const loadPayroll = useCallback(async () => {
@@ -56,6 +57,7 @@ export default function AdminPayrollPage() {
                 status: row.config?.status || 'draft',
                 notes: row.config?.notes || '',
             }])));
+            setEditingIds({});
         } catch (error) {
             setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Không thể tải bảng lương' });
         } finally {
@@ -96,7 +98,8 @@ export default function AdminPayrollPage() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Không thể lưu bảng lương');
             await loadPayroll();
-            setMessage({ type: 'success', text: 'Đã lưu cấu hình và tính lại bảng lương chính xác.' });
+            setEditingIds((current) => ({ ...current, [staffId]: false }));
+            setMessage({ type: 'success', text: 'Đã lưu thành công vào hệ thống và tính lại bảng lương chính xác.' });
         } catch (error) {
             setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Không thể lưu bảng lương' });
         } finally {
@@ -137,6 +140,7 @@ export default function AdminPayrollPage() {
                     {rows.length === 0 && <div className="rounded-2xl bg-white p-16 text-center text-slate-500">Chưa có nhân viên.</div>}
                     {rows.map((row) => {
                         const edit = edits[row.staff._id];
+                        const isEditing = !row.configured || Boolean(editingIds[row.staff._id]);
                         return (
                             <section key={row.staff._id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                                 <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -145,12 +149,15 @@ export default function AdminPayrollPage() {
                                         <p className="text-sm text-slate-500">{row.staff.staffCode || 'Chưa có mã'} · {row.staff.email}</p>
                                         <p className="mt-3 text-sm">Doanh thu tháng: <strong className="text-emerald-700">{money(row.liveRevenue)}</strong></p>
                                     </div>
-                                    {edit && <div className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                                        <Field label="Lương cứng"><input type="number" min="0" value={edit.baseSalary} onChange={(e) => updateEdit(row.staff._id, 'baseSalary', e.target.value)} /></Field>
-                                        <Field label="KPI doanh thu"><input type="number" min="1" value={edit.kpiTarget} onChange={(e) => updateEdit(row.staff._id, 'kpiTarget', e.target.value)} /></Field>
-                                        <Field label="Hoa hồng vượt KPI (%)"><input type="number" min="0" max="100" step="0.01" value={edit.commissionRate} onChange={(e) => updateEdit(row.staff._id, 'commissionRate', e.target.value)} /></Field>
-                                        <Field label="Trạng thái"><select value={edit.status} onChange={(e) => updateEdit(row.staff._id, 'status', e.target.value)}><option value="draft">Tạm tính</option><option value="finalized">Đã chốt</option><option value="paid">Đã thanh toán</option></select></Field>
-                                        <button onClick={() => savePayroll(row.staff._id)} disabled={savingId === row.staff._id} className="mt-auto flex h-[42px] items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 font-semibold text-slate-900 hover:bg-amber-400 disabled:opacity-50"><Save size={17} />{savingId === row.staff._id ? 'Đang lưu' : 'Lưu'}</button>
+                                    {edit && <div className="grid flex-1 gap-3 sm:grid-cols-2 2xl:grid-cols-6">
+                                        <Field label="Lương cứng"><input disabled={!isEditing} type="number" min="0" value={edit.baseSalary} onChange={(e) => updateEdit(row.staff._id, 'baseSalary', e.target.value)} /></Field>
+                                        <Field label="KPI doanh thu"><input disabled={!isEditing} type="number" min="1" value={edit.kpiTarget} onChange={(e) => updateEdit(row.staff._id, 'kpiTarget', e.target.value)} /></Field>
+                                        <Field label="Hoa hồng vượt KPI (%)"><input disabled={!isEditing} type="number" min="0" max="100" step="0.01" value={edit.commissionRate} onChange={(e) => updateEdit(row.staff._id, 'commissionRate', e.target.value)} /></Field>
+                                        <Field label="Trạng thái"><select disabled={!isEditing} value={edit.status} onChange={(e) => updateEdit(row.staff._id, 'status', e.target.value)}><option value="draft">Tạm tính</option><option value="finalized">Đã chốt</option><option value="paid">Đã thanh toán</option></select></Field>
+                                        <div className="mt-auto flex gap-2 sm:col-span-2 2xl:col-span-2">
+                                            <button type="button" onClick={() => setEditingIds((current) => ({ ...current, [row.staff._id]: true }))} disabled={isEditing || savingId === row.staff._id} className="flex h-[42px] flex-1 items-center justify-center gap-2 rounded-xl border border-amber-500 bg-white px-4 font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:opacity-70"><Pencil size={17} />Chỉnh sửa</button>
+                                            <button type="button" onClick={() => savePayroll(row.staff._id)} disabled={!isEditing || savingId === row.staff._id} className="flex h-[42px] flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 font-semibold text-slate-900 hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"><Save size={17} />{savingId === row.staff._id ? 'Đang lưu' : 'Lưu'}</button>
+                                        </div>
                                     </div>}
                                 </div>
                                 {row.amounts && <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2 lg:grid-cols-5">
@@ -170,7 +177,7 @@ export default function AdminPayrollPage() {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactElement<{ className?: string }> }) {
-    return <label className="text-xs font-semibold text-slate-600">{label}{cloneElement(children, { className: 'mt-1.5 h-[42px] w-full rounded-xl border border-slate-300 px-3 text-sm font-normal outline-none focus:border-amber-500' })}</label>;
+    return <label className="text-xs font-semibold text-slate-600">{label}{cloneElement(children, { className: 'mt-1.5 h-[42px] w-full rounded-xl border border-slate-300 px-3 text-sm font-normal outline-none focus:border-amber-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500' })}</label>;
 }
 
 function Metric({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
