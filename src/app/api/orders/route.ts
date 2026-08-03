@@ -124,15 +124,22 @@ export async function POST(req: Request) {
         let voucherToApply: VoucherForOrder | null = null;
 
         if (voucherCode) {
-            const voucher = await UserVoucher.findOne({ code: voucherCode, isUsed: false });
+            if (!userId) {
+                return NextResponse.json(
+                    { message: 'Vui lòng đăng nhập để sử dụng voucher' },
+                    { status: 401 },
+                );
+            }
+            const voucher = await UserVoucher.findOne({
+                code: voucherCode,
+                userId,
+                isUsed: false,
+            });
             if (!voucher) {
                 return NextResponse.json({ message: 'Voucher không hợp lệ hoặc đã sử dụng' }, { status: 400 });
             }
             if (new Date(voucher.expiresAt) < new Date()) {
                 return NextResponse.json({ message: 'Voucher đã hết hạn' }, { status: 400 });
-            }
-            if (voucher.userId && voucher.userId.toString() !== userId) {
-                return NextResponse.json({ message: 'Voucher không thuộc về bạn' }, { status: 400 });
             }
             appliedVoucherId = voucher._id;
             voucherToApply = voucher;

@@ -32,7 +32,14 @@ async function resolveManagingStaff(user: any) {
     return referrer.parentStaff || null;
 }
 
-export async function getCustomerDetail(user: any) {
+interface CustomerDetailOptions {
+    includeVouchers?: boolean;
+}
+
+export async function getCustomerDetail(
+    user: any,
+    { includeVouchers = true }: CustomerDetailOptions = {},
+) {
     const orderMatch = {
         $or: [
             { user: user._id },
@@ -47,10 +54,12 @@ export async function getCustomerDetail(user: any) {
             .limit(20)
             .select('_id totalAmount status paymentStatus orderType createdAt')
             .lean(),
-        UserVoucher.find({ userId: user._id })
-            .sort({ createdAt: -1 })
-            .select('code discountValue discountType maxDiscount isUsed expiresAt createdAt')
-            .lean(),
+        includeVouchers
+            ? UserVoucher.find({ userId: user._id })
+                .sort({ createdAt: -1 })
+                .select('code discountValue discountType maxDiscount isUsed expiresAt createdAt')
+                .lean()
+            : Promise.resolve(undefined),
         UserMembership.find({ userId: user._id })
             .sort({ createdAt: -1 })
             .populate({
@@ -84,7 +93,7 @@ export async function getCustomerDetail(user: any) {
         vipSavingsOrderCount: financialSummary.vipSavingsOrderCount,
         vipSavingsOrders: financialSummary.vipSavingsOrders,
         recentOrders,
-        vouchers,
+        ...(includeVouchers ? { vouchers } : {}),
         membershipPackages,
         managedBy: managingStaff
             ? {

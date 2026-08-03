@@ -57,6 +57,35 @@ test('staff payroll and customer finance APIs are scoped to the authenticated ac
     assert.match(staffCustomerSource, /buildManagedCustomerQuery/);
 });
 
+test('staff customer details never expose customer voucher codes', async () => {
+    const [staffCustomerApiSource, staffCustomerPageSource, customerDetailSource, adminCustomerApiSource] = await Promise.all([
+        readFile(new URL('../src/app/api/staff/customers/[id]/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/staff/customers/[id]/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/customer-detail.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/users/[id]/detail/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(staffCustomerApiSource, /getCustomerDetail\(customer, \{ includeVouchers: false \}\)/);
+    assert.match(customerDetailSource, /includeVouchers = true/);
+    assert.match(customerDetailSource, /\.\.\.\(includeVouchers \? \{ vouchers \} : \{\}\)/);
+    assert.match(adminCustomerApiSource, /getCustomerDetail\(user\)/);
+    assert.doesNotMatch(staffCustomerPageSource, /customer\.vouchers/);
+    assert.doesNotMatch(staffCustomerPageSource, /voucher\.code/);
+    assert.doesNotMatch(staffCustomerPageSource, /key: ['"]vouchers['"]/);
+});
+
+test('voucher validation is bound to the authenticated voucher owner', async () => {
+    const [applyVoucherSource, orderSource] = await Promise.all([
+        readFile(new URL('../src/app/api/vouchers/apply/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/orders/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(applyVoucherSource, /if \(!decoded\)/);
+    assert.match(applyVoucherSource, /userId: decoded\.id/);
+    assert.match(orderSource, /if \(!userId\)/);
+    assert.match(orderSource, /userId,/);
+});
+
 test('staff customer scope includes only direct and team referral relationships', () => {
     const query = buildManagedCustomerQuery('staff-1', ['collab-1']);
     assert.equal(query.role, 'user');

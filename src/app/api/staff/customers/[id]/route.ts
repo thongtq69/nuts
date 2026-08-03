@@ -37,6 +37,6 @@ export async function GET(
         );
     }
 
-    return NextResponse.json(await getCustomerDetail(customer));
+    return NextResponse.json(await getCustomerDetail(customer, { includeVouchers: false }));
 }
 

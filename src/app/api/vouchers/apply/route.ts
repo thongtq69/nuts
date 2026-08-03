@@ -8,13 +8,13 @@ import { calculateVoucherDiscount, type VoucherDiscountItem } from '@/lib/vouche
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        // Optional: Verify user owns the voucher? 
-        // Voucher code might be shared or private. If UserVoucher has userId, usually it's private.
-        // Let's assume we check if the current user owns it OR if it's a generic code (if we support that, but specific logic said "UserVoucher").
-
         const decoded = await verifyToken(req);
-        // If logged in, check ownership. If guest, maybe restricted?
-        // Requirement implies these are "My Vouchers" from packages/registration. So ownership check is good.
+        if (!decoded) {
+            return NextResponse.json(
+                { message: 'Vui lòng đăng nhập để sử dụng mã giảm giá' },
+                { status: 401 },
+            );
+        }
 
         const { code, orderValue, items } = await req.json();
 
@@ -22,7 +22,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Missing code or order value' }, { status: 400 });
         }
 
-        const voucher = await UserVoucher.findOne({ code, isUsed: false });
+        const voucher = await UserVoucher.findOne({
+            code,
+            userId: decoded.id,
+            isUsed: false,
+        });
 
         if (!voucher) {
             return NextResponse.json({ message: 'Mã giảm giá không hợp lệ hoặc đã sử dụng' }, { status: 404 });
@@ -32,10 +36,6 @@ export async function POST(req: Request) {
         const now = new Date();
         if (voucher.expiresAt < now) {
             return NextResponse.json({ message: 'Mã giảm giá đã hết hạn' }, { status: 400 });
-        }
-
-        if (decoded && voucher.userId.toString() !== decoded.id) {
-            return NextResponse.json({ message: 'Mã giảm giá không thuộc về bạn' }, { status: 403 });
         }
 
         let discountItems: VoucherDiscountItem[] = [];
