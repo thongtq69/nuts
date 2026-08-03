@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import UserVoucher from '@/models/UserVoucher';
+import { requireAdminAuth } from '@/lib/auth-permissions';
 
 // DELETE - Xóa voucher (Admin only)
 export async function DELETE(
@@ -8,6 +9,11 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
         const { id } = await params;
         
@@ -30,6 +36,11 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
         const { id } = await params;
         

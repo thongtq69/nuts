@@ -3,11 +3,17 @@ import dbConnect from '@/lib/db';
 import UserVoucher from '@/models/UserVoucher';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
 import VoucherRewardRule from '@/models/VoucherRewardRule';
+import { requireAdminAuth } from '@/lib/auth-permissions';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
 
         // Aggregate vouchers by source and sourceId

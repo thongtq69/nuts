@@ -66,8 +66,14 @@ export function getUserPermissions(user: AuthenticatedUser): Permission[] {
         // Publishing rights are always granted explicitly per employee by Admin.
         // They must never be inherited merely from a broad staff role.
         const rolePermissions = getDefaultPermissions(user.roleType)
-            .filter(permission => !permission.startsWith('blogs:'));
-        const customPermissions = user.customPermissions || [];
+            .filter(permission => (
+                !permission.startsWith('blogs:')
+                && !permission.startsWith('vouchers:')
+            ));
+        // Customer voucher codes are admin-only. Staff cannot regain access
+        // through custom permissions assigned before this policy existed.
+        const customPermissions = (user.customPermissions || [])
+            .filter(permission => !permission.startsWith('vouchers:'));
         return [...new Set([...rolePermissions, ...customPermissions])];
     }
 

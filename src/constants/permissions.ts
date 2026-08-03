@@ -134,7 +134,6 @@ export const ROLE_DEFINITIONS: Record<RoleType, RoleDefinition> = {
             'staff:view', 'staff:create', 'staff:edit',
             'collaborators:view', 'collaborators:create', 'collaborators:edit', 'collaborators:commissions',
             'affiliate:view', 'affiliate:commissions',
-            'vouchers:view', 'vouchers:create', 'vouchers:edit', 'vouchers:rewards',
             'banners:view', 'banners:create', 'banners:edit',
             'reports:view', 'reports:export', 'reports:financial',
             'settings:view'
@@ -151,8 +150,7 @@ export const ROLE_DEFINITIONS: Record<RoleType, RoleDefinition> = {
             'orders:view', 'orders:edit', 'orders:process',
             'users:view', 'users:create',
             'collaborators:view', 'collaborators:commissions',
-            'affiliate:view',
-            'vouchers:view'
+            'affiliate:view'
         ],
         isDefault: true,
         color: '#059669'
@@ -165,8 +163,7 @@ export const ROLE_DEFINITIONS: Record<RoleType, RoleDefinition> = {
             'products:view',
             'orders:view',
             'users:view', 'users:create',
-            'collaborators:view',
-            'vouchers:view', 'vouchers:create'
+            'collaborators:view'
         ],
         isDefault: false,
         color: '#0891b2'

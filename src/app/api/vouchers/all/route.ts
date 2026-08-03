@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import UserVoucher from '@/models/UserVoucher';
+import { requireAdminAuth } from '@/lib/auth-permissions';
 
 // GET - Lấy tất cả voucher đã phát hành (Admin only)
 export async function GET(request: Request) {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
 
         const { searchParams } = new URL(request.url);

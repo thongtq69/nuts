@@ -42,14 +42,17 @@ function hasPermission(user: any, requiredPermission: string): boolean {
     if (!user) return false;
     
     if (user.role === 'admin') return true;
+
+    // Voucher management and customer voucher codes are admin-only.
+    if (requiredPermission.startsWith('vouchers:')) return false;
     
     const permissions = user.customPermissions || [];
     const roleType = user.roleType;
     
     const rolePermissionMap: Record<string, string[]> = {
-        'manager': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'staff:view', 'collaborators:view', 'affiliate:view', 'vouchers:view', 'banners:view', 'reports:view', 'settings:view'],
-        'sales': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'collaborators:view', 'affiliate:view', 'vouchers:view'],
-        'support': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'vouchers:view'],
+        'manager': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'staff:view', 'collaborators:view', 'affiliate:view', 'banners:view', 'reports:view', 'settings:view'],
+        'sales': ['dashboard:view', 'products:view', 'orders:view', 'users:view', 'collaborators:view', 'affiliate:view'],
+        'support': ['dashboard:view', 'products:view', 'orders:view', 'users:view'],
         'warehouse': ['dashboard:view', 'products:view', 'orders:view'],
         'accountant': ['dashboard:view', 'orders:view', 'affiliate:view', 'reports:view', 'settings:payments'],
         'viewer': ['dashboard:view', 'products:view']
