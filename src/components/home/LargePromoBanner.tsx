@@ -30,7 +30,9 @@ export default function LargePromoBanner() {
                     const data = await res.json();
                     if (data) {
                         setSettings({
-                            homePromoBannerUrl: data.homePromoBannerUrl || '/assets/images/gonuts-banner-member.png',
+                            homePromoBannerUrl: typeof data.homePromoBannerUrl === 'string'
+                                ? data.homePromoBannerUrl
+                                : '/assets/images/gonuts-banner-member.png',
                             homePromoBannerTitle: data.homePromoBannerTitle || "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN",
                             homePromoBannerButtonText: data.homePromoBannerButtonText || 'ĐĂNG KÝ NGAY',
                             homePromoBannerButtonLink: data.homePromoBannerButtonLink || '/register',
@@ -46,7 +48,7 @@ export default function LargePromoBanner() {
         fetchSettings();
     }, []);
 
-    if (!settings.homePromoBannerEnabled) return null;
+    if (!settings.homePromoBannerEnabled || !settings.homePromoBannerUrl) return null;
 
     return (
         <section className="promo-banner-section">

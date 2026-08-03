@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
+import StaffSiteBannerSettings from '@/components/staff/StaffSiteBannerSettings';
 
 interface Banner {
     _id: string;
@@ -251,6 +252,8 @@ export default function StaffBannersPage() {
                     </div>
                 </div>
             </div>
+
+            <StaffSiteBannerSettings />
 
             {/* Banner Grid */}
             {loading ? (

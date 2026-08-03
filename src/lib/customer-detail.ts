@@ -52,7 +52,7 @@ export async function getCustomerDetail(
         Order.find(orderMatch)
             .sort({ createdAt: -1 })
             .limit(20)
-            .select('_id totalAmount status paymentStatus orderType createdAt')
+            .select('_id items shippingInfo paymentMethod shippingFee totalAmount status paymentStatus orderType note createdAt')
             .lean(),
         includeVouchers
             ? UserVoucher.find({ userId: user._id })

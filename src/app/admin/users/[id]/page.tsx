@@ -32,6 +32,7 @@ import {
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { usePrompt } from '@/context/PromptContext';
+import CustomerOrderDetails from '@/components/customers/CustomerOrderDetails';
 
 interface UserDetail {
     _id: string;
@@ -690,27 +691,11 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
                     {/* Đơn hàng gần đây */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">Đơn hàng gần đây</h3>
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">Chi tiết đơn hàng gần đây</h3>
 
                         {user.recentOrders.length > 0 ? (
                             <div className="space-y-3">
-                                {user.recentOrders.slice(0, 5).map((order: any) => (
-                                    <div key={order._id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                                        <div>
-                                            <p className="font-medium text-sm">#{order._id.slice(-6)}</p>
-                                            <p className="text-xs text-slate-500">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-sm">{new Intl.NumberFormat('vi-VN').format(order.totalAmount || 0)}đ</p>
-                                            <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-blue-100 text-blue-700'
-                                                }`}>
-                                                {order.status}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                                <CustomerOrderDetails orders={user.recentOrders} adminLinks limit={5} />
 
                                 <Link
                                     href={`/admin/orders?userId=${userId}`}

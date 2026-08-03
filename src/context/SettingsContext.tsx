@@ -54,7 +54,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                 // Use default settings if API fails
                 setSettings({
                     companyName: 'Go Nuts',
-                    hotline: '0901234567',
+                    hotline: '096 118 5753',
+                    zaloLink: 'https://zalo.me/0961185753',
                     email: 'info@gonuts.vn',
                     address: 'TP. Hồ Chí Minh, Việt Nam',
                     topBarPromoText: 'Giảm giá 8% khi mua hàng từ 899k trở lên với mã "SAVER8"',
@@ -67,7 +68,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             // Use default settings
             setSettings({
                 companyName: 'Go Nuts',
-                hotline: '0901234567',
+                hotline: '096 118 5753',
+                zaloLink: 'https://zalo.me/0961185753',
                 homePromotionText: DEFAULT_HOME_PROMOTION_TEXT,
                 homePromotionEnabled: true,
             });

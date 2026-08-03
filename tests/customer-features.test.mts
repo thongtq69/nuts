@@ -74,6 +74,62 @@ test('staff customer details never expose customer voucher codes', async () => {
     assert.doesNotMatch(staffCustomerPageSource, /key: ['"]vouchers['"]/);
 });
 
+test('staff banner management is authenticated and limited to banner settings', async () => {
+    const [bannerCrudSource, bannerSettingsSource, uploadSource, staffBannerPageSource, productListSource, homePromoSource] = await Promise.all([
+        readFile(new URL('../src/app/api/staff/banners/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/staff/banner-settings/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/upload/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/staff/banners/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/components/products/ProductList.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/components/home/LargePromoBanner.tsx', import.meta.url), 'utf8'),
+    ]);
+
+    for (const source of [bannerCrudSource, bannerSettingsSource, uploadSource]) {
+        assert.match(source, /requireStaffAuth/);
+        assert.match(source, /if \(!auth\.user\)/);
+    }
+
+    assert.match(bannerSettingsSource, /productsBannerUrl/);
+    assert.match(bannerSettingsSource, /homePromoBannerUrl/);
+    assert.match(bannerSettingsSource, /normalizeBannerUpdate/);
+    assert.doesNotMatch(bannerSettingsSource, /\.\.\.body/);
+    assert.match(staffBannerPageSource, /StaffSiteBannerSettings/);
+    assert.match(productListSource, /settings\.productsBannerEnabled && settings\.productsBannerUrl/);
+    assert.match(homePromoSource, /!settings\.homePromoBannerEnabled \|\| !settings\.homePromoBannerUrl/);
+});
+
+test('customer care order cards include fulfillment and payment details without vouchers', async () => {
+    const [customerDetailSource, orderDetailsSource, staffCustomerPageSource, adminCustomerPageSource] = await Promise.all([
+        readFile(new URL('../src/lib/customer-detail.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/components/customers/CustomerOrderDetails.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/staff/customers/[id]/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/admin/users/[id]/page.tsx', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(customerDetailSource, /items shippingInfo paymentMethod shippingFee totalAmount status paymentStatus/);
+    assert.doesNotMatch(customerDetailSource, /select\([^\n]*voucherCode/);
+    assert.match(orderDetailsSource, /Chờ thanh toán/);
+    assert.match(orderDetailsSource, /Đã thanh toán/);
+    assert.match(orderDetailsSource, /Sản phẩm trong đơn/);
+    assert.match(orderDetailsSource, /Địa chỉ giao hàng/);
+    assert.match(staffCustomerPageSource, /<CustomerOrderDetails orders=\{customer\.recentOrders\}/);
+    assert.match(adminCustomerPageSource, /<CustomerOrderDetails orders=\{user\.recentOrders\}/);
+});
+
+test('the storefront uses the polished shared Zalo icon', async () => {
+    const [zaloIconSource, topBarSource, headerSource] = await Promise.all([
+        readFile(new URL('../src/components/icons/ZaloIcon.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/components/layout/TopBar.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/components/layout/Header.tsx', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(zaloIconSource, />\s*Zalo\s*</);
+    assert.match(zaloIconSource, /aria-hidden="true"/);
+    assert.match(topBarSource, /<ZaloIcon/);
+    assert.match(headerSource, /<ZaloIcon/);
+    assert.match(topBarSource, /aria-label="Chat Go Nuts qua Zalo"/);
+});
+
 test('voucher validation is bound to the authenticated voucher owner', async () => {
     const [applyVoucherSource, orderSource] = await Promise.all([
         readFile(new URL('../src/app/api/vouchers/apply/route.ts', import.meta.url), 'utf8'),

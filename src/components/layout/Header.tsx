@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import AffiliateTermsModal from '@/components/affiliate/AffiliateTermsModal';
+import ZaloIcon from '@/components/icons/ZaloIcon';
 
 interface SiteSettings {
     hotline: string;
@@ -26,8 +27,8 @@ export default function Header() {
     const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [settings, setSettings] = useState<SiteSettings>({
-        hotline: '090xxxxxxx',
-        zaloLink: '',
+        hotline: '096 118 5753',
+        zaloLink: 'https://zalo.me/0961185753',
         facebookUrl: '',
         instagramUrl: '',
         youtubeUrl: '',
@@ -84,11 +85,8 @@ export default function Header() {
                         <div className="mobile-hotline flex items-center gap-2 md:gap-3">
                             <span className="opacity-90 whitespace-nowrap">Hotline: {settings.hotline}</span>
                             {settings.zaloLink && (
-                                <a href={settings.zaloLink} target="_blank" rel="noopener noreferrer" className="w-9 h-9 md:w-6 md:h-6 hover:scale-110 transition-transform flex items-center justify-center flex-shrink-0" title="Chat qua Zalo" aria-label="Chat Go Nuts qua Zalo">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
-                                        <path d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0Z" fill="#0068FF" />
-                                        <path d="M17 16H7V15.5L13.5 8.5H7V7H17V7.5L10.5 14.5H17V16Z" fill="white" />
-                                    </svg>
+                                <a href={settings.zaloLink} target="_blank" rel="noopener noreferrer" className="w-9 h-9 md:w-7 md:h-7 hover:scale-110 transition-transform flex items-center justify-center flex-shrink-0" title="Chat qua Zalo" aria-label="Chat Go Nuts qua Zalo">
+                                    <ZaloIcon size={26} className="drop-shadow-sm" />
                                 </a>
                             )}
                         </div>

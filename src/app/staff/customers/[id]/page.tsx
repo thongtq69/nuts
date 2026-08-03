@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, CreditCard, Loader2, Mail, Package, Phone, PiggyBank, ShoppingBag, TrendingUp } from 'lucide-react';
+import CustomerOrderDetails from '@/components/customers/CustomerOrderDetails';
 
 type StatKey = 'orders' | 'spent' | 'savings' | 'membership';
 
@@ -72,11 +73,9 @@ export default function StaffCustomerDetailPage({ params }: { params: Promise<{ 
 
                 <div className="mt-5 border-t border-slate-100 pt-5">
                     {activeStat === 'orders' && (
-                        <div className="space-y-2">
-                            <h4 className="font-semibold">Đơn hàng gần đây</h4>
-                            {customer.recentOrders.length === 0 ? <p className="text-sm text-slate-500">Chưa có đơn hàng.</p> : customer.recentOrders.map((order: any) => (
-                                <div key={order._id} className="flex justify-between rounded-lg bg-slate-50 p-3 text-sm"><span>#{order._id.slice(-6).toUpperCase()} · {new Date(order.createdAt).toLocaleDateString('vi-VN')}</span><strong>{money(order.totalAmount)}</strong></div>
-                            ))}
+                        <div className="space-y-3">
+                            <h4 className="font-semibold">Chi tiết đơn hàng gần đây</h4>
+                            <CustomerOrderDetails orders={customer.recentOrders} />
                         </div>
                     )}
                     {activeStat === 'spent' && <div><h4 className="font-semibold">Tổng chi tiêu đã thanh toán</h4><p className="text-2xl font-bold text-emerald-700 mt-2">{money(customer.totalSpent)}</p></div>}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Banner from '@/models/Banner';
+import { requireStaffAuth } from '@/lib/auth-permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,8 +10,19 @@ export const dynamic = 'force-dynamic';
  * @description Lấy danh sách tất cả banner (sắp xếp theo trường order tăng dần)
  * @returns {Array} Danh sách banner với thông tin _id, createdAt, updatedAt đã được chuyển đổi sang string
  */
+async function authorize() {
+    const auth = await requireStaffAuth();
+    if (!auth.user) {
+        return NextResponse.json({ error: auth.error }, { status: 401 });
+    }
+    return null;
+}
+
 export async function GET() {
     try {
+        const authError = await authorize();
+        if (authError) return authError;
+
         await dbConnect();
         const banners = await Banner.find().sort({ order: 1 }).lean();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,6 +51,9 @@ export async function GET() {
  */
 export async function POST(req: Request) {
     try {
+        const authError = await authorize();
+        if (authError) return authError;
+
         await dbConnect();
         const body = await req.json();
 
@@ -46,7 +61,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Title and imageUrl are required' }, { status: 400 });
         }
 
-        const banner = await Banner.create(body);
+        const banner = await Banner.create({
+            title: String(body.title).trim().slice(0, 150),
+            imageUrl: String(body.imageUrl).trim().slice(0, 2_000),
+            link: typeof body.link === 'string' ? body.link.trim().slice(0, 2_000) : '',
+            isActive: body.isActive !== false,
+            order: Number.isFinite(Number(body.order)) ? Number(body.order) : 0,
+        });
         
         return NextResponse.json({
             ...banner.toObject(),
@@ -69,6 +90,9 @@ export async function POST(req: Request) {
  */
 export async function PATCH(req: Request) {
     try {
+        const authError = await authorize();
+        if (authError) return authError;
+
         await dbConnect();
         const { id, ...updates } = await req.json();
 
@@ -76,10 +100,17 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ error: 'ID is required' }, { status: 400 });
         }
 
+        const allowedUpdates: Record<string, string | boolean | number | Date> = { updatedAt: new Date() };
+        if (typeof updates.title === 'string') allowedUpdates.title = updates.title.trim().slice(0, 150);
+        if (typeof updates.imageUrl === 'string') allowedUpdates.imageUrl = updates.imageUrl.trim().slice(0, 2_000);
+        if (typeof updates.link === 'string') allowedUpdates.link = updates.link.trim().slice(0, 2_000);
+        if (typeof updates.isActive === 'boolean') allowedUpdates.isActive = updates.isActive;
+        if (Number.isFinite(Number(updates.order))) allowedUpdates.order = Number(updates.order);
+
         const banner = await Banner.findByIdAndUpdate(
             id, 
-            { ...updates, updatedAt: new Date() }, 
-            { new: true }
+            { $set: allowedUpdates },
+            { new: true, runValidators: true }
         );
 
         if (!banner) {
@@ -107,6 +138,9 @@ export async function PATCH(req: Request) {
  */
 export async function PUT(req: Request) {
     try {
+        const authError = await authorize();
+        if (authError) return authError;
+
         await dbConnect();
         const { banners } = await req.json();
 
@@ -135,6 +169,9 @@ export async function PUT(req: Request) {
  */
 export async function DELETE(req: Request) {
     try {
+        const authError = await authorize();
+        if (authError) return authError;
+
         await dbConnect();
         const { id } = await req.json();
 

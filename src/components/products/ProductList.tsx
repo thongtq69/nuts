@@ -51,7 +51,9 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                 if (res.ok) {
                     const data = await res.json();
                     setSettings({
-                        productsBannerUrl: data.productsBannerUrl || '/assets/images/gonuts-banner-member.png',
+                        productsBannerUrl: typeof data.productsBannerUrl === 'string'
+                            ? data.productsBannerUrl
+                            : '/assets/images/gonuts-banner-member.png',
                         productsBannerEnabled: data.productsBannerEnabled !== false
                     });
                 }
@@ -217,11 +219,11 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                 />
 
                 <div className="product-content">
-                    {settings.productsBannerEnabled && (
+                    {settings.productsBannerEnabled && settings.productsBannerUrl && (
                         <div className="product-banner">
                             <img
                                 src={getOptimizedCloudinaryUrl(
-                                    settings.productsBannerUrl || '/assets/images/gonuts-banner-member.png',
+                                    settings.productsBannerUrl,
                                     'f_auto,q_auto,w_1600,c_limit',
                                 )}
                                 alt="Shop Banner"

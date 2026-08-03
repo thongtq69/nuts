@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { requireStaffAuth } from '@/lib/auth-permissions';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await requireStaffAuth();
+        if (!auth.user) return NextResponse.json({ error: auth.error }, { status: 401 });
+
         console.log('📤 Upload API: Starting upload process...');
 
         const formData = await request.formData();
@@ -17,6 +21,14 @@ export async function POST(request: NextRequest) {
                 error: 'No file provided',
                 message: 'Please select a file to upload'
             }, { status: 400 });
+        }
+
+        if (!file.type.startsWith('image/')) {
+            return NextResponse.json({ error: 'Chỉ chấp nhận tệp hình ảnh' }, { status: 400 });
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            return NextResponse.json({ error: 'Ảnh không được vượt quá 10MB' }, { status: 400 });
         }
 
         console.log('📁 File details:', {
@@ -71,6 +83,9 @@ export async function POST(request: NextRequest) {
 // Handle base64 uploads (for cropped images)
 export async function PUT(request: NextRequest) {
     try {
+        const auth = await requireStaffAuth();
+        if (!auth.user) return NextResponse.json({ error: auth.error }, { status: 401 });
+
         console.log('📤 Upload API: Starting base64 upload...');
 
         const body = await request.json();
