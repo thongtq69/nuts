@@ -58,8 +58,6 @@ function MembershipCheckoutContent() {
         phone: ''
     });
 
-    const [paymentMethod, setPaymentMethod] = useState('banking');
-
     useEffect(() => {
         if (user) {
             setFormData(prev => ({
@@ -98,8 +96,7 @@ function MembershipCheckoutContent() {
     const handlePlaceOrder = async () => {
         if (isProcessing) return;
 
-        // For banking, require payment confirmation first
-        if (paymentMethod === 'banking' && !paymentConfirmed) {
+        if (!paymentConfirmed) {
             toast.info('Xác nhận thanh toán', 'Vui lòng quét mã QR và xác nhận đã chuyển khoản');
             return;
         }
@@ -111,7 +108,7 @@ function MembershipCheckoutContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     packageId,
-                    paymentMethod
+                    paymentMethod: 'banking'
                 }),
             });
 
@@ -226,61 +223,33 @@ function MembershipCheckoutContent() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-800 mb-1">Phương thức thanh toán</h3>
-                                        <p className="text-sm text-gray-600">
-                                            Chọn phương thức thanh toán phù hợp với bạn
-                                        </p>
+                                        <p className="text-sm text-gray-600">Gói hội viên chỉ áp dụng thanh toán chuyển khoản</p>
                                     </div>
                                 </div>
                                 
-                                {/* Payment Method Selection */}
-                                <div className="flex gap-3 mb-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setPaymentMethod('banking')}
-                                        className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
-                                            paymentMethod === 'banking' 
-                                                ? 'border-brand bg-brand text-white' 
-                                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                                        }`}
-                                    >
-                                        <span>🏦</span>
-                                        <span className="font-medium">Chuyển khoản</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setPaymentMethod('cod')}
-                                        className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
-                                            paymentMethod === 'cod' 
-                                                ? 'border-brand bg-brand text-white' 
-                                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                                        }`}
-                                    >
-                                        <span>💵</span>
-                                        <span className="font-medium">Thanh toán khi nhận hàng</span>
-                                    </button>
+                                {/* Membership packages use bank transfer only */}
+                                <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border-2 border-brand bg-white px-4 py-3">
+                                    <div className="flex items-center gap-3">
+                                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 text-xl">🏦</span>
+                                        <div>
+                                            <p className="font-semibold text-gray-800">Chuyển khoản ngân hàng</p>
+                                            <p className="text-xs text-gray-500">Phương thức thanh toán duy nhất</p>
+                                        </div>
+                                    </div>
+                                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">Đã chọn</span>
                                 </div>
                                 
                                 {/* Bank Transfer Info */}
-                                {paymentMethod === 'banking' && (
-                                    <div className="mt-4">
-                                        <BankInfoDisplay 
-                                            amount={pkg.price}
-                                            description={`VIP${pkg._id.slice(-6).toUpperCase()}${Date.now().toString().slice(-4)}`}
-                                        />
-                                    </div>
-                                )}
-
-                                {paymentMethod === 'cod' && (
-                                    <div className="mt-4 p-4 bg-amber-100/50 rounded-lg">
-                                        <p className="text-sm text-amber-800">
-                                            💡 <strong>Lưu ý:</strong> Với phương thức COD, gói hội viên sẽ được kích hoạt sau khi bạn thanh toán tiền mặt cho nhân viên giao hàng.
-                                        </p>
-                                    </div>
-                                )}
+                                <div className="mt-4">
+                                    <BankInfoDisplay
+                                        amount={pkg.price}
+                                        description={`VIP${pkg._id.slice(-6).toUpperCase()}${Date.now().toString().slice(-4)}`}
+                                    />
+                                </div>
                             </div>
 
                             {/* Payment Confirmation for Banking */}
-                            {paymentMethod === 'banking' && !paymentConfirmed && (
+                            {!paymentConfirmed && (
                                 <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                                     <div className="flex items-start gap-3">
                                         <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -308,9 +277,9 @@ function MembershipCheckoutContent() {
                             <button
                                 type="button"
                                 onClick={handlePlaceOrder}
-                                disabled={isProcessing || (paymentMethod === 'banking' && !paymentConfirmed)}
+                                disabled={isProcessing || !paymentConfirmed}
                                 className={`w-full py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
-                                    isProcessing || (paymentMethod === 'banking' && !paymentConfirmed)
+                                    isProcessing || !paymentConfirmed
                                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         : 'bg-gradient-to-r from-brand to-brand-light text-white hover:shadow-lg hover:shadow-brand/30'
                                 }`}
@@ -322,13 +291,13 @@ function MembershipCheckoutContent() {
                                     </>
                                 ) : (
                                     <>
-                                        {paymentMethod === 'banking' ? '✅ Gửi yêu cầu xác nhận thanh toán' : '📦 Gửi yêu cầu đăng ký'} - {formatPrice(pkg.price)}đ
+                                        ✅ Gửi yêu cầu xác nhận thanh toán - {formatPrice(pkg.price)}đ
                                     </>
                                 )}
                             </button>
 
                             {/* Cancel Confirmation Button */}
-                            {paymentMethod === 'banking' && paymentConfirmed && (
+                            {paymentConfirmed && (
                                 <button
                                     type="button"
                                     onClick={() => setPaymentConfirmed(false)}
@@ -351,37 +320,27 @@ function MembershipCheckoutContent() {
                                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <span className="text-4xl">✓</span>
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                                        {paymentMethod === 'banking' 
-                                            ? 'Đơn hàng đang chờ xác nhận'
-                                            : 'Đăng ký thành công!'}
-                                    </h2>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Đơn hàng đang chờ xác nhận</h2>
                                     
-                                    {paymentMethod === 'banking' ? (
-                                        <div className="space-y-4">
-                                            <p className="text-gray-600">
-                                                Cảm ơn bạn đã đăng ký! Đơn hàng của bạn đang chờ hệ thống kiểm tra và xác nhận thanh toán.
-                                            </p>
-                                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left">
-                                                <div className="flex items-start gap-3">
-                                                    <span className="text-xl">ℹ️</span>
-                                                    <div className="text-sm text-amber-800">
-                                                        <p className="font-semibold mb-1">Quy trình xác nhận:</p>
-                                                        <ol className="list-decimal list-inside space-y-1">
-                                                            <li>Hệ thống kiểm tra khoản chuyển</li>
-                                                            <li>Xác nhận và kích hoạt gói VIP</li>
-                                                            <li>Gửi email thông báo qua {formData.email}</li>
-                                                        </ol>
-                                                        <p className="mt-2">Thời gian xử lý: 1-24 giờ</p>
-                                                    </div>
+                                    <div className="space-y-4">
+                                        <p className="text-gray-600">
+                                            Cảm ơn bạn đã đăng ký! Đơn hàng của bạn đang chờ hệ thống kiểm tra và xác nhận thanh toán.
+                                        </p>
+                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left">
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-xl">ℹ️</span>
+                                                <div className="text-sm text-amber-800">
+                                                    <p className="font-semibold mb-1">Quy trình xác nhận:</p>
+                                                    <ol className="list-decimal list-inside space-y-1">
+                                                        <li>Hệ thống kiểm tra khoản chuyển</li>
+                                                        <li>Xác nhận và kích hoạt gói VIP</li>
+                                                        <li>Gửi email thông báo qua {formData.email}</li>
+                                                    </ol>
+                                                    <p className="mt-2">Thời gian xử lý: 1-24 giờ</p>
                                                 </div>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <p className="text-gray-600">
-                                            Yêu cầu đã được ghi nhận. Gói VIP và voucher chỉ được kích hoạt sau khi hệ thống xác nhận đã thanh toán.
-                                        </p>
-                                    )}
+                                    </div>
 
                                     <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                                         <p className="text-sm text-gray-500 mb-1">Mã đơn hàng</p>

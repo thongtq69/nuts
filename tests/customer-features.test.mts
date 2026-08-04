@@ -189,6 +189,20 @@ test('membership vouchers can only be activated after confirmed payment', () => 
     assert.equal(isConfirmedPaymentStatus('completed'), true);
 });
 
+test('membership packages only accept bank transfer payments', async () => {
+    const [checkoutSource, buyPackageSource] = await Promise.all([
+        readFile(new URL('../src/app/checkout/membership/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/packages/buy/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(checkoutSource, /paymentMethod: 'banking'/);
+    assert.match(checkoutSource, /Phương thức thanh toán duy nhất/);
+    assert.doesNotMatch(checkoutSource, /setPaymentMethod\('cod'\)/);
+    assert.doesNotMatch(checkoutSource, /Với phương thức COD/);
+    assert.match(buyPackageSource, /requestedPaymentMethod !== 'banking'/);
+    assert.match(buyPackageSource, /Gói hội viên chỉ hỗ trợ thanh toán chuyển khoản/);
+});
+
 test('membership voucher codes are stable per order and voucher position', () => {
     assert.equal(buildMembershipVoucherCode('698abc1234567890', 0), 'VIP3456789001');
     assert.equal(buildMembershipVoucherCode('698abc1234567890', 1), 'VIP3456789002');

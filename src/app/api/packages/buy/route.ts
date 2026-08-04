@@ -28,7 +28,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Phiên đăng nhập đã hết hạn' }, { status: 401 });
         }
 
-        const { packageId, paymentMethod = 'banking' } = await req.json();
+        const { packageId, paymentMethod: requestedPaymentMethod = 'banking' } = await req.json();
+
+        if (requestedPaymentMethod !== 'banking') {
+            return NextResponse.json(
+                { message: 'Gói hội viên chỉ hỗ trợ thanh toán chuyển khoản' },
+                { status: 400 },
+            );
+        }
+
+        const paymentMethod = 'banking';
         
         const pkg = await SubscriptionPackage.findById(packageId);
 
