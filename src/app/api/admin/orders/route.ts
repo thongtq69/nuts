@@ -5,6 +5,7 @@ import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { sendOrderStatusEmail } from '@/lib/email';
+import { syncAffiliateCommissionsForOrderStatus } from '@/lib/affiliate-commission-lifecycle';
 
 // Helper to check if user is admin
 async function isAdmin() {
@@ -71,15 +72,15 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ message: 'Invalid status' }, { status: 400 });
         }
 
-        const order = await Order.findByIdAndUpdate(
-            orderId,
-            { status },
-            { new: true }
-        );
+        const order = await Order.findById(orderId);
 
         if (!order) {
             return NextResponse.json({ message: 'Order not found' }, { status: 404 });
         }
+
+        order.status = status;
+        await syncAffiliateCommissionsForOrderStatus(order, status);
+        await order.save();
 
         // Gửi email thông báo khi đơn hàng được xác nhận
         if (status === 'confirmed' || status === 'shipping' || status === 'completed' || status === 'cancelled') {

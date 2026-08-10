@@ -24,6 +24,11 @@ import { addReferralToPath, normalizeReferralCode } from '../src/lib/referral-at
 import { ROLE_DEFINITIONS } from '../src/constants/permissions.ts';
 import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '../src/lib/home-promotion.ts';
 import { calculatePayrollAmounts } from '../src/lib/payroll-formula.ts';
+import {
+    allocateKpiCommission,
+    getEligibleProductRevenue,
+    isEligibleStaffRevenueOrder,
+} from '../src/lib/staff-commission-rules.ts';
 import { calculateLegacyVipSavings } from '../src/lib/vip-savings.ts';
 import {
     buildManagedCustomerQuery,
@@ -236,6 +241,128 @@ test('commission is calculated only on revenue above KPI', () => {
     assert.equal(payroll.excessRevenue, 50_000_000);
     assert.equal(payroll.commissionAmount, 1_500_000);
     assert.equal(payroll.totalSalary, 8_500_000);
+});
+
+test('staff KPI revenue is product revenue after discounts and excludes shipping', () => {
+    const order = {
+        orderType: 'product',
+        status: 'confirmed',
+        paymentStatus: 'paid',
+        // 100k product - 10k voucher + 20k shipping
+        totalAmount: 110_000,
+        shippingFee: 20_000,
+    };
+
+    assert.equal(isEligibleStaffRevenueOrder(order), true);
+    assert.equal(getEligibleProductRevenue(order), 90_000);
+});
+
+test('cancelled, refunded, unpaid and membership orders never count toward staff KPI', () => {
+    const baseOrder = {
+        orderType: 'product',
+        status: 'completed',
+        paymentStatus: 'paid',
+        totalAmount: 120_000,
+        shippingFee: 20_000,
+    };
+
+    assert.equal(getEligibleProductRevenue({ ...baseOrder, status: 'cancelled' }), 0);
+    assert.equal(getEligibleProductRevenue({ ...baseOrder, status: 'refunded' }), 0);
+    assert.equal(getEligibleProductRevenue({
+        ...baseOrder,
+        status: 'pending',
+        paymentStatus: 'pending',
+    }), 0);
+    assert.equal(getEligibleProductRevenue({ ...baseOrder, orderType: 'membership' }), 0);
+});
+
+test('per-order staff commission starts only on the portion crossing KPI', () => {
+    const allocations = allocateKpiCommission([
+        {
+            id: 'before-kpi',
+            orderType: 'product',
+            status: 'completed',
+            totalAmount: 95_000_000,
+            shippingFee: 0,
+            createdAt: '2026-08-01T00:00:00.000Z',
+        },
+        {
+            id: 'crosses-kpi',
+            orderType: 'product',
+            status: 'completed',
+            totalAmount: 10_000_000,
+            shippingFee: 0,
+            createdAt: '2026-08-02T00:00:00.000Z',
+        },
+    ], 100_000_000, 3);
+
+    assert.equal(allocations[0].commissionAmount, 0);
+    assert.equal(allocations[1].commissionableRevenue, 5_000_000);
+    assert.equal(allocations[1].commissionAmount, 150_000);
+});
+
+test('reaching KPI exactly does not create staff commission', () => {
+    const [allocation] = allocateKpiCommission([{
+        orderType: 'product',
+        status: 'completed',
+        totalAmount: 100_000_000,
+        shippingFee: 0,
+        createdAt: '2026-08-01T00:00:00.000Z',
+    }], 100_000_000, 3);
+
+    assert.equal(allocation.commissionableRevenue, 0);
+    assert.equal(allocation.commissionAmount, 0);
+});
+
+test('sum of per-order allocations exactly matches the Admin monthly commission', () => {
+    const orders = [1, 2, 3].map((index) => ({
+        orderType: 'product',
+        status: 'completed',
+        totalAmount: index === 1 ? 100_000_000 : 17,
+        shippingFee: 0,
+        createdAt: `2026-08-0${index}T00:00:00.000Z`,
+    }));
+    const allocations = allocateKpiCommission(orders, 100_000_000, 3);
+    const staffTotal = allocations.reduce((sum, allocation) => sum + allocation.commissionAmount, 0);
+    const adminTotal = calculatePayrollAmounts({
+        baseSalary: 7_000_000,
+        kpiTarget: 100_000_000,
+        commissionRate: 3,
+        revenue: 100_000_034,
+    }).commissionAmount;
+
+    assert.equal(staffTotal, adminTotal);
+});
+
+test('admin payroll and staff commission APIs share the KPI revenue source', async () => {
+    const [adminPayrollSource, staffPayrollSource, staffCommissionsSource, orderSource] = await Promise.all([
+        readFile(new URL('../src/app/api/admin/payroll/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/staff/payroll/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/staff/commissions/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/orders/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(adminPayrollSource, /getStaffMonthlyRevenue/);
+    assert.match(staffPayrollSource, /getStaffMonthlyRevenue/);
+    assert.match(staffCommissionsSource, /getStaffEligibleRevenueOrders/);
+    assert.match(staffCommissionsSource, /allocateKpiCommission/);
+    assert.doesNotMatch(orderSource, /Staff override from collaborator/);
+});
+
+test('every admin order mutation synchronizes or removes legacy commission records', async () => {
+    const [adminOrdersSource, adminOrderSource, genericOrderSource, lifecycleSource] = await Promise.all([
+        readFile(new URL('../src/app/api/admin/orders/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/orders/[id]/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/orders/[id]/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/affiliate-commission-lifecycle.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(adminOrdersSource, /syncAffiliateCommissionsForOrderStatus/);
+    assert.match(adminOrderSource, /syncAffiliateCommissionsForOrderStatus/);
+    assert.match(genericOrderSource, /syncAffiliateCommissionsForOrderStatus/);
+    assert.match(adminOrderSource, /removeAffiliateCommissionsForOrder/);
+    assert.match(genericOrderSource, /removeAffiliateCommissionsForOrder/);
+    assert.match(lifecycleSource, /commission\.status = 'rejected'/);
 });
 
 test('legacy VIP savings use the actual voucher reduction after product pricing', () => {

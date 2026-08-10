@@ -6,6 +6,7 @@ import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import mongoose from 'mongoose';
+import { buildManagedCustomerQuery } from '@/lib/customer-ownership';
 
 async function getCurrentUser() {
     try {
@@ -35,7 +36,7 @@ export async function GET(
 
         await dbConnect();
 
-        const userId = user._id as mongoose.Types.ObjectId;
+        const userId = new mongoose.Types.ObjectId(String(user._id));
 
         // Get all collaborators under this staff
         const collaborators = await User.find({
@@ -45,6 +46,13 @@ export async function GET(
 
         const collaboratorIds = collaborators.map((c: any) => c._id);
         const allAffiliates = [userId, ...collaboratorIds];
+        const managedCustomers = user.role === 'staff'
+            ? await User.find(buildManagedCustomerQuery(
+                String(userId),
+                collaboratorIds.map((collaboratorId: mongoose.Types.ObjectId) => String(collaboratorId)),
+            )).select('_id').lean()
+            : [];
+        const managedCustomerIds = new Set(managedCustomers.map((customer) => String(customer._id)));
 
         // Find the order
         let orderId: mongoose.Types.ObjectId | null = null;
@@ -69,9 +77,13 @@ export async function GET(
 
         // Check if this order belongs to the staff's team
         const referrerId = (order.referrer as mongoose.Types.ObjectId)?.toString();
-        const hasAccess = allAffiliates.some((aid: any) => 
+        const hasReferralAccess = allAffiliates.some((aid: any) =>
             (aid as mongoose.Types.ObjectId).toString() === referrerId
         );
+        const orderOwnerId = String(order.user || order.get('userId') || '');
+        const hasAccess = user.role === 'admin'
+            || hasReferralAccess
+            || managedCustomerIds.has(orderOwnerId);
 
         if (!hasAccess) {
             return NextResponse.json({ message: 'Bạn không có quyền xem đơn hàng này' }, { status: 403 });

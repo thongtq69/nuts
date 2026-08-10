@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
-import Order from '@/models/Order';
-import AffiliateCommission from '@/models/AffiliateCommission';
+import StaffPayroll from '@/models/StaffPayroll';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { getStaffEligibleRevenueOrders } from '@/lib/staff-payroll';
+import {
+    allocateKpiCommission,
+    getEligibleProductRevenue,
+} from '@/lib/staff-commission-rules';
 
 async function getCurrentUser() {
     try {
@@ -12,7 +16,11 @@ async function getCurrentUser() {
         const token = cookieStore.get('token')?.value;
         if (!token) return null;
 
-        const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me');
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET || 'fallback_secret_change_me',
+        ) as jwt.JwtPayload;
+        if (!decoded.id) return null;
         await dbConnect();
         return await User.findById(decoded.id);
     } catch {
@@ -20,87 +28,108 @@ async function getCurrentUser() {
     }
 }
 
+function getCurrentBangkokPeriod() {
+    const bangkokNow = new Date(Date.now() + (7 * 60 * 60 * 1000));
+    return {
+        year: bangkokNow.getUTCFullYear(),
+        month: bangkokNow.getUTCMonth() + 1,
+    };
+}
+
 export async function GET() {
     try {
         const user = await getCurrentUser();
 
-        if (!user || (user.role !== 'staff' && user.role !== 'admin')) {
+        if (!user || user.role !== 'staff') {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
         await dbConnect();
+        const period = getCurrentBangkokPeriod();
+        const payroll = await StaffPayroll.findOne({
+            staffId: user._id,
+            year: period.year,
+            month: period.month,
+        }).lean();
 
-        // Get all collaborators under this staff
-        const collaborators = await User.find({
-            parentStaff: user._id,
-            affiliateLevel: 'collaborator'
-        } as any).select('_id name email referralCode');
+        if (!payroll) {
+            return NextResponse.json({
+                ...period,
+                configured: false,
+                commissions: [],
+                stats: { totalPending: 0, totalApproved: 0, totalPaid: 0, totalAll: 0 },
+            });
+        }
 
-        const collaboratorIds = collaborators.map((c: any) => c._id);
+        const orders = await getStaffEligibleRevenueOrders(
+            String(user._id),
+            period.year,
+            period.month,
+        );
+        const allocations = allocateKpiCommission(
+            orders,
+            payroll.kpiTarget,
+            payroll.commissionRate,
+        );
+        const commissionStatus = payroll.status === 'paid'
+            ? 'paid'
+            : payroll.status === 'finalized'
+                ? 'approved'
+                : 'pending';
 
-        // Get all referral codes (staff's own + all collaborators')
-        const allCodes = [
-            user.referralCode,
-            ...collaborators.map((c: any) => c.referralCode).filter(Boolean)
-        ];
+        // Orders below KPI are still counted as KPI revenue, but must never appear
+        // as earned commission. Only the part crossing the KPI threshold is listed.
+        const commissions = allocations
+            .filter((allocation) => allocation.commissionAmount > 0)
+            .map((allocation) => {
+                const order = allocation.order;
+                const fullOrderId = String(order._id);
+                return {
+                    id: `${String(payroll._id)}-${fullOrderId}`,
+                    orderId: fullOrderId.slice(-8).toUpperCase(),
+                    orderIdFull: fullOrderId,
+                    orderValue: getEligibleProductRevenue(order),
+                    commissionRate: payroll.commissionRate,
+                    commissionAmount: allocation.commissionAmount,
+                    commissionableRevenue: allocation.commissionableRevenue,
+                    status: commissionStatus,
+                    note: `Hoa hồng phần doanh thu vượt KPI tháng ${period.month}/${period.year}`,
+                    orderStatus: order.status || 'unknown',
+                    orderItems: order.items || [],
+                    customerName: order.shippingInfo?.fullName || 'Khách vãng lai',
+                    customerPhone: order.shippingInfo?.phone || '',
+                    customerAddress: order.shippingInfo
+                        ? `${order.shippingInfo.address || ''}, ${order.shippingInfo.district || ''}, ${order.shippingInfo.city || ''}`
+                        : '',
+                    paymentMethod: order.paymentMethod || 'cod',
+                    createdAt: order.createdAt,
+                };
+            })
+            .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime());
 
-        // Get all commissions for staff (from their own referrals and from collaborator referrals)
-        const commissions = await AffiliateCommission.find({
-            $or: [
-                { affiliateId: user._id },
-                { 
-                    affiliateId: { $in: collaboratorIds },
-                    note: { $regex: 'Collaborator commission' }
-                }
-            ]
-        })
-        .populate({
-            path: 'orderId',
-            select: 'totalAmount status createdAt items shippingInfo paymentMethod'
-        })
-        .sort({ createdAt: -1 });
-
-        const formattedCommissions = commissions.map((comm: any) => {
-            const order = comm.orderId || {};
-            return {
-                id: comm._id.toString(),
-                orderId: order._id?.toString().slice(-8).toUpperCase() || 'N/A',
-                orderValue: comm.orderValue || order.totalAmount || 0,
-                commissionRate: comm.commissionRate,
-                commissionAmount: comm.commissionAmount,
-                status: comm.status,
-                note: comm.note,
-                orderStatus: order.status || 'unknown',
-                orderItems: order.items || [],
-                customerName: order.shippingInfo?.fullName || 'Khách vãng lai',
-                customerPhone: order.shippingInfo?.phone || '',
-                customerAddress: order.shippingInfo ? 
-                    `${order.shippingInfo.address || ''}, ${order.shippingInfo.district || ''}, ${order.shippingInfo.city || ''}` : '',
-                paymentMethod: order.paymentMethod || 'cod',
-                createdAt: comm.createdAt
-            };
-        });
-
-        // Calculate totals
-        const totalPending = commissions.filter((c: any) => c.status === 'pending').reduce((sum: number, c: any) => sum + c.commissionAmount, 0);
-        const totalApproved = commissions.filter((c: any) => c.status === 'approved').reduce((sum: number, c: any) => sum + c.commissionAmount, 0);
-        const totalPaid = commissions.filter((c: any) => c.status === 'paid').reduce((sum: number, c: any) => sum + c.commissionAmount, 0);
-        const totalAll = commissions.reduce((sum: number, c: any) => sum + c.commissionAmount, 0);
+        const totalPending = commissions
+            .filter((commission) => commission.status === 'pending')
+            .reduce((sum, commission) => sum + commission.commissionAmount, 0);
+        const totalApproved = commissions
+            .filter((commission) => commission.status === 'approved')
+            .reduce((sum, commission) => sum + commission.commissionAmount, 0);
+        const totalPaid = commissions
+            .filter((commission) => commission.status === 'paid')
+            .reduce((sum, commission) => sum + commission.commissionAmount, 0);
 
         return NextResponse.json({
-            commissions: formattedCommissions,
+            ...period,
+            configured: true,
+            commissions,
             stats: {
                 totalPending,
                 totalApproved,
                 totalPaid,
-                totalAll
-            }
+                totalAll: totalPending + totalApproved + totalPaid,
+            },
         });
     } catch (error) {
-        console.error('Get staff commissions error:', error);
-        return NextResponse.json(
-            { message: 'Lỗi server' },
-            { status: 500 }
-        );
+        console.error('Get staff KPI commissions error:', error);
+        return NextResponse.json({ message: 'Lỗi server' }, { status: 500 });
     }
 }

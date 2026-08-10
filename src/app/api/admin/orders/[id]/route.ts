@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
-import User from '@/models/User';
-import AffiliateCommission from '@/models/AffiliateCommission';
 import { sendOrderStatusEmail } from '@/lib/email';
+import {
+    removeAffiliateCommissionsForOrder,
+    syncAffiliateCommissionsForOrderStatus,
+} from '@/lib/affiliate-commission-lifecycle';
 
 export async function PATCH(
     req: Request,
@@ -19,60 +21,9 @@ export async function PATCH(
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
 
-        // Store previous status to detect changes
-        const previousStatus = order.status;
-
         // Update order status
         order.status = status;
-
-        // Handle Affiliate Commission - Support 2-level system
-        // Trigger only if status changes to 'delivered' | 'completed'
-        if (status === 'delivered' || status === 'completed') {
-            // Find ALL commission records for this order (regardless of status)
-            const commissions = await AffiliateCommission.find({
-                orderId: order._id
-            });
-
-            // Filter for pending commissions that need to be approved
-            const pendingCommissions = commissions.filter(c => c.status === 'pending');
-
-            if (pendingCommissions.length > 0) {
-                // Approve all pending commissions and credit wallets
-                for (const comm of pendingCommissions) {
-                    const affiliate = await User.findById(comm.affiliateId);
-                    if (affiliate) {
-                        affiliate.walletBalance = (affiliate.walletBalance || 0) + comm.commissionAmount;
-                        affiliate.totalCommission = (affiliate.totalCommission || 0) + comm.commissionAmount;
-                        await affiliate.save();
-
-                        // Update commission status
-                        comm.status = 'approved';
-                        await comm.save();
-                    }
-                }
-            }
-
-            // Update order commission status to approved if there are any commissions
-            if (commissions.length > 0) {
-                order.commissionStatus = 'approved';
-            }
-        }
-
-        // Handle Order Cancellation
-        if (status === 'cancelled') {
-            // Find all pending commissions for this order and mark as rejected
-            const pendingCommissions = await AffiliateCommission.find({
-                orderId: order._id,
-                status: 'pending'
-            });
-
-            for (const comm of pendingCommissions) {
-                comm.status = 'rejected';
-                await comm.save();
-            }
-
-            order.commissionStatus = 'cancelled';
-        }
+        await syncAffiliateCommissionsForOrderStatus(order, status);
 
         await order.save();
 
@@ -114,10 +65,13 @@ export async function DELETE(
         await dbConnect();
         const { id } = await params;
 
-        const order = await Order.findByIdAndDelete(id);
+        const order = await Order.findById(id);
         if (!order) {
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
+
+        await removeAffiliateCommissionsForOrder(order);
+        await order.deleteOne();
 
         return NextResponse.json({ message: 'Order deleted successfully' });
     } catch (error) {

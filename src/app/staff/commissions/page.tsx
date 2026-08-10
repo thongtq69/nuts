@@ -11,6 +11,7 @@ import {
 interface Commission {
     id: string;
     orderId: string;
+    orderIdFull: string;
     orderValue: number;
     commissionRate: number;
     commissionAmount: number;
@@ -94,7 +95,7 @@ export default function CommissionsPage() {
         setOrderDetail(null);
         
         try {
-            const res = await fetch(`/api/staff/orders/${commission.orderId}`);
+            const res = await fetch(`/api/staff/orders/${commission.orderIdFull}`);
             if (res.ok) {
                 const data = await res.json();
                 setOrderDetail(data);

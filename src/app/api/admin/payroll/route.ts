@@ -40,9 +40,9 @@ export async function GET(request: NextRequest) {
                 revenue: liveRevenue,
             })
             : null;
-        const amounts = config?.status !== 'draft' && config?.snapshot
-            ? { ...calculated, ...config.snapshot, revenue: config.snapshot.revenue }
-            : calculated;
+        // Always display the live calculation so a cancelled/refunded order is
+        // removed from KPI revenue immediately for both Admin and Staff.
+        const amounts = calculated;
 
         return {
             staff: {

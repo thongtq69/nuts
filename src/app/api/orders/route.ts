@@ -213,51 +213,30 @@ export async function POST(req: Request) {
 
         const refCode = cookieStore.get('gonuts_ref')?.value;
         let referrerId: any = undefined;
-        let staffId: any = undefined;
         let commissionAmount = 0;
         let commissionStatus: any = undefined;
-        let totalCommissionAmount = 0; // For storing total commission (CTV + Staff)
 
         if (refCode) {
             const referrerUser = await User.findOne({ referralCode: refCode });
             if (referrerUser && referrerUser._id.toString() !== userId) {
                 referrerId = referrerUser._id;
-                if (referrerUser.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
-                    staffId = referrerUser.parentStaff;
-                }
             }
         }
         if (!referrerId && userId && user?.referrer) {
             referrerId = user.referrer;
-            const referrerUser = await User.findById(user.referrer);
-            if (referrerUser?.affiliateLevel === 'collaborator' && referrerUser.parentStaff) {
-                staffId = referrerUser.parentStaff;
-            }
         }
 
         if (referrerId) {
             const referrerUser = await User.findById(referrerId);
             const defaultRate = settings.defaultCommissionRate ?? 10;
-            let referrerRate = referrerUser?.commissionRateOverride ?? defaultRate;
-            let staffRate = 0;
-
-            if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
-                const staffUser = await User.findById(staffId);
-                staffRate = staffUser?.staffCommissionRate ?? 2;
-            }
+            const referrerRate = referrerUser?.commissionRateOverride ?? defaultRate;
 
             const revenueBase = Math.max(0, itemsTotal - discountAmount);
 
-            if (revenueBase > 0) {
-                if (referrerUser?.affiliateLevel === 'collaborator') {
-                    const collabCommission = Math.round(revenueBase * (referrerRate / 100));
-                    const staffCommission = Math.round(revenueBase * (staffRate / 100));
-                    commissionAmount = collabCommission; // Only store CTV's commission
-                    totalCommissionAmount = collabCommission + staffCommission; // Store total for reference
-                } else {
-                    commissionAmount = Math.round(revenueBase * (referrerRate / 100));
-                    totalCommissionAmount = commissionAmount;
-                }
+            // Staff commission is calculated monthly from revenue above KPI. Do
+            // not create a per-order staff commission from the first đồng.
+            if (revenueBase > 0 && referrerUser?.role !== 'staff') {
+                commissionAmount = Math.round(revenueBase * (referrerRate / 100));
                 commissionStatus = 'pending';
             }
         }
@@ -321,7 +300,7 @@ export async function POST(req: Request) {
             const defaultRate = settings.defaultCommissionRate ?? 10;
             const revenueBase = Math.max(0, itemsTotal - discountAmount);
 
-            if (referrerUser?.affiliateLevel === 'collaborator' && staffId) {
+            if (referrerUser?.affiliateLevel === 'collaborator') {
                 const collabRate = referrerUser?.commissionRateOverride ?? defaultRate;
                 const collabCommission = Math.round(revenueBase * (collabRate / 100));
 
@@ -335,22 +314,7 @@ export async function POST(req: Request) {
                     note: voucherCode ? `Collaborator commission - Order with voucher ${voucherCode}` : 'Collaborator commission'
                 });
                 commissionRecords.push(collabComm);
-
-                const staffUser = await User.findById(staffId);
-                const staffRate = staffUser?.staffCommissionRate ?? 2;
-                const staffCommission = Math.round(revenueBase * (staffRate / 100));
-
-                const staffComm = await AffiliateCommission.create({
-                    affiliateId: staffId,
-                    orderId: order._id,
-                    orderValue: revenueBase,
-                    commissionRate: staffRate,
-                    commissionAmount: staffCommission,
-                    status: 'pending',
-                    note: voucherCode ? `Staff override from collaborator - Order with voucher ${voucherCode}` : 'Staff override from collaborator'
-                });
-                commissionRecords.push(staffComm);
-            } else {
+            } else if (referrerUser?.role !== 'staff') {
                 const rate = referrerUser?.commissionRateOverride ?? defaultRate;
                 const comm = await AffiliateCommission.create({
                     affiliateId: referrerId,

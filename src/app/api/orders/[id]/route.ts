@@ -4,6 +4,10 @@ import Order from '@/models/Order';
 import { verifyToken } from '@/lib/auth';
 import { activateMembershipOrder, MembershipActivationError } from '@/lib/membership-activation';
 import { isConfirmedPaymentStatus } from '@/lib/customer-ownership';
+import {
+    removeAffiliateCommissionsForOrder,
+    syncAffiliateCommissionsForOrderStatus,
+} from '@/lib/affiliate-commission-lifecycle';
 
 // GET single order
 export async function GET(
@@ -77,6 +81,10 @@ export async function PATCH(
         if (body.shippingInfo) order.shippingInfo = { ...order.shippingInfo, ...body.shippingInfo };
         if (body.note !== undefined) order.note = body.note;
 
+        if (body.status) {
+            await syncAffiliateCommissionsForOrderStatus(order, body.status);
+        }
+
         await order.save();
 
         return NextResponse.json({ 
@@ -107,11 +115,14 @@ export async function DELETE(
 
         const { id } = await params;
         await dbConnect();
-        const order = await Order.findByIdAndDelete(id);
+        const order = await Order.findById(id);
         
         if (!order) {
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
+
+        await removeAffiliateCommissionsForOrder(order);
+        await order.deleteOne();
 
         return NextResponse.json({ 
             success: true, 

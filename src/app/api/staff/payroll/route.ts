@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
         commissionRate: config.commissionRate,
         revenue: liveRevenue,
     });
-    const amounts = config.status !== 'draft' && config.snapshot
-        ? { ...calculated, ...config.snapshot, revenue: config.snapshot.revenue }
-        : calculated;
+    // Use the same live source as Admin. Snapshots remain an audit record, but
+    // cancelled/refunded orders must not stay in the employee's current totals.
+    const amounts = calculated;
 
     return NextResponse.json({
         year,

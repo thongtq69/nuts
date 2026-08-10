@@ -2,9 +2,15 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import Order from '@/models/Order';
-import AffiliateCommission from '@/models/AffiliateCommission';
+import StaffPayroll from '@/models/StaffPayroll';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { calculatePayrollAmounts } from '@/lib/payroll-formula';
+import {
+    getStaffEligibleRevenueOrders,
+    getStaffMonthlyRevenue,
+} from '@/lib/staff-payroll';
+import { allocateKpiCommission } from '@/lib/staff-commission-rules';
 
 // Helper to get current user
 async function getCurrentUser() {
@@ -60,59 +66,44 @@ export async function GET() {
         const totalOrders = orders.length;
         const teamRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
-        // Get commissions
-        const commissions = await AffiliateCommission.find({
-            affiliateId: user._id
-        });
-
-        const totalCommission = commissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
-
-        // Get pending commissions
-        const pendingCommissions = await AffiliateCommission.find({
-            affiliateId: user._id,
-            status: 'pending'
-        });
-        const pendingCommission = pendingCommissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
-
-        // Get this month and last month revenue
+        // KPI revenue and commission use the same shared monthly calculation as Admin.
         const now = new Date();
-        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        const bangkokNow = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        const year = bangkokNow.getUTCFullYear();
+        const month = bangkokNow.getUTCMonth() + 1;
+        const lastMonthDate = new Date(Date.UTC(year, month - 2, 1));
+        const lastMonthYear = lastMonthDate.getUTCFullYear();
+        const lastMonthNumber = lastMonthDate.getUTCMonth() + 1;
+        const [payroll, eligibleOrders, thisMonthRevenue, lastMonthRevenue] = await Promise.all([
+            StaffPayroll.findOne({ staffId: user._id, year, month }).lean(),
+            getStaffEligibleRevenueOrders(String(user._id), year, month),
+            getStaffMonthlyRevenue(String(user._id), year, month),
+            getStaffMonthlyRevenue(String(user._id), lastMonthYear, lastMonthNumber),
+        ]);
+        const payrollAmounts = payroll
+            ? calculatePayrollAmounts({
+                baseSalary: payroll.baseSalary,
+                kpiTarget: payroll.kpiTarget,
+                commissionRate: payroll.commissionRate,
+                revenue: thisMonthRevenue,
+            })
+            : null;
+        const totalCommission = payrollAmounts?.commissionAmount || 0;
+        const pendingCommission = payroll?.status === 'draft' ? totalCommission : 0;
+        const allocations = payroll
+            ? allocateKpiCommission(eligibleOrders, payroll.kpiTarget, payroll.commissionRate)
+            : [];
 
-        const thisMonthOrders = orders.filter(o => new Date(o.createdAt!) >= thisMonthStart);
-        const thisMonthRevenue = thisMonthOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-
-        const lastMonthOrders = orders.filter(o => {
-            const createdAt = new Date(o.createdAt!);
-            return createdAt >= lastMonthStart && createdAt <= lastMonthEnd;
-        });
-        const lastMonthRevenue = lastMonthOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-
-        // Commission data for chart (last 7 days)
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-        const recentCommissions = await AffiliateCommission.aggregate([
-            {
-                $match: {
-                    affiliateId: user._id,
-                    createdAt: { $gte: sevenDaysAgo }
-                }
-            },
-            {
-                $group: {
-                    _id: { $dateToString: { format: "%d/%m", date: "$createdAt" } },
-                    commission: { $sum: "$commissionAmount" }
-                }
-            },
-            { $sort: { "_id": 1 } }
-        ]);
-
-        const commissionData = recentCommissions.map(item => ({
-            date: item._id,
-            commission: item.commission
-        }));
+        const commissionByDate = new Map<string, number>();
+        for (const allocation of allocations) {
+            const createdAt = new Date(allocation.order.createdAt || 0);
+            if (createdAt < sevenDaysAgo || allocation.commissionAmount <= 0) continue;
+            const date = createdAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+            commissionByDate.set(date, (commissionByDate.get(date) || 0) + allocation.commissionAmount);
+        }
+        const commissionData = Array.from(commissionByDate, ([date, commission]) => ({ date, commission }));
 
         // Get collaborator stats
         const collaboratorStats = await Promise.all(
