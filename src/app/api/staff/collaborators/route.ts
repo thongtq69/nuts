@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import Order from '@/models/Order';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 
@@ -13,7 +13,10 @@ async function getCurrentUser() {
         const token = cookieStore.get('token')?.value;
         if (!token) return null;
 
-        const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_change_me');
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET || 'fallback_secret_change_me',
+        ) as JwtPayload;
         await dbConnect();
         return await User.findById(decoded.id);
     } catch {
@@ -35,7 +38,7 @@ export async function GET() {
         const collaborators = await User.find({
             parentStaff: user._id,
             affiliateLevel: 'collaborator'
-        } as any).select('name email phone referralCode walletBalance totalCommission createdAt').sort({ createdAt: -1 });
+        }).select('name email phone referralCode walletBalance totalCommission createdAt').sort({ createdAt: -1 });
 
         // Get order stats for each collaborator
         const collaboratorsWithStats = await Promise.all(
@@ -96,7 +99,7 @@ export async function POST(req: Request) {
         const collaboratorCount = await User.countDocuments({
             parentStaff: user._id,
             affiliateLevel: 'collaborator'
-        } as any);
+        });
 
         const newCode = `${user.staffCode}-CTV${collaboratorCount + 1}`;
 
@@ -115,7 +118,7 @@ export async function POST(req: Request) {
             referralCode: newCode,
             walletBalance: 0,
             totalCommission: 0
-        } as any) as any;
+        });
 
         // Update staff's collaborator count
         await User.findByIdAndUpdate(user._id, {
@@ -161,14 +164,16 @@ export async function DELETE(req: Request) {
             _id: collaboratorId,
             parentStaff: user._id,
             affiliateLevel: 'collaborator'
-        } as any);
+        });
 
         if (!collaborator) {
             return NextResponse.json({ message: 'Không tìm thấy cộng tác viên' }, { status: 404 });
         }
 
-        // Delete the collaborator
-        await User.findByIdAndDelete(collaboratorId);
+        // Preserve financial and order references by deactivating instead of hard-deleting.
+        collaborator.isActive = false;
+        collaborator.deletedAt = new Date();
+        await collaborator.save();
 
         // Update staff's collaborator count
         await User.findByIdAndUpdate(user._id, {
@@ -176,7 +181,7 @@ export async function DELETE(req: Request) {
         });
 
         return NextResponse.json({
-            message: 'Đã xóa cộng tác viên'
+            message: 'Đã vô hiệu hóa cộng tác viên'
         });
     } catch (error) {
         console.error('Delete collaborator error:', error);

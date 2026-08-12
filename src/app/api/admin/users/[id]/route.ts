@@ -25,7 +25,10 @@ export async function PATCH(
         }
 
         const updateData: Record<string, unknown> = {};
-        if (typeof body.isActive === 'boolean') updateData.isActive = body.isActive;
+        if (typeof body.isActive === 'boolean') {
+            updateData.isActive = body.isActive;
+            updateData.deletedAt = body.isActive ? null : new Date();
+        }
         if (['user', 'sale', 'staff'].includes(body.role)) updateData.role = body.role;
 
         if (body.role === 'sale' && !user.referralCode) {
@@ -74,12 +77,28 @@ export async function DELETE(
         await dbConnect();
         const { id } = await params;
 
-        const user = await User.findByIdAndDelete(id);
-        if (!user) {
+        const existingUser = await User.findById(id).select('role');
+        if (!existingUser) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
+        if (existingUser.role === 'admin' || auth.user._id === id) {
+            return NextResponse.json(
+                { error: 'Không thể vô hiệu hóa tài khoản quản trị này' },
+                { status: 409 },
+            );
+        }
 
-        return NextResponse.json({ message: 'User deleted successfully' });
+        await User.findByIdAndUpdate(
+            id,
+            {
+                $set: {
+                    isActive: false,
+                    deletedAt: new Date(),
+                },
+            },
+            { new: true },
+        );
+        return NextResponse.json({ message: 'User deactivated successfully' });
     } catch (error) {
         console.error('Error deleting user:', error);
         return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });

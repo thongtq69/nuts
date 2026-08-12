@@ -5,6 +5,26 @@ import { requireAdminAuth } from '@/lib/auth-permissions';
 
 export const dynamic = 'force-dynamic';
 
+interface PopulatedManager {
+    _id: { toString(): string };
+    name: string;
+    email?: string;
+    staffCode?: string;
+}
+
+interface AdminUserListItem {
+    _id: { toString(): string };
+    isActive?: boolean;
+    parentStaff?: PopulatedManager;
+    commissionSettings?: { managerId?: PopulatedManager };
+    referrer?: PopulatedManager & {
+        role?: string;
+        affiliateLevel?: string;
+        parentStaff?: PopulatedManager;
+    };
+    [key: string]: unknown;
+}
+
 export async function GET(request: Request) {
     try {
         const auth = await requireAdminAuth();
@@ -16,7 +36,7 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const roles = searchParams.get('role')?.split(',') || [];
 
-        const query: any = {};
+        const query: { role?: { $in: string[] } } = {};
         if (roles.length > 0) {
             query.role = { $in: roles };
         }
@@ -31,10 +51,10 @@ export async function GET(request: Request) {
                 populate: { path: 'parentStaff', select: 'name email staffCode' },
             })
             .sort({ createdAt: -1 })
-            .lean();
+            .lean() as unknown as AdminUserListItem[];
 
 
-        return NextResponse.json(users.map((user: any) => {
+        return NextResponse.json(users.map((user) => {
             const directManager = user.parentStaff || user.commissionSettings?.managerId;
             const referrerManager = user.referrer && (
                 user.referrer.role === 'staff' || user.referrer.affiliateLevel === 'staff'
@@ -48,6 +68,7 @@ export async function GET(request: Request) {
             return {
                 ...user,
                 _id: user._id.toString(),
+                isActive: user.isActive !== false,
                 managedBy: manager
                     ? {
                         _id: String(manager._id),

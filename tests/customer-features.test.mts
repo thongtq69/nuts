@@ -42,6 +42,42 @@ import {
     MIN_PASSWORD_LENGTH,
     getNewPasswordValidationError,
 } from '../src/lib/password-policy.ts';
+import {
+    canTransitionLegacyCommission,
+    getLegacyCommissionIntegrity,
+} from '../src/lib/legacy-commission.ts';
+
+test('legacy commissions enforce integrity and one-way status transitions', () => {
+    assert.equal(getLegacyCommissionIntegrity(true, true), 'valid');
+    assert.equal(getLegacyCommissionIntegrity(false, true), 'missing_affiliate');
+    assert.equal(getLegacyCommissionIntegrity(true, false), 'missing_order');
+    assert.equal(getLegacyCommissionIntegrity(false, false), 'missing_both');
+
+    assert.equal(canTransitionLegacyCommission('pending', 'approved'), true);
+    assert.equal(canTransitionLegacyCommission('pending', 'rejected'), true);
+    assert.equal(canTransitionLegacyCommission('approved', 'paid'), true);
+    assert.equal(canTransitionLegacyCommission('approved', 'rejected'), false);
+    assert.equal(canTransitionLegacyCommission('paid', 'approved'), false);
+});
+
+test('legacy commission APIs are admin-only and orphan records are locked', async () => {
+    const [commissionApi, reconciliationApi, commissionPage, userDeleteApi] = await Promise.all([
+        readFile(new URL('../src/app/api/admin/commissions/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/commissions/reconcile/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/admin/commissions/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/users/[id]/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    for (const source of [commissionApi, reconciliationApi]) {
+        assert.match(source, /const auth = await requireAdminAuth\(\)/);
+        assert.match(source, /if \(!auth\.user\)/);
+    }
+    assert.match(commissionApi, /canTransitionLegacyCommission/);
+    assert.match(commissionApi, /requiresReconciliation: true/);
+    assert.match(commissionPage, /Đã khóa thao tác/);
+    assert.match(userDeleteApi, /isActive: false/);
+    assert.doesNotMatch(userDeleteApi, /findByIdAndDelete/);
+});
 
 test('authenticated users can change their password and are signed out afterwards', async () => {
     const [changePasswordSource, logoutSource, staffLayoutSource, authContextSource] = await Promise.all([

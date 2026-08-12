@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, CreditCard, TrendingUp, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { AlertTriangle, Loader2, CreditCard, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 import { Pagination } from '@/components/admin/ui/Pagination';
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
+import { SearchInput } from '@/components/admin/ui/SearchInput';
 import { useToast } from '@/context/ToastContext';
 
 interface Commission {
@@ -15,9 +16,14 @@ interface Commission {
     orderId?: {
         _id: string;
     };
+    affiliateName?: string;
+    affiliateReferralCode?: string;
+    orderNumber?: string;
     orderValue: number;
     commissionAmount: number;
     status: 'pending' | 'approved' | 'paid' | 'rejected';
+    integrityStatus?: 'valid' | 'missing_affiliate' | 'missing_order' | 'missing_both';
+    requiresReconciliation?: boolean;
     createdAt: string;
 }
 
@@ -34,20 +40,24 @@ export default function AdminCommissionsPage() {
         newStatus: ''
     });
     const [updating, setUpdating] = useState<string | null>(null);
-    const toast = useToast();
+    const { error: showError } = useToast();
 
     const fetchCommissions = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch('/api/admin/commissions');
             const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || data.message || 'Không thể tải danh sách hoa hồng');
+            }
             setCommissions(data);
         } catch (err) {
             console.error(err);
+            showError('Không thể tải hoa hồng', err instanceof Error ? err.message : 'Vui lòng thử lại.');
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [showError]);
 
     useEffect(() => {
         fetchCommissions();
@@ -72,10 +82,11 @@ export default function AdminCommissionsPage() {
                 );
                 setUpdateModal({ isOpen: false, id: null, newStatus: '' });
             } else {
-                toast.error('Lỗi cập nhật', 'Vui lòng thử lại.');
+                const data = await res.json();
+                showError('Lỗi cập nhật', data.message || 'Vui lòng thử lại.');
             }
-        } catch (e) {
-            toast.error('Lỗi cập nhật', 'Vui lòng thử lại.');
+        } catch {
+            showError('Lỗi cập nhật', 'Vui lòng thử lại.');
         } finally {
             setUpdating(null);
         }
@@ -85,7 +96,10 @@ export default function AdminCommissionsPage() {
         const matchesSearch = searchTerm === '' ||
             comm.affiliateId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             comm.affiliateId?.referralCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            comm.orderId?._id?.toLowerCase().includes(searchTerm.toLowerCase());
+            comm.affiliateName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            comm.affiliateReferralCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            comm.orderId?._id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            comm.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || comm.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -104,6 +118,7 @@ export default function AdminCommissionsPage() {
     const totalApproved = commissions.filter(c => c.status === 'approved').length;
     const totalPaid = commissions.filter(c => c.status === 'paid').length;
     const totalCommissionAmount = commissions.reduce((sum, c) => sum + c.commissionAmount, 0);
+    const reconciliationCount = commissions.filter(c => c.requiresReconciliation).length;
 
     return (
         <div className="space-y-6">
@@ -132,6 +147,18 @@ export default function AdminCommissionsPage() {
                     </p>
                 </div>
             </div>
+
+            {reconciliationCount > 0 && (
+                <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                    <div>
+                        <p className="font-semibold">{reconciliationCount} bản ghi cũ cần đối soát</p>
+                        <p className="mt-1 text-sm text-amber-800">
+                            Các bản ghi mất tài khoản hoặc đơn hàng đã bị khóa thao tác để tránh cộng hoặc trừ tiền sai.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -175,6 +202,12 @@ export default function AdminCommissionsPage() {
 
             {/* Filter */}
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <SearchInput
+                    value={searchTerm}
+                    onChange={(value) => { setSearchTerm(value); setCurrentPage(1); }}
+                    placeholder="Tìm theo CTV, mã giới thiệu hoặc mã đơn..."
+                    className="mb-4 max-w-xl"
+                />
                 <div className="flex gap-2 overflow-x-auto pb-2">
                     {['all', 'pending', 'approved', 'paid', 'rejected'].map((status) => (
                         <button
@@ -234,13 +267,25 @@ export default function AdminCommissionsPage() {
                                             {startIndex + index + 1}
                                         </td>
                                         <td className="px-4 py-4">
-                                            <div className="font-semibold text-slate-900 text-base">{comm.affiliateId?.name || 'Unknown'}</div>
-                                            <div className="text-sm text-slate-500 font-mono mt-0.5">{comm.affiliateId?.referralCode}</div>
+                                            <div className="font-semibold text-slate-900 text-base">
+                                                {comm.affiliateId?.name || comm.affiliateName || 'Tài khoản không còn tồn tại'}
+                                            </div>
+                                            <div className="text-sm text-slate-500 font-mono mt-0.5">
+                                                {comm.affiliateId?.referralCode || comm.affiliateReferralCode || '—'}
+                                            </div>
+                                            {comm.requiresReconciliation && (
+                                                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+                                                    <AlertTriangle className="h-3.5 w-3.5" />
+                                                    Cần đối soát
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-4 text-slate-600">
                                             {comm.orderId?._id ? (
                                                 <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded">...{comm.orderId._id.slice(-6)}</span>
-                                            ) : 'N/A'}
+                                            ) : comm.orderNumber ? (
+                                                <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded">...{comm.orderNumber.slice(-6)}</span>
+                                            ) : 'Đơn hàng không còn tồn tại'}
                                         </td>
                                         <td className="px-4 py-4 text-right text-slate-700 font-medium">
                                             {new Intl.NumberFormat('vi-VN').format(comm.orderValue)}đ
@@ -264,7 +309,7 @@ export default function AdminCommissionsPage() {
                                         </td>
                                         <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-center gap-2">
-                                                {comm.status === 'pending' && (
+                                                {comm.status === 'pending' && !comm.requiresReconciliation && (
                                                     <>
                                                         <button
                                                             onClick={() => openUpdateModal(comm._id, 'approved')}
@@ -280,7 +325,7 @@ export default function AdminCommissionsPage() {
                                                         </button>
                                                     </>
                                                 )}
-                                                {comm.status === 'approved' && (
+                                                {comm.status === 'approved' && !comm.requiresReconciliation && (
                                                     <button
                                                         onClick={() => openUpdateModal(comm._id, 'paid')}
                                                         className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-lg transition-colors"
@@ -288,7 +333,9 @@ export default function AdminCommissionsPage() {
                                                         Đã TT
                                                     </button>
                                                 )}
-                                                {(comm.status === 'paid' || comm.status === 'rejected') && (
+                                                {comm.requiresReconciliation ? (
+                                                    <span className="text-sm font-medium text-slate-400">Đã khóa thao tác</span>
+                                                ) : (comm.status === 'paid' || comm.status === 'rejected') && (
                                                     <span className="text-slate-400 text-sm">-</span>
                                                 )}
                                             </div>

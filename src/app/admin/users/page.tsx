@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { Users, CheckCircle, XCircle, MoreHorizontal, Loader2 } from 'lucide-react';
+import { Users, CheckCircle, XCircle, UserX, Loader2 } from 'lucide-react';
 import { Pagination } from '@/components/admin/ui/Pagination';
 import { SearchInput } from '@/components/admin/ui/SearchInput';
-import { ExportButton, exportToCSV, ExportColumn } from '@/components/admin/ui/ExportButton';
+import { ExportButton, ExportColumn } from '@/components/admin/ui/ExportButton';
 import { ConfirmModal } from '@/components/admin/ui/ConfirmModal';
-import { Button } from '@/components/admin/ui/Button';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { usePrompt } from '@/context/PromptContext';
@@ -19,6 +17,7 @@ interface User {
     phone?: string;
     role: 'user' | 'sale' | 'admin' | 'staff';
     saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
+    isActive?: boolean;
     createdAt: string;
     managedBy?: {
         _id: string;
@@ -41,7 +40,7 @@ export default function AdminUsersPage() {
         userName: ''
     });
     const [deleting, setDeleting] = useState<string | null>(null);
-    const toast = useToast();
+    const { error: showError, success: showSuccess, warning: showWarning } = useToast();
     const confirm = useConfirm();
     const prompt = usePrompt();
 
@@ -49,13 +48,20 @@ export default function AdminUsersPage() {
         try {
             const res = await fetch('/api/admin/users');
             const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Không thể tải danh sách người dùng');
+            }
             setUsers(data);
         } catch (error) {
             console.error('Error fetching users:', error);
+            showError(
+                'Không thể tải người dùng',
+                error instanceof Error ? error.message : 'Vui lòng thử lại.',
+            );
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [showError]);
 
     useEffect(() => {
         fetchUsers();
@@ -133,7 +139,7 @@ export default function AdminUsersPage() {
 
     const openDeleteModal = (userId: string, userName: string, userRole: string) => {
         if (userRole === 'admin') {
-            toast.warning('Không thể xóa tài khoản Admin', 'Hãy chọn tài khoản khác.');
+            showWarning('Không thể vô hiệu hóa tài khoản Admin', 'Hãy chọn tài khoản khác.');
             return;
         }
         setDeleteModal({ isOpen: true, userId, userName });
@@ -147,15 +153,20 @@ export default function AdminUsersPage() {
                 method: 'DELETE',
             });
             if (res.ok) {
-                setUsers(prev => prev.filter(user => user._id !== deleteModal.userId));
+                setUsers(prev => prev.map(user => (
+                    user._id === deleteModal.userId
+                        ? { ...user, isActive: false }
+                        : user
+                )));
                 setDeleteModal({ isOpen: false, userId: null, userName: '' });
+                showSuccess('Đã vô hiệu hóa tài khoản', 'Dữ liệu đơn hàng và hoa hồng vẫn được giữ nguyên.');
             } else {
                 const data = await res.json();
-                toast.error('Lỗi xóa người dùng', data.error || 'Vui lòng thử lại.');
+                showError('Lỗi vô hiệu hóa người dùng', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting user:', error);
-            toast.error('Lỗi xóa người dùng', 'Vui lòng thử lại.');
+            showError('Lỗi vô hiệu hóa người dùng', 'Vui lòng thử lại.');
         } finally {
             setDeleting(null);
         }
@@ -189,7 +200,16 @@ export default function AdminUsersPage() {
         { key: 'name', label: 'Tên' },
         { key: 'email', label: 'Email' },
         { key: 'phone', label: 'Số điện thoại', format: (v) => v || '-' },
-        { key: 'managedBy', label: 'Nhân viên quản lý', format: (v: any) => v?.name ? `${v.name}${v.staffCode ? ` (${v.staffCode})` : ''}` : 'Chưa gắn' },
+        {
+            key: 'managedBy',
+            label: 'Nhân viên quản lý',
+            format: (value) => {
+                const manager = value as User['managedBy'];
+                return manager?.name
+                    ? `${manager.name}${manager.staffCode ? ` (${manager.staffCode})` : ''}`
+                    : 'Chưa gắn';
+            },
+        },
         {
             key: 'role', label: 'Vai trò', format: (v) =>
                 v === 'admin' ? 'Admin' : v === 'staff' ? 'Nhân viên' : v === 'sale' ? 'Đại lý' : 'Khách hàng'
@@ -215,9 +235,9 @@ export default function AdminUsersPage() {
                 isOpen={deleteModal.isOpen}
                 onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
                 onConfirm={handleDelete}
-                title="Xóa người dùng"
-                message={`Bạn có chắc chắn muốn xóa người dùng "${deleteModal.userName}"? Hành động này không thể hoàn tác.`}
-                confirmText="Xóa"
+                title="Vô hiệu hóa tài khoản"
+                message={`Vô hiệu hóa tài khoản "${deleteModal.userName}"? Người dùng sẽ không thể đăng nhập, nhưng toàn bộ đơn hàng và hoa hồng vẫn được giữ lại.`}
+                confirmText="Vô hiệu hóa"
                 variant="danger"
                 isLoading={deleting !== null}
             />
@@ -284,6 +304,13 @@ export default function AdminUsersPage() {
 
             </div>
 
+            <SearchInput
+                value={searchTerm}
+                onChange={(value) => { setSearchTerm(value); setCurrentPage(1); }}
+                placeholder="Tìm theo tên, email hoặc số điện thoại..."
+                className="max-w-2xl"
+            />
+
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -345,7 +372,11 @@ export default function AdminUsersPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            {user.saleApplicationStatus === 'pending' && (
+                                            {user.isActive === false ? (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                                    Đã vô hiệu hóa
+                                                </span>
+                                            ) : user.saleApplicationStatus === 'pending' && (
                                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-light/30 text-brand-dark border border-brand-light/50">
                                                     Đang chờ duyệt
                                                 </span>
@@ -356,7 +387,7 @@ export default function AdminUsersPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-2">
-                                                {user.saleApplicationStatus === 'pending' && (
+                                                {user.isActive !== false && user.saleApplicationStatus === 'pending' && (
                                                     <>
                                                         <button
                                                             className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
@@ -374,7 +405,7 @@ export default function AdminUsersPage() {
                                                         </button>
                                                     </>
                                                 )}
-                                                {user.role === 'user' && !user.saleApplicationStatus && (
+                                                {user.isActive !== false && user.role === 'user' && !user.saleApplicationStatus && (
                                                     <button
                                                         className="px-3 py-1 bg-brand/10 text-brand text-xs font-semibold rounded-lg hover:bg-brand/20 transition-colors"
                                                         onClick={() => handleChangeRole(user._id, 'sale')}
@@ -382,7 +413,7 @@ export default function AdminUsersPage() {
                                                         Nâng cấp Đại lý
                                                     </button>
                                                 )}
-                                                {user.role === 'sale' && (
+                                                {user.isActive !== false && user.role === 'sale' && (
                                                     <button
                                                         className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg hover:bg-slate-200 transition-colors"
                                                         onClick={() => handleChangeRole(user._id, 'user')}
@@ -390,23 +421,20 @@ export default function AdminUsersPage() {
                                                         Hạ cấp
                                                     </button>
                                                 )}
-                                                {user.role !== 'admin' && (
+                                                {user.role !== 'admin' && user.isActive !== false && (
                                                     <button
                                                         className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
                                                         onClick={() => openDeleteModal(user._id, user.name, user.role)}
                                                         disabled={deleting === user._id}
-                                                        title="Xóa người dùng"
+                                                        title="Vô hiệu hóa tài khoản"
                                                     >
                                                         {deleting === user._id ? (
                                                             <Loader2 size={16} className="animate-spin" />
                                                         ) : (
-                                                            <MoreHorizontal size={16} />
+                                                            <UserX size={16} />
                                                         )}
                                                     </button>
                                                 )}
-                                                <button className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors">
-                                                    <MoreHorizontal size={16} />
-                                                </button>
                                             </div>
                                         </td>
                                     </tr>

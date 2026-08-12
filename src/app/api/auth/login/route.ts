@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
         const user = await User.findOne({ email });
 
-        if (!user || !user.password) {
+        if (!user || !user.password || user.isActive === false) {
             return NextResponse.json(
                 { message: 'Email hoặc mật khẩu không đúng' },
                 { status: 401 }

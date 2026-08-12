@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { assignStaffIdentity } from '@/lib/staff-identity';
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         await dbConnect();
         const cookieStore = await cookies();
@@ -19,17 +19,17 @@ export async function GET(req: Request) {
         }
 
         try {
-            const decoded: any = jwt.verify(
+            const decoded = jwt.verify(
                 token,
                 process.env.JWT_SECRET || 'fallback_secret_change_me'
-            );
+            ) as JwtPayload;
 
             const user = await User.findById(decoded.id).select('-password');
 
-            if (!user) {
+            if (!user || user.isActive === false) {
                 return NextResponse.json(
-                    { message: 'User không tồn tại' },
-                    { status: 404 }
+                    { message: 'Tài khoản không tồn tại hoặc đã bị vô hiệu hóa' },
+                    { status: 401 }
                 );
             }
 
@@ -39,7 +39,7 @@ export async function GET(req: Request) {
 
             return NextResponse.json(user);
 
-        } catch (error) {
+        } catch {
             return NextResponse.json(
                 { message: 'Token không hợp lệ' },
                 { status: 401 }

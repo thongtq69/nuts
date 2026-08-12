@@ -60,6 +60,8 @@ export interface IUser {
     consecutiveMonthsInTier?: number;
     resetPasswordToken?: string;
     resetPasswordExpires?: Date;
+    isActive?: boolean;
+    deletedAt?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -157,7 +159,9 @@ const UserSchema: Schema<IUser> = new Schema(
         lastPromotionAt: { type: Date },
         consecutiveMonthsInTier: { type: Number, default: 0 },
         resetPasswordToken: { type: String },
-        resetPasswordExpires: { type: Date }
+        resetPasswordExpires: { type: Date },
+        isActive: { type: Boolean, default: true },
+        deletedAt: { type: Date },
     },
     {
         timestamps: true,

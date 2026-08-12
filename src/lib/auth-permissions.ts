@@ -1,8 +1,7 @@
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
-import jwt from 'jsonwebtoken';
-import { cookies } from 'next/headers';
-import { Permission, ROLE_DEFINITIONS, getDefaultPermissions } from '@/constants/permissions';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
+import { Permission, getDefaultPermissions } from '@/constants/permissions';
 import { cookies as nextCookies } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_change_me';
@@ -24,10 +23,10 @@ export async function getAuthUser(): Promise<AuthenticatedUser | null> {
         
         if (!token) return null;
 
-        const decoded: any = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
         const user = await User.findById(decoded.id).select('-password');
         
-        if (!user) return null;
+        if (!user || user.isActive === false) return null;
 
         return {
             _id: user._id.toString(),

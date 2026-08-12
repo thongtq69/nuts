@@ -10,6 +10,7 @@ function publicUser(user: any) {
     delete object.password;
     delete object.resetPasswordToken;
     delete object.resetPasswordExpires;
+    object.isActive = object.isActive !== false;
     return object;
 }
 
