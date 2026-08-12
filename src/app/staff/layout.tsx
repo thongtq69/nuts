@@ -3,6 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import PasswordInput from '@/components/common/PasswordInput';
+import {
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    getNewPasswordValidationError,
+} from '@/lib/password-policy';
 import Link from 'next/link';
 import {
     LayoutDashboard,
@@ -17,7 +24,10 @@ import {
     ChevronRight,
     FileText,
     Image as ImageIcon,
-    Calculator
+    Calculator,
+    KeyRound,
+    LogOut,
+    LoaderCircle,
 } from 'lucide-react';
 
 const menuItems = [
@@ -38,21 +48,34 @@ export default function StaffLayout({
 }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { user, loading } = useAuth();
-    const [isAuthorized, setIsAuthorized] = useState(false);
+    const { user, loading, logout } = useAuth();
+    const toast = useToast();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
-        if (!loading) {
-            if (!user) {
-                router.push('/login');
-            } else if (user.role !== 'staff' && user.role !== 'admin') {
-                router.push('/');
-            } else {
-                setIsAuthorized(true);
-            }
+        if (loading) return;
+        if (!user) {
+            router.replace('/login');
+        } else if (user.role !== 'staff' && user.role !== 'admin') {
+            router.replace('/');
         }
     }, [user, loading, router]);
+
+    const isAuthorized = Boolean(user && (user.role === 'staff' || user.role === 'admin'));
+
+    const handleLogout = async () => {
+        if (isLoggingOut) return;
+
+        setIsLoggingOut(true);
+        const didLogout = await logout();
+
+        if (!didLogout) {
+            toast.error('Không thể đăng xuất', 'Vui lòng thử lại.');
+            setIsLoggingOut(false);
+        }
+    };
 
     if (loading || !isAuthorized) {
         return (
@@ -95,14 +118,30 @@ export default function StaffLayout({
                         onClick={() => setIsSidebarOpen(false)}
                     />
                     <div className="absolute inset-y-0 left-0 w-72 bg-white shadow-xl animate-in slide-in-from-left duration-300">
-                        <SidebarContent pathname={pathname} onClose={() => setIsSidebarOpen(false)} user={user} />
+                        <SidebarContent
+                            pathname={pathname}
+                            onClose={() => setIsSidebarOpen(false)}
+                            onChangePassword={() => {
+                                setIsSidebarOpen(false);
+                                setIsChangePasswordOpen(true);
+                            }}
+                            onLogout={handleLogout}
+                            isLoggingOut={isLoggingOut}
+                            user={user}
+                        />
                     </div>
                 </div>
             )}
 
             {/* Desktop Sidebar */}
             <aside className="hidden lg:flex w-64 shrink-0 bg-white border-r border-slate-200 flex-col">
-                <SidebarContent pathname={pathname} user={user} />
+                <SidebarContent
+                    pathname={pathname}
+                    onChangePassword={() => setIsChangePasswordOpen(true)}
+                    onLogout={handleLogout}
+                    isLoggingOut={isLoggingOut}
+                    user={user}
+                />
             </aside>
 
             {/* Main Content */}
@@ -111,11 +150,38 @@ export default function StaffLayout({
                     {children}
                 </div>
             </main>
+
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => setIsChangePasswordOpen(false)}
+            />
         </div>
     );
 }
 
-function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose?: () => void; user: any }) {
+interface SidebarContentProps {
+    pathname: string;
+    onClose?: () => void;
+    onChangePassword: () => void;
+    onLogout: () => void;
+    isLoggingOut: boolean;
+    user: {
+        name?: string;
+        email?: string;
+        role?: string;
+        staffCode?: string;
+        customPermissions?: readonly string[];
+    } | null;
+}
+
+function SidebarContent({
+    pathname,
+    onClose,
+    onChangePassword,
+    onLogout,
+    isLoggingOut,
+    user,
+}: SidebarContentProps) {
     const [copied, setCopied] = useState(false);
 
     const copyStaffCode = () => {
@@ -186,7 +252,7 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
             <nav className="flex-1 overflow-y-auto px-3">
                 <div className="space-y-1">
                     {menuItems.filter((item) => {
-                        if (!('permission' in item)) return true;
+                        if (!item.permission) return true;
                         if (user?.role === 'admin') return true;
                         return user?.customPermissions?.includes(item.permission);
                     }).map((item) => {
@@ -223,7 +289,25 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
             </nav>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-200">
+            <div className="space-y-1 p-4 border-t border-slate-200">
+                <button
+                    type="button"
+                    onClick={onChangePassword}
+                    className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-[#7d5a36] hover:bg-[#F5EFE6] transition-all text-sm font-medium"
+                >
+                    <KeyRound size={16} />
+                    <span className="flex-1 text-left">Đổi mật khẩu</span>
+                    <ChevronRight size={14} className="opacity-50" />
+                </button>
+                <button
+                    type="button"
+                    onClick={onLogout}
+                    disabled={isLoggingOut}
+                    className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-all text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    {isLoggingOut ? <LoaderCircle size={16} className="animate-spin" /> : <LogOut size={16} />}
+                    <span className="flex-1 text-left">{isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
+                </button>
                 <Link
                     href="/"
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all text-sm font-medium"
@@ -232,6 +316,171 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                     <span className="flex-1">Về trang chủ</span>
                     <ChevronRight size={14} className="opacity-50" />
                 </Link>
+            </div>
+        </div>
+    );
+}
+
+function ChangePasswordModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+    const toast = useToast();
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && !isSubmitting) {
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+                onClose();
+            }
+        };
+
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [isOpen, isSubmitting, onClose]);
+
+    if (!isOpen) return null;
+
+    const closeModal = () => {
+        if (isSubmitting) return;
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        onClose();
+    };
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+
+        if (newPassword !== confirmPassword) {
+            toast.error('Mật khẩu chưa khớp', 'Xác nhận mật khẩu mới không chính xác.');
+            return;
+        }
+
+        const passwordValidationError = getNewPasswordValidationError(newPassword, currentPassword);
+        if (passwordValidationError) {
+            toast.error('Mật khẩu chưa hợp lệ', passwordValidationError);
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const response = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword, newPassword }),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Không thể đổi mật khẩu');
+            }
+
+            toast.success('Đổi mật khẩu thành công', 'Vui lòng đăng nhập lại bằng mật khẩu mới.');
+            window.setTimeout(() => window.location.assign('/login'), 600);
+        } catch (error) {
+            toast.error(
+                'Không thể đổi mật khẩu',
+                error instanceof Error ? error.message : 'Vui lòng thử lại.',
+            );
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+            onMouseDown={closeModal}
+            role="presentation"
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="change-password-title"
+                className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+                onMouseDown={(event) => event.stopPropagation()}
+            >
+                <div className="mb-6 flex items-start justify-between gap-4">
+                    <div className="flex gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F5EFE6] text-[#9C7044]">
+                            <KeyRound size={20} />
+                        </div>
+                        <div>
+                            <h2 id="change-password-title" className="text-lg font-bold text-slate-900">Đổi mật khẩu</h2>
+                            <p className="mt-1 text-sm text-slate-500">Bạn sẽ cần đăng nhập lại sau khi đổi thành công.</p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={closeModal}
+                        disabled={isSubmitting}
+                        aria-label="Đóng"
+                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <X size={19} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <label className="block">
+                        <span className="mb-2 block text-sm font-semibold text-slate-700">Mật khẩu hiện tại</span>
+                        <PasswordInput
+                            value={currentPassword}
+                            onChange={setCurrentPassword}
+                            placeholder="Nhập mật khẩu hiện tại"
+                            required
+                            disabled={isSubmitting}
+                            name="currentPassword"
+                        />
+                    </label>
+                    <label className="block">
+                        <span className="mb-2 block text-sm font-semibold text-slate-700">Mật khẩu mới</span>
+                        <PasswordInput
+                            value={newPassword}
+                            onChange={setNewPassword}
+                            placeholder={`Từ ${MIN_PASSWORD_LENGTH} đến ${MAX_PASSWORD_LENGTH} ký tự`}
+                            required
+                            disabled={isSubmitting}
+                            name="newPassword"
+                        />
+                    </label>
+                    <label className="block">
+                        <span className="mb-2 block text-sm font-semibold text-slate-700">Xác nhận mật khẩu mới</span>
+                        <PasswordInput
+                            value={confirmPassword}
+                            onChange={setConfirmPassword}
+                            placeholder="Nhập lại mật khẩu mới"
+                            required
+                            disabled={isSubmitting}
+                            name="confirmPassword"
+                        />
+                    </label>
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            disabled={isSubmitting}
+                            className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#9C7044] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#7d5a36] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {isSubmitting && <LoaderCircle size={16} className="animate-spin" />}
+                            {isSubmitting ? 'Đang đổi...' : 'Đổi mật khẩu'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

@@ -14,13 +14,15 @@ interface User {
     saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
     roleType?: RoleType;
     customPermissions?: Permission[];
+    staffCode?: string;
+    referralCode?: string;
 }
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: (userData: User) => void;
-    logout: () => void;
+    logout: () => Promise<boolean>;
     checkUser: () => Promise<void>;
     isAdmin: boolean;
     isSale: boolean;
@@ -63,12 +65,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
-            await fetch('/api/auth/logout', { method: 'POST' });
+            const response = await fetch('/api/auth/logout', { method: 'POST' });
+            if (!response.ok) {
+                throw new Error('Logout request failed');
+            }
         } catch (e) {
             console.error('Logout error', e);
+            return false;
         }
+
         setUser(null);
-        router.push('/login');
+        router.replace('/login');
+        router.refresh();
+        return true;
     };
 
     const isAdmin = user?.role === 'admin';

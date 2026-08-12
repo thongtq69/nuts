@@ -35,6 +35,41 @@ import {
     buildMembershipVoucherCode,
     isConfirmedPaymentStatus,
 } from '../src/lib/customer-ownership.ts';
+import {
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    getNewPasswordValidationError,
+} from '../src/lib/password-policy.ts';
+
+test('authenticated users can change their password and are signed out afterwards', async () => {
+    const [changePasswordSource, logoutSource, staffLayoutSource, authContextSource] = await Promise.all([
+        readFile(new URL('../src/app/api/auth/change-password/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/auth/logout/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/staff/layout.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/context/AuthContext.tsx', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(changePasswordSource, /const auth = await requireAuth\(\)/);
+    assert.match(changePasswordSource, /bcrypt\.compare\(currentPassword, user\.password\)/);
+    assert.match(changePasswordSource, /bcrypt\.hash\(newPassword, 10\)/);
+    assert.match(changePasswordSource, /resetPasswordToken = undefined/);
+    assert.match(changePasswordSource, /clearAuthCookie\(response\)/);
+    assert.match(logoutSource, /maxAge: 0/);
+    assert.match(staffLayoutSource, />Đổi mật khẩu</);
+    assert.match(staffLayoutSource, /'Đăng xuất'/);
+    assert.match(staffLayoutSource, /\/api\/auth\/change-password/);
+    assert.match(authContextSource, /if \(!response\.ok\)/);
+    assert.match(authContextSource, /router\.replace\('\/login'\)/);
+});
+
+test('new passwords use the same bounded policy on client and server', () => {
+    assert.equal(MIN_PASSWORD_LENGTH, 6);
+    assert.equal(MAX_PASSWORD_LENGTH, 128);
+    assert.match(getNewPasswordValidationError('short') || '', /6/);
+    assert.match(getNewPasswordValidationError('x'.repeat(129)) || '', /128/);
+    assert.match(getNewPasswordValidationError('secret1', 'secret1') || '', /khác/);
+    assert.equal(getNewPasswordValidationError('secret2', 'secret1'), null);
+});
 
 test('customer detail registers the membership package model on cold starts', async () => {
     const source = await readFile(

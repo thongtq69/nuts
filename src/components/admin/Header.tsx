@@ -2,10 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
-    Bell,
     User,
     LogOut,
     Menu,
@@ -22,13 +20,11 @@ interface HeaderProps {
 }
 
 export default function AdminHeader({ onMenuClick }: HeaderProps) {
-    const router = useRouter();
     const { user, logout } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
 
-    const handleLogout = () => {
-        logout?.();
-        router.push('/login');
+    const handleLogout = async () => {
+        await logout();
     };
 
     return (
