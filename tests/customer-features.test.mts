@@ -58,6 +58,10 @@ test('authenticated users can change their password and are signed out afterward
     assert.match(staffLayoutSource, />Đổi mật khẩu</);
     assert.match(staffLayoutSource, /'Đăng xuất'/);
     assert.match(staffLayoutSource, /\/api\/auth\/change-password/);
+    assert.ok(
+        staffLayoutSource.indexOf('{/* Account Actions */}') > staffLayoutSource.indexOf('Xem sản phẩm'),
+        'staff account actions should appear immediately after the quick product link',
+    );
     assert.match(authContextSource, /if \(!response\.ok\)/);
     assert.match(authContextSource, /router\.replace\('\/login'\)/);
 });

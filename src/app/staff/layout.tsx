@@ -279,44 +279,46 @@ function SidebarContent({
                 </div>
 
                 {/* Quick Links */}
-                <div className="mt-6 px-3">
+                <div className="mt-6 px-3 pb-4">
                     <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Liên kết nhanh</div>
-                    <Link href="/products" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-[#9C7044] hover:bg-slate-50 rounded-lg transition-colors">
+                    <Link href="/products" onClick={onClose} className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-500 hover:text-[#9C7044] hover:bg-slate-50 rounded-lg transition-colors">
                         <Package size={16} />
                         <span>Xem sản phẩm</span>
                     </Link>
+
+                    {/* Account Actions */}
+                    <div className="mt-3 space-y-1 border-t border-slate-200 pt-3">
+                        <button
+                            type="button"
+                            onClick={onChangePassword}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-[#F5EFE6] hover:text-[#7d5a36]"
+                        >
+                            <KeyRound size={18} />
+                            <span className="flex-1 text-left">Đổi mật khẩu</span>
+                            <ChevronRight size={14} className="opacity-50" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onLogout}
+                            disabled={isLoggingOut}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-all hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {isLoggingOut ? <LoaderCircle size={18} className="animate-spin" /> : <LogOut size={18} />}
+                            <span className="flex-1 text-left">{isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
+                        </button>
+                        <Link
+                            href="/"
+                            onClick={onClose}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900"
+                        >
+                            <ExternalLink size={18} />
+                            <span className="flex-1">Về trang chủ</span>
+                            <ChevronRight size={14} className="opacity-50" />
+                        </Link>
+                    </div>
                 </div>
             </nav>
 
-            {/* Footer */}
-            <div className="space-y-1 p-4 border-t border-slate-200">
-                <button
-                    type="button"
-                    onClick={onChangePassword}
-                    className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-[#7d5a36] hover:bg-[#F5EFE6] transition-all text-sm font-medium"
-                >
-                    <KeyRound size={16} />
-                    <span className="flex-1 text-left">Đổi mật khẩu</span>
-                    <ChevronRight size={14} className="opacity-50" />
-                </button>
-                <button
-                    type="button"
-                    onClick={onLogout}
-                    disabled={isLoggingOut}
-                    className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-all text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {isLoggingOut ? <LoaderCircle size={16} className="animate-spin" /> : <LogOut size={16} />}
-                    <span className="flex-1 text-left">{isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
-                </button>
-                <Link
-                    href="/"
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all text-sm font-medium"
-                >
-                    <ExternalLink size={16} />
-                    <span className="flex-1">Về trang chủ</span>
-                    <ChevronRight size={14} className="opacity-50" />
-                </Link>
-            </div>
         </div>
     );
 }
