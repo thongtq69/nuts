@@ -1,6 +1,7 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import { DEFAULT_HOME_FEATURES, HomeFeature, HOME_FEATURE_ICONS } from '@/lib/site-features';
 import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
+import { OFFICIAL_COMPANY_NAME } from '@/constants/company';
 
 export interface IProductFeature {
     title: string;
@@ -117,7 +118,7 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         supportHotline: { type: String, default: '096 118 5753' },
 
         logoUrl: { type: String, default: '/assets/images/logo.png' },
-        siteName: { type: String, default: 'Go Nuts' },
+        siteName: { type: String, default: OFFICIAL_COMPANY_NAME },
         businessLicense: { type: String, default: '0123xxxxxx' },
         workingHours: { type: String, default: 'Thứ 2 - Thứ 7: 8:00 - 17:30' },
 

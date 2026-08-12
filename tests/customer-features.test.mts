@@ -23,6 +23,7 @@ import { formatStaffCode } from '../src/lib/staff-code.ts';
 import { addReferralToPath, normalizeReferralCode } from '../src/lib/referral-attribution.ts';
 import { ROLE_DEFINITIONS } from '../src/constants/permissions.ts';
 import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '../src/lib/home-promotion.ts';
+import { OFFICIAL_COMPANY_NAME } from '../src/constants/company.ts';
 import { calculatePayrollAmounts } from '../src/lib/payroll-formula.ts';
 import {
     allocateKpiCommission,
@@ -173,6 +174,33 @@ test('the storefront uses the polished shared Zalo icon', async () => {
     assert.match(topBarSource, /<ZaloIcon/);
     assert.match(headerSource, /<ZaloIcon/);
     assert.match(topBarSource, /aria-label="Chat Go Nuts qua Zalo"/);
+});
+
+test('the public footer uses the official Euphoria company name', async () => {
+    const [footerSource, settingsApiSource, settingsModelSource] = await Promise.all([
+        readFile(new URL('../src/components/layout/Footer.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/settings/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/models/SiteSettings.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.equal(OFFICIAL_COMPANY_NAME, 'CÔNG TY TNHH THƯƠNG MẠI EUPHORIA');
+    assert.match(footerSource, /siteName: OFFICIAL_COMPANY_NAME/);
+    assert.match(settingsApiSource, /LEGACY_COMPANY_NAMES\.has/);
+    assert.match(settingsApiSource, /settings\.siteName = OFFICIAL_COMPANY_NAME/);
+    assert.match(settingsModelSource, /siteName: \{ type: String, default: OFFICIAL_COMPANY_NAME \}/);
+});
+
+test('commission users table shows each account creation time', async () => {
+    const [commissionUsersSource, adminUsersApiSource] = await Promise.all([
+        readFile(new URL('../src/app/admin/commission/users/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/users/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(adminUsersApiSource, /\.sort\(\{ createdAt: -1 \}\)/);
+    assert.match(commissionUsersSource, /createdAt\?: string/);
+    assert.match(commissionUsersSource, />Thời gian tạo</);
+    assert.match(commissionUsersSource, /timeZone: 'Asia\/Ho_Chi_Minh'/);
+    assert.match(commissionUsersSource, /formatCreatedAt\(user\.createdAt\)/);
 });
 
 test('voucher validation is bound to the authenticated voucher owner', async () => {

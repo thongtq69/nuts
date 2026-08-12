@@ -5,20 +5,12 @@ import Link from 'next/link';
 import { Button, Input, Select, Badge, Card, Modal } from '@/components/admin/ui';
 import {
     Search,
-    Filter,
     Settings,
     BarChart3,
-    Users,
-    User as UserIcon,
     Mail,
-    Award,
     TrendingUp,
-    ChevronRight,
+    CalendarClock,
     SearchX,
-    MoreHorizontal,
-    Star,
-    CheckCircle2,
-    Briefcase
 } from 'lucide-react';
 
 
@@ -27,6 +19,7 @@ interface User {
     name: string;
     email: string;
     role: string;
+    createdAt?: string;
     commissionSettings?: {
         tier: string;
         personalCommissionRate?: number;
@@ -114,7 +107,12 @@ export default function CommissionUsersPage() {
         setSaving(true);
 
         try {
-            const body: any = {
+            const body: {
+                tier: string;
+                personalCommissionRate?: number;
+                clearPersonalRate?: boolean;
+                managerId?: string | null;
+            } = {
                 tier: editForm.tier
             };
 
@@ -159,8 +157,25 @@ export default function CommissionUsersPage() {
         }).format(amount);
     };
 
+    const formatCreatedAt = (createdAt?: string) => {
+        if (!createdAt) return 'Chưa có dữ liệu';
+
+        const date = new Date(createdAt);
+        if (Number.isNaN(date.getTime())) return 'Chưa có dữ liệu';
+
+        return new Intl.DateTimeFormat('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour12: false,
+            timeZone: 'Asia/Ho_Chi_Minh',
+        }).format(date);
+    };
+
     const getTierBadge = (tierName: string) => {
-        const tier = tiers.find((t: any) => t.name === tierName);
+        const tier = tiers.find((item) => item.name === tierName);
         if (!tier) return <Badge variant="default">{tierName}</Badge>;
 
 
@@ -273,6 +288,7 @@ export default function CommissionUsersPage() {
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
                                 <th className="p-5 text-left text-xs font-black text-slate-500 uppercase tracking-widest">User / Affiliate</th>
+                                <th className="p-5 text-left text-xs font-black text-slate-500 uppercase tracking-widest">Thời gian tạo</th>
                                 <th className="p-5 text-left text-xs font-black text-slate-500 uppercase tracking-widest">Vai trò</th>
                                 <th className="p-5 text-left text-xs font-black text-slate-500 uppercase tracking-widest text-center">Cấp bậc</th>
                                 <th className="p-5 text-right text-xs font-black text-slate-500 uppercase tracking-widest">Chiết khấu (%)</th>
@@ -284,7 +300,7 @@ export default function CommissionUsersPage() {
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="p-20 text-center">
+                                    <td colSpan={8} className="p-20 text-center">
                                         <div className="flex flex-col items-center justify-center gap-3 text-slate-300">
                                             <SearchX className="w-12 h-12 mb-2" />
                                             <p className="text-slate-500 font-bold">Không tìm thấy người dùng nào</p>
@@ -308,6 +324,12 @@ export default function CommissionUsersPage() {
                                                         <Mail className="w-3 h-3" /> {user.email}
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-5">
+                                            <div className="flex items-center gap-2 whitespace-nowrap text-xs font-semibold text-slate-500">
+                                                <CalendarClock className="h-4 w-4 text-slate-400" />
+                                                {formatCreatedAt(user.createdAt)}
                                             </div>
                                         </td>
                                         <td className="p-5">

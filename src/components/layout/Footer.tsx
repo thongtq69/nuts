@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/context/ToastContext';
+import { OFFICIAL_COMPANY_NAME } from '@/constants/company';
 
 interface SiteSettings {
     hotline: string;
@@ -58,7 +59,7 @@ export default function Footer() {
         agentRegistrationUrl: '/agent/register',
         ctvRegistrationUrl: '/agent/register',
         logoUrl: '/assets/logo.png',
-        siteName: 'Go Nuts Vietnam'
+        siteName: OFFICIAL_COMPANY_NAME
     };
 
     const currentSettings = settings || defaultSettings;

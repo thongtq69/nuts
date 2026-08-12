@@ -24,6 +24,7 @@ import { useToast } from '@/context/ToastContext';
 import { useSettings } from '@/context/SettingsContext';
 import { DEFAULT_HOME_FEATURES, HomeFeature, normalizeHomeFeatures } from '@/lib/site-features';
 import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
+import { OFFICIAL_COMPANY_NAME } from '@/constants/company';
 
 interface ProductFeature {
     title: string;
@@ -84,7 +85,7 @@ export default function AdminSettingsPage() {
         freeShippingThreshold: 2000000,
         homeFeatures: DEFAULT_HOME_FEATURES.map(feature => ({ ...feature })),
         logoUrl: '/assets/logo.png',
-        siteName: 'Go Nuts Vietnam',
+        siteName: OFFICIAL_COMPANY_NAME,
         businessLicense: '0123xxxxxx',
         workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
         productFeatures: [

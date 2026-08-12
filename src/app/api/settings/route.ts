@@ -4,6 +4,7 @@ import SiteSettings from '@/models/SiteSettings';
 import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '@/lib/site-features';
 import { requireAdminAuth } from '@/lib/auth-permissions';
 import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '@/lib/home-promotion';
+import { LEGACY_COMPANY_NAMES, OFFICIAL_COMPANY_NAME } from '@/constants/company';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -51,7 +52,7 @@ export async function GET() {
                 freeShippingThreshold: 500000,
                 homeFeatures: DEFAULT_HOME_FEATURES,
                 logoUrl: '/assets/logo.png',
-                siteName: 'Go Nuts Vietnam',
+                siteName: OFFICIAL_COMPANY_NAME,
                 businessLicense: '0123xxxxxx',
                 workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
                 productsBannerUrl: '/assets/images/gonuts-banner-member.png',
@@ -66,6 +67,12 @@ export async function GET() {
             };
 
             settings = await Settings.create(defaultSettings);
+        }
+
+        // Migrate the known old footer names while preserving any future custom value.
+        if (LEGACY_COMPANY_NAMES.has(String(settings.siteName || '').trim())) {
+            settings.siteName = OFFICIAL_COMPANY_NAME;
+            await settings.save();
         }
 
         // Forced cleanup of old English defaults if they persist in DB
