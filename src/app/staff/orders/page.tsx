@@ -3,18 +3,14 @@
 import { useState, useEffect } from 'react';
 import {
     ShoppingCart,
-    Search,
-    Filter,
     Clock,
     CheckCircle,
     Truck,
     XCircle,
-    Eye,
     Calendar,
     User,
     MapPin,
     Package,
-    Loader2
 } from 'lucide-react';
 
 interface Order {
@@ -60,7 +56,7 @@ const statusConfig = {
 export default function StaffOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [loadError, setLoadError] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('all');
 
     useEffect(() => {
@@ -70,61 +66,26 @@ export default function StaffOrdersPage() {
     const fetchOrders = async () => {
         try {
             setLoading(true);
-            // TODO: Create API endpoint for staff to view orders
-            setOrders([
-                {
-                    _id: '1',
-                    orderId: 'ORD001',
-                    customerName: 'Nguyễn Văn Khách',
-                    customerPhone: '0912345678',
-                    shippingAddress: '123 Lê Lợi, Quận 1, TP.HCM',
-                    items: [
-                        { name: 'Hạt điều rang', quantity: 2, price: 150000 },
-                        { name: 'Hạt óc chó', quantity: 1, price: 200000 },
-                    ],
-                    totalAmount: 500000,
-                    status: 'pending',
-                    createdAt: '2026-01-19T10:30:00'
-                },
-                {
-                    _id: '2',
-                    orderId: 'ORD002',
-                    customerName: 'Trần Thị Khách Hàng',
-                    customerPhone: '0987654321',
-                    shippingAddress: '456 Nguyễn Huệ, Quận 1, TP.HCM',
-                    items: [
-                        { name: 'Hạt macca', quantity: 3, price: 180000 },
-                    ],
-                    totalAmount: 540000,
-                    status: 'shipped',
-                    createdAt: '2026-01-18T14:20:00'
-                },
-                {
-                    _id: '3',
-                    orderId: 'ORD003',
-                    customerName: 'Lê Văn B',
-                    customerPhone: '0934567890',
-                    shippingAddress: '789 Hai Bà Trưng, Quận 3, TP.HCM',
-                    items: [
-                        { name: 'Hạt hướng dương', quantity: 5, price: 80000 },
-                    ],
-                    totalAmount: 400000,
-                    status: 'delivered',
-                    createdAt: '2026-01-17T09:15:00'
-                },
-            ]);
+            setLoadError('');
+            const response = await fetch('/api/staff/orders', { cache: 'no-store' });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Không thể tải danh sách đơn hàng');
+            }
+
+            setOrders(Array.isArray(data.orders) ? data.orders : []);
         } catch (error) {
             console.error('Error fetching orders:', error);
+            setOrders([]);
+            setLoadError(error instanceof Error ? error.message : 'Không thể tải danh sách đơn hàng');
         } finally {
             setLoading(false);
         }
     };
 
     const filteredOrders = orders.filter(order =>
-        (filterStatus === 'all' || order.status === filterStatus) &&
-        (order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         order.customerPhone.includes(searchTerm))
+        filterStatus === 'all' || order.status === filterStatus
     );
 
     const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price);
@@ -175,6 +136,7 @@ export default function StaffOrdersPage() {
                             }`}
                         >
                             <div className={`text-2xl font-black ${filterStatus === item.key ? 'text-white' : 'text-gray-800'}`}>
+                                {count}
                             </div>
                             <div className={`text-xs mt-1 ${filterStatus === item.key ? 'text-white/90' : 'text-gray-500'}`}>
                                 {item.label}
@@ -193,6 +155,25 @@ export default function StaffOrdersPage() {
                             <p className="text-gray-500 font-medium">Đang tải đơn hàng...</p>
                         </div>
                     </div>
+                ) : loadError ? (
+                    <div className="bg-white rounded-3xl p-12 text-center shadow-lg">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center">
+                                <XCircle className="w-10 h-10 text-red-400" />
+                            </div>
+                            <div>
+                                <p className="text-gray-700 font-medium text-lg">Không thể tải đơn hàng</p>
+                                <p className="text-gray-500 text-sm mt-1">{loadError}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={fetchOrders}
+                                className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                            >
+                                Thử lại
+                            </button>
+                        </div>
+                    </div>
                 ) : filteredOrders.length === 0 ? (
                     <div className="bg-white rounded-3xl p-12 text-center shadow-lg">
                         <div className="flex flex-col items-center gap-4">
@@ -201,9 +182,7 @@ export default function StaffOrdersPage() {
                             </div>
                             <div>
                                 <p className="text-gray-600 font-medium text-lg">Không tìm thấy đơn hàng nào</p>
-                                <p className="text-gray-500 text-sm mt-1">
-                                    {searchTerm ? 'Thử từ khóa khác' : 'Chưa có đơn hàng nào'}
-                                </p>
+                                <p className="text-gray-500 text-sm mt-1">Chưa có đơn hàng nào</p>
                             </div>
                         </div>
                     </div>

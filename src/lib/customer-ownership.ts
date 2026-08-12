@@ -15,6 +15,27 @@ export function buildManagedCustomerQuery(
     };
 }
 
+export function buildManagedOrderQuery(
+    staffId: string,
+    collaboratorIds: string[] = [],
+    customerIds: string[] = [],
+) {
+    const referrerIds = [staffId, ...collaboratorIds];
+    const relationships: Record<string, unknown>[] = [
+        { referrer: { $in: referrerIds } },
+    ];
+
+    if (customerIds.length > 0) {
+        relationships.push(
+            { user: { $in: customerIds } },
+            // Some legacy orders used userId before the Order schema standardized on user.
+            { userId: { $in: customerIds } },
+        );
+    }
+
+    return { $or: relationships };
+}
+
 export function isConfirmedPaymentStatus(status: unknown): boolean {
     return ['paid', 'completed'].includes(String(status || '').trim().toLowerCase());
 }

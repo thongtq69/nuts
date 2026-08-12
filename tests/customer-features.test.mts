@@ -32,6 +32,7 @@ import {
 import { calculateLegacyVipSavings } from '../src/lib/vip-savings.ts';
 import {
     buildManagedCustomerQuery,
+    buildManagedOrderQuery,
     buildMembershipVoucherCode,
     isConfirmedPaymentStatus,
 } from '../src/lib/customer-ownership.ts';
@@ -224,6 +225,34 @@ test('staff customer scope includes only direct and team referral relationships'
         { 'commissionSettings.managerId': 'staff-1' },
         { referrer: { $in: ['staff-1', 'collab-1'] } },
     ]);
+});
+
+test('staff order scope includes only team referrals and managed customers', () => {
+    const query = buildManagedOrderQuery(
+        'staff-1',
+        ['collab-1', 'collab-2'],
+        ['customer-1'],
+    );
+
+    assert.deepEqual(query.$or, [
+        { referrer: { $in: ['staff-1', 'collab-1', 'collab-2'] } },
+        { user: { $in: ['customer-1'] } },
+        { userId: { $in: ['customer-1'] } },
+    ]);
+});
+
+test('staff orders page loads scoped API data instead of sample orders', async () => {
+    const [apiSource, pageSource] = await Promise.all([
+        readFile(new URL('../src/app/api/staff/orders/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/staff/orders/page.tsx', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(apiSource, /const auth = await requireStaffAuth\(\)/);
+    assert.match(apiSource, /buildManagedCustomerQuery/);
+    assert.match(apiSource, /buildManagedOrderQuery/);
+    assert.match(pageSource, /fetch\('\/api\/staff\/orders'/);
+    assert.match(pageSource, />Chưa có đơn hàng nào</);
+    assert.doesNotMatch(pageSource, /ORD001|ORD002|ORD003/);
 });
 
 test('membership vouchers can only be activated after confirmed payment', () => {
