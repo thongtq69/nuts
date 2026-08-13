@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
+import { useLocale } from '@/context/LocaleContext';
 
 interface PromoBannerSettings {
     homePromoBannerUrl: string;
@@ -13,6 +14,7 @@ interface PromoBannerSettings {
 }
 
 export default function LargePromoBanner() {
+    const { t, href, apiPath } = useLocale();
     const [settings, setSettings] = useState<PromoBannerSettings>({
         homePromoBannerUrl: '/assets/images/gonuts-banner-member.png',
         homePromoBannerTitle: "TẶNG VOUCHER 50.000 VNĐ<br />KHI ĐĂNG KÝ THÀNH VIÊN",
@@ -25,7 +27,7 @@ export default function LargePromoBanner() {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('/api/settings', { cache: 'no-store' });
+                const res = await fetch(apiPath('/api/settings'), { cache: 'no-store' });
                 if (res.ok) {
                     const data = await res.json();
                     if (data) {
@@ -46,7 +48,7 @@ export default function LargePromoBanner() {
             }
         };
         fetchSettings();
-    }, []);
+    }, [apiPath]);
 
     if (!settings.homePromoBannerEnabled || !settings.homePromoBannerUrl) return null;
 
@@ -57,12 +59,12 @@ export default function LargePromoBanner() {
                     <div className="promo-banner-content">
                         <h2
                             className="promo-title"
-                            dangerouslySetInnerHTML={{ __html: settings.homePromoBannerTitle }}
+                            dangerouslySetInnerHTML={{ __html: t(settings.homePromoBannerTitle) }}
                         />
-                        <a href={settings.homePromoBannerButtonLink} className="promo-btn">
-                            {settings.homePromoBannerButtonText}
+                        <a href={href(settings.homePromoBannerButtonLink)} className="promo-btn">
+                            {t(settings.homePromoBannerButtonText)}
                         </a>
-                        <p className="promo-note">{settings.homePromoBannerNote}</p>
+                        <p className="promo-note">{t(settings.homePromoBannerNote)}</p>
                     </div>
                     <div className="promo-banner-image">
                         <img

@@ -64,6 +64,17 @@ interface SiteSettings {
     homePromoBannerButtonLink: string;
     homePromoBannerNote: string;
     homePromoBannerEnabled: boolean;
+    translations: {
+        en: {
+            address: string;
+            workingHours: string;
+            promoText: string;
+            homePromotionText: string;
+            homePromoBannerTitle: string;
+            homePromoBannerButtonText: string;
+            homePromoBannerNote: string;
+        };
+    };
 }
 
 export default function AdminSettingsPage() {
@@ -102,6 +113,17 @@ export default function AdminSettingsPage() {
         homePromoBannerButtonLink: '/register',
         homePromoBannerNote: '*Áp dụng cho đơn hàng từ 300.000đ',
         homePromoBannerEnabled: true,
+        translations: {
+            en: {
+                address: '',
+                workingHours: '',
+                promoText: '',
+                homePromotionText: '',
+                homePromoBannerTitle: '',
+                homePromoBannerButtonText: '',
+                homePromoBannerNote: '',
+            },
+        },
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -126,6 +148,17 @@ export default function AdminSettingsPage() {
                         : DEFAULT_HOME_PROMOTION_TEXT,
                     homePromotionEnabled: data.homePromotionEnabled !== false,
                     homeFeatures: normalizeHomeFeatures(data.homeFeatures),
+                    translations: {
+                        en: {
+                            address: data.translations?.en?.address || '',
+                            workingHours: data.translations?.en?.workingHours || '',
+                            promoText: data.translations?.en?.promoText || '',
+                            homePromotionText: data.translations?.en?.homePromotionText || '',
+                            homePromoBannerTitle: data.translations?.en?.homePromoBannerTitle || '',
+                            homePromoBannerButtonText: data.translations?.en?.homePromoBannerButtonText || '',
+                            homePromoBannerNote: data.translations?.en?.homePromoBannerNote || '',
+                        },
+                    },
                 });
             }
         } catch (error) {
@@ -442,6 +475,40 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {/* Products Page Banner */}
+                <div className="bg-blue-50/40 rounded-xl shadow-sm border border-blue-100 p-6">
+                    <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <Globe className="text-blue-600" size={20} />
+                        English storefront content
+                    </h2>
+                    <p className="text-sm text-slate-500 mb-5">Blank fields fall back to the Vietnamese settings.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                            ['address', 'Address'],
+                            ['workingHours', 'Business hours'],
+                            ['promoText', 'Top promotion banner'],
+                            ['homePromotionText', 'Home announcement strip'],
+                            ['homePromoBannerTitle', 'Home promo title'],
+                            ['homePromoBannerButtonText', 'Home promo button'],
+                            ['homePromoBannerNote', 'Home promo note'],
+                        ].map(([field, label]) => (
+                            <div key={field} className={field === 'homePromotionText' || field === 'homePromoBannerTitle' ? 'md:col-span-2' : ''}>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+                                <textarea
+                                    value={settings.translations.en[field as keyof typeof settings.translations.en]}
+                                    onChange={event => setSettings(previous => ({
+                                        ...previous,
+                                        translations: {
+                                            en: { ...previous.translations.en, [field]: event.target.value },
+                                        },
+                                    }))}
+                                    rows={field === 'homePromotionText' || field === 'homePromoBannerTitle' ? 2 : 1}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 resize-none"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                         <ImageIcon className="text-brand" size={20} />

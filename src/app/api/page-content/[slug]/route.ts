@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import PageContent from '@/models/PageContent';
+import { getUrlLocale } from '@/i18n/server';
+import { localizePageContent } from '@/lib/localized-content';
+import { translate } from '@/i18n/messages';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +30,7 @@ export async function GET(
     try {
         await dbConnect();
         const { slug } = await params;
+        const locale = getUrlLocale(request);
 
         let content = await PageContent.findOne({ slug }).lean();
 
@@ -61,6 +65,19 @@ export async function GET(
                     };
                 }
 
+                if (locale === 'en') {
+                    defaultData.title = translate(locale, defaultData.title);
+                    defaultData.content = '<p>Content is being updated...</p>';
+                    if (defaultData.subtitle) {
+                        defaultData.subtitle = 'Bringing the finest Vietnamese produce to consumers around the world.';
+                    }
+                    if (defaultData.stats) {
+                        defaultData.stats = defaultData.stats.map((item: any) => ({
+                            ...item,
+                            label: translate(locale, item.label),
+                        }));
+                    }
+                }
                 return NextResponse.json(defaultData);
             }
 
@@ -86,7 +103,7 @@ export async function GET(
             }
         }
 
-        return NextResponse.json(content);
+        return NextResponse.json(localizePageContent(content as any, locale));
     } catch (error) {
         console.error('Error fetching page content:', error);
         return NextResponse.json({ error: 'Failed to fetch page content' }, { status: 500 });
@@ -117,6 +134,7 @@ export async function PUT(
         if (body.stats !== undefined) updateData.stats = body.stats;
         if (body.commitments !== undefined) updateData.commitments = body.commitments;
         if (body.metadata !== undefined) updateData.metadata = body.metadata;
+        if (body.translations !== undefined) updateData.translations = body.translations;
 
         const content = await PageContent.findOneAndUpdate(
             { slug },

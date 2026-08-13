@@ -7698,6 +7698,75 @@ a[class*="from-orange"] {
   }
 }
 
+/* Locale switcher shared by the desktop header and compact mobile nav. */
+.language-switcher {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid #e8e0d8;
+  border-radius: 999px;
+  color: #776554;
+  background: #fcfaf7;
+  box-shadow: 0 3px 12px rgba(60, 42, 26, 0.05);
+}
+
+.language-switcher button {
+  min-width: 29px;
+  min-height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 999px;
+  color: #7d6c5c;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.language-switcher button:hover,
+.language-switcher button:focus-visible {
+  color: #7d5a36;
+  outline: 2px solid rgba(156, 112, 68, 0.25);
+  outline-offset: 1px;
+}
+
+.language-switcher button.is-active {
+  color: #fff;
+  background: #9c7044;
+}
+
+.language-switcher > span {
+  color: #d4c9bf;
+  font-size: 11px;
+}
+
+.language-switcher-compact {
+  min-height: 42px;
+  gap: 2px;
+  padding: 3px 5px;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .site-navbar > .container > div {
+    gap: 8px;
+  }
+
+  .site-mobile-menu-toggle {
+    width: auto;
+    flex: 1 1 auto;
+  }
+
+  .language-switcher-compact button {
+    min-width: 27px;
+    padding-right: 4px;
+    padding-left: 4px;
+  }
+}
+
 /* ========================================
    Mobile storefront polish (2026-07)
    Presentation only: no product or business data is changed.

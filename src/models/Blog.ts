@@ -1,5 +1,15 @@
 import mongoose, { Schema, Model, Types } from 'mongoose';
 
+export interface IBlogEnglishTranslation {
+    title?: string;
+    slug?: string;
+    excerpt?: string;
+    content?: string;
+    category?: string;
+    tags?: string[];
+    isPublished?: boolean;
+}
+
 export interface IBlog {
     _id?: string;
     title: string;
@@ -21,7 +31,20 @@ export interface IBlog {
     viewCount: number;
     createdAt?: Date;
     updatedAt?: Date;
+    translations?: {
+        en?: IBlogEnglishTranslation;
+    };
 }
+
+const BlogEnglishTranslationSchema = new Schema<IBlogEnglishTranslation>({
+    title: { type: String, trim: true },
+    slug: { type: String, trim: true },
+    excerpt: { type: String },
+    content: { type: String },
+    category: { type: String, trim: true },
+    tags: [{ type: String }],
+    isPublished: { type: Boolean, default: false },
+}, { _id: false });
 
 const BlogSchema: Schema<IBlog> = new Schema(
     {
@@ -46,6 +69,9 @@ const BlogSchema: Schema<IBlog> = new Schema(
         rejectionReason: { type: String },
         publishedAt: { type: Date },
         viewCount: { type: Number, default: 0 },
+        translations: {
+            en: { type: BlogEnglishTranslationSchema, default: undefined },
+        },
     },
     {
         timestamps: true,
@@ -54,6 +80,7 @@ const BlogSchema: Schema<IBlog> = new Schema(
 
 BlogSchema.index({ authorId: 1, createdAt: -1 });
 BlogSchema.index({ moderationStatus: 1, createdAt: -1 });
+BlogSchema.index({ 'translations.en.slug': 1 }, { unique: true, sparse: true });
 
 const Blog: Model<IBlog> = mongoose.models.Blog || mongoose.model<IBlog>('Blog', BlogSchema);
 

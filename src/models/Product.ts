@@ -1,5 +1,14 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
+export interface IProductEnglishTranslation {
+    name?: string;
+    description?: string;
+    shortDescription?: string;
+    badgeText?: string;
+    linkedCategory?: string;
+    isPublished?: boolean;
+}
+
 export interface IProduct {
     id?: string;
     name: string;
@@ -34,6 +43,9 @@ export interface IProduct {
     sortOrder?: number;
     createdAt?: Date;
     updatedAt?: Date;
+    translations?: {
+        en?: IProductEnglishTranslation;
+    };
 }
 
 export interface IBulkPricingTier {
@@ -46,6 +58,15 @@ const BulkPricingTierSchema = new Schema<IBulkPricingTier>({
     minQuantity: { type: Number, required: true, min: 1 },
     discountPercent: { type: Number, required: true, min: 0, max: 100 },
     discountedPrice: { type: Number }
+}, { _id: false });
+
+const ProductEnglishTranslationSchema = new Schema<IProductEnglishTranslation>({
+    name: { type: String, trim: true },
+    description: { type: String },
+    shortDescription: { type: String },
+    badgeText: { type: String, trim: true },
+    linkedCategory: { type: String, trim: true },
+    isPublished: { type: Boolean, default: false },
 }, { _id: false });
 
 const ProductSchema: Schema<IProduct> = new Schema(
@@ -83,7 +104,10 @@ const ProductSchema: Schema<IProduct> = new Schema(
         soldCount: { type: Number, default: 0 },
         weight: { type: Number, default: 0.5 },
         vipMaxDiscount: { type: Number, default: 0, min: 0 },
-        sortOrder: { type: Number, default: 0 }
+        sortOrder: { type: Number, default: 0 },
+        translations: {
+            en: { type: ProductEnglishTranslationSchema, default: undefined },
+        },
     },
     {
         timestamps: true,

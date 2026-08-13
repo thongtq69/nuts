@@ -9,6 +9,7 @@ import FAQSection from '@/components/common/FAQSection';
 import { Loader2, Heart, Award, Users, Sprout, ChevronRight, Leaf, Sparkles, Shield, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLocale } from '@/context/LocaleContext';
 
 interface PageImage {
     url: string;
@@ -59,16 +60,17 @@ const colorClasses: Record<string, string> = {
 export default function AboutPage() {
     const [data, setData] = useState<PageContent | null>(null);
     const [loading, setLoading] = useState(true);
+    const { t, href, apiPath } = useLocale();
 
     useEffect(() => {
-        fetch('/api/page-content/about-us')
+        fetch(apiPath('/api/page-content/about-us'))
             .then(res => res.json())
             .then(data => {
                 setData(data);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, []);
+    }, [apiPath]);
 
     const stats = data?.stats || [
         { label: 'Nông dân liên kết', value: '5000+', icon: 'Users', color: 'bg-blue-50 text-blue-600' },
@@ -120,7 +122,7 @@ export default function AboutPage() {
 
                         {/* Title */}
                         <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-6 leading-tight animate-in fade-in slide-in-from-bottom-6 duration-1000">
-                            VỀ{' '}
+                            {t('VỀ')}{' '}
                             <span className="relative">
                                 <span className="text-brand relative z-10">GO NUTS</span>
                                 <span className="absolute -bottom-2 left-0 right-0 h-3 bg-brand/30 -skew-x-6" />
@@ -129,23 +131,23 @@ export default function AboutPage() {
 
                         {/* Subtitle */}
                         <p className="text-lg sm:text-xl lg:text-2xl text-slate-300 max-w-2xl font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                            {data?.subtitle || 'Kết nối tinh hoa nông sản Việt với trái tim ngườI tiêu dùng toàn cầu.'}
+                            {data?.subtitle || t('Kết nối tinh hoa nông sản Việt với trái tim ngườI tiêu dùng toàn cầu.')}
                         </p>
 
                         {/* CTA Buttons */}
                         <div className="flex flex-wrap gap-4 mt-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
                             <Link
-                                href="/products"
+                                href={href('/products')}
                                 className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-slate-900 font-black rounded-2xl hover:bg-brand-light transition-all shadow-lg shadow-brand/25 hover:shadow-xl hover:shadow-brand/30 hover:-translate-y-1"
                             >
-                                Khám phá sản phẩm
+                                {t('Khám phá sản phẩm')}
                                 <ChevronRight className="w-5 h-5" />
                             </Link>
                             <Link
-                                href="/contact"
+                                href={href('/contact')}
                                 className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-2xl border border-white/20 hover:bg-white/20 transition-all"
                             >
-                                Liên hệ với chúng tôi
+                                {t('Liên hệ với chúng tôi')}
                             </Link>
                         </div>
                     </div>
@@ -176,7 +178,7 @@ export default function AboutPage() {
                                         <Icon className="w-6 h-6 lg:w-7 lg:h-7" />
                                     </div>
                                     <div className="text-2xl lg:text-4xl font-black text-slate-900 mb-1 lg:mb-2">{stat.value}</div>
-                                    <div className="text-xs lg:text-sm font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</div>
+                                    <div className="text-xs lg:text-sm font-semibold text-slate-500 uppercase tracking-wider">{t(stat.label)}</div>
                                 </div>
                             );
                         })}
@@ -193,13 +195,13 @@ export default function AboutPage() {
                             {loading ? (
                                 <div className="flex items-center gap-3 py-10">
                                     <Loader2 className="animate-spin text-brand w-6 h-6" />
-                                    <span className="text-slate-500 font-medium">Đang tải câu chuyện thương hiệu...</span>
+                                    <span className="text-slate-500 font-medium">{t('Đang tải câu chuyện thương hiệu...')}</span>
                                 </div>
                             ) : (
                                 <div className="about-rich-content">
                                     <div className="flex items-center gap-4 mb-8">
                                         <div className="w-12 h-1.5 bg-brand rounded-full" />
-                                        <span className="text-sm font-bold text-brand uppercase tracking-widest">Câu chuyện của chúng tôi</span>
+                                        <span className="text-sm font-bold text-brand uppercase tracking-widest">{t('Câu chuyện của chúng tôi')}</span>
                                     </div>
                                     <div
                                         className="prose prose-lg prose-slate max-w-none prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-h2:text-2xl prose-h2:font-black prose-h2:text-slate-900 prose-h3:text-xl prose-h3:font-bold prose-h3:text-slate-800"
@@ -218,8 +220,8 @@ export default function AboutPage() {
                                 ].map((item, i) => (
                                     <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                         <item.icon className="w-8 h-8 text-brand mb-2" />
-                                        <div className="font-bold text-slate-900">{item.label}</div>
-                                        <div className="text-sm text-slate-500">{item.desc}</div>
+                                        <div className="font-bold text-slate-900">{t(item.label)}</div>
+                                        <div className="text-sm text-slate-500">{t(item.desc)}</div>
                                     </div>
                                 ))}
                             </div>
@@ -240,15 +242,15 @@ export default function AboutPage() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-brand/90 via-brand/20 to-transparent" />
                                 <div className="absolute inset-0 p-6 lg:p-10 flex flex-col justify-end">
                                     <div className="transform group-hover:translate-y-0 transition-transform duration-500">
-                                        <h3 className="text-2xl lg:text-3xl font-black text-white mb-3">Mầm xanh hy vọng</h3>
+                                        <h3 className="text-2xl lg:text-3xl font-black text-white mb-3">{t('Mầm xanh hy vọng')}</h3>
                                         <p className="text-white/90 text-base lg:text-lg leading-relaxed mb-6">
-                                            Mỗi sản phẩm Go Nuts là một lời cam kết về sức khỏe và sự tử tế từ nông trại.
+                                            {t('Mỗi sản phẩm Go Nuts là một lời cam kết về sức khỏe và sự tử tế từ nông trại.')}
                                         </p>
                                         <Link
-                                            href="/products"
+                                            href={href('/products')}
                                             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-brand font-bold rounded-xl hover:bg-slate-900 hover:text-white transition-all shadow-lg"
                                         >
-                                            Khám phá ngay <ChevronRight className="w-5 h-5" />
+                                            {t('Khám phá ngay')} <ChevronRight className="w-5 h-5" />
                                         </Link>
                                     </div>
                                 </div>
@@ -260,13 +262,13 @@ export default function AboutPage() {
                                     <div className="w-12 h-12 rounded-2xl bg-brand/20 flex items-center justify-center">
                                         <Award className="w-6 h-6 text-brand" />
                                     </div>
-                                    <h3 className="text-xl lg:text-2xl font-black">Cam kết vàng</h3>
+                                    <h3 className="text-xl lg:text-2xl font-black">{t('Cam kết vàng')}</h3>
                                 </div>
                                 <ul className="space-y-4">
                                     {commitments.map((item, i) => (
                                         <li key={i} className="flex items-start gap-3 group">
                                             <div className="mt-2 w-2 h-2 rounded-full bg-brand flex-shrink-0 group-hover:scale-150 transition-transform" />
-                                            <span className="text-slate-300 font-medium leading-relaxed group-hover:text-white transition-colors">{item.text}</span>
+                                            <span className="text-slate-300 font-medium leading-relaxed group-hover:text-white transition-colors">{t(item.text)}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -282,8 +284,8 @@ export default function AboutPage() {
                                 ].map((item, i) => (
                                     <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-brand/5 hover:border-brand/20 transition-all group">
                                         <item.icon className="w-8 h-8 text-brand mb-3 group-hover:scale-110 transition-transform" />
-                                        <div className="font-bold text-slate-900">{item.label}</div>
-                                        <div className="text-sm text-slate-500">{item.desc}</div>
+                                        <div className="font-bold text-slate-900">{t(item.label)}</div>
+                                        <div className="text-sm text-slate-500">{t(item.desc)}</div>
                                     </div>
                                 ))}
                             </div>
@@ -297,9 +299,9 @@ export default function AboutPage() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="max-w-4xl mx-auto">
                         <div className="text-center mb-12">
-                            <span className="inline-block px-4 py-1.5 bg-brand/10 text-brand text-sm font-bold rounded-full mb-4">Hỏi đáp</span>
-                            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 mb-4">Bạn thắc mắc về Go Nuts?</h2>
-                            <p className="text-slate-600 text-lg">Chúng tôi luôn sẵn sàng lắng nghe và giải đáp mọi câu hỏi của bạn.</p>
+                            <span className="inline-block px-4 py-1.5 bg-brand/10 text-brand text-sm font-bold rounded-full mb-4">{t('Hỏi đáp')}</span>
+                            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 mb-4">{t('Bạn thắc mắc về Go Nuts?')}</h2>
+                            <p className="text-slate-600 text-lg">{t('Chúng tôi luôn sẵn sàng lắng nghe và giải đáp mọi câu hỏi của bạn.')}</p>
                         </div>
                         <FAQSection
                             category="about"
@@ -308,10 +310,10 @@ export default function AboutPage() {
                         />
                         <div className="text-center mt-10">
                             <Link
-                                href="/contact"
+                                href={href('/contact')}
                                 className="inline-flex items-center gap-2 text-brand font-bold hover:underline"
                             >
-                                Gửi câu hỏi cho chúng tôi <ChevronRight className="w-5 h-5" />
+                                {t('Gửi câu hỏi cho chúng tôi')} <ChevronRight className="w-5 h-5" />
                             </Link>
                         </div>
                     </div>
@@ -329,23 +331,23 @@ export default function AboutPage() {
                         </div>
                         <div className="relative px-8 py-16 lg:px-20 lg:py-24 text-center">
                             <h2 className="text-3xl lg:text-5xl font-black text-white mb-6">
-                                Bắt đầu hành trình <span className="text-brand">sức khỏe</span> của bạn
+                                {t('Bắt đầu hành trình')} <span className="text-brand">{t('sức khỏe')}</span> {t('của bạn')}
                             </h2>
                             <p className="text-slate-400 text-lg lg:text-xl max-w-2xl mx-auto mb-10">
-                                Khám phá bộ sưu tập hạt dinh dưỡng tự nhiên, được chọn lọc kỹ càng từ những vùng đất tốt nhất Việt Nam.
+                                {t('Khám phá bộ sưu tập hạt dinh dưỡng tự nhiên, được chọn lọc kỹ càng từ những vùng đất tốt nhất Việt Nam.')}
                             </p>
                             <div className="flex flex-wrap justify-center gap-4">
                                 <Link
-                                    href="/products"
+                                    href={href('/products')}
                                     className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-slate-900 font-black rounded-2xl hover:bg-brand-light transition-all shadow-lg shadow-brand/25"
                                 >
-                                    Mua sắm ngay <ChevronRight className="w-5 h-5" />
+                                    {t('Mua sắm ngay')} <ChevronRight className="w-5 h-5" />
                                 </Link>
                                 <Link
-                                    href="/contact"
+                                    href={href('/contact')}
                                     className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-2xl border border-white/20 hover:bg-white/20 transition-all"
                                 >
-                                    Liên hệ tư vấn
+                                    {t('Liên hệ tư vấn')}
                                 </Link>
                             </div>
                         </div>

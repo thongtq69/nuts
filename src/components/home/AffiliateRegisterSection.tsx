@@ -1,47 +1,49 @@
 'use client';
 
 import Link from 'next/link';
+import { useLocale } from '@/context/LocaleContext';
 
 export default function AffiliateRegisterSection() {
+    const { t, href } = useLocale();
     return (
         <section className="affiliate-register-section">
             <div className="container">
                 <div className="affiliate-register-content">
                     <div className="affiliate-text">
-                        <h2>Trở thành Đối tác của Go Nuts</h2>
+                        <h2>{t('Trở thành Đối tác của Go Nuts')}</h2>
                         <p className="affiliate-subtitle">
-                            Kiếm thu nhập thụ động bằng cách giới thiệu sản phẩm dinh dưỡng chất lượng cao
+                            {t('Kiếm thu nhập thụ động bằng cách giới thiệu sản phẩm dinh dưỡng chất lượng cao')}
                         </p>
                         
                         <div className="affiliate-benefits">
                             <div className="benefit-item">
                                 <span className="benefit-icon">💰</span>
                                 <div className="benefit-info">
-                                    <h4>Hoa hồng hấp dẫn</h4>
-                                    <p>Nhận đến 10% hoa hồng cho mỗi đơn hàng giới thiệu thành công</p>
+                                    <h4>{t('Hoa hồng hấp dẫn')}</h4>
+                                    <p>{t('Nhận đến 10% hoa hồng cho mỗi đơn hàng giới thiệu thành công')}</p>
                                 </div>
                             </div>
                             <div className="benefit-item">
                                 <span className="benefit-icon">📊</span>
                                 <div className="benefit-info">
-                                    <h4>Theo dõi dễ dàng</h4>
-                                    <p>Dashboard trực tuyến để theo dõi doanh thu và hoa hồng</p>
+                                    <h4>{t('Theo dõi dễ dàng')}</h4>
+                                    <p>{t('Dashboard trực tuyến để theo dõi doanh thu và hoa hồng')}</p>
                                 </div>
                             </div>
                             <div className="benefit-item">
                                 <span className="benefit-icon">🎁</span>
                                 <div className="benefit-info">
-                                    <h4>Mã giới thiệu riêng</h4>
-                                    <p>Mã giới thiệu cá nhân để chia sẻ với khách hàng</p>
+                                    <h4>{t('Mã giới thiệu riêng')}</h4>
+                                    <p>{t('Mã giới thiệu cá nhân để chia sẻ với khách hàng')}</p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="affiliate-cta">
-                            <Link href="/register?type=agent" className="btn-agent">
-                                Đăng ký Đại lý
+                            <Link href={href('/register?type=agent')} className="btn-agent">
+                                {t('Đăng ký Đại lý')}
                             </Link>
-                            <span className="coming-soon-ctv">Cộng tác viên - Đang cập nhật</span>
+                            <span className="coming-soon-ctv">{t('Cộng tác viên - Đang cập nhật')}</span>
                         </div>
                     </div>
 
@@ -50,17 +52,17 @@ export default function AffiliateRegisterSection() {
                             <div className="stats-card">
                                 <div className="stat-item">
                                     <span className="stat-number">500+</span>
-                                    <span className="stat-label">Đại lý</span>
+                                    <span className="stat-label">{t('Đại lý')}</span>
                                 </div>
                                 <div className="stat-divider"></div>
                                 <div className="stat-item">
                                     <span className="stat-number">50M+</span>
-                                    <span className="stat-label">Hoa hồng đã trả</span>
+                                    <span className="stat-label">{t('Hoa hồng đã trả')}</span>
                                 </div>
                                 <div className="stat-divider"></div>
                                 <div className="stat-item">
                                     <span className="stat-number">10K+</span>
-                                    <span className="stat-label">Khách hàng mới</span>
+                                    <span className="stat-label">{t('Khách hàng mới')}</span>
                                 </div>
                             </div>
                         </div>

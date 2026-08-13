@@ -3,6 +3,8 @@ import dbConnect from '@/lib/db';
 import Blog from '@/models/Blog';
 import mongoose from 'mongoose';
 import { getAuthUser, requireAdminAuth } from '@/lib/auth-permissions';
+import { getUrlLocale } from '@/i18n/server';
+import { isPublishedForLocale, localizeBlog } from '@/lib/localized-content';
 
 export async function GET(
     req: Request,
@@ -16,7 +18,9 @@ export async function GET(
         if (mongoose.Types.ObjectId.isValid(id)) {
             blog = await Blog.findById(id);
         } else {
-            blog = await Blog.findOne({ slug: id });
+            blog = await Blog.findOne({
+                $or: [{ slug: id }, { 'translations.en.slug': id }],
+            });
         }
 
         if (!blog) {
@@ -29,7 +33,11 @@ export async function GET(
             return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
         }
 
-        return NextResponse.json(blog);
+        const locale = getUrlLocale(req);
+        if (!isPublishedForLocale(blog.toObject(), locale)) {
+            return NextResponse.json({ error: 'Blog not found' }, { status: 404 });
+        }
+        return NextResponse.json(localizeBlog(blog.toObject(), locale));
     } catch (error) {
         console.error('Error fetching blog:', error);
         return NextResponse.json({ error: 'Failed to fetch blog' }, { status: 500 });
@@ -61,6 +69,9 @@ export async function PATCH(
         if (typeof body.category === 'string') blog.category = body.category.trim();
         if (typeof body.coverImage === 'string') blog.coverImage = body.coverImage;
         if (Array.isArray(body.tags)) blog.tags = body.tags.filter((tag: unknown) => typeof tag === 'string');
+        if (body.translations && typeof body.translations === 'object') {
+            blog.translations = body.translations;
+        }
 
         const shouldPublish = body.isPublished === true;
         const shouldReject = body.moderationStatus === 'rejected';

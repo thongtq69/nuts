@@ -3,19 +3,30 @@ import dbConnect from '@/lib/db';
 import Blog from '@/models/Blog';
 import BlogDetailClient from './BlogDetailClient';
 import { ArticleJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd';
+import { getRequestLocale } from '@/i18n/server';
+import { localizeBlog } from '@/lib/localized-content';
+import type { Locale } from '@/i18n/config';
+import { translate } from '@/i18n/messages';
 
 export const dynamic = 'force-dynamic';
 
 const BASE_URL = 'https://gonuts.vn';
 
-async function getBlog(slug: string) {
+async function getBlog(slug: string, locale: Locale) {
     try {
         await dbConnect();
-        const blog = await Blog.findOne({ slug, isPublished: true }).lean();
+        const blog = await Blog.findOne({
+            isPublished: true,
+            ...(locale === 'en' ? { 'translations.en.isPublished': { $ne: false } } : {}),
+            $or: [{ slug }, { 'translations.en.slug': slug }],
+        }).lean();
         if (!blog) return null;
+        const localized = localizeBlog(blog as any, locale);
         return {
-            ...blog,
+            ...localized,
             _id: blog._id.toString(),
+            viSlug: blog.slug,
+            enSlug: blog.translations?.en?.slug || blog.slug,
             createdAt: blog.createdAt?.toISOString?.() || new Date().toISOString(),
             updatedAt: blog.updatedAt?.toISOString?.() || new Date().toISOString(),
             publishedAt: blog.publishedAt?.toISOString?.() || undefined,
@@ -28,24 +39,31 @@ async function getBlog(slug: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
-    const blog = await getBlog(slug);
+    const locale = await getRequestLocale();
+    const isEnglish = locale === 'en';
+    const blog = await getBlog(slug, locale);
 
     if (!blog) {
         return {
-            title: 'Bài viết không tìm thấy',
+            title: isEnglish ? 'Article Not Found' : 'Bài viết không tìm thấy',
         };
     }
 
     const title = blog.title;
     const description = blog.excerpt || blog.content?.replace(/<[^>]*>/g, '').substring(0, 160) || '';
     const imageUrl = blog.coverImage || `${BASE_URL}/assets/images/gonuts-banner-member.png`;
-    const articleUrl = `${BASE_URL}/news/${slug}`;
+    const articleUrl = `${BASE_URL}${isEnglish ? '/en' : ''}/news/${isEnglish ? blog.enSlug : blog.viSlug}`;
 
     return {
         title,
         description,
         alternates: {
             canonical: articleUrl,
+            languages: {
+                'vi-VN': `${BASE_URL}/news/${blog.viSlug}`,
+                en: `${BASE_URL}/en/news/${blog.enSlug}`,
+                'x-default': `${BASE_URL}/news/${blog.viSlug}`,
+            },
         },
         openGraph: {
             title: `${title} | Go Nuts`,
@@ -60,7 +78,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
                     alt: title,
                 },
             ],
-            locale: 'vi_VN',
+            locale: isEnglish ? 'en_US' : 'vi_VN',
             type: 'article',
             publishedTime: blog.publishedAt || blog.createdAt,
             modifiedTime: blog.updatedAt,
@@ -77,13 +95,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const blog = await getBlog(slug);
+    const locale = await getRequestLocale();
+    const isEnglish = locale === 'en';
+    const blog = await getBlog(slug, locale);
 
     if (!blog) {
         return <BlogDetailClient blog={null} />;
     }
 
-    const articleUrl = `${BASE_URL}/news/${slug}`;
+    const articleUrl = `${BASE_URL}${isEnglish ? '/en' : ''}/news/${isEnglish ? blog.enSlug : blog.viSlug}`;
 
     return (
         <>
@@ -97,8 +117,8 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             />
             <BreadcrumbJsonLd
                 items={[
-                    { name: 'Trang chủ', url: BASE_URL },
-                    { name: 'Tin tức', url: `${BASE_URL}/news` },
+                    { name: translate(locale, 'Trang chủ'), url: `${BASE_URL}${isEnglish ? '/en' : ''}` },
+                    { name: translate(locale, 'Tin tức'), url: `${BASE_URL}${isEnglish ? '/en' : ''}/news` },
                     { name: blog.title },
                 ]}
             />

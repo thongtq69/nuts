@@ -8,11 +8,13 @@ import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import { useToast } from '@/context/ToastContext';
+import { useLocale } from '@/context/LocaleContext';
 
 function ResetPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
+    const { t, href } = useLocale();
     const token = searchParams.get('token');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,12 +33,12 @@ function ResetPasswordForm() {
         e.preventDefault();
 
         if (password !== confirmPassword) {
-            toast.error('Lỗi', 'Mật khẩu xác nhận không khớp');
+            toast.error(t('Lỗi'), t('Mật khẩu xác nhận không khớp'));
             return;
         }
 
         if (password.length < 6) {
-            toast.error('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+            toast.error(t('Lỗi'), t('Mật khẩu phải có ít nhất 6 ký tự'));
             return;
         }
 
@@ -51,13 +53,13 @@ function ResetPasswordForm() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.message || 'Có lỗi xảy ra');
+                throw new Error(data.message || t('Có lỗi xảy ra'));
             }
 
-            toast.success('Thành công', 'Mật khẩu đã được đặt lại');
-            router.push('/login');
+            toast.success(t('Thành công'), t('Mật khẩu đã được đặt lại'));
+            router.push(href('/login'));
         } catch (err: any) {
-            toast.error('Lỗi', err.message);
+            toast.error(t('Lỗi'), err.message);
         } finally {
             setIsLoading(false);
         }
@@ -97,12 +99,12 @@ function ResetPasswordForm() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <h1>Link không hợp lệ</h1>
+                            <h1>{t('Link không hợp lệ')}</h1>
                             <p className="auth-subtitle">
-                                Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.
+                                {t('Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.')}
                             </p>
                             <div className="auth-footer">
-                                <Link href="/forgot-password">Yêu cầu link mới</Link>
+                                <Link href={href('/forgot-password')}>{t('Yêu cầu link mới')}</Link>
                             </div>
                         </div>
                     </div>
@@ -132,15 +134,15 @@ function ResetPasswordForm() {
                         <div className="auth-logo">
                             <img src="/assets/logo.png" alt="Go Nuts" />
                         </div>
-                        <h1>Đặt lại mật khẩu</h1>
-                        <p className="auth-subtitle">Nhập mật khẩu mới của bạn</p>
+                        <h1>{t('Đặt lại mật khẩu')}</h1>
+                        <p className="auth-subtitle">{t('Nhập mật khẩu mới của bạn')}</p>
 
                         <form className="auth-form" onSubmit={handleSubmit}>
                             <div className="form-group">
-                                <label>Mật khẩu mới</label>
+                                <label>{t('Mật khẩu mới')}</label>
                                 <input
                                     type="password"
-                                    placeholder="Nhập mật khẩu mới"
+                                    placeholder={t('Nhập mật khẩu mới')}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -149,10 +151,10 @@ function ResetPasswordForm() {
                             </div>
 
                             <div className="form-group">
-                                <label>Xác nhận mật khẩu</label>
+                                <label>{t('Xác nhận mật khẩu')}</label>
                                 <input
                                     type="password"
-                                    placeholder="Nhập lại mật khẩu"
+                                    placeholder={t('Nhập lại mật khẩu')}
                                     required
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -160,12 +162,12 @@ function ResetPasswordForm() {
                             </div>
 
                             <button type="submit" className="auth-btn" disabled={isLoading}>
-                                {isLoading ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
+                                {isLoading ? t('Đang xử lý...') : t('Đặt lại mật khẩu')}
                             </button>
                         </form>
 
                         <div className="auth-footer">
-                            <Link href="/login">Quay lại đăng nhập</Link>
+                            <Link href={href('/login')}>{t('Quay lại đăng nhập')}</Link>
                         </div>
                     </div>
                 </div>

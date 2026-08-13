@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Blog {
     _id: string;
@@ -16,6 +17,7 @@ interface Blog {
 }
 
 export default function LatestNews() {
+    const { t, href, apiPath, locale } = useLocale();
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -23,7 +25,7 @@ export default function LatestNews() {
         const fetchBlogs = async () => {
             try {
                 // Fetch only first 3 published blogs
-                const res = await fetch('/api/blogs?published=true&summary=true&limit=3');
+                const res = await fetch(apiPath('/api/blogs?published=true&summary=true&limit=3'));
                 if (res.ok) {
                     const data = await res.json();
                     setBlogs(data);
@@ -35,12 +37,12 @@ export default function LatestNews() {
             }
         };
         fetchBlogs();
-    }, []);
+    }, [apiPath]);
 
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
     if (loading) return null;
@@ -56,14 +58,14 @@ export default function LatestNews() {
                             <span className="text-[13px] font-black uppercase tracking-[0.3em] text-[#9C7044]">Insights & Updates</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl font-black text-[#3C2A1A] uppercase tracking-tighter leading-none">
-                            Tin tức & <br className="hidden md:block" />Khuyến mãi
+                            {locale === 'en' ? 'News & ' : 'Tin tức & '}<br className="hidden md:block" />{locale === 'en' ? 'Promotions' : 'Khuyến mãi'}
                         </h2>
                     </div>
                     <Link
-                        href="/news"
+                        href={href('/news')}
                         className="group flex items-center gap-3 text-sm font-black text-[#3C2A1A] uppercase tracking-widest bg-slate-50 px-8 py-4 rounded-full hover:bg-[#9C7044] hover:text-white transition-all duration-300"
                     >
-                        Xem tất cả bài viết
+                        {t('Xem tất cả bài viết')}
                         <ArrowRight size={18} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>
@@ -103,7 +105,7 @@ export default function LatestNews() {
                                     {formatDate(item.createdAt)}
                                 </div>
 
-                                <Link href={`/news/${item.slug}`}>
+                                <Link href={href(`/news/${item.slug}`)}>
                                     <h3 className="text-xl font-black text-[#3C2A1A] mb-4 line-clamp-2 leading-tight group-hover:text-[#9C7044] transition-colors">
                                         {item.title}
                                     </h3>
@@ -115,10 +117,10 @@ export default function LatestNews() {
 
                                 <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
                                     <Link
-                                        href={`/news/${item.slug}`}
+                                        href={href(`/news/${item.slug}`)}
                                         className="text-[11px] font-black text-[#3C2A1A] uppercase tracking-[0.2em] flex items-center gap-2 group/link hover:text-[#9C7044] transition-colors"
                                     >
-                                        Khám phá ngay
+                                        {t('Khám phá ngay')}
                                         <ArrowRight size={14} strokeWidth={4} className="group-hover/link:translate-x-1 transition-transform" />
                                     </Link>
                                 </div>

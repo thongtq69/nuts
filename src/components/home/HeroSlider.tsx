@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Banner {
     _id: string;
@@ -13,6 +14,7 @@ interface Banner {
 }
 
 export default function HeroSlider() {
+    const { t, apiPath } = useLocale();
     const [slides, setSlides] = useState<Banner[]>([]);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
@@ -22,7 +24,7 @@ export default function HeroSlider() {
     useEffect(() => {
         const fetchBanners = async () => {
             try {
-                const response = await fetch('/api/banners/active');
+                const response = await fetch(apiPath('/api/banners/active'));
                 const activeBanners = await response.json();
                 setSlides(activeBanners);
             } catch (error) {
@@ -35,7 +37,7 @@ export default function HeroSlider() {
         };
 
         fetchBanners();
-    }, []);
+    }, [apiPath]);
 
     const nextSlide = useCallback(() => {
         if (slides.length > 0) {
@@ -59,7 +61,7 @@ export default function HeroSlider() {
                             <div className="w-full h-full bg-gradient-to-r from-slate-200 to-slate-300 flex items-center justify-center">
                                 <div className="text-center">
                                     <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                                    <div className="text-slate-600 font-medium">Đang tải banner...</div>
+                                    <div className="text-slate-600 font-medium">{t('Đang tải banner...')}</div>
                                 </div>
                             </div>
                         </div>
@@ -79,8 +81,8 @@ export default function HeroSlider() {
                             <div className="w-full h-full bg-gradient-to-r from-brand-light/10 to-brand/5 flex items-center justify-center">
                                 <div className="text-center">
                                     <div className="text-6xl mb-4">🖼️</div>
-                                    <div className="text-slate-600 font-medium text-lg">Chưa có banner nào được hiển thị</div>
-                                    <div className="text-slate-500 text-sm mt-2">Vui lòng thêm banner trong trang quản trị</div>
+                                    <div className="text-slate-600 font-medium text-lg">{t('Chưa có banner nào được hiển thị')}</div>
+                                    <div className="text-slate-500 text-sm mt-2">{t('Vui lòng thêm banner trong trang quản trị')}</div>
                                 </div>
                             </div>
                         </div>
@@ -115,7 +117,7 @@ export default function HeroSlider() {
                                         decoding="async"
                                         onError={(e) => {
                                             console.error(`Failed to load banner image: ${slide.imageUrl}`);
-                                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"%3E%3Crect fill="%23f1f5f9" width="1200" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="24"%3EBanner không tải được%3C/text%3E%3C/svg%3E';
+                                            e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"%3E%3Crect fill="%23f1f5f9" width="1200" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="24"%3E${encodeURIComponent(t('Banner không tải được'))}%3C/text%3E%3C/svg%3E`;
                                         }}
                                     />
                                 </a>
@@ -130,7 +132,7 @@ export default function HeroSlider() {
                                     decoding="async"
                                     onError={(e) => {
                                         console.error(`Failed to load banner image: ${slide.imageUrl}`);
-                                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"%3E%3Crect fill="%23f1f5f9" width="1200" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="24"%3EBanner không tải được%3C/text%3E%3C/svg%3E';
+                                        e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"%3E%3Crect fill="%23f1f5f9" width="1200" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="24"%3E${encodeURIComponent(t('Banner không tải được'))}%3C/text%3E%3C/svg%3E`;
                                     }}
                                 />
                             )}

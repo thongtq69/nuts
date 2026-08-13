@@ -2,9 +2,11 @@
 
 import { useSettings } from '@/context/SettingsContext';
 import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
+import { useLocale } from '@/context/LocaleContext';
 
 export default function PromotionBanner() {
     const { settings } = useSettings();
+    const { t } = useLocale();
     const text = settings?.homePromotionText ?? DEFAULT_HOME_PROMOTION_TEXT;
     const enabled = settings?.homePromotionEnabled ?? true;
 
@@ -14,7 +16,7 @@ export default function PromotionBanner() {
         <section className="promotion-banner">
             <div className="container">
                 <p className="promotion-text">
-                    {text}
+                    {t(text)}
                 </p>
             </div>
         </section>

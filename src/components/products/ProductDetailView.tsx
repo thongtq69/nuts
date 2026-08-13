@@ -10,6 +10,7 @@ import ProductInfo from '@/components/products/ProductInfo';
 import ProductSection from '@/components/home/ProductSection';
 import { IProduct } from '@/models/Product';
 import { cleanHTMLContent } from '@/lib/textUtils';
+import { useLocale } from '@/context/LocaleContext';
 
 interface ProductDetailViewProps {
     product: IProduct;
@@ -17,6 +18,7 @@ interface ProductDetailViewProps {
 }
 
 export default function ProductDetailView({ product, relatedProducts }: ProductDetailViewProps) {
+    const { t } = useLocale();
     const [activeTab, setActiveTab] = React.useState<'description' | 'specs' | 'reviews'>('description');
 
     // Process images: Main image should be first, followed by gallery images
@@ -114,13 +116,13 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                             className={`tab-btn ${activeTab === 'description' ? 'active' : ''}`}
                             onClick={() => setActiveTab('description')}
                         >
-                            Mô tả sản phẩm
+                            {t('Mô tả sản phẩm')}
                         </button>
                         <button
                             className={`tab-btn ${activeTab === 'specs' ? 'active' : ''}`}
                             onClick={() => setActiveTab('specs')}
                         >
-                            Thông tin chi tiết
+                            {t('Thông tin chi tiết')}
                         </button>
                         {/* Tạm ẩn tab Đánh giá
                         <button
@@ -138,7 +140,7 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                     {product.description ? (
                                         <div dangerouslySetInnerHTML={{ __html: cleanHTMLContent(product.description) }} />
                                     ) : (
-                                        <p className="no-description">Chưa có mô tả cho sản phẩm này.</p>
+                                        <p className="no-description">{t('Chưa có mô tả cho sản phẩm này.')}</p>
                                     )}
                                 </div>
                             </div>
@@ -150,24 +152,24 @@ export default function ProductDetailView({ product, relatedProducts }: ProductD
                                     <div className="specs-list bg-slate-50 p-6 rounded-2xl space-y-3">
                                         {product.sku && (
                                             <div className="flex justify-between py-2 border-b border-slate-200">
-                                                <span className="font-medium text-slate-600">Mã sản phẩm:</span>
+                                                <span className="font-medium text-slate-600">{t('Mã sản phẩm:')}</span>
                                                 <span className="text-slate-900">{product.sku}</span>
                                             </div>
                                         )}
                                         {product.category && (
                                             <div className="flex justify-between py-2 border-b border-slate-200">
-                                                <span className="font-medium text-slate-600">Danh mục:</span>
+                                                <span className="font-medium text-slate-600">{t('Danh mục:')}</span>
                                                 <span className="text-slate-900">{product.category}</span>
                                             </div>
                                         )}
                                         {!!product.weight && (
                                             <div className="flex justify-between py-2 border-b border-slate-200">
-                                                <span className="font-medium text-slate-600">Trọng lượng:</span>
+                                                <span className="font-medium text-slate-600">{t('Trọng lượng:')}</span>
                                                 <span className="text-slate-900">{product.weight} kg</span>
                                             </div>
                                         )}
                                         {!product.sku && !product.category && !product.weight && (
-                                            <p className="no-description">Thông tin chi tiết đang được cập nhật.</p>
+                                            <p className="no-description">{t('Thông tin chi tiết đang được cập nhật.')}</p>
                                         )}
                                     </div>
                                 </div>

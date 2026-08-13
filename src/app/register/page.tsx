@@ -10,11 +10,13 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import PasswordInput from '@/components/common/PasswordInput';
 import Link from 'next/link';
 import { normalizeReferralCode } from '@/lib/referral-attribution';
+import { useLocale } from '@/context/LocaleContext';
 
 function RegisterForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
+    const { t, href } = useLocale();
     
     const [formData, setFormData] = useState({
         name: '',
@@ -42,7 +44,7 @@ function RegisterForm() {
         setError('');
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Mật khẩu không khớp');
+            setError(t('Mật khẩu không khớp'));
             return;
         }
 
@@ -65,11 +67,11 @@ function RegisterForm() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.message || 'Đăng ký thất bại');
+                throw new Error(data.message || t('Đăng ký thất bại'));
             }
 
-            toast.success('Đăng ký thành công!', data.message);
-            router.push('/login');
+            toast.success(t('Đăng ký thành công!'), data.message);
+            router.push(href('/login'));
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -89,12 +91,12 @@ function RegisterForm() {
                         <div className="auth-logo">
                             <img src="/assets/logo.png" alt="Go Nuts" />
                         </div>
-                        <h1>Đăng ký tài khoản</h1>
-                        <p className="auth-subtitle">Tạo tài khoản để nhận nhiều ưu đãi</p>
+                        <h1>{t('Đăng ký tài khoản')}</h1>
+                        <p className="auth-subtitle">{t('Tạo tài khoản để nhận nhiều ưu đãi')}</p>
 
                         {referralCode && (
                             <div className="referral-notice">
-                                <span>Đăng ký theo nhân viên</span>
+                                <span>{t('Đăng ký theo nhân viên')}</span>
                                 <strong>{referralCode}</strong>
                             </div>
                         )}
@@ -103,20 +105,20 @@ function RegisterForm() {
 
                         <form className="auth-form" onSubmit={handleSubmit}>
                             <div className="form-group">
-                                <label>Họ và tên</label>
+                                <label>{t('Họ và tên')}</label>
                                 <input
                                     type="text"
-                                    placeholder="Nhập họ tên của bạn"
+                                    placeholder={t('Nhập họ tên của bạn')}
                                     required
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Số điện thoại</label>
+                                <label>{t('Số điện thoại')}</label>
                                 <input
                                     type="tel"
-                                    placeholder="Nhập số điện thoại"
+                                    placeholder={t('Nhập số điện thoại')}
                                     required
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -126,7 +128,7 @@ function RegisterForm() {
                                 <label>Email</label>
                                 <input
                                     type="email"
-                                    placeholder="Nhập email"
+                                    placeholder={t('Nhập email')}
                                     required
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -134,7 +136,7 @@ function RegisterForm() {
                             </div>
                             
                             <div className="form-group">
-                                <label>Đăng ký với tư cách</label>
+                                <label>{t('Đăng ký với tư cách')}</label>
                                 <div className="role-selector">
                                     <label className={`role-option ${registerAs === 'user' ? 'active' : ''}`}>
                                         <input
@@ -144,8 +146,8 @@ function RegisterForm() {
                                             checked={registerAs === 'user'}
                                             onChange={(e) => setRegisterAs(e.target.value as any)}
                                         />
-                                        <span className="role-label">Khách hàng</span>
-                                        <span className="role-desc">Mua hàng và nhận ưu đãi</span>
+                                        <span className="role-label">{t('Khách hàng')}</span>
+                                        <span className="role-desc">{t('Mua hàng và nhận ưu đãi')}</span>
                                     </label>
                                     <label className={`role-option ${registerAs === 'collaborator' ? 'active' : ''}`}>
                                         <input
@@ -155,8 +157,8 @@ function RegisterForm() {
                                             checked={registerAs === 'collaborator'}
                                             onChange={(e) => setRegisterAs(e.target.value as any)}
                                         />
-                                        <span className="role-label">Cộng tác viên</span>
-                                        <span className="role-desc">Nhận hoa hồng từ giới thiệu</span>
+                                        <span className="role-label">{t('Cộng tác viên')}</span>
+                                        <span className="role-desc">{t('Nhận hoa hồng từ giới thiệu')}</span>
                                     </label>
                                     <label className={`role-option ${registerAs === 'agent' ? 'active' : ''}`}>
                                         <input
@@ -166,43 +168,43 @@ function RegisterForm() {
                                             checked={registerAs === 'agent'}
                                             onChange={(e) => setRegisterAs(e.target.value as any)}
                                         />
-                                        <span className="role-label">Đại lý</span>
-                                        <span className="role-desc">Hoa hồng cao + quản lý CTV</span>
+                                        <span className="role-label">{t('Đại lý')}</span>
+                                        <span className="role-desc">{t('Hoa hồng cao + quản lý CTV')}</span>
                                     </label>
                                 </div>
                                 {registerAs !== 'user' && (
                                     <p className="role-notice">
-                                        * Tài khoản sẽ được admin duyệt trong 24-48 giờ. Bạn sẽ nhận email thông báo khi được duyệt.
+                                        {t('* Tài khoản sẽ được admin duyệt trong 24-48 giờ. Bạn sẽ nhận email thông báo khi được duyệt.')}
                                     </p>
                                 )}
                             </div>
 
                             <div className="form-group">
-                                <label>Mật khẩu</label>
+                                <label>{t('Mật khẩu')}</label>
                                 <PasswordInput
                                     value={formData.password}
                                     onChange={(value) => setFormData({ ...formData, password: value })}
-                                    placeholder="Nhập mật khẩu"
+                                    placeholder={t('Nhập mật khẩu')}
                                     required
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Nhập lại mật khẩu</label>
+                                <label>{t('Nhập lại mật khẩu')}</label>
                                 <PasswordInput
                                     value={formData.confirmPassword}
                                     onChange={(value) => setFormData({ ...formData, confirmPassword: value })}
-                                    placeholder="Xác nhận mật khẩu"
+                                    placeholder={t('Xác nhận mật khẩu')}
                                     required
                                 />
                             </div>
 
                             <button type="submit" className="auth-btn" disabled={isLoading}>
-                                {isLoading ? 'Đang xử lý...' : 'Đăng ký'}
+                                {isLoading ? t('Đang xử lý...') : t('Đăng ký')}
                             </button>
                         </form>
 
                         <div className="auth-footer">
-                            Đã có tài khoản? <Link href="/login">Đăng nhập ngay</Link>
+                            {t('Đã có tài khoản?')} <Link href={href('/login')}>{t('Đăng nhập ngay')}</Link>
                         </div>
                     </div>
                 </div>

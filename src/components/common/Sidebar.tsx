@@ -8,6 +8,7 @@ import {
     PRODUCT_PRICE_RANGES,
     ProductPriceRange,
 } from '@/lib/product-price-filter';
+import { useLocale } from '@/context/LocaleContext';
 
 interface SidebarProps {
     selectedPriceRanges: readonly ProductPriceRange[];
@@ -22,6 +23,7 @@ export default function Sidebar({
     availableCategoryValues,
     linkedCategoryValues,
 }: SidebarProps) {
+    const { t, href, apiPath } = useLocale();
     const searchParams = useSearchParams();
     const selectedCategory = searchParams.get('category') || '';
     const isLinkedProductsPage = searchParams.get('linked') === '1';
@@ -32,13 +34,13 @@ export default function Sidebar({
     );
 
     useEffect(() => {
-        fetch('/api/product-categories')
+        fetch(apiPath('/api/product-categories'))
             .then(response => response.ok ? response.json() : [])
             .then(data => {
                 if (Array.isArray(data)) setCategories(data);
             })
             .catch(() => undefined);
-    }, []);
+    }, [apiPath]);
 
     const availableCategorySet = new Set(availableCategoryValues);
     const visibleCategories = categories.filter(category =>
@@ -58,11 +60,11 @@ export default function Sidebar({
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                         <path d="M4 6h16M7 12h10M10 18h4" />
                     </svg>
-                    Bộ lọc sản phẩm
+                    {t('Bộ lọc sản phẩm')}
                 </span>
                 <span className="mobile-filter-toggle-meta">
                     {selectedPriceRanges.length > 0 && (
-                        <span>{selectedPriceRanges.length} đã chọn</span>
+                        <span>{t('{count} đã chọn', { count: selectedPriceRanges.length })}</span>
                     )}
                     <span className="mobile-filter-chevron" aria-hidden="true">⌄</span>
                 </span>
@@ -70,32 +72,32 @@ export default function Sidebar({
 
             <div id="product-filter-content" className="sidebar-mobile-content">
                 <div className="sidebar-section">
-                    <h3 className="sidebar-title">Danh mục</h3>
+                    <h3 className="sidebar-title">{t('Danh mục')}</h3>
                     <ul className="sidebar-list">
                         <li>
                             <Link
-                                href="/products"
+                                href={href('/products')}
                                 aria-current={!selectedCategory && !isLinkedProductsPage ? 'page' : undefined}
                                 className={!selectedCategory && !isLinkedProductsPage ? 'font-semibold text-[#9C7044]' : ''}
                             >
-                                Tất cả sản phẩm
+                                {t('Tất cả sản phẩm')}
                             </Link>
                         </li>
                         {visibleCategories.map(category => (
                             <li key={category.value}>
                                 <Link
-                                    href={`/products?category=${encodeURIComponent(category.value)}`}
+                                    href={href(`/products?category=${encodeURIComponent(category.value)}`)}
                                     aria-current={selectedCategory === category.value ? 'page' : undefined}
                                     className={selectedCategory === category.value ? 'font-semibold text-[#9C7044]' : ''}
                                 >
-                                    {category.label}
+                                    {t(category.label)}
                                 </Link>
                             </li>
                         ))}
                         {linkedCategoryValues.map(category => (
                             <li key={`linked-${category}`}>
                                 <Link
-                                    href={`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`}
+                                    href={href(`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`)}
                                     aria-current={isLinkedProductsPage && selectedLinkedCategory === category ? 'page' : undefined}
                                     className={isLinkedProductsPage && selectedLinkedCategory === category ? 'font-semibold text-[#9C7044]' : ''}
                                 >
@@ -107,7 +109,7 @@ export default function Sidebar({
                 </div>
 
                 <div className="sidebar-section">
-                    <h3 className="sidebar-title">Khoảng giá</h3>
+                    <h3 className="sidebar-title">{t('Khoảng giá')}</h3>
                     <div className="price-filter">
                         {PRODUCT_PRICE_RANGES.map(range => (
                             <label key={range.value}>
@@ -116,7 +118,7 @@ export default function Sidebar({
                                     checked={selectedPriceRanges.includes(range.value)}
                                     onChange={event => onPriceRangeChange(range.value, event.target.checked)}
                                 />
-                                {' '}{range.label}
+                                {' '}{t(range.label)}
                             </label>
                         ))}
                     </div>

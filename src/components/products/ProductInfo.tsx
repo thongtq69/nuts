@@ -5,6 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useSettings } from '@/context/SettingsContext';
 import { cleanHTMLContent } from '@/lib/textUtils';
+import { useLocale } from '@/context/LocaleContext';
 
 interface ProductInfoProps {
     id: string;
@@ -38,13 +39,14 @@ export default function ProductInfo({
     const { addToCart } = useCart();
     const toast = useToast();
     const { settings } = useSettings();
+    const { t, href, locale } = useLocale();
 
     // Format price
     const formatPrice = (value: string | number | undefined): string => {
         if (value === undefined || value === null) return '';
         const numValue = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^\d]/g, ''));
         if (isNaN(numValue)) return '';
-        return numValue.toLocaleString('vi-VN') + 'đ';
+        return numValue.toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN') + '₫';
     };
 
     const formattedPrice = formatPrice(price);
@@ -77,7 +79,7 @@ export default function ProductInfo({
         const priceValue = typeof price === 'number' ? price : parseFloat(String(price).replace(/[^\d]/g, ''));
 
         if (!priceValue || isNaN(priceValue) || priceValue <= 0) {
-            toast.error('Không thể thêm vào giỏ', 'Giá sản phẩm không hợp lệ');
+            toast.error(t('Không thể thêm vào giỏ'), t('Giá sản phẩm không hợp lệ'));
             return;
         }
 
@@ -94,9 +96,9 @@ export default function ProductInfo({
                 vipMaxDiscount
             });
 
-            toast.success('Đã thêm vào giỏ hàng', name);
+            toast.success(t('Đã thêm vào giỏ hàng'), name);
         } catch (error) {
-            toast.error('Không thể thêm vào giỏ', 'Vui lòng thử lại sau');
+            toast.error(t('Không thể thêm vào giỏ'), t('Vui lòng thử lại sau'));
         } finally {
             setIsAddingToCart(false);
         }
@@ -105,7 +107,7 @@ export default function ProductInfo({
     const handleBuyNow = () => {
         handleAddToCart();
         // Navigate to cart/checkout
-        window.location.href = '/cart';
+        window.location.href = href('/cart');
     };
 
     return (
@@ -122,7 +124,7 @@ export default function ProductInfo({
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <polyline points="20 6 9 17 4 12" />
                             </svg>
-                            Còn hàng
+                            {t('Còn hàng')}
                         </>
                     ) : (
                         <>
@@ -131,7 +133,7 @@ export default function ProductInfo({
                                 <line x1="15" y1="9" x2="9" y2="15" />
                                 <line x1="9" y1="9" x2="15" y2="15" />
                             </svg>
-                            Hết hàng
+                            {t('Hết hàng')}
                         </>
                     )}
                 </span>
@@ -171,13 +173,13 @@ export default function ProductInfo({
             {/* Quantity & Actions */}
             <div className="purchase-section">
                 <div className="quantity-row">
-                    <span className="quantity-label">Số lượng:</span>
+                    <span className="quantity-label">{t('Số lượng:')}</span>
                     <div className="quantity-selector-modern">
                         <button
                             className="qty-btn-modern"
                             onClick={() => handleQuantityChange(-1)}
                             disabled={quantity <= 1}
-                            aria-label="Giảm số lượng"
+                            aria-label={t('Giảm số lượng')}
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -195,7 +197,7 @@ export default function ProductInfo({
                             className="qty-btn-modern"
                             onClick={() => handleQuantityChange(1)}
                             disabled={quantity >= 999}
-                            aria-label="Tăng số lượng"
+                            aria-label={t('Tăng số lượng')}
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -220,7 +222,7 @@ export default function ProductInfo({
                                     <circle cx="20" cy="21" r="1" />
                                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                                 </svg>
-                                Thêm vào giỏ<span className="hidden md:inline"> hàng</span>
+                                {t('Thêm vào giỏ hàng')}
                             </>
                         )}
                     </button>
@@ -229,7 +231,7 @@ export default function ProductInfo({
                         onClick={handleBuyNow}
                         disabled={!inStock}
                     >
-                        Mua ngay
+                        {t('Mua ngay')}
                     </button>
                 </div>
             </div>
@@ -269,8 +271,8 @@ export default function ProductInfo({
                             )}
                         </div>
                         <div className="feature-text-modern">
-                            <strong>{feature.title}</strong>
-                            <span>{feature.description}</span>
+                            <strong>{t(feature.title)}</strong>
+                            <span>{t(feature.description)}</span>
                         </div>
                     </div>
                 ))}
@@ -283,7 +285,7 @@ export default function ProductInfo({
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                     </svg>
                     <div>
-                        <span>Hotline hỗ trợ:</span>
+                        <span>{t('Hotline hỗ trợ:')}</span>
                         <a href={`tel:${(settings?.supportHotline || '1900 123 456').replace(/\s/g, '')}`} className="hotline-number">
                             {settings?.supportHotline || '1900 123 456'}
                         </a>
@@ -313,6 +315,7 @@ function StickyMobileAction({
     handleBuyNow
 }: any) {
     const [isVisible, setIsVisible] = useState(false);
+    const { t } = useLocale();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -338,14 +341,14 @@ function StickyMobileAction({
                     onClick={handleAddToCart}
                     disabled={isAddingToCart || !inStock}
                 >
-                    {isAddingToCart ? <span className="loading-spinner-small" /> : 'Thêm giỏ'}
+                    {isAddingToCart ? <span className="loading-spinner-small" /> : t('Thêm giỏ')}
                 </button>
                 <button
                     className="sticky-btn-buy"
                     onClick={handleBuyNow}
                     disabled={!inStock}
                 >
-                    Mua ngay
+                    {t('Mua ngay')}
                 </button>
             </div>
         </div>

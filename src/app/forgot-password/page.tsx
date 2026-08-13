@@ -8,11 +8,13 @@ import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import Link from 'next/link';
 import { useToast } from '@/context/ToastContext';
+import { useLocale } from '@/context/LocaleContext';
 
 function ForgotPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
+    const { t, href } = useLocale();
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
@@ -32,13 +34,13 @@ function ForgotPasswordForm() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.message || 'Có lỗi xảy ra');
+                throw new Error(data.message || t('Có lỗi xảy ra'));
             }
 
             setSubmitted(true);
-            toast.success('Thành công', 'Vui lòng kiểm tra email để đặt lại mật khẩu');
+            toast.success(t('Thành công'), t('Vui lòng kiểm tra email để đặt lại mật khẩu'));
         } catch (err: any) {
-            toast.error('Lỗi', err.message);
+            toast.error(t('Lỗi'), err.message);
         } finally {
             setIsLoading(false);
         }
@@ -59,9 +61,9 @@ function ForgotPasswordForm() {
 
                         {!submitted ? (
                             <>
-                                <h1>Quên mật khẩu</h1>
+                                <h1>{t('Quên mật khẩu')}</h1>
                                 <p className="auth-subtitle">
-                                    Nhập email của bạn, chúng tôi sẽ gửi link đặt lại mật khẩu
+                                    {t('Nhập email của bạn, chúng tôi sẽ gửi link đặt lại mật khẩu')}
                                 </p>
 
                                 <form className="auth-form" onSubmit={handleSubmit}>
@@ -69,7 +71,7 @@ function ForgotPasswordForm() {
                                         <label>Email</label>
                                         <input
                                             type="email"
-                                            placeholder="Nhập email của bạn"
+                                            placeholder={t('Nhập email của bạn')}
                                             required
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
@@ -77,7 +79,7 @@ function ForgotPasswordForm() {
                                     </div>
 
                                     <button type="submit" className="auth-btn" disabled={isLoading}>
-                                        {isLoading ? 'Đang xử lý...' : 'Gửi yêu cầu'}
+                                        {isLoading ? t('Đang xử lý...') : t('Gửi yêu cầu')}
                                     </button>
                                 </form>
                             </>
@@ -88,24 +90,24 @@ function ForgotPasswordForm() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
-                                <h1>Kiểm tra email</h1>
+                                <h1>{t('Kiểm tra email')}</h1>
                                 <p className="auth-subtitle">
-                                    Chúng tôi đã gửi link đặt lại mật khẩu đến email <strong>{email}</strong>
+                                    {t('Chúng tôi đã gửi link đặt lại mật khẩu đến email')} <strong>{email}</strong>
                                 </p>
                                 <p className="auth-text">
-                                    Vui lòng kiểm tra hộp thư (và thư mục spam) để xem email từ chúng tôi.
+                                    {t('Vui lòng kiểm tra hộp thư (và thư mục spam) để xem email từ chúng tôi.')}
                                 </p>
                                 <button
                                     onClick={() => setSubmitted(false)}
                                     className="auth-btn-secondary"
                                 >
-                                    Gửi lại email
+                                    {t('Gửi lại email')}
                                 </button>
                             </>
                         )}
 
                         <div className="auth-footer">
-                            <Link href="/login">Quay lại đăng nhập</Link>
+                            <Link href={href('/login')}>{t('Quay lại đăng nhập')}</Link>
                         </div>
                     </div>
                 </div>

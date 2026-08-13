@@ -12,6 +12,8 @@ import ErrorBoundary from '@/components/common/ErrorBoundary';
 import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
 import { HOMEPAGE_SECTION_CONFIG } from '@/lib/homepage-products';
+import { getRequestLocale } from '@/i18n/server';
+import { localizeProduct } from '@/lib/localized-content';
 
 export const dynamic = 'force-dynamic';
 
@@ -122,12 +124,17 @@ async function getLinkedProducts(limit = 6) {
 export default async function Home() {
   console.log('🏠 Home page: Starting to fetch products...');
 
-  const [bestSellers, newProducts, promotionProducts, linkedProducts] = await Promise.all([
+  const locale = await getRequestLocale();
+  const [bestSellerData, newProductData, promotionProductData, linkedProductData] = await Promise.all([
     getProductsByTag('best-seller', 8),
     getProductsByTag('new', 8),
     getProductsByTag('promo', 8),
     getLinkedProducts(6),
   ]);
+  const bestSellers = bestSellerData.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
+  const newProducts = newProductData.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
+  const promotionProducts = promotionProductData.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
+  const linkedProducts = linkedProductData.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
 
   console.log('🏠 Home page: Products fetched:', {
     bestSellers: bestSellers.length,
@@ -180,4 +187,3 @@ export default async function Home() {
     </main>
   );
 }
-

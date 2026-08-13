@@ -1,16 +1,20 @@
 import React from 'react';
+import type { Locale } from '@/i18n/config';
 
 const BASE_URL = 'https://gonuts.vn';
 
 // ========== Organization Schema ==========
-export function OrganizationJsonLd() {
+export function OrganizationJsonLd({ locale = 'vi' }: { locale?: Locale }) {
+    const isEnglish = locale === 'en';
     const schema = {
         '@context': 'https://schema.org',
         '@type': 'Organization',
         name: 'Go Nuts',
         url: BASE_URL,
         logo: `${BASE_URL}/android-chrome-512x512.png`,
-        description: 'Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam. Hạt dinh dưỡng, trái cây sấy, combo quà tặng.',
+        description: isEnglish
+            ? 'Go Nuts offers nutritious nuts, dried fruit and clean food sourced from more than 5,000 Vietnamese farmers.'
+            : 'Go Nuts - Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam. Hạt dinh dưỡng, trái cây sấy, combo quà tặng.',
         address: {
             '@type': 'PostalAddress',
             streetAddress: 'Tầng 4, VT1-B09, Khu đô thị mới An Hưng, Phường Dương Nội',
@@ -21,7 +25,7 @@ export function OrganizationJsonLd() {
             '@type': 'ContactPoint',
             telephone: '+84-96-118-5753',
             contactType: 'customer service',
-            availableLanguage: ['Vietnamese'],
+            availableLanguage: ['Vietnamese', 'English'],
         },
         sameAs: [
             'https://www.facebook.com/profile.php?id=61572944004088',
@@ -37,19 +41,22 @@ export function OrganizationJsonLd() {
 }
 
 // ========== WebSite Schema (for Sitelinks Search Box) ==========
-export function WebSiteJsonLd() {
+export function WebSiteJsonLd({ locale = 'vi' }: { locale?: Locale }) {
+    const isEnglish = locale === 'en';
     const schema = {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: 'Go Nuts',
-        url: BASE_URL,
-        description: 'Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam',
-        inLanguage: 'vi',
+        url: isEnglish ? `${BASE_URL}/en` : BASE_URL,
+        description: isEnglish
+            ? 'Nutritious, clean food sourced from more than 5,000 Vietnamese farmers'
+            : 'Cửa hàng thực phẩm sạch, dinh dưỡng từ 5000+ nông dân Việt Nam',
+        inLanguage: locale,
         potentialAction: {
             '@type': 'SearchAction',
             target: {
                 '@type': 'EntryPoint',
-                urlTemplate: `${BASE_URL}/search?q={search_term_string}`,
+                urlTemplate: `${BASE_URL}${isEnglish ? '/en' : ''}/search?q={search_term_string}`,
             },
             'query-input': 'required name=search_term_string',
         },

@@ -6,63 +6,25 @@ import Blog from '@/models/Blog';
 const BASE_URL = 'https://gonuts.vn';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    // Static pages
-    const staticPages: MetadataRoute.Sitemap = [
-        {
-            url: BASE_URL,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 1.0,
-        },
-        {
-            url: `${BASE_URL}/products`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.9,
-        },
-        {
-            url: `${BASE_URL}/about`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.7,
-        },
-        {
-            url: `${BASE_URL}/contact`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.6,
-        },
-        {
-            url: `${BASE_URL}/news`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.8,
-        },
-        {
-            url: `${BASE_URL}/policy`,
-            lastModified: new Date(),
-            changeFrequency: 'yearly',
-            priority: 0.3,
-        },
-        {
-            url: `${BASE_URL}/search`,
-            lastModified: new Date(),
-            changeFrequency: 'weekly',
-            priority: 0.5,
-        },
-        {
-            url: `${BASE_URL}/subscriptions`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.6,
-        },
-        {
-            url: `${BASE_URL}/tra-cuu-don-hang`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.4,
-        },
+    const staticDefinitions = [
+        { path: '', changeFrequency: 'daily' as const, priority: 1.0 },
+        { path: '/products', changeFrequency: 'daily' as const, priority: 0.9 },
+        { path: '/about', changeFrequency: 'monthly' as const, priority: 0.7 },
+        { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.6 },
+        { path: '/news', changeFrequency: 'daily' as const, priority: 0.8 },
+        { path: '/policy', changeFrequency: 'yearly' as const, priority: 0.3 },
+        { path: '/subscriptions', changeFrequency: 'monthly' as const, priority: 0.6 },
+        { path: '/tra-cuu-don-hang', changeFrequency: 'monthly' as const, priority: 0.4 },
     ];
+    const staticPages: MetadataRoute.Sitemap = staticDefinitions.flatMap(page => {
+        const viUrl = `${BASE_URL}${page.path}`;
+        const enUrl = `${BASE_URL}/en${page.path}`;
+        const alternates = { languages: { vi: viUrl, en: enUrl, 'x-default': viUrl } };
+        return [
+            { url: viUrl, lastModified: new Date(), changeFrequency: page.changeFrequency, priority: page.priority, alternates },
+            { url: enUrl, lastModified: new Date(), changeFrequency: page.changeFrequency, priority: page.priority, alternates },
+        ];
+    });
 
     // Dynamic product pages
     let productPages: MetadataRoute.Sitemap = [];
@@ -72,12 +34,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             .select('_id updatedAt')
             .lean();
 
-        productPages = products.map((product: any) => ({
-            url: `${BASE_URL}/products/${product._id.toString()}`,
-            lastModified: product.updatedAt || new Date(),
-            changeFrequency: 'weekly' as const,
-            priority: 0.8,
-        }));
+        productPages = products.flatMap((product: any) => {
+            const viUrl = `${BASE_URL}/products/${product._id.toString()}`;
+            const enUrl = `${BASE_URL}/en/products/${product._id.toString()}`;
+            const alternates = { languages: { vi: viUrl, en: enUrl, 'x-default': viUrl } };
+            return [
+                { url: viUrl, lastModified: product.updatedAt || new Date(), changeFrequency: 'weekly' as const, priority: 0.8, alternates },
+                { url: enUrl, lastModified: product.updatedAt || new Date(), changeFrequency: 'weekly' as const, priority: 0.8, alternates },
+            ];
+        });
     } catch (error) {
         console.error('Error generating product sitemap:', error);
     }
@@ -87,15 +52,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
         await dbConnect();
         const blogs = await Blog.find({ isPublished: true })
-            .select('slug updatedAt')
+            .select('slug translations.en.slug translations.en.isPublished updatedAt')
             .lean();
 
-        blogPages = blogs.map((blog: any) => ({
-            url: `${BASE_URL}/news/${blog.slug}`,
-            lastModified: blog.updatedAt || new Date(),
-            changeFrequency: 'weekly' as const,
-            priority: 0.7,
-        }));
+        blogPages = blogs.flatMap((blog: any) => {
+            const viUrl = `${BASE_URL}/news/${blog.slug}`;
+            const enSlug = blog.translations?.en?.slug || blog.slug;
+            const enUrl = `${BASE_URL}/en/news/${enSlug}`;
+            const alternates = { languages: { vi: viUrl, en: enUrl, 'x-default': viUrl } };
+            const entries: MetadataRoute.Sitemap = [
+                { url: viUrl, lastModified: blog.updatedAt || new Date(), changeFrequency: 'weekly', priority: 0.7, alternates },
+            ];
+            if (blog.translations?.en?.isPublished !== false) {
+                entries.push({ url: enUrl, lastModified: blog.updatedAt || new Date(), changeFrequency: 'weekly', priority: 0.7, alternates });
+            }
+            return entries;
+        });
     } catch (error) {
         console.error('Error generating blog sitemap:', error);
     }

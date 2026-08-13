@@ -28,7 +28,22 @@ export interface ISubscriptionPackage {
     vouchers?: IVoucherConfig[];
     createdAt?: Date;
     updatedAt?: Date;
+    translations?: {
+        en?: {
+            name?: string;
+            description?: string;
+            terms?: string;
+            badgeText?: string;
+        };
+    };
 }
+
+const SubscriptionEnglishTranslationSchema = new Schema({
+    name: { type: String, trim: true },
+    description: { type: String },
+    terms: { type: String },
+    badgeText: { type: String, trim: true },
+}, { _id: false });
 
 const VoucherConfigSchema = new Schema({
     discountType: { type: String, enum: ['percent', 'fixed'], required: true },
@@ -56,6 +71,9 @@ const SubscriptionPackageSchema: Schema<ISubscriptionPackage> = new Schema(
         badgeText: { type: String, default: '' }, // Custom label like "Best Value"
         isActive: { type: Boolean, default: true },
         vouchers: { type: [VoucherConfigSchema], default: [] },
+        translations: {
+            en: { type: SubscriptionEnglishTranslationSchema, default: undefined },
+        },
     },
     {
         timestamps: true,
@@ -65,4 +83,3 @@ const SubscriptionPackageSchema: Schema<ISubscriptionPackage> = new Schema(
 const SubscriptionPackage: Model<ISubscriptionPackage> = mongoose.models.SubscriptionPackage || mongoose.model<ISubscriptionPackage>('SubscriptionPackage', SubscriptionPackageSchema);
 
 export default SubscriptionPackage;
-

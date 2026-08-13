@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Blog from '@/models/Blog';
 import { getAuthUser, requireAdminAuth } from '@/lib/auth-permissions';
+import { getUrlLocale } from '@/i18n/server';
+import { localizeBlog } from '@/lib/localized-content';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +11,7 @@ export async function GET(req: Request) {
     try {
         await dbConnect();
         const { searchParams } = new URL(req.url);
+        const locale = getUrlLocale(req);
         const published = searchParams.get('published');
         const summaryOnly = searchParams.get('summary') === 'true';
         const requestedLimit = Number.parseInt(searchParams.get('limit') || '', 10);
@@ -17,9 +20,12 @@ export async function GET(req: Request) {
             : 0;
 
         const authUser = await getAuthUser();
-        const filter: { isPublished?: boolean } = {};
+        const filter: { isPublished?: boolean; 'translations.en.isPublished'?: { $ne: boolean } } = {};
         if (published === 'true' || authUser?.role !== 'admin') {
             filter.isPublished = true;
+        }
+        if (locale === 'en' && authUser?.role !== 'admin') {
+            filter['translations.en.isPublished'] = { $ne: false };
         }
 
         let query = Blog.find(filter).sort({ createdAt: -1 });
@@ -35,7 +41,7 @@ export async function GET(req: Request) {
         const blogs = await query.lean();
 
         return NextResponse.json(blogs.map((blog) => ({
-            ...blog,
+            ...localizeBlog(blog as any, locale),
             _id: blog._id.toString(),
         })));
     } catch (error) {

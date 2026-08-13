@@ -8,6 +8,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Calendar, ArrowRight, Tag } from 'lucide-react';
 import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Blog {
     _id: string;
@@ -24,6 +25,7 @@ interface Blog {
 }
 
 export default function NewsPage() {
+    const { t, href, apiPath, locale } = useLocale();
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export default function NewsPage() {
 
     useEffect(() => {
         fetchBlogs();
-    }, []);
+    }, [apiPath]);
 
     useEffect(() => {
         if (activeCategory === 'Tất cả') {
@@ -45,7 +47,7 @@ export default function NewsPage() {
 
     const fetchBlogs = async () => {
         try {
-            const res = await fetch('/api/blogs?published=true&summary=true');
+            const res = await fetch(apiPath('/api/blogs?published=true&summary=true'));
             if (res.ok) {
                 const data = await res.json();
                 setBlogs(data);
@@ -61,7 +63,7 @@ export default function NewsPage() {
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
     return (
@@ -74,8 +76,8 @@ export default function NewsPage() {
                 <div className="container mx-auto px-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
                         <div>
-                            <h1 className="text-4xl font-black text-[#3C2A1A] uppercase tracking-tight">Tin tức & Khuyến mãi</h1>
-                            <p className="text-slate-500 mt-2">Cập nhật những tin tức mới nhất về GoNuts và các chương trình ưu đãi hấp dẫn</p>
+                            <h1 className="text-4xl font-black text-[#3C2A1A] uppercase tracking-tight">{t('Tin tức & Khuyến mãi')}</h1>
+                            <p className="text-slate-500 mt-2">{t('Cập nhật những tin tức mới nhất về GoNuts và các chương trình ưu đãi hấp dẫn')}</p>
                         </div>
 
                         {/* Category Filter */}
@@ -89,7 +91,7 @@ export default function NewsPage() {
                                         : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                                         }`}
                                 >
-                                    {cat}
+                                    {t(cat)}
                                 </button>
                             ))}
                         </div>
@@ -113,13 +115,13 @@ export default function NewsPage() {
                             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <Tag className="text-slate-300" size={40} />
                             </div>
-                            <h3 className="text-xl font-bold text-slate-800">Chưa có bài viết nào</h3>
-                            <p className="text-slate-500 mt-2">Vui lòng quay lại sau hoặc chọn danh mục khác.</p>
+                            <h3 className="text-xl font-bold text-slate-800">{t('Chưa có bài viết nào')}</h3>
+                            <p className="text-slate-500 mt-2">{t('Vui lòng quay lại sau hoặc chọn danh mục khác.')}</p>
                             <button
                                 onClick={() => setActiveCategory('Tất cả')}
                                 className="mt-8 px-6 py-3 bg-[#9C7044]/10 text-[#9C7044] font-bold rounded-xl hover:bg-[#9C7044]/20 transition-all"
                             >
-                                Xem tất cả bài viết
+                                {t('Xem tất cả bài viết')}
                             </button>
                         </div>
                     ) : (
@@ -156,7 +158,7 @@ export default function NewsPage() {
                                             {formatDate(item.createdAt)}
                                         </div>
 
-                                        <Link href={`/news/${item.slug}`}>
+                                        <Link href={href(`/news/${item.slug}`)}>
                                             <h2 className="text-xl font-black text-[#3C2A1A] mb-4 line-clamp-2 transition-colors group-hover:text-[#9C7044]">
                                                 {item.title}
                                             </h2>
@@ -168,10 +170,10 @@ export default function NewsPage() {
 
                                         <div className="mt-auto pt-6 border-t border-slate-50">
                                             <Link
-                                                href={`/news/${item.slug}`}
+                                                href={href(`/news/${item.slug}`)}
                                                 className="inline-flex items-center gap-2 text-sm font-black text-[#3C2A1A] uppercase tracking-widest transition-all hover:gap-4 hover:text-[#9C7044]"
                                             >
-                                                Đọc chi tiết
+                                                {t('Đọc chi tiết')}
                                                 <ArrowRight size={16} strokeWidth={3} />
                                             </Link>
                                         </div>

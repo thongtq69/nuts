@@ -84,9 +84,10 @@ const CommissionTierSchema: Schema<ICommissionTier> = new Schema(
         toJSON: {
             virtuals: true,
             transform: function (doc, ret) {
-                ret.id = ret._id.toString();
-                delete ret._id;
-                delete ret.__v;
+                const transformed = ret as Record<string, unknown>;
+                transformed.id = String(transformed._id);
+                delete transformed._id;
+                delete transformed.__v;
             }
         }
     }

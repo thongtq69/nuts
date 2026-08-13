@@ -5,6 +5,7 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Blog {
     _id: string;
@@ -25,10 +26,11 @@ interface Props {
 }
 
 export default function BlogDetailClient({ blog }: Props) {
+    const { t, locale } = useLocale();
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
     if (!blog) {
@@ -39,8 +41,8 @@ export default function BlogDetailClient({ blog }: Props) {
                 <main>
                     <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Tin tức', href: '/news' }]} />
                     <div className="container py-20 text-center">
-                        <h1 className="text-2xl font-bold text-gray-800 mb-4">Bài viết không tồn tại</h1>
-                        <p className="text-gray-500">Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+                        <h1 className="text-2xl font-bold text-gray-800 mb-4">{t('Bài viết không tồn tại')}</h1>
+                        <p className="text-gray-500">{t('Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.')}</p>
                     </div>
                 </main>
                 <Footer />
@@ -62,7 +64,7 @@ export default function BlogDetailClient({ blog }: Props) {
                             <h1 className="blog-title">{blog.title}</h1>
                             <div className="blog-meta">
                                 <span>{formatDate(blog.createdAt)}</span>
-                                <span>{blog.viewCount || 0} lượt xem</span>
+                                <span>{t('{count} lượt xem', { count: blog.viewCount || 0 })}</span>
                             </div>
                         </header>
 

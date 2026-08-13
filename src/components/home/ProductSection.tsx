@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import ProductCard from '../common/ProductCard';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Product {
     id: string | number;
@@ -48,6 +49,7 @@ export default function ProductSection({
     viewMoreHref = '/products',
     paginate = true,
 }: ProductSectionProps) {
+    const { t, href } = useLocale();
     const [pageSize, setPageSize] = useState(6);
     const [page, setPage] = useState(0);
 
@@ -78,7 +80,7 @@ export default function ProductSection({
         <section className="products-section">
             <div className="container">
                 <div className="section-header">
-                    <h2 className="section-title">{title}</h2>
+                    <h2 className="section-title">{t(title)}</h2>
                     <div className="section-actions">
                         {paginate && products.length > pageSize && (
                             <div className="section-pager" aria-label="Product section pagination">
@@ -103,8 +105,8 @@ export default function ProductSection({
                                 </button>
                             </div>
                         )}
-                        <Link href={viewMoreHref} className="view-more">
-                            Xem thêm
+                        <Link href={href(viewMoreHref)} className="view-more">
+                            {t('Xem thêm')}
                         </Link>
                     </div>
                 </div>
@@ -133,8 +135,8 @@ export default function ProductSection({
                     <div className="no-products">
                         <div className="no-products-content">
                             <div className="no-products-icon">📦</div>
-                            <h3>Đang cập nhật sản phẩm</h3>
-                            <p>Chúng tôi đang cập nhật các sản phẩm mới. Vui lòng quay lại sau!</p>
+                            <h3>{t('Đang cập nhật sản phẩm')}</h3>
+                            <p>{t('Chúng tôi đang cập nhật các sản phẩm mới. Vui lòng quay lại sau!')}</p>
                         </div>
                     </div>
                 )}

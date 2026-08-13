@@ -160,7 +160,9 @@ async function seedTiers() {
         await mongoose.connect(MONGODB_URI);
         console.log('Connected!');
 
-        const collection = mongoose.connection.db.collection('commissiontiers');
+        const database = mongoose.connection.db;
+        if (!database) throw new Error('MongoDB connection is not ready');
+        const collection = database.collection('commissiontiers');
 
         // Delete existing tiers
         const deleteResult = await collection.deleteMany({});

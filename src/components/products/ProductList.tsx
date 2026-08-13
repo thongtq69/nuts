@@ -20,6 +20,7 @@ import {
     ProductPriceRange,
 } from '@/lib/product-price-filter';
 import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary-image';
+import { useLocale } from '@/context/LocaleContext';
 
 interface ProductListProps {
     products: IProduct[];
@@ -33,6 +34,7 @@ interface SiteSettings {
 
 export default function ProductList({ products, initialSettings }: ProductListProps) {
     const searchParams = useSearchParams();
+    const { t, href, apiPath, locale } = useLocale();
     const [sortOption, setSortOption] = useState('default');
     const [selectedPriceRanges, setSelectedPriceRanges] = useState<ProductPriceRange[]>([]);
     const [settings, setSettings] = useState<SiteSettings>(initialSettings || {
@@ -47,7 +49,7 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('/api/settings', { cache: 'no-store' });
+                const res = await fetch(apiPath('/api/settings'), { cache: 'no-store' });
                 if (res.ok) {
                     const data = await res.json();
                     setSettings({
@@ -62,16 +64,16 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             }
         };
         fetchSettings();
-    }, []);
+    }, [apiPath]);
 
     useEffect(() => {
-        fetch('/api/product-categories')
+        fetch(apiPath('/api/product-categories'))
             .then(response => response.ok ? response.json() : [])
             .then(data => {
                 if (Array.isArray(data)) setProductCategories(data);
             })
             .catch(() => undefined);
-    }, []);
+    }, [apiPath]);
 
     // Get sort parameter from URL
     const urlSort = searchParams.get('sort');
@@ -86,7 +88,7 @@ export default function ProductList({ products, initialSettings }: ProductListPr
             .filter(product => product.isLinkedProduct && product.linkedCategory)
             .map(product => product.linkedCategory!.trim())
             .filter(Boolean)
-    )).sort((a, b) => a.localeCompare(b, 'vi')), [products]);
+    )).sort((a, b) => a.localeCompare(b, locale === 'en' ? 'en' : 'vi')), [products, locale]);
     const availableCategoryValues = useMemo(
         () => getCategoryValuesWithProducts(products),
         [products],
@@ -169,11 +171,11 @@ export default function ProductList({ products, initialSettings }: ProductListPr
     // Get page title based on URL sort parameter
     const getPageTitle = () => {
         if (isLinkedProductsPage && linkedCategory) return linkedCategory;
-        if (isLinkedProductsPage) return 'Sản phẩm liên kết';
-        if (selectedCategoryLabel) return selectedCategoryLabel;
-        if (urlSort === 'bestselling') return 'Sản phẩm bán chạy';
-        if (urlSort === 'newest') return 'Sản phẩm mới';
-        return 'Sản phẩm';
+        if (isLinkedProductsPage) return t('Sản phẩm liên kết');
+        if (selectedCategoryLabel) return t(selectedCategoryLabel);
+        if (urlSort === 'bestselling') return t('Sản phẩm bán chạy');
+        if (urlSort === 'newest') return t('Sản phẩm mới');
+        return t('Sản phẩm');
     };
 
     // Get breadcrumb items based on URL sort parameter
@@ -244,34 +246,34 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                         {isLinkedProductsPage && (
                             <p className="page-description">
                                 {linkedCategory
-                                    ? `Các sản phẩm liên kết thuộc submenu ${linkedCategory}`
-                                    : 'Khám phá các sản phẩm liên kết được Go Nuts tuyển chọn'}
+                                    ? t('Các sản phẩm liên kết thuộc submenu {category}', { category: linkedCategory })
+                                    : t('Khám phá các sản phẩm liên kết được Go Nuts tuyển chọn')}
                             </p>
                         )}
                         {urlSort === 'bestselling' && (
-                            <p className="page-description">Những sản phẩm được yêu thích và bán chạy nhất</p>
+                            <p className="page-description">{t('Những sản phẩm được yêu thích và bán chạy nhất')}</p>
                         )}
                         {urlSort === 'newest' && (
-                            <p className="page-description">Sản phẩm mới nhất vừa được cập nhật</p>
+                            <p className="page-description">{t('Sản phẩm mới nhất vừa được cập nhật')}</p>
                         )}
                     </div>
 
                     {isLinkedProductsPage && linkedCategories.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-5">
                             <Link
-                                href="/products?linked=1"
+                                href={href('/products?linked=1')}
                                 className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
                                     !linkedCategory
                                         ? 'bg-[#9C7044] text-white border-[#9C7044]'
                                         : 'bg-white text-slate-600 border-slate-200 hover:border-[#9C7044] hover:text-[#9C7044]'
                                 }`}
                             >
-                                Tất cả
+                                {t('Tất cả')}
                             </Link>
                             {linkedCategories.map(category => (
                                 <Link
                                     key={category}
-                                    href={`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`}
+                                    href={href(`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`)}
                                     className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
                                         linkedCategory === category
                                             ? 'bg-[#9C7044] text-white border-[#9C7044]'
@@ -285,17 +287,17 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                     )}
 
                     <div className="sort-bar">
-                        <span>Hiển thị 1–{filteredAndSortedProducts.length} trong {filteredAndSortedProducts.length} kết quả</span>
+                        <span>{t('Hiển thị 1–{count} trong {count} kết quả', { count: filteredAndSortedProducts.length })}</span>
                         <select
                             className="sort-select"
                             value={sortOption}
                             onChange={(e) => setSortOption(e.target.value)}
                         >
-                            <option value="default">Thứ tự mặc định</option>
-                            <option value="price-low-high">Giá thấp đến cao</option>
-                            <option value="price-high-low">Giá cao đến thấp</option>
-                            <option value="newest">Mới nhất</option>
-                            <option value="bestselling">Bán chạy nhất</option>
+                            <option value="default">{t('Thứ tự mặc định')}</option>
+                            <option value="price-low-high">{t('Giá thấp đến cao')}</option>
+                            <option value="price-high-low">{t('Giá cao đến thấp')}</option>
+                            <option value="newest">{t('Mới nhất')}</option>
+                            <option value="bestselling">{t('Bán chạy nhất')}</option>
                         </select>
                     </div>
 
@@ -321,17 +323,17 @@ export default function ProductList({ products, initialSettings }: ProductListPr
                         ) : (
                             <div className="no-products">
                                 <div className="no-products-icon">📦</div>
-                                <h3>Không tìm thấy sản phẩm</h3>
+                                <h3>{t('Không tìm thấy sản phẩm')}</h3>
                                 <p>
                                     {urlSort === 'bestselling'
-                                        ? 'Chưa có sản phẩm bán chạy nào. Vui lòng quay lại sau.'
+                                        ? t('Chưa có sản phẩm bán chạy nào. Vui lòng quay lại sau.')
                                         : urlSort === 'newest'
-                                            ? 'Chưa có sản phẩm mới nào. Vui lòng quay lại sau.'
-                                            : 'Đang cập nhật sản phẩm...'
+                                            ? t('Chưa có sản phẩm mới nào. Vui lòng quay lại sau.')
+                                            : t('Đang cập nhật sản phẩm...')
                                     }
                                 </p>
-                                <Link href="/" className="back-home-btn">
-                                    Về trang chủ
+                                <Link href={href('/')} className="back-home-btn">
+                                    {t('Về trang chủ')}
                                 </Link>
                             </div>
                         )}

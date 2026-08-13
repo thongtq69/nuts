@@ -3,6 +3,7 @@
 import { Truck, RotateCcw, ShieldCheck, Users } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { DEFAULT_HOME_FEATURES, HomeFeatureIcon } from '@/lib/site-features';
+import { useLocale } from '@/context/LocaleContext';
 
 const FEATURE_ICONS = {
     truck: Truck,
@@ -13,6 +14,7 @@ const FEATURE_ICONS = {
 
 export default function FeaturesSection() {
     const { settings } = useSettings();
+    const { t } = useLocale();
     const features = (settings?.homeFeatures?.length ? settings.homeFeatures : DEFAULT_HOME_FEATURES)
         .filter(feature => feature.enabled);
 
@@ -29,7 +31,7 @@ export default function FeaturesSection() {
                                 <div className="feature-icon">
                                     <Icon size={32} strokeWidth={2} />
                                 </div>
-                                <p className="feature-text">{feature.text}</p>
+                                <p className="feature-text">{t(feature.text)}</p>
                             </div>
                         );
                     })}

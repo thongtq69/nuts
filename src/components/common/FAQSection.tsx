@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, HelpCircle, Loader2 } from 'lucide-react';
+import { useLocale } from '@/context/LocaleContext';
 
 interface FAQ {
     _id: string;
@@ -28,12 +29,13 @@ export default function FAQSection({
     const [faqs, setFaqs] = useState<FAQ[]>([]);
     const [loading, setLoading] = useState(true);
     const [openIndex, setOpenIndex] = useState<number | null>(0);
+    const { t, apiPath } = useLocale();
 
     useEffect(() => {
         const fetchFaqs = async () => {
             try {
-                let url = '/api/faqs';
-                if (category) url += `?category=${category}`;
+                const baseUrl = category ? `/api/faqs?category=${encodeURIComponent(category)}` : '/api/faqs';
+                const url = apiPath(baseUrl);
 
                 const res = await fetch(url);
                 if (res.ok) {
@@ -49,13 +51,13 @@ export default function FAQSection({
         };
 
         fetchFaqs();
-    }, [category, limit]);
+    }, [category, limit, apiPath]);
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-brand mb-2" />
-                <p className="text-slate-500 text-sm">Đang tải câu hỏi...</p>
+                <p className="text-slate-500 text-sm">{t('Đang tải câu hỏi...')}</p>
             </div>
         );
     }
@@ -65,8 +67,8 @@ export default function FAQSection({
     return (
         <section className={`faq-component py-12 ${className}`}>
             <div className="text-center mb-10">
-                <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">{title}</h2>
-                {description && <p className="text-slate-500 max-w-2xl mx-auto">{description}</p>}
+                <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">{t(title)}</h2>
+                {description && <p className="text-slate-500 max-w-2xl mx-auto">{t(description)}</p>}
             </div>
 
             <div className="max-w-3xl mx-auto space-y-4 px-4">

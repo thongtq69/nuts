@@ -273,12 +273,12 @@ test('staff roles can never inherit customer voucher permissions', async () => {
         );
     }
 
-    const [authPermissionsSource, middlewareSource] = await Promise.all([
+    const [authPermissionsSource, proxySource] = await Promise.all([
         readFile(new URL('../src/lib/auth-permissions.ts', import.meta.url), 'utf8'),
-        readFile(new URL('../src/middleware.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/proxy.ts', import.meta.url), 'utf8'),
     ]);
     assert.match(authPermissionsSource, /customPermissions[\s\S]*filter\(permission => !permission\.startsWith\('vouchers:'\)\)/);
-    assert.match(middlewareSource, /if \(requiredPermission\.startsWith\('vouchers:'\)\) return false;/);
+    assert.match(proxySource, /if \(requiredPermission\.startsWith\('vouchers:'\)\) return false;/);
 });
 
 test('staff customer scope includes only direct and team referral relationships', () => {

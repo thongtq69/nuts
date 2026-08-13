@@ -3,19 +3,34 @@ import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
 import SiteSettings, { ISiteSettings } from '@/models/SiteSettings';
 import ProductList from '@/components/products/ProductList';
+import { getRequestLocale } from '@/i18n/server';
+import { localizeProduct, localizeSettings } from '@/lib/localized-content';
 
 export async function generateMetadata(): Promise<Metadata> {
+    const locale = await getRequestLocale();
+    const isEnglish = locale === 'en';
     const settings = await getSiteSettings();
     const bannerUrl = (settings.productsBannerUrl?.startsWith('http')
         ? settings.productsBannerUrl
         : `https://gonuts.vn${settings.productsBannerUrl}`) || "https://res.cloudinary.com/du6no35fj/image/upload/v1770576812/gonuts/banners/products_banner_1770576809653.png";
 
     return {
-        title: "Tất cả sản phẩm | Go Nuts",
-        description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
+        title: isEnglish ? 'All Products | Go Nuts' : 'Tất cả sản phẩm | Go Nuts',
+        description: isEnglish
+            ? 'Explore nutritious nuts, dried fruit and gift collections from Go Nuts.'
+            : 'Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.',
+        alternates: {
+            canonical: isEnglish ? 'https://gonuts.vn/en/products' : 'https://gonuts.vn/products',
+            languages: {
+                'vi-VN': 'https://gonuts.vn/products',
+                en: 'https://gonuts.vn/en/products',
+                'x-default': 'https://gonuts.vn/products',
+            },
+        },
         openGraph: {
-            title: "Tất cả sản phẩm | Go Nuts",
-            description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
+            title: isEnglish ? 'All Products | Go Nuts' : 'Tất cả sản phẩm | Go Nuts',
+            description: isEnglish ? 'Explore nutritious products from Go Nuts.' : 'Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.',
+            locale: isEnglish ? 'en_US' : 'vi_VN',
             images: [
                 {
                     url: `${bannerUrl}${bannerUrl.includes('?') ? '&' : '?'}v=10`,
@@ -27,8 +42,8 @@ export async function generateMetadata(): Promise<Metadata> {
         },
         twitter: {
             card: "summary_large_image",
-            title: "Tất cả sản phẩm | Go Nuts",
-            description: "Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.",
+            title: isEnglish ? 'All Products | Go Nuts' : 'Tất cả sản phẩm | Go Nuts',
+            description: isEnglish ? 'Explore nutritious products from Go Nuts.' : 'Khám phá danh mục các loại hạt dinh dưỡng, trái cây sấy và combo quà tặng từ Go Nuts.',
             images: [`${bannerUrl}${bannerUrl.includes('?') ? '&' : '?'}v=10`],
         },
     };
@@ -76,10 +91,13 @@ async function getSiteSettings(): Promise<Partial<ISiteSettings>> {
 }
 
 export default async function ProductsPage() {
+    const locale = await getRequestLocale();
     const [products, settings] = await Promise.all([
         getProducts(),
         getSiteSettings()
     ]);
 
-    return <ProductList products={products} initialSettings={settings} />;
+    const localizedProducts = products.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
+    const localizedSettings = localizeSettings(settings as any, locale) as Partial<ISiteSettings>;
+    return <ProductList products={localizedProducts} initialSettings={localizedSettings} />;
 }

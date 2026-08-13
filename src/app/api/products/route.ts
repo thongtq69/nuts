@@ -3,6 +3,8 @@ import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
 import { describeProductPersistenceError } from '@/lib/product-persistence-error';
+import { getUrlLocale } from '@/i18n/server';
+import { localizeProduct } from '@/lib/localized-content';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,17 +17,24 @@ export async function GET(request: Request) {
 
         // Simple query handling could be added here (e.g., ?category=...)
         const { searchParams } = new URL(request.url);
+        const locale = getUrlLocale(request);
         const category = searchParams.get('category');
         const query = searchParams.get('q');
         const linked = searchParams.get('linked');
         const linkedCategory = searchParams.get('linkedCategory')?.trim();
 
         let filter: any = {};
+        if (locale === 'en') {
+            filter['translations.en.isPublished'] = { $ne: false };
+        }
         if (category) {
             filter.category = category;
         }
         if (query) {
-            filter.name = { $regex: query, $options: 'i' };
+            filter.$or = [
+                { name: { $regex: query, $options: 'i' } },
+                { 'translations.en.name': { $regex: query, $options: 'i' } },
+            ];
         }
         if (linked === 'true' || linked === '1') {
             filter.isLinkedProduct = true;
@@ -44,7 +53,7 @@ export async function GET(request: Request) {
 
         // Convert ObjectId to string for JSON serialization
         const serializedProducts = products.map((product: any) => ({
-            ...product,
+            ...localizeProduct(product, locale),
             _id: product._id.toString(),
             id: product._id.toString()
         }));

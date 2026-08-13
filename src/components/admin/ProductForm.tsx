@@ -24,7 +24,8 @@ import {
     BarChart3,
     Wallet,
     Link2,
-    Crown
+    Crown,
+    Languages
 } from 'lucide-react';
 import { RichTextEditor } from './ui';
 import TagInput from './TagInput';
@@ -45,7 +46,7 @@ interface ProductFormProps {
     isEdit?: boolean;
 }
 
-type TabType = 'basic' | 'images' | 'inventory' | 'seo';
+type TabType = 'basic' | 'english' | 'images' | 'inventory' | 'seo';
 
 const BADGE_COLORS = [
     { value: '', label: 'Không có', class: '' },
@@ -108,6 +109,16 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         // Physical
         weight: initialData.weight || 0.5,
         sortOrder: initialData.sortOrder || 0,
+        translations: {
+            en: {
+                name: initialData.translations?.en?.name || '',
+                shortDescription: initialData.translations?.en?.shortDescription || '',
+                description: initialData.translations?.en?.description || '',
+                badgeText: initialData.translations?.en?.badgeText || '',
+                linkedCategory: initialData.translations?.en?.linkedCategory || '',
+                isPublished: initialData.translations?.en?.isPublished ?? true,
+            },
+        },
     });
 
 
@@ -168,6 +179,16 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
     const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: Number(value) || 0 }));
+    };
+
+    const handleEnglishChange = (field: string, value: string | boolean) => {
+        setFormData(previous => ({
+            ...previous,
+            translations: {
+                ...previous.translations,
+                en: { ...previous.translations.en, [field]: value },
+            },
+        }));
     };
 
     const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -351,6 +372,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
 
     const tabs: { id: TabType; label: string; icon: any }[] = [
         { id: 'basic', label: 'Thông tin cơ bản', icon: Package },
+        { id: 'english', label: 'English', icon: Languages },
         { id: 'images', label: 'Hình ảnh', icon: ImageIcon },
         { id: 'inventory', label: 'Tồn kho', icon: Box },
         { id: 'seo', label: 'SEO', icon: BarChart3 },
@@ -775,6 +797,83 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                         placeholder="Nhập mô tả chi tiết về sản phẩm: thành phần, hướng vị, nguồn gốc, hướng dẫn sử dụng..."
                                     />
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'english' && (
+                        <div className="space-y-6">
+                            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="font-bold text-slate-900">English product content</h2>
+                                        <p className="mt-1 text-sm text-slate-600">Leave a field blank to fall back to the Vietnamese version.</p>
+                                    </div>
+                                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.translations.en.isPublished}
+                                            onChange={event => handleEnglishChange('isPublished', event.target.checked)}
+                                            className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                                        />
+                                        Publish in English
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Product name</label>
+                                <input
+                                    type="text"
+                                    value={formData.translations.en.name}
+                                    onChange={event => handleEnglishChange('name', event.target.value)}
+                                    placeholder={formData.name || 'English product name'}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                                />
+                            </div>
+
+                            {formData.isLinkedProduct && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Linked-product submenu</label>
+                                    <input
+                                        type="text"
+                                        value={formData.translations.en.linkedCategory}
+                                        onChange={event => handleEnglishChange('linkedCategory', event.target.value)}
+                                        placeholder={formData.linkedCategory || 'English submenu name'}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Badge text</label>
+                                <input
+                                    type="text"
+                                    value={formData.translations.en.badgeText}
+                                    onChange={event => handleEnglishChange('badgeText', event.target.value)}
+                                    placeholder={formData.badgeText || 'e.g. Best Seller'}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Short description</label>
+                                <textarea
+                                    value={formData.translations.en.shortDescription}
+                                    onChange={event => handleEnglishChange('shortDescription', event.target.value)}
+                                    rows={3}
+                                    placeholder="A concise English product introduction..."
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Full description</label>
+                                <RichTextEditor
+                                    value={formData.translations.en.description}
+                                    onChange={(content: string) => handleEnglishChange('description', content)}
+                                    placeholder="Ingredients, origin, benefits and usage instructions in English..."
+                                />
                             </div>
                         </div>
                     )}

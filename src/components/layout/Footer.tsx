@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/context/ToastContext';
 import { OFFICIAL_COMPANY_NAME } from '@/constants/company';
+import { useLocale } from '@/context/LocaleContext';
 
 interface SiteSettings {
     hotline: string;
@@ -28,11 +29,12 @@ interface SiteSettings {
 export default function Footer() {
     const [settings, setSettings] = useState<SiteSettings | null>(null);
     const toast = useToast();
+    const { t, href, apiPath } = useLocale();
 
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('/api/settings', { cache: 'no-store' });
+                const res = await fetch(apiPath('/api/settings'), { cache: 'no-store' });
                 if (res.ok) {
                     const data = await res.json();
                     setSettings(data);
@@ -43,7 +45,7 @@ export default function Footer() {
         };
 
         fetchSettings();
-    }, []);
+    }, [apiPath]);
 
     // Default values nếu chưa load được settings
     const defaultSettings = {
@@ -66,7 +68,7 @@ export default function Footer() {
 
     const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        toast.success('Đăng ký thành công', 'Cảm ơn bạn đã đăng ký!');
+        toast.success(t('Đăng ký thành công'), t('Cảm ơn bạn đã đăng ký!'));
     };
 
     return (
@@ -86,10 +88,10 @@ export default function Footer() {
                             }}
                         />
                         <p className="company-name">{currentSettings.siteName}</p>
-                        <p className="footer-address">Địa chỉ: {currentSettings.address}</p>
-                        <p className="footer-contact">Số điện thoại: {currentSettings.hotline}</p>
+                        <p className="footer-address">{t('Địa chỉ')}: {currentSettings.address}</p>
+                        <p className="footer-contact">{t('Số điện thoại')}: {currentSettings.hotline}</p>
                         <p className="footer-contact">Email: {currentSettings.email}</p>
-                        <p className="license footer-license">Số giấy phép kinh doanh: {currentSettings.businessLicense || '0123xxxxxx'}</p>
+                        <p className="license footer-license">{t('Số giấy phép kinh doanh')}: {currentSettings.businessLicense || '0123xxxxxx'}</p>
                     </div>
 
                     {/* Menu */}
@@ -97,55 +99,55 @@ export default function Footer() {
                         <h4 className="footer-title">Menu</h4>
                         <ul className="footer-links">
                             <li>
-                                <Link href="/about">Về chúng tôi</Link>
+                                <Link href={href('/about')}>{t('Về chúng tôi')}</Link>
                             </li>
                             <li>
-                                <Link href="/register?type=agent">Đăng ký Đại lý</Link>
+                                <Link href={href('/register?type=agent')}>{t('Đăng ký Đại lý')}</Link>
                             </li>
                             <li>
-                                <Link href="/subscriptions">Gói VIP</Link>
+                                <Link href={href('/subscriptions')}>{t('Gói VIP')}</Link>
                             </li>
                             <li>
-                                <Link href="/policy">Chính sách</Link>
+                                <Link href={href('/policy')}>{t('Chính sách')}</Link>
                             </li>
                             <li>
-                                <Link href="/contact">Liên hệ</Link>
+                                <Link href={href('/contact')}>{t('Liên hệ')}</Link>
                             </li>
                             <li>
-                                <Link href="/tra-cuu-don-hang">Tra cứu đơn hàng</Link>
+                                <Link href={href('/tra-cuu-don-hang')}>{t('Tra cứu đơn hàng')}</Link>
                             </li>
                         </ul>
                     </div>
 
                     {/* Products */}
                     <div className="footer-col footer-products">
-                        <h4 className="footer-title">Sản phẩm</h4>
+                        <h4 className="footer-title">{t('Sản phẩm')}</h4>
                         <ul className="footer-links">
                             <li>
-                                <Link href="/products?sort=newest">Sản phẩm mới</Link>
+                                <Link href={href('/products?sort=newest')}>{t('Sản phẩm mới')}</Link>
                             </li>
                             <li>
-                                <Link href="/products?category=sale">Sản phẩm khuyến mãi</Link>
+                                <Link href={href('/products?category=sale')}>{t('Sản phẩm khuyến mãi')}</Link>
                             </li>
                             <li>
-                                <Link href="/subscriptions">Gói VIP</Link>
+                                <Link href={href('/subscriptions')}>{t('Gói VIP')}</Link>
                             </li>
                             <li>
-                                <Link href="/news">Tin tức</Link>
+                                <Link href={href('/news')}>{t('Tin tức')}</Link>
                             </li>
                             <li>
-                                <Link href="/contact">Liên hệ</Link>
+                                <Link href={href('/contact')}>{t('Liên hệ')}</Link>
                             </li>
                         </ul>
                     </div>
 
                     {/* Newsletter */}
                     <div className="footer-col newsletter-col footer-newsletter">
-                        <h4 className="footer-title">Đăng ký nhận khuyến mãi</h4>
+                        <h4 className="footer-title">{t('Đăng ký nhận khuyến mãi')}</h4>
                         <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
-                            <input type="email" placeholder="Nhập email của bạn" required />
+                            <input type="email" placeholder={t('Nhập email của bạn')} required />
                             <button type="submit" className="btn-submit">
-                                Gửi
+                                {t('Gửi')}
                             </button>
                         </form>
 

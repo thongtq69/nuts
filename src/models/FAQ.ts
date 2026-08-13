@@ -6,7 +6,18 @@ export interface IFAQ extends Document {
     category: string; // e.g., 'general', 'membership', 'shipping', 'about'
     order: number;
     isActive: boolean;
+    translations?: {
+        en?: {
+            question?: string;
+            answer?: string;
+        };
+    };
 }
+
+const FAQEnglishTranslationSchema = new Schema({
+    question: { type: String, trim: true },
+    answer: { type: String },
+}, { _id: false });
 
 const FAQSchema: Schema<IFAQ> = new Schema(
     {
@@ -15,6 +26,9 @@ const FAQSchema: Schema<IFAQ> = new Schema(
         category: { type: String, default: 'general' },
         order: { type: Number, default: 0 },
         isActive: { type: Boolean, default: true },
+        translations: {
+            en: { type: FAQEnglishTranslationSchema, default: undefined },
+        },
     },
     {
         timestamps: true,

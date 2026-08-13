@@ -3,14 +3,19 @@ import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
 import { describeProductPersistenceError } from '@/lib/product-persistence-error';
+import { getUrlLocale } from '@/i18n/server';
+import { isPublishedForLocale, localizeProduct } from '@/lib/localized-content';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
         await dbConnect();
-        const product = await Product.findById(id);
-        if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-        return NextResponse.json(product);
+        const product = await Product.findById(id).lean();
+        const locale = getUrlLocale(request);
+        if (!product || !isPublishedForLocale(product as any, locale)) {
+            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        }
+        return NextResponse.json(localizeProduct(product as any, locale));
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 });
     }

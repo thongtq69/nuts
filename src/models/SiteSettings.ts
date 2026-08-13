@@ -65,6 +65,21 @@ export interface ISiteSettings {
     homePromoBannerEnabled: boolean;
 
     updatedAt?: Date;
+    translations?: {
+        en?: {
+            address?: string;
+            workingHours?: string;
+            promoText?: string;
+            homePromotionText?: string;
+            homeFeatures?: HomeFeature[];
+            productFeatures?: IProductFeature[];
+            productsBannerUrl?: string;
+            homePromoBannerUrl?: string;
+            homePromoBannerTitle?: string;
+            homePromoBannerButtonText?: string;
+            homePromoBannerNote?: string;
+        };
+    };
 }
 
 const ProductFeatureSchema = new Schema<IProductFeature>({
@@ -78,6 +93,20 @@ const HomeFeatureSchema = new Schema<HomeFeature>({
     text: { type: String, required: true, trim: true },
     icon: { type: String, enum: HOME_FEATURE_ICONS, required: true },
     enabled: { type: Boolean, default: true }
+}, { _id: false });
+
+const SiteSettingsEnglishTranslationSchema = new Schema({
+    address: { type: String },
+    workingHours: { type: String },
+    promoText: { type: String },
+    homePromotionText: { type: String, maxlength: 300 },
+    homeFeatures: { type: [HomeFeatureSchema], default: undefined },
+    productFeatures: { type: [ProductFeatureSchema], default: undefined },
+    productsBannerUrl: { type: String },
+    homePromoBannerUrl: { type: String },
+    homePromoBannerTitle: { type: String },
+    homePromoBannerButtonText: { type: String },
+    homePromoBannerNote: { type: String },
 }, { _id: false });
 
 const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
@@ -133,6 +162,9 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         homePromoBannerButtonLink: { type: String, default: '/register' },
         homePromoBannerNote: { type: String, default: '*Áp dụng cho đơn hàng từ 300.000đ' },
         homePromoBannerEnabled: { type: Boolean, default: true },
+        translations: {
+            en: { type: SiteSettingsEnglishTranslationSchema, default: undefined },
+        },
     },
     {
         timestamps: true,

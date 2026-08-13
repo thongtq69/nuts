@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import { useLocale } from '@/context/LocaleContext';
 
 interface NavItem {
     href: string;
@@ -12,16 +14,17 @@ interface NavItem {
 
 export default function Navbar() {
     const pathname = usePathname();
+    const { t, href, apiPath, isEnglish } = useLocale();
     const [, setForceUpdate] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [linkedCategories, setLinkedCategories] = useState<string[]>([]);
 
     useEffect(() => {
-        fetch('/api/products/linked-categories')
+        fetch(apiPath('/api/products/linked-categories'))
             .then(res => res.ok ? res.json() : [])
             .then(data => setLinkedCategories(Array.isArray(data) ? data : []))
             .catch(() => setLinkedCategories([]));
-    }, []);
+    }, [apiPath]);
 
     useEffect(() => {
         let lastUrl = window.location.href;
@@ -89,21 +92,21 @@ export default function Navbar() {
     };
 
     const navItems: NavItem[] = [
-        { href: '/', label: 'Trang chủ' },
-        { href: '/products?sort=bestselling', label: 'Sản phẩm bán chạy' },
-        { href: '/products?sort=newest', label: 'Sản phẩm mới' },
+        { href: href('/'), label: t('Trang chủ') },
+        { href: href('/products?sort=bestselling'), label: t('Sản phẩm bán chạy') },
+        { href: href('/products?sort=newest'), label: t('Sản phẩm mới') },
         {
-            href: '/products?linked=1',
-            label: 'Sản phẩm liên kết',
+            href: href('/products?linked=1'),
+            label: t('Sản phẩm liên kết'),
             children: linkedCategories.map(category => ({
-                href: `/products?linked=1&linkedCategory=${encodeURIComponent(category)}`,
+                href: href(`/products?linked=1&linkedCategory=${encodeURIComponent(category)}`),
                 label: category,
             })),
         },
-        { href: '/subscriptions', label: 'Gói VIP' },
-        { href: '/agent', label: 'Đại lý' },
-        { href: '/news', label: 'Tin tức' },
-        { href: '/contact', label: 'Liên hệ' },
+        { href: href('/subscriptions'), label: t('Gói VIP') },
+        { href: href(isEnglish ? '/register?type=agent' : '/agent'), label: t('Đại lý') },
+        { href: href('/news'), label: t('Tin tức') },
+        { href: href('/contact'), label: t('Liên hệ') },
     ];
 
     return (
@@ -123,10 +126,14 @@ export default function Navbar() {
                                 <span className={`h-0.5 w-full bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
                                 <span className={`h-0.5 w-full bg-current rounded-full transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
                             </span>
-                            <span className="mobile-menu-label">Danh mục</span>
+                            <span className="mobile-menu-label">{t('Danh mục')}</span>
                         </span>
                         <span className={`mobile-menu-chevron transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true">⌄</span>
                     </button>
+
+                    <div className="lg:hidden shrink-0">
+                        <LanguageSwitcher compact />
+                    </div>
 
                     {/* Desktop Menu */}
                     <ul className="hidden lg:flex items-center justify-center gap-10 w-full">
@@ -154,7 +161,7 @@ export default function Navbar() {
                                             href={item.href}
                                             className="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-[#9C7044]/5 hover:text-[#9C7044]"
                                         >
-                                            Tất cả
+                                            {t('Tất cả')}
                                         </Link>
                                         {item.children?.map(child => (
                                             <div key={child.href} className="group/flyout relative">
@@ -171,7 +178,7 @@ export default function Navbar() {
                                                             href={child.href}
                                                             className="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-[#9C7044]/5 hover:text-[#9C7044]"
                                                         >
-                                                            Tất cả {child.label}
+                                                            {t('Tất cả')} {child.label}
                                                         </Link>
                                                         {child.children.map(submenu => (
                                                             <Link
@@ -226,7 +233,7 @@ export default function Navbar() {
                                                                     className="block px-6 py-2 text-xs font-semibold text-slate-600 hover:text-[#9C7044]"
                                                                     onClick={() => setIsMobileMenuOpen(false)}
                                                                 >
-                                                                    Tất cả {child.label}
+                                                                    {t('Tất cả')} {child.label}
                                                                 </Link>
                                                                 {child.children.map(submenu => (
                                                                     <Link
@@ -258,7 +265,7 @@ export default function Navbar() {
                         </ul>
                         {/* Mobile Extras: Hotline in Menu */}
                         <div className="p-6 bg-slate-50 border-t border-slate-100 mt-2">
-                            <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-3">Hỗ trợ nhanh</p>
+                            <p className="text-xs text-slate-500 uppercase font-black tracking-widest mb-3">{t('Hỗ trợ nhanh')}</p>
                             <a href="tel:0961185753" className="flex items-center gap-3 text-lg font-black text-[#3C2A1A]">
                                 <div className="w-10 h-10 rounded-full bg-[#E3E846] flex items-center justify-center">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">

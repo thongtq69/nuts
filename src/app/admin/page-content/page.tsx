@@ -91,13 +91,21 @@ export default function AdminPageContent() {
         metadata: {
             description: '',
             keywords: ''
-        }
+        },
+        translations: {
+            en: {
+                title: '',
+                subtitle: '',
+                content: '',
+                metadata: { description: '', keywords: '' },
+            },
+        },
     });
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isPreview, setIsPreview] = useState(false);
-    const [activeTab, setActiveTab] = useState<'content' | 'images' | 'stats' | 'seo'>('content');
+    const [activeTab, setActiveTab] = useState<'content' | 'english' | 'images' | 'stats' | 'seo'>('content');
 
     const toast = useToast();
 
@@ -123,7 +131,18 @@ export default function AdminPageContent() {
                     metadata: {
                         description: data.metadata?.description || '',
                         keywords: (data.metadata?.keywords || []).join(', ')
-                    }
+                    },
+                    translations: {
+                        en: {
+                            title: data.translations?.en?.title || '',
+                            subtitle: data.translations?.en?.subtitle || '',
+                            content: data.translations?.en?.content || '',
+                            metadata: {
+                                description: data.translations?.en?.metadata?.description || '',
+                                keywords: (data.translations?.en?.metadata?.keywords || []).join(', '),
+                            },
+                        },
+                    },
                 });
             }
         } catch (error) {
@@ -143,7 +162,16 @@ export default function AdminPageContent() {
                 metadata: {
                     description: contentData.metadata.description,
                     keywords: contentData.metadata.keywords.split(',').map(k => k.trim()).filter(Boolean)
-                }
+                },
+                translations: {
+                    en: {
+                        ...contentData.translations.en,
+                        metadata: {
+                            description: contentData.translations.en.metadata.description,
+                            keywords: contentData.translations.en.metadata.keywords.split(',').map(k => k.trim()).filter(Boolean),
+                        },
+                    },
+                },
             };
 
             // Add about-us specific fields
@@ -179,7 +207,18 @@ export default function AdminPageContent() {
                         metadata: {
                             description: savedData.metadata?.description || '',
                             keywords: (savedData.metadata?.keywords || []).join(', ')
-                        }
+                        },
+                        translations: {
+                            en: {
+                                title: savedData.translations?.en?.title || '',
+                                subtitle: savedData.translations?.en?.subtitle || '',
+                                content: savedData.translations?.en?.content || '',
+                                metadata: {
+                                    description: savedData.translations?.en?.metadata?.description || '',
+                                    keywords: (savedData.translations?.en?.metadata?.keywords || []).join(', '),
+                                },
+                            },
+                        },
                     }));
                 }
             } else {
@@ -345,6 +384,7 @@ export default function AdminPageContent() {
                                         <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1">
                                             {[
                                                 { id: 'content', label: 'Nội dung chính', icon: FileText },
+                                                { id: 'english', label: 'English', icon: BookOpen },
                                                 { id: 'images', label: 'Hình ảnh', icon: ImageIcon },
                                                 { id: 'stats', label: 'Thống kê & Cam kết', icon: BarChart3 },
                                                 { id: 'seo', label: 'SEO', icon: Search },
@@ -403,6 +443,86 @@ export default function AdminPageContent() {
                                         </Card>
                                     )}
 
+                                    {(activeTab === 'english' || !isAboutPage) && (
+                                        <Card className="p-6 space-y-6 border-blue-100 bg-blue-50/30">
+                                            <div>
+                                                <h3 className="font-bold text-slate-900">English version</h3>
+                                                <p className="mt-1 text-sm text-slate-500">Leave a field blank to use the Vietnamese version as a fallback.</p>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Page title</label>
+                                                <Input
+                                                    value={contentData.translations.en.title}
+                                                    onChange={event => setContentData({
+                                                        ...contentData,
+                                                        translations: { en: { ...contentData.translations.en, title: event.target.value } },
+                                                    })}
+                                                    placeholder="English page title"
+                                                    className="text-xl font-bold"
+                                                />
+                                            </div>
+                                            {isAboutPage && (
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Subtitle</label>
+                                                    <Input
+                                                        value={contentData.translations.en.subtitle}
+                                                        onChange={event => setContentData({
+                                                            ...contentData,
+                                                            translations: { en: { ...contentData.translations.en, subtitle: event.target.value } },
+                                                        })}
+                                                        placeholder="English subtitle"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Page content</label>
+                                                <RichTextEditor
+                                                    value={contentData.translations.en.content}
+                                                    onChange={content => setContentData({
+                                                        ...contentData,
+                                                        translations: { en: { ...contentData.translations.en, content } },
+                                                    })}
+                                                    placeholder="Write the English page content..."
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase">English meta description</label>
+                                                    <Textarea
+                                                        value={contentData.translations.en.metadata.description}
+                                                        onChange={event => setContentData({
+                                                            ...contentData,
+                                                            translations: {
+                                                                en: {
+                                                                    ...contentData.translations.en,
+                                                                    metadata: { ...contentData.translations.en.metadata, description: event.target.value },
+                                                                },
+                                                            },
+                                                        })}
+                                                        rows={3}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-bold text-slate-500 uppercase">English keywords</label>
+                                                    <Textarea
+                                                        value={contentData.translations.en.metadata.keywords}
+                                                        onChange={event => setContentData({
+                                                            ...contentData,
+                                                            translations: {
+                                                                en: {
+                                                                    ...contentData.translations.en,
+                                                                    metadata: { ...contentData.translations.en.metadata, keywords: event.target.value },
+                                                                },
+                                                            },
+                                                        })}
+                                                        rows={3}
+                                                        placeholder="comma, separated, keywords"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    )}
+
                                     {/* Images Tab - About Page Only */}
                                     {isAboutPage && activeTab === 'images' && (
                                         <Card className="p-6 space-y-8">
@@ -420,7 +540,7 @@ export default function AdminPageContent() {
                                                 {/* Hero Image */}
                                                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
                                                     <div className="flex items-center gap-2 mb-4">
-                                                        <Badge variant="primary" className="text-xs">Hero Section</Badge>
+                                                        <Badge variant="default" className="text-xs">Hero Section</Badge>
                                                         <span className="text-sm font-semibold text-slate-700">Hình nền đầu trang</span>
                                                     </div>
                                                     <p className="text-xs text-slate-500 mb-4">Tỉ lệ khuyến nghị: 16:9 (1920x1080px)</p>
@@ -437,7 +557,7 @@ export default function AdminPageContent() {
                                                 {/* Side Image */}
                                                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
                                                     <div className="flex items-center gap-2 mb-4">
-                                                        <Badge variant="primary" className="text-xs">Side Card</Badge>
+                                                        <Badge variant="default" className="text-xs">Side Card</Badge>
                                                         <span className="text-sm font-semibold text-slate-700">Hình ảnh sidebar</span>
                                                     </div>
                                                     <p className="text-xs text-slate-500 mb-4">Tỉ lệ khuyến nghị: 4:5 (800x1000px)</p>

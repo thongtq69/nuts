@@ -27,13 +27,13 @@ function VNPayReturnContent() {
         }
 
         if (responseCode === '00') {
-            setStatus(prev => prev === 'pending' ? 'success' : prev);
-            setMessage(prev => prev === 'Đang xử lý...' ? 'Thanh toán thành công!' : prev);
+            setStatus('success');
+            setMessage('Thanh toán thành công!');
             clearCart();
         } else {
-            setStatus(prev => prev === 'pending' ? 'failed' : prev);
+            setStatus('failed');
             const errorMsg = responseCode ? (VNPayResponseCode as Record<string, string>)[responseCode] || 'Thanh toán thất bại' : 'Thanh toán thất bại';
-            setMessage(prev => prev === 'Đang xử lý...' ? errorMsg : prev);
+            setMessage(errorMsg);
         }
     }, [searchParams, clearCart]);
 

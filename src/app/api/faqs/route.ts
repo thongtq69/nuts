@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import FAQ from '@/models/FAQ';
+import { getUrlLocale } from '@/i18n/server';
+import { localizeDocument } from '@/lib/localized-content';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +21,10 @@ export async function GET(request: NextRequest) {
 
         const faqs = await FAQ.find(query).sort({ order: 1, createdAt: -1 }).lean();
 
-        return NextResponse.json(faqs);
+        const locale = admin === 'true' ? 'vi' : getUrlLocale(request);
+        return NextResponse.json(faqs.map(faq =>
+            localizeDocument(faq as any, locale, ['question', 'answer'])
+        ));
     } catch (error) {
         console.error('Error fetching FAQs:', error);
         return NextResponse.json({ error: 'Failed to fetch FAQs' }, { status: 500 });

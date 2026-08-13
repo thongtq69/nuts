@@ -7,6 +7,8 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import AffiliateTermsModal from '@/components/affiliate/AffiliateTermsModal';
 import ZaloIcon from '@/components/icons/ZaloIcon';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import { useLocale } from '@/context/LocaleContext';
 
 interface SiteSettings {
     hotline: string;
@@ -25,6 +27,7 @@ export default function Header() {
     const router = useRouter();
     const { cartCount, cartTotal } = useCart();
     const { user } = useAuth();
+    const { t, href, apiPath, locale } = useLocale();
     const [searchQuery, setSearchQuery] = useState('');
     const [settings, setSettings] = useState<SiteSettings>({
         hotline: '096 118 5753',
@@ -43,7 +46,7 @@ export default function Header() {
 
     useEffect(() => {
         // Fetch site settings
-        fetch('/api/settings', { cache: 'no-store' })
+        fetch(apiPath('/api/settings'), { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
                 if (data && !data.message) {
@@ -51,11 +54,11 @@ export default function Header() {
                 }
             })
             .catch(err => console.error('Error fetching settings:', err));
-    }, []);
+    }, [apiPath]);
 
     const handleSearch = () => {
         if (searchQuery.trim()) {
-            router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+            router.push(href(`/search?q=${encodeURIComponent(searchQuery)}`));
         }
     };
 
@@ -70,7 +73,7 @@ export default function Header() {
             setAffiliateType(type);
             setShowTermsModal(true);
         } else {
-            router.push(`/register?type=${type}`);
+            router.push(href(`/register?type=${type}`));
         }
     };
 
@@ -93,9 +96,9 @@ export default function Header() {
 
                         {/* Center: Affiliate Links (Mobile Only) */}
                         <div className="mobile-affiliate-links flex lg:hidden items-center gap-2 font-medium text-[9px] opacity-80">
-                            <button onClick={() => handleAffiliateClick('agent')} className="hover:text-[#9C7044] whitespace-nowrap">Đại lý</button>
+                            <button onClick={() => handleAffiliateClick('agent')} className="hover:text-[#9C7044] whitespace-nowrap">{t('Đại lý')}</button>
                             <span>|</span>
-                            <button onClick={() => handleAffiliateClick('collaborator')} className="hover:text-[#9C7044] whitespace-nowrap">CTV</button>
+                            <button onClick={() => handleAffiliateClick('collaborator')} className="hover:text-[#9C7044] whitespace-nowrap">{t('Cộng tác viên')}</button>
                         </div>
 
                         {/* Right Side: Links & Social Icons */}
@@ -105,14 +108,14 @@ export default function Header() {
                                     onClick={() => handleAffiliateClick('agent')}
                                     className="hover:text-[#9C7044] transition-colors whitespace-nowrap bg-transparent border-0 cursor-pointer"
                                 >
-                                    Đăng ký Đại lý
+                                    {t('Đăng ký Đại lý')}
                                 </button>
                                 <span className="opacity-20 font-bold">|</span>
                                 <button
                                     onClick={() => handleAffiliateClick('collaborator')}
                                     className="hover:text-[#9C7044] transition-colors whitespace-nowrap bg-transparent border-0 cursor-pointer"
                                 >
-                                    Cộng tác viên
+                                    {t('Cộng tác viên')}
                                 </button>
                             </div>
 
@@ -161,7 +164,7 @@ export default function Header() {
                     <div className="flex flex-col lg:flex-row items-center justify-between gap-2 lg:gap-8">
                         {/* Mobile Row: Logo & Actions */}
                         <div className="site-header-row w-full flex items-center justify-between lg:w-auto">
-                            <Link href="/" className="site-brand shrink-0 flex items-center gap-3 md:gap-4 group">
+                            <Link href={href('/')} className="site-brand shrink-0 flex items-center gap-3 md:gap-4 group">
                                 <img src="/assets/logo.png" alt="Go Nuts Logo" width={80} height={80} className="h-10 md:h-16 lg:h-20 w-auto transition-transform duration-300 group-hover:scale-105" />
                                 <div className="site-brand-copy flex flex-col justify-center border-l-2 border-[#9C7044]/20 pl-3 md:pl-4">
                                     <span className="text-[10px] md:text-[13px] font-black text-[#3C2A1A] leading-tight uppercase tracking-[0.1em]">
@@ -175,13 +178,13 @@ export default function Header() {
 
                             {/* Mobile Icons - Right side */}
                             <div className="site-mobile-actions flex items-center gap-4 lg:hidden">
-                                <Link href={user ? "/account" : "/login"} aria-label={user ? 'Tài khoản' : 'Đăng nhập'} className="w-11 h-11 flex items-center justify-center text-[#3C2A1A] hover:bg-slate-50 rounded-full transition-colors">
+                                <Link href={href(user ? '/account' : '/login')} aria-label={t(user ? 'Tài khoản' : 'Đăng nhập')} className="w-11 h-11 flex items-center justify-center text-[#3C2A1A] hover:bg-slate-50 rounded-full transition-colors">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                                         <circle cx="12" cy="7" r="4" />
                                     </svg>
                                 </Link>
-                                <Link href="/cart" aria-label={`Giỏ hàng, ${cartCount} sản phẩm`} className="w-11 h-11 flex items-center justify-center text-[#3C2A1A] hover:bg-slate-50 rounded-full transition-colors relative">
+                                <Link href={href('/cart')} aria-label={t('Giỏ hàng, {count} sản phẩm', { count: cartCount })} className="w-11 h-11 flex items-center justify-center text-[#3C2A1A] hover:bg-slate-50 rounded-full transition-colors relative">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <circle cx="9" cy="21" r="1" />
                                         <circle cx="20" cy="21" r="1" />
@@ -210,7 +213,7 @@ export default function Header() {
                                 <input
                                     type="text"
                                     className="w-full py-2.5 md:py-4 px-4 bg-transparent text-sm md:text-base outline-none font-semibold placeholder:text-slate-400 placeholder:font-medium text-slate-800 z-10"
-                                    placeholder="Bạn đang tìm sản phẩm nào hôm nay?..."
+                                    placeholder={t('Bạn đang tìm sản phẩm nào hôm nay?...')}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={handleKeyDown}
@@ -220,10 +223,10 @@ export default function Header() {
                                 <div className="pr-1.5 py-1.5 h-full">
                                     <button
                                         onClick={handleSearch}
-                                        aria-label="Tìm kiếm"
+                                        aria-label={t('Tìm kiếm')}
                                         className="h-full bg-gradient-to-br from-[#9C7044] via-[#855D36] to-[#7d5a36] text-white px-4 md:px-8 py-2.5 rounded-[18px] font-bold text-sm tracking-wider hover:shadow-[0_4px_15px_rgba(156,112,68,0.4)] active:scale-95 transition-all duration-300 flex items-center gap-2"
                                     >
-                                        <span className="hidden md:inline">Tìm</span>
+                                        <span className="hidden md:inline">{t('Tìm')}</span>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="md:hidden">
                                             <path d="M5 12h14m-7-7l7 7-7 7" />
                                         </svg>
@@ -237,7 +240,8 @@ export default function Header() {
 
                         {/* Desktop Actions - Hidden on Mobile */}
                         <div className="hidden lg:flex items-center gap-8 shrink-0">
-                            <Link href={user ? "/account" : "/login"} className="flex items-center gap-3 group">
+                            <LanguageSwitcher />
+                            <Link href={href(user ? '/account' : '/login')} className="flex items-center gap-3 group">
                                 <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-[#9C7044] group-hover:bg-[#9C7044] group-hover:text-white transition-all duration-300">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
@@ -245,14 +249,14 @@ export default function Header() {
                                     </svg>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-slate-500 font-semibold tracking-wide">Tài khoản</span>
+                                    <span className="text-[10px] text-slate-500 font-semibold tracking-wide">{t('Tài khoản')}</span>
                                     <span className="text-sm font-bold text-slate-800">
-                                        {user ? user.name.split(' ').pop() : 'Đăng nhập'}
+                                        {user ? user.name.split(' ').pop() : t('Đăng nhập')}
                                     </span>
                                 </div>
                             </Link>
 
-                            <Link href="/cart" className="flex items-center gap-3 group">
+                            <Link href={href('/cart')} className="flex items-center gap-3 group">
                                 <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-[#9C7044] group-hover:bg-[#9C7044] group-hover:text-white transition-all duration-300 relative">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <circle cx="9" cy="21" r="1" />
@@ -264,8 +268,8 @@ export default function Header() {
                                     </span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-slate-500 font-semibold tracking-wide">Giỏ hàng</span>
-                                    <span className="text-sm font-bold text-slate-800">{cartTotal.toLocaleString()}đ</span>
+                                    <span className="text-[10px] text-slate-500 font-semibold tracking-wide">{t('Giỏ hàng')}</span>
+                                    <span className="text-sm font-bold text-slate-800">{cartTotal.toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}₫</span>
                                 </div>
                             </Link>
                         </div>

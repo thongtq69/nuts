@@ -9,7 +9,22 @@ export interface IBanner {
     order: number;
     createdAt?: Date;
     updatedAt?: Date;
+    translations?: {
+        en?: {
+            title?: string;
+            imageUrl?: string;
+            link?: string;
+            alt?: string;
+        };
+    };
 }
+
+const BannerEnglishTranslationSchema = new Schema({
+    title: { type: String, trim: true },
+    imageUrl: { type: String, trim: true },
+    link: { type: String, trim: true },
+    alt: { type: String, trim: true },
+}, { _id: false });
 
 const BannerSchema: Schema<IBanner> = new Schema(
     {
@@ -18,6 +33,9 @@ const BannerSchema: Schema<IBanner> = new Schema(
         link: { type: String },
         isActive: { type: Boolean, default: true },
         order: { type: Number, default: 0 },
+        translations: {
+            en: { type: BannerEnglishTranslationSchema, default: undefined },
+        },
     },
     {
         timestamps: true,

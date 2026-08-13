@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import FAQSection from '@/components/common/FAQSection';
 import { Loader2, ShieldCheck, Truck, RefreshCw, FileText, ChevronRight, Scale } from 'lucide-react';
+import { useLocale } from '@/context/LocaleContext';
 
 const POLICY_MENU = [
     { slug: 'return-policy', label: 'Chính sách đổi trả', icon: RefreshCw },
@@ -25,17 +26,18 @@ export default function PolicyPage() {
     const [activeSlug, setActiveSlug] = useState('return-policy');
     const [data, setData] = useState<PolicyData | null>(null);
     const [loading, setLoading] = useState(true);
+    const { t, apiPath, locale } = useLocale();
 
     useEffect(() => {
         setLoading(true);
-        fetch(`/api/page-content/${activeSlug}`)
+        fetch(apiPath(`/api/page-content/${activeSlug}`))
             .then(res => res.json())
             .then(data => {
                 setData(data);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, [activeSlug]);
+    }, [activeSlug, apiPath]);
 
     return (
         <main className="min-h-screen bg-slate-50">
@@ -51,7 +53,7 @@ export default function PolicyPage() {
                             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                                 <div className="p-6 border-b border-slate-50">
                                     <h3 className="text-lg font-black text-slate-900 border-l-4 border-brand pl-3">
-                                        Trung tâm chính sách
+                                        {t('Trung tâm chính sách')}
                                     </h3>
                                 </div>
                                 <div className="p-2">
@@ -70,7 +72,7 @@ export default function PolicyPage() {
                                                 <div className={`p-2 rounded-xl ${isActive ? 'bg-white/20' : 'bg-slate-100'}`}>
                                                     <Icon size={18} />
                                                 </div>
-                                                <span className="flex-1 text-left">{item.label}</span>
+                                                <span className="flex-1 text-left">{t(item.label)}</span>
                                                 <ChevronRight size={14} className={isActive ? 'text-white/50' : 'text-slate-300'} />
                                             </button>
                                         );
@@ -81,9 +83,9 @@ export default function PolicyPage() {
                             {/* Need Help Card */}
                             <div className="bg-slate-900 rounded-3xl p-6 text-white overflow-hidden relative">
                                 <FileText className="absolute -right-4 -bottom-4 text-white/5 w-24 h-24 rotate-12" />
-                                <h4 className="text-xl font-black mb-2">Cần hỗ trợ?</h4>
+                                <h4 className="text-xl font-black mb-2">{t('Cần hỗ trợ?')}</h4>
                                 <p className="text-slate-400 text-xs leading-relaxed mb-4">
-                                    Nếu bạn có thắc mắc về các điều khoản, hãy liên hệ trực tiếp với chúng tôi.
+                                    {t('Nếu bạn có thắc mắc về các điều khoản, hãy liên hệ trực tiếp với chúng tôi.')}
                                 </p>
                                 <a
                                     href="tel:0961185753"
@@ -104,7 +106,7 @@ export default function PolicyPage() {
                             {loading ? (
                                 <div className="relative z-10 h-full flex flex-col items-center justify-center py-20">
                                     <Loader2 className="w-12 h-12 animate-spin text-brand mb-4" />
-                                    <p className="text-slate-500 font-bold">Đang tải nội dung...</p>
+                                    <p className="text-slate-500 font-bold">{t('Đang tải nội dung...')}</p>
                                 </div>
                             ) : (
                                 <div className="relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -114,7 +116,7 @@ export default function PolicyPage() {
                                         </h1>
                                         {data?.updatedAt && (
                                             <p className="text-slate-400 text-sm font-medium">
-                                                Cập nhật lần cuối: {new Date(data.updatedAt).toLocaleDateString('vi-VN')}
+                                                {t('Cập nhật lần cuối:')} {new Date(data.updatedAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                             </p>
                                         )}
                                         <div className="h-2 w-20 bg-brand rounded-full mt-6" />

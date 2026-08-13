@@ -8,6 +8,7 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import { useToast } from '@/context/ToastContext';
 import { useSearchParams } from 'next/navigation';
 import { Search, Package, Clock, CheckCircle, Truck, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { useLocale } from '@/context/LocaleContext';
 
 interface OrderItem {
     name: string;
@@ -51,6 +52,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 function TraCuuDonHangContent() {
     const toast = useToast();
     const searchParams = useSearchParams();
+    const { t, locale } = useLocale();
     const [email, setEmail] = useState(searchParams.get('email') || '');
     const [phone, setPhone] = useState(searchParams.get('phone') || '');
     const [isLoading, setIsLoading] = useState(false);
@@ -62,14 +64,14 @@ function TraCuuDonHangContent() {
         e.preventDefault();
         
         if (!email.trim() || !phone.trim()) {
-            toast.warning('Thiếu thông tin', 'Vui lòng nhập đầy đủ email và số điện thoại');
+            toast.warning(t('Thiếu thông tin'), t('Vui lòng nhập đầy đủ email và số điện thoại'));
             return;
         }
 
         // Validate email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            toast.warning('Email không hợp lệ', 'Vui lòng kiểm tra lại định dạng email');
+            toast.warning(t('Email không hợp lệ'), t('Vui lòng kiểm tra lại định dạng email'));
             return;
         }
 
@@ -86,19 +88,19 @@ function TraCuuDonHangContent() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.message || 'Tra cứu thất bại');
+                throw new Error(data.message || t('Tra cứu thất bại'));
             }
 
             setOrders(data.orders || []);
             if (data.orders?.length > 0) {
-                toast.success('Tìm thấy đơn hàng', `Có ${data.orders.length} đơn hàng phù hợp`);
+                toast.success(t('Tìm thấy đơn hàng'), t('Có {count} đơn hàng phù hợp', { count: data.orders.length }));
             } else {
-                toast.info('Không tìm thấy', 'Không có đơn hàng nào với thông tin này');
+                toast.info(t('Không tìm thấy'), t('Không có đơn hàng nào với thông tin này'));
             }
         } catch (error: unknown) {
             console.error('Search error:', error);
-            const message = error instanceof Error ? error.message : 'Vui lòng thử lại sau';
-            toast.error('Lỗi tra cứu', message);
+            const message = error instanceof Error ? error.message : t('Vui lòng thử lại sau');
+            toast.error(t('Lỗi tra cứu'), message);
             setOrders([]);
         } finally {
             setIsLoading(false);
@@ -110,11 +112,11 @@ function TraCuuDonHangContent() {
     };
 
     const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('vi-VN').format(price);
+        return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'vi-VN').format(price);
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('vi-VN', {
+        return new Date(dateString).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -131,9 +133,9 @@ function TraCuuDonHangContent() {
 
             <div className="container">
                 <div className="max-w-3xl mx-auto py-8">
-                    <h1 className="text-3xl font-bold text-center mb-2">Tra cứu đơn hàng</h1>
+                    <h1 className="text-3xl font-bold text-center mb-2">{t('Tra cứu đơn hàng')}</h1>
                     <p className="text-gray-500 text-center mb-8">
-                        Nhập email và số điện thoại đã đặt hàng để tra cứu thông tin đơn hàng
+                        {t('Nhập email và số điện thoại đã đặt hàng để tra cứu thông tin đơn hàng')}
                     </p>
 
                     {/* Search Form */}
@@ -155,7 +157,7 @@ function TraCuuDonHangContent() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Số điện thoại <span className="text-red-500">*</span>
+                                        {t('Số điện thoại')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="tel"
@@ -175,12 +177,12 @@ function TraCuuDonHangContent() {
                                 {isLoading ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Đang tra cứu...
+                                        {t('Đang tra cứu...')}
                                     </>
                                 ) : (
                                     <>
                                         <Search className="w-5 h-5" />
-                                        Tra cứu đơn hàng
+                                        {t('Tra cứu đơn hàng')}
                                     </>
                                 )}
                             </button>
@@ -196,16 +198,16 @@ function TraCuuDonHangContent() {
                                         <Package className="w-10 h-10 text-gray-400" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                                        Không tìm thấy đơn hàng
+                                        {t('Không tìm thấy đơn hàng')}
                                     </h3>
                                     <p className="text-gray-500">
-                                        Vui lòng kiểm tra lại email và số điện thoại đã nhập
+                                        {t('Vui lòng kiểm tra lại email và số điện thoại đã nhập')}
                                     </p>
                                 </div>
                             ) : (
                                 <>
                                     <p className="text-gray-600 mb-4">
-                                        Tìm thấy <strong>{orders.length}</strong> đơn hàng
+                                        {t('Tìm thấy')} <strong>{orders.length}</strong> {t('đơn hàng')}
                                     </p>
                                     {orders.map((order) => {
                                         const status = statusConfig[order.status] || statusConfig.pending;
@@ -230,16 +232,16 @@ function TraCuuDonHangContent() {
                                                                 </span>
                                                                 <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold ${status.color}`}>
                                                                     <StatusIcon size={14} />
-                                                                    {status.label}
+                                                                    {t(status.label)}
                                                                 </span>
                                                             </div>
                                                             <p className="text-sm text-gray-500">
-                                                                Đặt ngày: {formatDate(order.createdAt)}
+                                                                {t('Đặt ngày:')} {formatDate(order.createdAt)}
                                                             </p>
                                                         </div>
                                                         <div className="flex items-center gap-4">
                                                             <div className="text-right">
-                                                                <p className="text-sm text-gray-500">Tổng tiền</p>
+                                                                <p className="text-sm text-gray-500">{t('Tổng tiền')}</p>
                                                                 <p className="text-xl font-bold text-brand">
                                                                     {formatPrice(order.totalAmount)}đ
                                                                 </p>
@@ -258,21 +260,21 @@ function TraCuuDonHangContent() {
                                                     <div className="border-t border-gray-100 p-6 bg-gray-50">
                                                         {/* Shipping Info */}
                                                         <div className="mb-6">
-                                                            <h4 className="font-semibold text-gray-800 mb-3">Thông tin giao hàng</h4>
+                                                            <h4 className="font-semibold text-gray-800 mb-3">{t('Thông tin giao hàng')}</h4>
                                                             <div className="bg-white rounded-lg p-4 space-y-2 text-sm">
-                                                                <p><strong>Người nhận:</strong> {order.shippingInfo.fullName}</p>
-                                                                <p><strong>Số điện thoại:</strong> {order.shippingInfo.phone}</p>
+                                                                <p><strong>{t('Người nhận:')}</strong> {order.shippingInfo.fullName}</p>
+                                                                <p><strong>{t('Số điện thoại:')}</strong> {order.shippingInfo.phone}</p>
                                                                 <p><strong>Email:</strong> {order.shippingInfo.email}</p>
-                                                                <p><strong>Địa chỉ:</strong> {order.shippingInfo.address}, {order.shippingInfo.ward}, {order.shippingInfo.district}, {order.shippingInfo.city}</p>
+                                                                <p><strong>{t('Địa chỉ:')}</strong> {order.shippingInfo.address}, {order.shippingInfo.ward}, {order.shippingInfo.district}, {order.shippingInfo.city}</p>
                                                                 {order.note && (
-                                                                    <p><strong>Ghi chú:</strong> {order.note}</p>
+                                                                    <p><strong>{t('Ghi chú:')}</strong> {order.note}</p>
                                                                 )}
                                                             </div>
                                                         </div>
 
                                                         {/* Items */}
                                                         <div className="mb-6">
-                                                            <h4 className="font-semibold text-gray-800 mb-3">Sản phẩm</h4>
+                                                            <h4 className="font-semibold text-gray-800 mb-3">{t('Sản phẩm')}</h4>
                                                             <div className="bg-white rounded-lg overflow-hidden">
                                                                 {order.items.map((item, idx) => (
                                                                     <div
@@ -304,19 +306,19 @@ function TraCuuDonHangContent() {
                                                         <div className="bg-white rounded-lg p-4">
                                                             <div className="space-y-2 text-sm">
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-gray-500">Tạm tính:</span>
+                                                                    <span className="text-gray-500">{t('Tạm tính:')}</span>
                                                                     <span>{formatPrice(order.totalAmount - order.shippingFee)}đ</span>
                                                                 </div>
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-gray-500">Phí vận chuyển:</span>
-                                                                    <span>{order.shippingFee === 0 ? 'Miễn phí' : formatPrice(order.shippingFee) + 'đ'}</span>
+                                                                    <span className="text-gray-500">{t('Phí vận chuyển:')}</span>
+                                                                    <span>{order.shippingFee === 0 ? t('Miễn phí') : formatPrice(order.shippingFee) + '₫'}</span>
                                                                 </div>
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-gray-500">Phương thức thanh toán:</span>
-                                                                    <span>{order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'Chuyển khoản ngân hàng'}</span>
+                                                                    <span className="text-gray-500">{t('Phương thức thanh toán:')}</span>
+                                                                    <span>{order.paymentMethod === 'cod' ? t('Thanh toán khi nhận hàng') : t('Chuyển khoản ngân hàng')}</span>
                                                                 </div>
                                                                 <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between text-lg font-bold">
-                                                                    <span>Tổng cộng:</span>
+                                                                    <span>{t('Tổng cộng:')}</span>
                                                                     <span className="text-brand">{formatPrice(order.totalAmount)}đ</span>
                                                                 </div>
                                                             </div>
@@ -362,13 +364,14 @@ function TraCuuDonHangContent() {
 }
 
 function LoadingFallback() {
+    const { t } = useLocale();
     return (
         <main>
             <Header />
             <Navbar />
             <div className="container">
                 <div className="max-w-3xl mx-auto py-16 text-center text-gray-500 font-semibold">
-                    Đang tải trang tra cứu...
+                    {t('Đang tải trang tra cứu...')}
                 </div>
             </div>
             <Footer />

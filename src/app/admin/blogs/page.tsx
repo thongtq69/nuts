@@ -21,6 +21,16 @@ interface Blog {
     viewCount?: number;
     publishedAt?: string;
     createdAt: string;
+    translations?: {
+        en?: {
+            title?: string;
+            slug?: string;
+            excerpt?: string;
+            content?: string;
+            category?: string;
+            isPublished?: boolean;
+        };
+    };
 }
 
 const CATEGORIES = ['Tin tức', 'Hướng dẫn', 'Review', 'Khuyến mãi'];
@@ -39,6 +49,9 @@ export default function AdminBlogsPage() {
         category: 'Tin tức',
         coverImage: '',
         isPublished: false,
+        translations: {
+            en: { title: '', slug: '', excerpt: '', content: '', category: '', isPublished: true },
+        },
     });
 
     const stats = {
@@ -175,6 +188,16 @@ export default function AdminBlogsPage() {
                 category: fullBlog.category,
                 coverImage: fullBlog.coverImage || '',
                 isPublished: fullBlog.isPublished,
+                translations: {
+                    en: {
+                        title: fullBlog.translations?.en?.title || '',
+                        slug: fullBlog.translations?.en?.slug || '',
+                        excerpt: fullBlog.translations?.en?.excerpt || '',
+                        content: fullBlog.translations?.en?.content || '',
+                        category: fullBlog.translations?.en?.category || '',
+                        isPublished: fullBlog.translations?.en?.isPublished ?? true,
+                    },
+                },
             });
         } else {
             setEditingBlog(null);
@@ -185,6 +208,9 @@ export default function AdminBlogsPage() {
                 category: 'Tin tức',
                 coverImage: '',
                 isPublished: false,
+                translations: {
+                    en: { title: '', slug: '', excerpt: '', content: '', category: '', isPublished: true },
+                },
             });
         }
         setShowModal(true);
@@ -547,6 +573,74 @@ export default function AdminBlogsPage() {
                                         value={formData.content}
                                         onChange={content => setFormData({ ...formData, content })}
                                         placeholder="Soạn thảo nội dung bài viết..."
+                                    />
+                                </div>
+
+                                <div className="rounded-xl border-2 border-blue-100 bg-blue-50/60 p-5 space-y-4">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div>
+                                            <h3 className="font-bold text-slate-900">English version</h3>
+                                            <p className="text-xs text-slate-500 mt-1">Blank fields fall back to Vietnamese content.</p>
+                                        </div>
+                                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.translations.en.isPublished}
+                                                onChange={event => setFormData({
+                                                    ...formData,
+                                                    translations: { en: { ...formData.translations.en, isPublished: event.target.checked } },
+                                                })}
+                                            />
+                                            Publish in English
+                                        </label>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={formData.translations.en.title}
+                                        onChange={event => setFormData({
+                                            ...formData,
+                                            translations: { en: { ...formData.translations.en, title: event.target.value } },
+                                        })}
+                                        placeholder="English title"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand outline-none"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={formData.translations.en.slug}
+                                        onChange={event => setFormData({
+                                            ...formData,
+                                            translations: { en: { ...formData.translations.en, slug: event.target.value } },
+                                        })}
+                                        placeholder="english-url-slug (optional)"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand outline-none"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={formData.translations.en.category}
+                                        onChange={event => setFormData({
+                                            ...formData,
+                                            translations: { en: { ...formData.translations.en, category: event.target.value } },
+                                        })}
+                                        placeholder="English category"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand outline-none"
+                                    />
+                                    <textarea
+                                        value={formData.translations.en.excerpt}
+                                        onChange={event => setFormData({
+                                            ...formData,
+                                            translations: { en: { ...formData.translations.en, excerpt: event.target.value } },
+                                        })}
+                                        rows={3}
+                                        placeholder="English excerpt"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-brand outline-none resize-none"
+                                    />
+                                    <RichTextEditor
+                                        value={formData.translations.en.content}
+                                        onChange={content => setFormData({
+                                            ...formData,
+                                            translations: { en: { ...formData.translations.en, content } },
+                                        })}
+                                        placeholder="Write the article in English..."
                                     />
                                 </div>
                             </div>

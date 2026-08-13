@@ -5,6 +5,8 @@ import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '@/lib/site-feature
 import { requireAdminAuth } from '@/lib/auth-permissions';
 import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '@/lib/home-promotion';
 import { LEGACY_COMPANY_NAMES, OFFICIAL_COMPANY_NAME } from '@/constants/company';
+import { getUrlLocale } from '@/i18n/server';
+import { localizeSettings } from '@/lib/localized-content';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -24,7 +26,7 @@ async function ensureSingleton() {
 }
 
 // GET - Lấy cài đặt website
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await dbConnect();
         await ensureSingleton();
@@ -101,7 +103,8 @@ export async function GET() {
             await settings.save();
         }
 
-        return NextResponse.json(settings, {
+        const responseSettings = localizeSettings(settings.toObject(), getUrlLocale(request));
+        return NextResponse.json(responseSettings, {
             headers: { 'Cache-Control': 'no-store, max-age=0' }
         });
     } catch (error) {

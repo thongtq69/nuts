@@ -31,6 +31,9 @@ export interface IPageContent extends Document {
         keywords?: string[];
     };
     updatedAt: Date;
+    translations?: {
+        en?: Partial<Pick<IPageContent, 'title' | 'subtitle' | 'content' | 'heroImage' | 'sideImage' | 'stats' | 'commitments' | 'metadata'>>;
+    };
 }
 
 const PageImageSchema = new Schema<IPageImage>({
@@ -50,6 +53,20 @@ const PageCommitmentSchema = new Schema<IPageCommitment>({
     text: { type: String, required: true },
 }, { _id: false });
 
+const PageContentEnglishTranslationSchema = new Schema({
+    title: { type: String, trim: true },
+    subtitle: { type: String },
+    content: { type: String },
+    heroImage: { type: PageImageSchema },
+    sideImage: { type: PageImageSchema },
+    stats: { type: [PageStatSchema], default: undefined },
+    commitments: { type: [PageCommitmentSchema], default: undefined },
+    metadata: {
+        description: { type: String },
+        keywords: [{ type: String }],
+    },
+}, { _id: false });
+
 const PageContentSchema: Schema<IPageContent> = new Schema(
     {
         slug: { type: String, required: true, unique: true },
@@ -63,6 +80,9 @@ const PageContentSchema: Schema<IPageContent> = new Schema(
         metadata: {
             description: { type: String },
             keywords: [{ type: String }],
+        },
+        translations: {
+            en: { type: PageContentEnglishTranslationSchema, default: undefined },
         },
     },
     {

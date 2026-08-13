@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
 import { getServerSession } from '@/lib/auth'; // Assuming we have auth helper, or use headers
+import { getUrlLocale } from '@/i18n/server';
+import { localizeDocument } from '@/lib/localized-content';
 // Since we don't have NextAuth, we rely on our own token. 
 // For now, I'll assume public GET, protected POST (Admin).
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await dbConnect();
         const packages = await SubscriptionPackage.find({}).sort({ price: 1 }).lean();
-        return NextResponse.json(packages);
+        const locale = getUrlLocale(request);
+        return NextResponse.json(packages.map(pkg =>
+            localizeDocument(pkg as any, locale, ['name', 'description', 'terms', 'badgeText'])
+        ));
     } catch (error) {
         return NextResponse.json({ message: 'Error fetching packages' }, { status: 500 });
     }

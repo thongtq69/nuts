@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ProductCard from '@/components/common/ProductCard';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Product {
     _id: string;
@@ -24,12 +25,13 @@ interface SearchResultsProps {
 export default function SearchResults({ query }: SearchResultsProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const { t, apiPath } = useLocale();
 
     useEffect(() => {
         const fetchProducts = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`/api/products?q=${encodeURIComponent(query)}`);
+                const res = await fetch(apiPath(`/api/products?q=${encodeURIComponent(query)}`));
                 if (res.ok) {
                     const data = await res.json();
                     setProducts(data);
@@ -42,15 +44,15 @@ export default function SearchResults({ query }: SearchResultsProps) {
         };
 
         fetchProducts();
-    }, [query]);
+    }, [query, apiPath]);
 
     if (loading) {
         return (
             <div className="container">
                 <h1 className="search-title">
-                    Đang tìm kiếm: <span>&quot;{query}&quot;</span>
+                    {t('Đang tìm kiếm:')} <span>&quot;{query}&quot;</span>
                 </h1>
-                <p>Đang tải...</p>
+                <p>{t('Đang tải...')}</p>
                 <style jsx>{`
                     .search-title {
                         margin: 30px 0;
@@ -68,7 +70,7 @@ export default function SearchResults({ query }: SearchResultsProps) {
     return (
         <div className="container">
             <h1 className="search-title">
-                Kết quả tìm kiếm cho: <span>&quot;{query}&quot;</span>
+                {t('Kết quả tìm kiếm cho:')} <span>&quot;{query}&quot;</span>
             </h1>
 
             {products.length > 0 ? (
@@ -91,13 +93,13 @@ export default function SearchResults({ query }: SearchResultsProps) {
                 </div>
             ) : (
                 <div className="no-results">
-                    <p>Không tìm thấy sản phẩm nào phù hợp với từ khóa &quot;{query}&quot;.</p>
+                    <p>{t('Không tìm thấy sản phẩm nào phù hợp với từ khóa')} &quot;{query}&quot;.</p>
                     <div className="suggestions">
-                        <p>Gợi ý:</p>
+                        <p>{t('Gợi ý:')}</p>
                         <ul>
-                            <li>Kiểm tra lỗi chính tả của từ khóa.</li>
-                            <li>Thử tìm kiếm bằng từ khóa khác hoặc chung chung hơn.</li>
-                            <li>Thử tìm kiếm theo danh mục sản phẩm.</li>
+                            <li>{t('Kiểm tra lỗi chính tả của từ khóa.')}</li>
+                            <li>{t('Thử tìm kiếm bằng từ khóa khác hoặc chung chung hơn.')}</li>
+                            <li>{t('Thử tìm kiếm theo danh mục sản phẩm.')}</li>
                         </ul>
                     </div>
                 </div>

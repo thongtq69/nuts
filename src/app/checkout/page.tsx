@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Province {
     code: number;
@@ -80,6 +81,7 @@ export default function CheckoutPage() {
     const { cartItems, cartTotal, originalTotal, savingsTotal, clearCart, getItemPrice } = useCart();
     const { user } = useAuth();
     const toast = useToast();
+    const { t, href, apiPath, locale } = useLocale();
     const [voucherCode, setVoucherCode] = useState('');
     const [voucherError, setVoucherError] = useState('');
     const [appliedDiscount, setAppliedDiscount] = useState(0);
@@ -127,11 +129,11 @@ export default function CheckoutPage() {
             .catch(err => console.error('Error fetching shipping config:', err));
 
         // Fetch site settings for free shipping threshold
-        fetch('/api/settings')
+        fetch(apiPath('/api/settings'))
             .then(res => res.json() as Promise<SiteSettings>)
             .then(data => setSiteSettings(data))
             .catch(err => console.error('Error fetching settings:', err));
-    }, [user]);
+    }, [user, apiPath]);
 
 
     useEffect(() => {
@@ -344,7 +346,7 @@ export default function CheckoutPage() {
 
     const goToBankPending = () => {
         if (!bankPaymentModal) return;
-        router.push(getBankPendingUrl(bankPaymentModal));
+        router.push(href(getBankPendingUrl(bankPaymentModal)));
     };
 
     useEffect(() => {
@@ -370,24 +372,24 @@ export default function CheckoutPage() {
         if (isProcessing) return;
 
         if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
-            toast.warning('Thiếu thông tin', 'Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.');
+            toast.warning(t('Thiếu thông tin'), t('Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.'));
             return;
         }
         // Bắt buộc email cho khách vãng lai (chưa đăng nhập)
         if (!user && !formData.email.trim()) {
-            toast.warning('Thiếu thông tin', 'Vui lòng nhập email để nhận thông tin đơn hàng.');
+            toast.warning(t('Thiếu thông tin'), t('Vui lòng nhập email để nhận thông tin đơn hàng.'));
             return;
         }
         if (!user && formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            toast.warning('Email không hợp lệ', 'Vui lòng kiểm tra lại định dạng email.');
+            toast.warning(t('Email không hợp lệ'), t('Vui lòng kiểm tra lại định dạng email.'));
             return;
         }
         if (!selectedProvince || !selectedDistrict || !selectedWard) {
-            toast.warning('Thiếu thông tin', 'Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã.');
+            toast.warning(t('Thiếu thông tin'), t('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã.'));
             return;
         }
         if (!/^[0-9]{10,11}$/.test(formData.phone.replace(/\s/g, ''))) {
-            toast.warning('Số điện thoại không hợp lệ', 'Vui lòng kiểm tra lại số điện thoại.');
+            toast.warning(t('Số điện thoại không hợp lệ'), t('Vui lòng kiểm tra lại số điện thoại.'));
             return;
         }
 
@@ -434,7 +436,7 @@ export default function CheckoutPage() {
             const data = await res.json() as OrderCreateResponse;
 
             if (!res.ok) {
-                throw new Error(data.message || 'Đặt hàng thất bại');
+                throw new Error(data.message || t('Đặt hàng thất bại'));
             }
 
             if (paymentMethod === 'banking') {
@@ -448,16 +450,16 @@ export default function CheckoutPage() {
                     customerPhone: formData.phone.trim() || undefined,
                 });
                 clearCart();
-                toast.success('Đã tạo đơn hàng', 'Vui lòng quét QR để hoàn tất chuyển khoản.');
+                toast.success(t('Đã tạo đơn hàng'), t('Vui lòng quét QR để hoàn tất chuyển khoản.'));
                 return;
             }
 
             clearCart();
-            router.push('/checkout/success');
+            router.push(href('/checkout/success'));
         } catch (error: unknown) {
             console.error(error);
-            const message = error instanceof Error ? error.message : 'Vui lòng thử lại.';
-            toast.error('Đặt hàng thất bại', message);
+            const message = error instanceof Error ? error.message : t('Vui lòng thử lại sau.');
+            toast.error(t('Đặt hàng thất bại'), message);
         } finally {
             setIsProcessing(false);
         }
@@ -470,18 +472,18 @@ export default function CheckoutPage() {
             <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]} />
 
             <div className="container">
-                <h1 className="checkout-title">Thanh toán</h1>
+                <h1 className="checkout-title">{t('Thanh toán')}</h1>
 
                 <div className="checkout-layout">
                     {/* Left Column: Shipping Info */}
                     <div className="checkout-form-section">
-                        <h3 className="section-header">Thông tin giao hàng</h3>
+                        <h3 className="section-header">{t('Thông tin giao hàng')}</h3>
                         <form className="checkout-form" onSubmit={(e) => { e.preventDefault(); }}>
                             <div className="form-group">
-                                <label>Họ và tên <span className="text-red-500">*</span></label>
+                                <label>{t('Họ và tên')} <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
-                                    placeholder="Nhập họ và tên"
+                                    placeholder={t('Nhập họ và tên')}
                                     required
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -492,26 +494,26 @@ export default function CheckoutPage() {
                                     <label>
                                         Email
                                         {!user && <span className="text-red-500">*</span>}
-                                        {user && <span className="text-gray-400 text-xs ml-1">(tùy chọn)</span>}
+                                        {user && <span className="text-gray-400 text-xs ml-1">{t('(tùy chọn)')}</span>}
                                     </label>
                                     <input
                                         type="email"
-                                        placeholder={!user ? "Nhập email để nhận thông tin đơn hàng" : "Nhập email"}
+                                        placeholder={!user ? t('Nhập email để nhận thông tin đơn hàng') : t('Nhập email')}
                                         required={!user}
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     />
                                     {!user && (
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Email sẽ được dùng để tra cứu đơn hàng và nhận thông báo
+                                            {t('Email sẽ được dùng để tra cứu đơn hàng và nhận thông báo')}
                                         </p>
                                     )}
                                 </div>
                                 <div className="form-group">
-                                    <label>Số điện thoại <span className="text-red-500">*</span></label>
+                                    <label>{t('Số điện thoại')} <span className="text-red-500">*</span></label>
                                     <input
                                         type="tel"
-                                        placeholder="Nhập số điện thoại"
+                                        placeholder={t('Nhập số điện thoại')}
                                         required
                                         value={formData.phone}
                                         onChange={e => setFormData({ ...formData, phone: e.target.value })}
@@ -519,10 +521,10 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label>Địa chỉ <span className="text-red-500">*</span></label>
+                                <label>{t('Địa chỉ')} <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
-                                    placeholder="Ví dụ: Số 23 ngõ 86..."
+                                    placeholder={t('Ví dụ: Số 23 ngõ 86...')}
                                     required
                                     value={formData.address}
                                     onChange={e => setFormData({ ...formData, address: e.target.value })}
@@ -530,7 +532,7 @@ export default function CheckoutPage() {
                             </div>
                             <div className="form-group-row">
                                 <div className="form-group">
-                                    <label>Tỉnh / Thành phố <span className="text-red-500">*</span></label>
+                                    <label>{t('Tỉnh / Thành phố')} <span className="text-red-500">*</span></label>
                                     {addressError ? (
                                         <div className="flex gap-2">
                                             <input
@@ -542,7 +544,7 @@ export default function CheckoutPage() {
                                             <button
                                                 onClick={() => window.location.reload()}
                                                 className="px-4 py-3 bg-brand text-white rounded hover:bg-brand-dark"
-                                                title="Tải lại trang"
+                                                title={t('Tải lại trang')}
                                             >
                                                 ↻
                                             </button>
@@ -557,7 +559,7 @@ export default function CheckoutPage() {
                                             }}
                                             required
                                         >
-                                            <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                            <option value="">{t('-- Chọn Tỉnh/Thành phố --')}</option>
                                             {provinces.map(province => (
                                                 <option key={province.code} value={province.code}>
                                                     {province.name}
@@ -566,12 +568,12 @@ export default function CheckoutPage() {
                                         </select>
                                     ) : (
                                         <div className="text-gray-500 p-3 text-center border border-dashed border-gray-300 rounded">
-                                            Đang tải...
+                                            {t('Đang tải...')}
                                         </div>
                                     )}
                                 </div>
                                 <div className="form-group">
-                                    <label>Quận / Huyện <span className="text-red-500">*</span></label>
+                                    <label>{t('Quận / Huyện')} <span className="text-red-500">*</span></label>
                                     <select
                                         value={selectedDistrict}
                                         onChange={e => {
@@ -582,7 +584,7 @@ export default function CheckoutPage() {
                                         disabled={!selectedProvince}
                                         required
                                     >
-                                        <option value="">-- Chọn Quận/Huyện --</option>
+                                        <option value="">{t('-- Chọn Quận/Huyện --')}</option>
                                         {districts.map(district => (
                                             <option key={district.code} value={district.code}>
                                                 {district.name}
@@ -592,7 +594,7 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label>Phường / Xã <span className="text-red-500">*</span></label>
+                                <label>{t('Phường / Xã')} <span className="text-red-500">*</span></label>
                                 <select
                                     value={selectedWard}
                                     onChange={e => {
@@ -603,7 +605,7 @@ export default function CheckoutPage() {
                                     disabled={!selectedDistrict}
                                     required
                                 >
-                                    <option value="">-- Chọn Phường/Xã --</option>
+                                    <option value="">{t('-- Chọn Phường/Xã --')}</option>
                                     {wards.map(ward => (
                                         <option key={ward.code} value={ward.code}>
                                             {ward.name}
@@ -612,17 +614,17 @@ export default function CheckoutPage() {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Ghi chú đơn hàng (tùy chọn)</label>
+                                <label>{t('Ghi chú đơn hàng (tùy chọn)')}</label>
                                 <textarea
                                     rows={3}
-                                    placeholder="Ví dụ: Giao hàng giờ hành chính..."
+                                    placeholder={t('Ví dụ: Giao hàng giờ hành chính...')}
                                     value={formData.note}
                                     onChange={e => setFormData({ ...formData, note: e.target.value })}
                                 ></textarea>
                             </div>
                         </form>
 
-                        <h3 className="section-header mt-4">Phương thức thanh toán</h3>
+                        <h3 className="section-header mt-4">{t('Phương thức thanh toán')}</h3>
                         <div className="payment-methods">
                             {/* VNPay Disabled temporarily */}
                             <label className={`payment-option ${paymentMethod === 'banking' ? 'active' : ''}`}>
@@ -633,7 +635,7 @@ export default function CheckoutPage() {
                                     checked={paymentMethod === 'banking'}
                                     onChange={() => setPaymentMethod('banking')}
                                 />
-                                <span>🏦 Chuyển khoản ngân hàng</span>
+                                <span>{t('🏦 Chuyển khoản ngân hàng')}</span>
                             </label>
                         </div>
 
@@ -642,10 +644,10 @@ export default function CheckoutPage() {
                             <div className="banking-info-section">
                                 <div className="p-5 bg-amber-50 border border-amber-200 rounded-xl mb-6">
                                     <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
-                                        🔔 Hướng dẫn thanh toán
+                                        {t('🔔 Hướng dẫn thanh toán')}
                                     </h4>
                                     <p className="text-sm text-amber-700 leading-relaxed">
-                                        Sau khi điền đủ thông tin và bấm thanh toán, hệ thống sẽ tạo đơn hàng và mở mã QR chuyển khoản. Đơn hàng tự xác nhận khi ACB ghi nhận giao dịch khớp số tiền và nội dung chuyển khoản.
+                                        {t('Sau khi điền đủ thông tin và bấm thanh toán, hệ thống sẽ tạo đơn hàng và mở mã QR chuyển khoản. Đơn hàng tự xác nhận khi ACB ghi nhận giao dịch khớp số tiền và nội dung chuyển khoản.')}
                                     </p>
                                 </div>
                             </div>
@@ -655,7 +657,7 @@ export default function CheckoutPage() {
                     {/* Right Column: Order Summary */}
                     <div className="order-summary-section">
                         <div className="order-summary-box">
-                            <h3>Đơn hàng của bạn</h3>
+                            <h3>{t('Đơn hàng của bạn')}</h3>
                             <div className="summary-items">
                                 {cartItems.map(item => (
                                     <div key={item.id} className="summary-item">
@@ -679,13 +681,13 @@ export default function CheckoutPage() {
 
                             {savings > 0 && (
                                 <div className="savings-row">
-                                    <span>💰 Tiết kiệm từ giá Đại lý/Bulk</span>
+                                    <span>{t('💰 Tiết kiệm từ giá Đại lý/Bulk')}</span>
                                     <span className="savings-value">-{savings.toLocaleString()}₫</span>
                                 </div>
                             )}
 
                             <div className="summary-row">
-                                <span>Giá gốc</span>
+                                <span>{t('Giá gốc')}</span>
                                 <span className="original-price-display">{originalSubtotal.toLocaleString()}₫</span>
                             </div>
 
@@ -693,7 +695,7 @@ export default function CheckoutPage() {
                             <div className="voucher-section">
                                 <div className="voucher-header">
                                     <span className="voucher-icon">🎟️</span>
-                                    <span className="voucher-label">Mã giảm giá</span>
+                                    <span className="voucher-label">{t('Mã giảm giá')}</span>
                                 </div>
 
                                 {isVoucherApplied ? (
@@ -718,7 +720,7 @@ export default function CheckoutPage() {
                                         className="voucher-select-btn"
                                         onClick={() => setShowVoucherModal(true)}
                                     >
-                                        <span>Chọn hoặc nhập mã</span>
+                                        <span>{t('Chọn hoặc nhập mã')}</span>
                                         <span className="voucher-arrow">→</span>
                                     </button>
                                 )}
@@ -729,7 +731,7 @@ export default function CheckoutPage() {
                                 <div className="voucher-modal-overlay" onClick={() => setShowVoucherModal(false)}>
                                     <div className="voucher-modal" onClick={e => e.stopPropagation()}>
                                         <div className="voucher-modal-header">
-                                            <h3>🎟️ Chọn mã giảm giá</h3>
+                                            <h3>{t('🎟️ Chọn mã giảm giá')}</h3>
                                             <button className="voucher-modal-close" onClick={() => setShowVoucherModal(false)}>✕</button>
                                         </div>
 
@@ -738,7 +740,7 @@ export default function CheckoutPage() {
                                             <input
                                                 type="text"
                                                 className="voucher-input"
-                                                placeholder="Nhập mã giảm giá"
+                                                placeholder={t('Nhập mã giảm giá')}
                                                 value={manualVoucherCode}
                                                 onChange={e => setManualVoucherCode(e.target.value.toUpperCase())}
                                             />
@@ -750,21 +752,21 @@ export default function CheckoutPage() {
                                                 }}
                                                 disabled={!manualVoucherCode}
                                             >
-                                                Áp dụng
+                                                {t('Áp dụng')}
                                             </button>
                                         </div>
                                         {voucherError && <p className="voucher-error">{voucherError}</p>}
 
                                         {/* Voucher List */}
                                         <div className="voucher-list-section">
-                                            <div className="voucher-list-title">Voucher của bạn ({vouchers.length})</div>
+                                            <div className="voucher-list-title">{t('Voucher của bạn')} ({vouchers.length})</div>
 
                                             {loadingVouchers ? (
-                                                <div className="voucher-loading">Đang tải...</div>
+                                                <div className="voucher-loading">{t('Đang tải...')}</div>
                                             ) : vouchers.length === 0 ? (
                                                 <div className="voucher-empty">
                                                     <span className="voucher-empty-icon">📭</span>
-                                                    <p>Bạn chưa có voucher nào</p>
+                                                    <p>{t('Bạn chưa có voucher nào')}</p>
                                                 </div>
                                             ) : (
                                                 <div className="voucher-list">
@@ -786,23 +788,23 @@ export default function CheckoutPage() {
                                                                             ? `${voucher.discountValue}%`
                                                                             : `${(voucher.discountValue / 1000).toFixed(0)}K`}
                                                                     </div>
-                                                                    <div className="voucher-card-type">GIẢM</div>
+                                                                    <div className="voucher-card-type">{t('GIẢM')}</div>
                                                                 </div>
                                                                 <div className="voucher-card-right">
                                                                     <div className="voucher-card-code">{voucher.code}</div>
                                                                     <div className="voucher-card-condition">
-                                                                        Đơn từ {voucher.minOrderValue.toLocaleString()}đ
+                                                                        {t('Đơn từ')} {voucher.minOrderValue.toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}₫
                                                                     </div>
                                                                     <div className="voucher-card-expiry">
-                                                                        HSD: {new Date(voucher.expiresAt).toLocaleDateString('vi-VN')}
+                                                                        {t('HSD:')} {new Date(voucher.expiresAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'vi-VN')}
                                                                     </div>
                                                                     {!canApply && (
-                                                                        <div className="voucher-card-warning">Chưa đủ điều kiện</div>
+                                                                        <div className="voucher-card-warning">{t('Chưa đủ điều kiện')}</div>
                                                                     )}
                                                                 </div>
                                                                 {canApply && (
                                                                     <div className="voucher-card-select">
-                                                                        <span>Chọn</span>
+                                                                        <span>{t('Chọn')}</span>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -816,21 +818,21 @@ export default function CheckoutPage() {
                             )}
 
                             <div className="summary-row">
-                                <span>Tạm tính</span>
+                                <span>{t('Tạm tính')}</span>
                                 <span>{subtotal.toLocaleString()}₫</span>
                             </div>
                             <div className="summary-row">
-                                <span>Phí vận chuyển</span>
-                                <span>{shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString()}₫`}</span>
+                                <span>{t('Phí vận chuyển')}</span>
+                                <span>{shippingFee === 0 ? t('Miễn phí') : `${shippingFee.toLocaleString()}₫`}</span>
                             </div>
                             {isVoucherApplied && (
                                 <div className="summary-row text-green-600 font-medium">
-                                    <span>Voucher giảm giá</span>
+                                    <span>{t('Voucher giảm giá')}</span>
                                     <span>- {appliedDiscount.toLocaleString()}₫</span>
                                 </div>
                             )}
                             <div className="summary-row total">
-                                <span>Tổng cộng</span>
+                                <span>{t('Tổng cộng')}</span>
                                 <span className="total-amount">{total > 0 ? total.toLocaleString() : 0}₫</span>
                             </div>
 
@@ -839,11 +841,11 @@ export default function CheckoutPage() {
                                 onClick={handlePlaceOrder}
                                 disabled={isProcessing}
                             >
-                                {isProcessing ? 'Đang xử lý...' : 'Thanh toán'}
+                                {isProcessing ? t('Đang xử lý...') : t('Thanh toán')}
                             </button>
 
                             <div className="security-note">
-                                🔒 Bảo mật thanh toán 100%
+                                {t('🔒 Bảo mật thanh toán 100%')}
                             </div>
                         </div>
                     </div>
@@ -855,13 +857,13 @@ export default function CheckoutPage() {
                     <div className="payment-modal">
                         <div className="payment-modal-header">
                             <div>
-                                <h3 id="bank-payment-title">Thanh toán chuyển khoản</h3>
-                                <p>Đơn #{bankPaymentModal.orderCode}</p>
+                                <h3 id="bank-payment-title">{t('Thanh toán chuyển khoản')}</h3>
+                                <p>{t('Đơn')} #{bankPaymentModal.orderCode}</p>
                             </div>
                             <button
                                 className="payment-modal-close"
                                 type="button"
-                                aria-label="Đóng"
+                                aria-label={t('Đóng')}
                                 onClick={goToBankPending}
                             >
                                 ✕
@@ -875,11 +877,11 @@ export default function CheckoutPage() {
                             />
                         </div>
                         <div className="payment-modal-note">
-                            Đơn hàng đang ở trạng thái chờ thanh toán. Hệ thống chỉ tự xác nhận sau khi nhận được giao dịch khớp số tiền và nội dung chuyển khoản.
+                            {t('Đơn hàng đang ở trạng thái chờ thanh toán. Hệ thống chỉ tự xác nhận sau khi nhận được giao dịch khớp số tiền và nội dung chuyển khoản.')}
                         </div>
                         <div className="payment-modal-actions">
                             <button type="button" onClick={goToBankPending}>
-                                Tôi đã lưu thông tin thanh toán
+                                {t('Tôi đã lưu thông tin thanh toán')}
                             </button>
                         </div>
                     </div>

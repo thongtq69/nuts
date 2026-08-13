@@ -8,6 +8,8 @@ import {
     PRODUCT_CATEGORIES,
     sortProductCategoriesAlphabetically,
 } from '@/constants/product-categories';
+import { getUrlLocale } from '@/i18n/server';
+import { translate } from '@/i18n/messages';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +17,9 @@ function normalizeKey(value: unknown) {
     return normalizeMenuName(value).toLocaleLowerCase('vi');
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const locale = getUrlLocale(request);
         await dbConnect();
         const [customCategories, productValues] = await Promise.all([
             ProductCategory.find().sort({ name: 1 }).lean(),
@@ -29,14 +32,16 @@ export async function GET() {
         for (const category of PRODUCT_CATEGORIES) {
             categories.set(normalizeKey(category.value), {
                 value: category.value,
-                label: category.label,
+                label: translate(locale, category.label),
                 isDefault: true,
             });
         }
         for (const category of customCategories) {
             categories.set(normalizeKey(category.value), {
                 value: category.value,
-                label: category.name,
+                label: locale === 'en' && category.translations?.en?.name
+                    ? category.translations.en.name
+                    : category.name,
                 isDefault: false,
             });
         }
@@ -49,7 +54,7 @@ export async function GET() {
             if (!categories.has(normalizeKey(cleanValue))) {
                 categories.set(normalizeKey(cleanValue), {
                     value: cleanValue,
-                    label: defaultCategory?.label || cleanValue,
+                    label: defaultCategory ? translate(locale, defaultCategory.label) : cleanValue,
                     isDefault: Boolean(defaultCategory),
                 });
             }

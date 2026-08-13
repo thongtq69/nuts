@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { HomeFeature } from '@/lib/site-features';
 import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
+import { useLocale } from '@/context/LocaleContext';
 
 interface ProductFeature {
     title: string;
@@ -41,12 +42,13 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
+    const { apiPath } = useLocale();
     const [settings, setSettings] = useState<Settings | null>(null);
     const [loading, setLoading] = useState(true);
 
     const fetchSettings = useCallback(async () => {
         try {
-            const res = await fetch('/api/settings', { cache: 'no-store' });
+            const res = await fetch(apiPath('/api/settings'), { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setSettings(data);
@@ -76,7 +78,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [apiPath]);
 
     useEffect(() => {
         void fetchSettings();

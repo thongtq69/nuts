@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Banner from '@/models/Banner';
+import { getUrlLocale } from '@/i18n/server';
+import { localizeDocument } from '@/lib/localized-content';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         await dbConnect();
         const banners = await Banner.find({ isActive: true })
@@ -12,7 +14,7 @@ export async function GET() {
             .lean();
 
         return NextResponse.json(banners.map((banner: any) => ({
-            ...banner,
+            ...localizeDocument(banner, getUrlLocale(request), ['title', 'imageUrl', 'link']),
             _id: banner._id.toString(),
         })));
     } catch (error) {
