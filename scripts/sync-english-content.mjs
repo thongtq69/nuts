@@ -299,6 +299,7 @@ function polishEnglish(value) {
         .replace(/\bcashews salad\b/gi, 'cashew salad')
         .replace(/\bcashews has\b/gi, 'cashews have')
         .replace(/\bININFRINGEMENTAL SAVE\b/gi, 'UNLIMITED SAVINGS')
+        .replace(/\bINFRINGEMENTAL SAVE\b/gi, 'UNLIMITED SAVINGS')
         .replace(/\bINFRIGEMENTAL SAVE\b/gi, 'UNLIMITED SAVINGS')
         .replace(/\bNGON\s*&(?:amp;)?\s*AN TÂM\b/gi, 'DELICIOUS & TRUSTED')
         .replace(/\bKhi mua\b/gi, 'When purchasing')
