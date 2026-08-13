@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import PackageList from './PackageList';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Package {
     _id: string;
@@ -31,6 +32,7 @@ export default function BuyPackageWrapper({ packages }: Props) {
     const { user, loading: authLoading, checkUser } = useAuth();
     const toast = useToast();
     const router = useRouter();
+    const { href, t } = useLocale();
 
     const handleBuyPackage = async (packageId: string) => {
         // Check auth first
@@ -40,13 +42,13 @@ export default function BuyPackageWrapper({ packages }: Props) {
         }
 
         if (!user) {
-            toast.info('Cần đăng nhập', 'Vui lòng đăng nhập để mua gói');
-            router.push('/login?redirect=/subscriptions');
+            toast.info(t('Cần đăng nhập'), t('Vui lòng đăng nhập để mua gói'));
+            router.push(href('/login?redirect=/subscriptions'));
             return;
         }
 
         // Redirect to checkout page for payment flow
-        router.push(`/checkout/membership?packageId=${packageId}`);
+        router.push(href(`/checkout/membership?packageId=${packageId}`));
     };
 
     return <PackageList packages={packages} onBuyPackage={handleBuyPackage} />;

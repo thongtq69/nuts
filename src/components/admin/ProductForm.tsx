@@ -116,7 +116,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                 description: initialData.translations?.en?.description || '',
                 badgeText: initialData.translations?.en?.badgeText || '',
                 linkedCategory: initialData.translations?.en?.linkedCategory || '',
-                isPublished: initialData.translations?.en?.isPublished ?? true,
+                isPublished: initialData.translations?.en?.isPublished ?? false,
             },
         },
     });

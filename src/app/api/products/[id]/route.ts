@@ -12,11 +12,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         await dbConnect();
         const product = await Product.findById(id).lean();
         const locale = getUrlLocale(request);
-        if (!product || !isPublishedForLocale(product as any, locale)) {
+        if (!product || !isPublishedForLocale(product, locale)) {
             return NextResponse.json({ error: 'Product not found' }, { status: 404 });
         }
-        return NextResponse.json(localizeProduct(product as any, locale));
-    } catch (error) {
+        return NextResponse.json(localizeProduct(product, locale));
+    } catch {
         return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 });
     }
 }
@@ -69,7 +69,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             const touchesProductRules =
                 'isLinkedProduct' in body ||
                 'linkedCategory' in body ||
-                'vipMaxDiscount' in body;
+                'vipMaxDiscount' in body ||
+                'translations' in body;
             updateOperation = touchesProductRules
                 ? normalizeProductPayload({ ...product.toObject(), ...body })
                 : body;
@@ -84,7 +85,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         console.log(`✅ Product ${action === 'add_tag' ? 'added to' : 'removed from'} ${tag}:`, updatedProduct?.name || 'Unknown');
         
         return NextResponse.json(updatedProduct);
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (error instanceof ProductPayloadError) {
             return NextResponse.json({ error: error.message, message: error.message }, { status: 400 });
         }
@@ -104,7 +105,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
         const product = await Product.findByIdAndDelete(id);
         if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
         return NextResponse.json({ message: 'Product deleted successfully' });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
     }
 }

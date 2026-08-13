@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Banner from '@/models/Banner';
 import { getUrlLocale } from '@/i18n/server';
-import { localizeDocument } from '@/lib/localized-content';
+import { localizeBanner } from '@/lib/localized-content';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +13,8 @@ export async function GET(request: Request) {
             .sort({ order: 1 })
             .lean();
 
-        return NextResponse.json(banners.map((banner: any) => ({
-            ...localizeDocument(banner, getUrlLocale(request), ['title', 'imageUrl', 'link']),
+        return NextResponse.json(banners.map((banner) => ({
+            ...localizeBanner(banner, getUrlLocale(request)),
             _id: banner._id.toString(),
         })));
     } catch (error) {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Product from '@/models/Product';
+import Product, { type IProduct } from '@/models/Product';
+import type { QueryFilter } from 'mongoose';
 import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payload';
 import { describeProductPersistenceError } from '@/lib/product-persistence-error';
 import { getUrlLocale } from '@/i18n/server';
@@ -23,9 +24,9 @@ export async function GET(request: Request) {
         const linked = searchParams.get('linked');
         const linkedCategory = searchParams.get('linkedCategory')?.trim();
 
-        let filter: any = {};
+        const filter: QueryFilter<IProduct> = {};
         if (locale === 'en') {
-            filter['translations.en.isPublished'] = { $ne: false };
+            filter['translations.en.isPublished'] = true;
         }
         if (category) {
             filter.category = category;
@@ -43,27 +44,31 @@ export async function GET(request: Request) {
         }
         if (linkedCategory) {
             filter.isLinkedProduct = true;
-            filter.linkedCategory = linkedCategory;
+            if (locale === 'en') {
+                filter['translations.en.linkedCategory'] = linkedCategory;
+            } else {
+                filter.linkedCategory = linkedCategory;
+            }
         }
 
         console.log('🔍 Products API: Query filter:', filter);
 
-        const products = await Product.find(filter).sort({ sortOrder: -1, createdAt: -1 } as any).lean();
+        const products = await Product.find(filter).sort({ sortOrder: -1, createdAt: -1 }).lean();
         console.log(`✅ Products API: Found ${products.length} products`);
 
         // Convert ObjectId to string for JSON serialization
-        const serializedProducts = products.map((product: any) => ({
+        const serializedProducts = products.map((product) => ({
             ...localizeProduct(product, locale),
             _id: product._id.toString(),
             id: product._id.toString()
         }));
 
         return NextResponse.json(serializedProducts);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('❌ Products API Error:', error);
         return NextResponse.json({
             error: 'Failed to fetch products',
-            message: error.message,
+            message: error instanceof Error ? error.message : 'Unknown error',
             timestamp: new Date().toISOString()
         }, { status: 500 });
     }

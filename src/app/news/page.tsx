@@ -41,9 +41,10 @@ export default function NewsPage() {
         if (activeCategory === 'Tất cả') {
             setFilteredBlogs(blogs);
         } else {
-            setFilteredBlogs(blogs.filter(blog => blog.category === activeCategory));
+            const localizedCategory = t(activeCategory);
+            setFilteredBlogs(blogs.filter(blog => blog.category === localizedCategory));
         }
-    }, [activeCategory, blogs]);
+    }, [activeCategory, blogs, t]);
 
     const fetchBlogs = async () => {
         try {
@@ -145,7 +146,7 @@ export default function NewsPage() {
                                             </div>
                                         )}
                                         <div className="absolute top-6 left-6">
-                                            <span className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider shadow-sm ${item.category === 'Khuyến mãi' ? 'bg-[#E3E846] text-[#3C2A1A]' : 'bg-white/90 backdrop-blur-md text-slate-800'
+                                            <span className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider shadow-sm ${item.category === t('Khuyến mãi') ? 'bg-[#E3E846] text-[#3C2A1A]' : 'bg-white/90 backdrop-blur-md text-slate-800'
                                                 }`}>
                                                 {item.category}
                                             </span>

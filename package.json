@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "test:customer-features": "node --experimental-strip-types --test tests/customer-features.test.mts",
-    "test:i18n": "node --experimental-strip-types --test tests/i18n.test.mts"
+    "test:i18n": "node --experimental-strip-types --test tests/i18n.test.mts",
+    "setup:i18n:translator": ".translation-venv/bin/python scripts/setup-local-translation.py",
+    "audit:i18n:dual": "node scripts/sync-english-content.mjs --audit-only",
+    "preview:i18n:dual": "node scripts/sync-english-content.mjs",
+    "sync:i18n:dual": "node scripts/sync-english-content.mjs --apply"
   },
   "dependencies": {
     "@google-analytics/data": "^5.2.1",

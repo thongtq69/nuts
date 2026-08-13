@@ -7,6 +7,7 @@ import { useLocale } from '@/context/LocaleContext';
 interface Banner {
     _id: string;
     title: string;
+    alt?: string;
     imageUrl: string;
     link?: string;
     isActive: boolean;
@@ -109,7 +110,7 @@ export default function HeroSlider() {
                                 <a href={slide.link} target="_blank" rel="noopener noreferrer">
                                     <img 
                                         src={getOptimizedCloudinaryUrl(slide.imageUrl, 'f_auto,q_auto,w_1920,c_limit')}
-                                        alt={slide.title}
+                                        alt={slide.alt || slide.title}
                                         width={1920}
                                         height={640}
                                         loading={index === 0 ? 'eager' : 'lazy'}
@@ -124,7 +125,7 @@ export default function HeroSlider() {
                             ) : (
                                 <img 
                                     src={getOptimizedCloudinaryUrl(slide.imageUrl, 'f_auto,q_auto,w_1920,c_limit')}
-                                    alt={slide.title}
+                                    alt={slide.alt || slide.title}
                                     width={1920}
                                     height={640}
                                     loading={index === 0 ? 'eager' : 'lazy'}

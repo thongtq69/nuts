@@ -90,7 +90,7 @@ export default function LatestNews() {
                                     </div>
                                 )}
                                 <div className="absolute top-6 left-6">
-                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md ${item.category === 'Khuyến mãi'
+                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md ${item.category === t('Khuyến mãi')
                                             ? 'bg-[#E3E846] text-[#3C2A1A]'
                                             : 'bg-white/90 backdrop-blur-md text-slate-800'
                                         }`}>

@@ -709,6 +709,41 @@ test('a regular product does not retain a linked submenu', () => {
     assert.equal(product.linkedCategory, '');
 });
 
+test('an English product cannot be published with untranslated storefront fields', () => {
+    assert.throws(
+        () => normalizeProductPayload({
+            name: 'Hạt điều rang',
+            description: 'Mô tả sản phẩm',
+            vipMaxDiscount: 0,
+            translations: {
+                en: {
+                    name: 'Roasted cashews',
+                    description: '',
+                    isPublished: true,
+                },
+            },
+        }),
+        /description/,
+    );
+
+    const product = normalizeProductPayload({
+        name: 'Hạt điều rang',
+        description: 'Mô tả sản phẩm',
+        vipMaxDiscount: 0,
+        translations: {
+            en: {
+                name: 'Roasted cashews',
+                description: 'Product description',
+                isPublished: true,
+            },
+        },
+    });
+    assert.equal(
+        (product.translations as { en: { isPublished: boolean } }).en.isPublished,
+        true,
+    );
+});
+
 test('a negative per-product VIP limit is rejected', () => {
     assert.throws(
         () => normalizeProductPayload({

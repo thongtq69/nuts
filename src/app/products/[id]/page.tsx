@@ -25,7 +25,7 @@ async function getRelatedProducts(currentId: string, locale: Locale) {
     await dbConnect();
     const products = await Product.find({
         _id: { $ne: currentId },
-        ...(locale === 'en' ? { 'translations.en.isPublished': { $ne: false } } : {}),
+        ...(locale === 'en' ? { 'translations.en.isPublished': true } : {}),
     }).limit(4).lean();
     return products.map((p: any) => localizeProduct({ ...p, id: p._id.toString(), _id: p._id.toString() }, locale)) as unknown as IProduct[];
 }

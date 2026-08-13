@@ -5,11 +5,12 @@ import SiteSettings, { ISiteSettings } from '@/models/SiteSettings';
 import ProductList from '@/components/products/ProductList';
 import { getRequestLocale } from '@/i18n/server';
 import { localizeProduct, localizeSettings } from '@/lib/localized-content';
+import type { Locale } from '@/i18n/config';
 
 export async function generateMetadata(): Promise<Metadata> {
     const locale = await getRequestLocale();
     const isEnglish = locale === 'en';
-    const settings = await getSiteSettings();
+    const settings = localizeSettings(await getSiteSettings() as any, locale) as Partial<ISiteSettings>;
     const bannerUrl = (settings.productsBannerUrl?.startsWith('http')
         ? settings.productsBannerUrl
         : `https://gonuts.vn${settings.productsBannerUrl}`) || "https://res.cloudinary.com/du6no35fj/image/upload/v1770576812/gonuts/banners/products_banner_1770576809653.png";
@@ -52,10 +53,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export const dynamic = 'force-dynamic';
 
 // Direct database query for server-side rendering
-async function getProducts(): Promise<IProduct[]> {
+async function getProducts(locale: Locale): Promise<IProduct[]> {
     try {
         await dbConnect();
-        const products = await Product.find({}).sort({ sortOrder: -1, createdAt: -1 } as any).lean();
+        const products = await Product.find(
+            locale === 'en' ? { 'translations.en.isPublished': true } : {},
+        ).sort({ sortOrder: -1, createdAt: -1 } as any).lean();
 
         // Serialize MongoDB documents
         return products.map((product: any) => ({
@@ -78,7 +81,8 @@ async function getSiteSettings(): Promise<Partial<ISiteSettings>> {
         if (settings) {
             return {
                 productsBannerUrl: settings.productsBannerUrl,
-                productsBannerEnabled: settings.productsBannerEnabled
+                productsBannerEnabled: settings.productsBannerEnabled,
+                translations: settings.translations,
             };
         }
     } catch (error) {
@@ -93,7 +97,7 @@ async function getSiteSettings(): Promise<Partial<ISiteSettings>> {
 export default async function ProductsPage() {
     const locale = await getRequestLocale();
     const [products, settings] = await Promise.all([
-        getProducts(),
+        getProducts(locale),
         getSiteSettings()
     ]);
 

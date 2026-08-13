@@ -31,17 +31,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
         await dbConnect();
         const products = await Product.find({})
-            .select('_id updatedAt')
+            .select('_id translations.en.isPublished updatedAt')
             .lean();
 
         productPages = products.flatMap((product: any) => {
             const viUrl = `${BASE_URL}/products/${product._id.toString()}`;
             const enUrl = `${BASE_URL}/en/products/${product._id.toString()}`;
-            const alternates = { languages: { vi: viUrl, en: enUrl, 'x-default': viUrl } };
-            return [
-                { url: viUrl, lastModified: product.updatedAt || new Date(), changeFrequency: 'weekly' as const, priority: 0.8, alternates },
-                { url: enUrl, lastModified: product.updatedAt || new Date(), changeFrequency: 'weekly' as const, priority: 0.8, alternates },
+            const hasEnglishVersion = product.translations?.en?.isPublished === true;
+            const alternates = {
+                languages: hasEnglishVersion
+                    ? { vi: viUrl, en: enUrl, 'x-default': viUrl }
+                    : { vi: viUrl, 'x-default': viUrl },
+            };
+            const entries: MetadataRoute.Sitemap = [
+                { url: viUrl, lastModified: product.updatedAt || new Date(), changeFrequency: 'weekly', priority: 0.8, alternates },
             ];
+            if (hasEnglishVersion) {
+                entries.push({ url: enUrl, lastModified: product.updatedAt || new Date(), changeFrequency: 'weekly', priority: 0.8, alternates });
+            }
+            return entries;
         });
     } catch (error) {
         console.error('Error generating product sitemap:', error);
@@ -59,11 +67,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             const viUrl = `${BASE_URL}/news/${blog.slug}`;
             const enSlug = blog.translations?.en?.slug || blog.slug;
             const enUrl = `${BASE_URL}/en/news/${enSlug}`;
-            const alternates = { languages: { vi: viUrl, en: enUrl, 'x-default': viUrl } };
+            const hasEnglishVersion = blog.translations?.en?.isPublished === true;
+            const alternates = {
+                languages: hasEnglishVersion
+                    ? { vi: viUrl, en: enUrl, 'x-default': viUrl }
+                    : { vi: viUrl, 'x-default': viUrl },
+            };
             const entries: MetadataRoute.Sitemap = [
                 { url: viUrl, lastModified: blog.updatedAt || new Date(), changeFrequency: 'weekly', priority: 0.7, alternates },
             ];
-            if (blog.translations?.en?.isPublished !== false) {
+            if (hasEnglishVersion) {
                 entries.push({ url: enUrl, lastModified: blog.updatedAt || new Date(), changeFrequency: 'weekly', priority: 0.7, alternates });
             }
             return entries;

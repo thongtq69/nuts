@@ -4,7 +4,12 @@ import Blog from '@/models/Blog';
 import mongoose from 'mongoose';
 import { getAuthUser, requireAdminAuth } from '@/lib/auth-permissions';
 import { getUrlLocale } from '@/i18n/server';
-import { isPublishedForLocale, localizeBlog } from '@/lib/localized-content';
+import {
+    BLOG_LOCALIZED_FIELDS,
+    getMissingEnglishFields,
+    isPublishedForLocale,
+    localizeBlog,
+} from '@/lib/localized-content';
 
 export async function GET(
     req: Request,
@@ -92,6 +97,18 @@ export async function PATCH(
             blog.rejectionReason = shouldReject && typeof body.rejectionReason === 'string'
                 ? body.rejectionReason.trim()
                 : undefined;
+        }
+
+        if (blog.translations?.en?.isPublished === true) {
+            const requiredFields = BLOG_LOCALIZED_FIELDS.filter(field =>
+                field !== 'tags' || blog.tags.length > 0
+            );
+            const missingFields = getMissingEnglishFields(blog.toObject(), requiredFields);
+            if (missingFields.length > 0) {
+                return NextResponse.json({
+                    error: `Không thể xuất bản tiếng Anh khi còn thiếu: ${missingFields.join(', ')}`,
+                }, { status: 400 });
+            }
         }
 
         await blog.save();

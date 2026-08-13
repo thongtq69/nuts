@@ -17,7 +17,7 @@ async function getBlog(slug: string, locale: Locale) {
         await dbConnect();
         const blog = await Blog.findOne({
             isPublished: true,
-            ...(locale === 'en' ? { 'translations.en.isPublished': { $ne: false } } : {}),
+            ...(locale === 'en' ? { 'translations.en.isPublished': true } : {}),
             $or: [{ slug }, { 'translations.en.slug': slug }],
         }).lean();
         if (!blog) return null;

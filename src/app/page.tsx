@@ -14,10 +14,25 @@ import Product, { IProduct } from '@/models/Product';
 import { HOMEPAGE_SECTION_CONFIG } from '@/lib/homepage-products';
 import { getRequestLocale } from '@/i18n/server';
 import { localizeProduct } from '@/lib/localized-content';
+import type { Locale } from '@/i18n/config';
 
 export const dynamic = 'force-dynamic';
 
-async function getProductsByTag(tag: string, limit = 4) {
+type StorefrontProduct = IProduct & { id: string };
+
+function serializeProduct<T extends { _id: { toString(): string } }>(product: T) {
+  return {
+    ...product,
+    id: product._id.toString(),
+    _id: product._id.toString(),
+  };
+}
+
+function getEnglishPublicationFilter(locale: Locale) {
+  return locale === 'en' ? { 'translations.en.isPublished': true } : {};
+}
+
+async function getProductsByTag(tag: string, limit: number, locale: Locale): Promise<StorefrontProduct[]> {
   try {
     console.log(`🔍 Fetching products by tag: ${tag}`);
 
@@ -25,7 +40,7 @@ async function getProductsByTag(tag: string, limit = 4) {
     console.log('✅ Database connected for tag query');
 
     // Sort logic: priority first, then newest first
-    const sortParams: { [key: string]: any } = { sortOrder: -1, createdAt: -1 };
+    const sortParams: Record<string, 1 | -1> = { sortOrder: -1, createdAt: -1 };
 
     // For best-seller tag, we might want to prioritize soldCount if sortOrder is equal
     if (tag === 'best-seller') {
@@ -38,15 +53,19 @@ async function getProductsByTag(tag: string, limit = 4) {
       promo: HOMEPAGE_SECTION_CONFIG.promo,
     } as const;
     const sectionConfig = sectionByTag[tag as keyof typeof sectionByTag];
+    const publicationFilter = getEnglishPublicationFilter(locale);
     const hasHomepageSelection = sectionConfig
-      ? Boolean(await Product.exists({ [sectionConfig.field]: { $exists: true } }))
+      ? Boolean(await Product.exists({
+        [sectionConfig.field]: { $exists: true },
+        ...publicationFilter,
+      }))
       : false;
     const productFilter = hasHomepageSelection && sectionConfig
-      ? { [sectionConfig.field]: true, isLinkedProduct: { $ne: true } }
-      : { tags: tag, isLinkedProduct: { $ne: true } };
+      ? { [sectionConfig.field]: true, isLinkedProduct: { $ne: true }, ...publicationFilter }
+      : { tags: tag, isLinkedProduct: { $ne: true }, ...publicationFilter };
 
     const products = await Product.find(productFilter)
-      .sort(sortParams as any)
+      .sort(sortParams)
       .limit(limit)
       .lean();
     console.log(`✅ Found ${products.length} products for tag: ${tag}`);
@@ -54,38 +73,32 @@ async function getProductsByTag(tag: string, limit = 4) {
     // If no products found with specific tag, get any products as fallback
     if (products.length === 0 && !hasHomepageSelection) {
       console.log(`⚠️ No products found for tag: ${tag}, getting fallback products`);
-      const fallbackProducts = await Product.find({ isLinkedProduct: { $ne: true } })
-        .sort({ sortOrder: -1, createdAt: -1 } as any)
+      const fallbackProducts = await Product.find({
+        isLinkedProduct: { $ne: true },
+        ...publicationFilter,
+      })
+        .sort({ sortOrder: -1, createdAt: -1 })
         .limit(limit)
         .lean();
       console.log(`✅ Found ${fallbackProducts.length} fallback products`);
 
-      return fallbackProducts.map((p: any) => ({
-        ...p,
-        id: p._id.toString(),
-        _id: p._id.toString()
-      })) as unknown as IProduct[];
+      return fallbackProducts.map(serializeProduct) as unknown as StorefrontProduct[];
     }
 
-    return products.map((p: any) => ({
-      ...p,
-      id: p._id.toString(),
-      _id: p._id.toString()
-    })) as unknown as IProduct[];
-  } catch (error: any) {
-    console.error(`❌ Error fetching products for tag ${tag}:`, error.message);
+    return products.map(serializeProduct) as unknown as StorefrontProduct[];
+  } catch (error: unknown) {
+    console.error(`❌ Error fetching products for tag ${tag}:`, error instanceof Error ? error.message : error);
 
     // Final fallback: try to get any products
     try {
       await dbConnect();
-      const anyProducts = await Product.find({ isLinkedProduct: { $ne: true } }).limit(limit).lean();
+      const anyProducts = await Product.find({
+        isLinkedProduct: { $ne: true },
+        ...getEnglishPublicationFilter(locale),
+      }).limit(limit).lean();
       console.log(`🔄 Fallback: Found ${anyProducts.length} any products`);
 
-      return anyProducts.map((p: any) => ({
-        ...p,
-        id: p._id.toString(),
-        _id: p._id.toString()
-      })) as unknown as IProduct[];
+      return anyProducts.map(serializeProduct) as unknown as StorefrontProduct[];
     } catch (fallbackError) {
       console.error(`❌ Fallback also failed:`, fallbackError);
       return [];
@@ -93,30 +106,30 @@ async function getProductsByTag(tag: string, limit = 4) {
   }
 }
 
-async function getLinkedProducts(limit = 6) {
+async function getLinkedProducts(limit: number, locale: Locale): Promise<StorefrontProduct[]> {
   try {
     await dbConnect();
 
     const config = HOMEPAGE_SECTION_CONFIG.linked;
+    const publicationFilter = getEnglishPublicationFilter(locale);
     const hasHomepageSelection = Boolean(
-      await Product.exists({ [config.field]: { $exists: true } }),
+      await Product.exists({
+        [config.field]: { $exists: true },
+        ...publicationFilter,
+      }),
     );
     const products = await Product.find(
       hasHomepageSelection
-        ? { isLinkedProduct: true, [config.field]: true }
-        : { isLinkedProduct: true },
+        ? { isLinkedProduct: true, [config.field]: true, ...publicationFilter }
+        : { isLinkedProduct: true, ...publicationFilter },
     )
-      .sort({ sortOrder: -1, createdAt: -1 } as any)
+      .sort({ sortOrder: -1, createdAt: -1 })
       .limit(limit)
       .lean();
 
-    return products.map((product: any) => ({
-      ...product,
-      id: product._id.toString(),
-      _id: product._id.toString(),
-    })) as unknown as IProduct[];
-  } catch (error: any) {
-    console.error('Failed to fetch linked products for homepage:', error.message);
+    return products.map(serializeProduct) as unknown as StorefrontProduct[];
+  } catch (error: unknown) {
+    console.error('Failed to fetch linked products for homepage:', error instanceof Error ? error.message : error);
     return [];
   }
 }
@@ -126,15 +139,15 @@ export default async function Home() {
 
   const locale = await getRequestLocale();
   const [bestSellerData, newProductData, promotionProductData, linkedProductData] = await Promise.all([
-    getProductsByTag('best-seller', 8),
-    getProductsByTag('new', 8),
-    getProductsByTag('promo', 8),
-    getLinkedProducts(6),
+    getProductsByTag('best-seller', 8, locale),
+    getProductsByTag('new', 8, locale),
+    getProductsByTag('promo', 8, locale),
+    getLinkedProducts(6, locale),
   ]);
-  const bestSellers = bestSellerData.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
-  const newProducts = newProductData.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
-  const promotionProducts = promotionProductData.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
-  const linkedProducts = linkedProductData.map(product => localizeProduct(product as any, locale)) as unknown as IProduct[];
+  const bestSellers = bestSellerData.map(product => localizeProduct(product, locale));
+  const newProducts = newProductData.map(product => localizeProduct(product, locale));
+  const promotionProducts = promotionProductData.map(product => localizeProduct(product, locale));
+  const linkedProducts = linkedProductData.map(product => localizeProduct(product, locale));
 
   console.log('🏠 Home page: Products fetched:', {
     bestSellers: bestSellers.length,
@@ -145,7 +158,11 @@ export default async function Home() {
 
   return (
     <main>
-      <h1 className="sr-only">Go Nuts - Hạt dinh dưỡng, Trái cây sấy & Thực phẩm sạch từ nông dân Việt Nam</h1>
+      <h1 className="sr-only">
+        {locale === 'en'
+          ? 'Go Nuts - Premium nuts, dried fruit and wholesome Vietnamese foods'
+          : 'Go Nuts - Hạt dinh dưỡng, Trái cây sấy & Thực phẩm sạch từ nông dân Việt Nam'}
+      </h1>
       <Header />
       <Navbar />
       <ErrorBoundary>
@@ -154,25 +171,25 @@ export default async function Home() {
       <PromotionBanner />
       {bestSellers.length > 0 && (
         <ErrorBoundary>
-          <ProductSection title="Sản phẩm bán chạy" products={bestSellers as any} />
+          <ProductSection title="Sản phẩm bán chạy" products={bestSellers} />
         </ErrorBoundary>
       )}
       <LargePromoBanner />
       {newProducts.length > 0 && (
         <ErrorBoundary>
-          <ProductSection title="Sản phẩm mới" products={newProducts as any} />
+          <ProductSection title="Sản phẩm mới" products={newProducts} />
         </ErrorBoundary>
       )}
       {promotionProducts.length > 0 && (
         <ErrorBoundary>
-          <ProductSection title="Khuyến mãi" products={promotionProducts as any} />
+          <ProductSection title="Khuyến mãi" products={promotionProducts} />
         </ErrorBoundary>
       )}
       {linkedProducts.length > 0 && (
         <ErrorBoundary>
           <ProductSection
             title="Sản phẩm liên kết"
-            products={linkedProducts as any}
+            products={linkedProducts}
             viewMoreHref="/products?linked=1"
             paginate={false}
           />

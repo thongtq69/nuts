@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Tag, ArrowRight, CheckCircle2, Zap, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Package {
     _id: string;
@@ -100,6 +101,7 @@ const normalizeName = (name: string) => name
     .trim();
 
 export default function PackageList({ packages, onBuyPackage }: Props) {
+    const { t } = useLocale();
     const containerRef = React.useRef<HTMLDivElement>(null);
     const [activeIndex, setActiveIndex] = React.useState(0);
     const [selectedTerms, setSelectedTerms] = React.useState<{ name: string; terms: string, theme: typeof cardThemes[0] } | null>(null);
@@ -178,13 +180,15 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                         ? `${pkg.discountValue}%`
                         : formatPrice(pkg.discountValue);
 
-                    const maxVoucher = pkg.isUnlimitedVoucher ? 'Không giới hạn' : `${pkg.voucherQuantity} mã`;
+                    const maxVoucher = pkg.isUnlimitedVoucher
+                        ? t('Không giới hạn')
+                        : t('{count} mã', { count: pkg.voucherQuantity });
                     const normalizedName = normalizeName(pkg.name);
                     const imageSrc = pkg.imageUrl || imageMap[normalizedName] || fallbackImages[index % fallbackImages.length];
 
                     let specialLabel = pkg.badgeText;
                     if (!specialLabel && pkg.price === 99000) {
-                        if (normalizedName.includes('pro')) specialLabel = 'Đề xuất';
+                        if (normalizedName.includes('pro')) specialLabel = t('Đề xuất');
                         else if (pkg.validityDays >= 60) specialLabel = 'Long Term';
                     }
 
@@ -194,7 +198,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                             className={`subscription-package-shell lg:snap-center shrink-0 w-full max-w-[400px] lg:w-[calc(25%-18px)] lg:max-w-[420px] lg:min-w-[320px] flex flex-col transition-all duration-700`}
                         >
                             <div
-                                onClick={() => setSelectedTerms({ name: pkg.name, terms: pkg.terms || pkg.description || 'Đang cập nhật...', theme })}
+                                onClick={() => setSelectedTerms({ name: pkg.name, terms: pkg.terms || pkg.description || t('Đang cập nhật...'), theme })}
                                 className={`subscription-package-card relative w-full h-auto lg:h-[840px] bg-gradient-to-b ${theme.bg} rounded-[40px] lg:rounded-[48px] border border-white/10 shadow-[0_45px_90px_-20px_rgba(0,0,0,0.2)] flex flex-col transition-all duration-500 overflow-visible cursor-pointer group`}
                             >
                                 {/* Mascot INTEGRATION */}
@@ -250,7 +254,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                         </div>
                                         <div className="px-4 py-1 rounded-lg bg-black/5 mt-1">
                                             <p className={`text-[10px] lg:text-[11px] font-black uppercase tracking-widest opacity-40 ${theme.title}`}>
-                                                TRỌN GÓI {pkg.validityDays} NGÀY
+                                                {t('TRỌN GÓI {days} NGÀY', { days: pkg.validityDays })}
                                             </p>
                                         </div>
                                     </div>
@@ -262,8 +266,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                                 <Tag className="w-4 h-4 lg:w-5 lg:h-5" strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col pt-0.5">
-                                                <span className={`text-[14px] lg:text-[15px] font-black leading-tight ${theme.title}`}>Giảm {discountValue} tât cả đơn</span>
-                                                <span className={`text-[11px] lg:text-[12px] font-bold opacity-50 mt-1 ${theme.text}`}>Tối ưu mọi đơn hàng</span>
+                                                <span className={`text-[14px] lg:text-[15px] font-black leading-tight ${theme.title}`}>{t('Giảm {discount} tất cả đơn', { discount: discountValue })}</span>
+                                                <span className={`text-[11px] lg:text-[12px] font-bold opacity-50 mt-1 ${theme.text}`}>{t('Tối ưu mọi đơn hàng')}</span>
                                             </div>
                                         </div>
 
@@ -272,8 +276,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                                 <CheckCircle2 className="w-4 h-4 lg:w-5 lg:h-5" strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col pt-0.5">
-                                                <span className={`text-[14px] lg:text-[15px] font-black leading-tight ${theme.title}`}>Tối đa {formatPrice(pkg.maxDiscount)}</span>
-                                                <span className={`text-[11px] lg:text-[12px] font-bold opacity-50 mt-1 ${theme.text}`}>Tiết kiệm bữa ăn hằng ngày</span>
+                                                <span className={`text-[14px] lg:text-[15px] font-black leading-tight ${theme.title}`}>{t('Tối đa {amount}', { amount: formatPrice(pkg.maxDiscount) })}</span>
+                                                <span className={`text-[11px] lg:text-[12px] font-bold opacity-50 mt-1 ${theme.text}`}>{t('Tiết kiệm bữa ăn hằng ngày')}</span>
                                             </div>
                                         </div>
 
@@ -282,8 +286,8 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                                 <Zap className="w-4 h-4 lg:w-5 lg:h-5" strokeWidth={3} />
                                             </div>
                                             <div className="flex flex-col pt-0.5">
-                                                <span className={`text-[14px] lg:text-[15px] font-black leading-tight ${theme.title}`}>{maxVoucher} mỗi tháng</span>
-                                                <span className={`text-[11px] lg:text-[12px] font-bold opacity-50 mt-1 ${theme.text}`}>Sử dụng linh hoạt</span>
+                                                <span className={`text-[14px] lg:text-[15px] font-black leading-tight ${theme.title}`}>{t('{value} mỗi tháng', { value: maxVoucher })}</span>
+                                                <span className={`text-[11px] lg:text-[12px] font-bold opacity-50 mt-1 ${theme.text}`}>{t('Sử dụng linh hoạt')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -297,7 +301,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                             }}
                                             className={`w-full py-5 lg:py-6 rounded-[20px] lg:rounded-[24px] font-black text-xs lg:text-sm uppercase tracking-[0.25em] transition-all duration-300 flex items-center justify-center gap-3 active:scale-95 shadow-lg group/btn ${theme.button}`}
                                         >
-                                            <span className="drop-shadow-sm group-hover/btn:translate-x-1 transition-transform font-black">Đăng ký ngay</span>
+                                            <span className="drop-shadow-sm group-hover/btn:translate-x-1 transition-transform font-black">{t('Đăng ký ngay')}</span>
                                             <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5" strokeWidth={4} />
                                         </button>
                                     </div>
@@ -305,7 +309,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                     {/* 5. Legal Footer */}
                                     <div className="text-center pt-4 opacity-20 group-hover:opacity-100 transition-opacity">
                                         <span className={`text-[8px] lg:text-[9px] font-black uppercase tracking-widest ${theme.title}`}>
-                                            NHẤN ĐỂ XEM ĐIỀU KHOẢN DỊCH VỤ
+                                            {t('NHẤN ĐỂ XEM ĐIỀU KHOẢN DỊCH VỤ')}
                                         </span>
                                     </div>
                                 </div>
@@ -348,7 +352,7 @@ export default function PackageList({ packages, onBuyPackage }: Props) {
                                 onClick={() => setSelectedTerms(null)}
                                 className="w-full py-5 lg:py-6 rounded-xl lg:rounded-2xl bg-black text-white font-black uppercase tracking-[0.2em] text-xs lg:text-sm hover:bg-slate-800 transition-all"
                             >
-                                Tôi đã đọc và đồng ý
+                                {t('Tôi đã đọc và đồng ý')}
                             </button>
                         </div>
                     </div>

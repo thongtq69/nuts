@@ -50,7 +50,7 @@ export default function AdminBlogsPage() {
         coverImage: '',
         isPublished: false,
         translations: {
-            en: { title: '', slug: '', excerpt: '', content: '', category: '', isPublished: true },
+            en: { title: '', slug: '', excerpt: '', content: '', category: '', isPublished: false },
         },
     });
 
@@ -195,7 +195,7 @@ export default function AdminBlogsPage() {
                         excerpt: fullBlog.translations?.en?.excerpt || '',
                         content: fullBlog.translations?.en?.content || '',
                         category: fullBlog.translations?.en?.category || '',
-                        isPublished: fullBlog.translations?.en?.isPublished ?? true,
+                        isPublished: fullBlog.translations?.en?.isPublished ?? false,
                     },
                 },
             });
@@ -209,7 +209,7 @@ export default function AdminBlogsPage() {
                 coverImage: '',
                 isPublished: false,
                 translations: {
-                    en: { title: '', slug: '', excerpt: '', content: '', category: '', isPublished: true },
+                    en: { title: '', slug: '', excerpt: '', content: '', category: '', isPublished: false },
                 },
             });
         }

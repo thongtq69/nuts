@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Suspense } from 'react';
 import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
+import { useLocale } from '@/context/LocaleContext';
 
 interface Package {
     _id: string;
@@ -44,6 +45,7 @@ function MembershipCheckoutContent() {
     const packageId = searchParams.get('packageId');
     const { user } = useAuth();
     const toast = useToast();
+    const { apiPath, href } = useLocale();
 
     const [pkg, setPkg] = useState<Package | null>(null);
     const [loading, setLoading] = useState(true);
@@ -71,10 +73,10 @@ function MembershipCheckoutContent() {
 
     useEffect(() => {
         if (!packageId) {
-            router.push('/subscriptions');
+            router.push(href('/subscriptions'));
             return;
         }
-        fetch(`/api/packages?id=${packageId}`)
+        fetch(apiPath(`/api/packages?id=${packageId}`))
             .then(res => res.json())
             .then(data => {
                 const found = Array.isArray(data) ? data.find((p: any) => p._id === packageId) : data;
@@ -82,14 +84,14 @@ function MembershipCheckoutContent() {
                     setPkg(found);
                 } else {
                     toast.error('Không tìm thấy gói', 'Gói không tồn tại hoặc đã bị xóa.');
-                    router.push('/subscriptions');
+                    router.push(href('/subscriptions'));
                 }
                 setLoading(false);
             })
             .catch(() => {
                 setLoading(false);
             });
-    }, [packageId, router, toast]);
+    }, [apiPath, href, packageId, router, toast]);
 
     const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price);
 
@@ -146,7 +148,7 @@ function MembershipCheckoutContent() {
                     <span className="text-4xl">📦</span>
                 </div>
                 <p className="text-gray-500 text-lg">Không tìm thấy gói hội viên</p>
-                <button onClick={() => router.push('/subscriptions')} className="mt-4 text-brand hover:underline">
+                <button onClick={() => router.push(href('/subscriptions'))} className="mt-4 text-brand hover:underline">
                     Quay lại trang gói VIP
                 </button>
             </div>
