@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { generateReferralLink } from '@/lib/affiliate';
 import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
 import {
     Wallet,
@@ -59,6 +58,11 @@ export default function AgentDashboard() {
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
     const [loadError, setLoadError] = useState('');
+    const [siteOrigin, setSiteOrigin] = useState('');
+
+    useEffect(() => {
+        setSiteOrigin(window.location.origin);
+    }, []);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -110,10 +114,11 @@ export default function AgentDashboard() {
 
     const displayStats = stats || emptyStats;
     
-    // Generate encoded referral link
-    const referralLink = displayStats.encodedAffiliateCode 
-        ? generateReferralLink(displayStats.encodedAffiliateCode)
-        : `${typeof window !== 'undefined' ? window.location.origin : ''}?ref=${displayStats.referralCode}`;
+    // Generate the link from the domain that is actually serving the portal.
+    // This prevents a localhost NEXT_PUBLIC_BASE_URL from leaking into copied links.
+    const referralLink = siteOrigin && displayStats.referralCode
+        ? `${siteOrigin}/?ref=${encodeURIComponent(displayStats.referralCode)}`
+        : '';
 
     const copyReferralLink = () => {
         if (referralLink) {

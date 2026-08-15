@@ -45,6 +45,23 @@ test('agent dashboard never falls back to fabricated sales data', async () => {
     assert.match(dashboard, /setLoadError/);
 });
 
+test('agent account actions are functional and referral links use the active public origin', async () => {
+    const [layout, dashboard, changePasswordApi] = await Promise.all([
+        read('src/app/agent/layout.tsx'),
+        read('src/app/agent/page.tsx'),
+        read('src/app/api/auth/change-password/route.ts'),
+    ]);
+
+    assert.match(layout, /Đổi mật khẩu/);
+    assert.match(layout, /await logout\(\)/);
+    assert.match(layout, /ChangePasswordModal/);
+    assert.match(changePasswordApi, /bcrypt\.compare\(currentPassword, user\.password\)/);
+    assert.match(changePasswordApi, /bcrypt\.hash\(newPassword, 10\)/);
+    assert.match(dashboard, /setSiteOrigin\(window\.location\.origin\)/);
+    assert.match(dashboard, /\?ref=\$\{encodeURIComponent\(displayStats\.referralCode\)\}/);
+    assert.doesNotMatch(dashboard, /generateReferralLink/);
+});
+
 test('admin commission user detail opens the existing user detail route', async () => {
     const page = await read('src/app/admin/commission/users/page.tsx');
     assert.match(page, /href={`\/admin\/users\/\${user\._id}`}/);
