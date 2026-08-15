@@ -8,7 +8,6 @@ import {
     Settings,
     BarChart3,
     Mail,
-    TrendingUp,
     CalendarClock,
     SearchX,
 } from 'lucide-react';
@@ -362,10 +361,6 @@ export default function CommissionUsersPage() {
                                                 <div className="text-sm font-black text-slate-800">
                                                     {formatCurrency(user.performance?.currentMonthSales || 0)}
                                                 </div>
-                                                <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                                    <TrendingUp className="w-2.5 h-2.5 text-emerald-500" />
-                                                    Tăng 12%
-                                                </div>
                                             </div>
                                         </td>
                                         <td className="p-5 text-right">
@@ -382,7 +377,7 @@ export default function CommissionUsersPage() {
                                                 >
                                                     <Settings className="w-4 h-4" />
                                                 </button>
-                                                <Link href={`/admin/commission/users/${user._id}`}>
+                                                <Link href={`/admin/users/${user._id}`}>
                                                     <button
                                                         className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
                                                         title="Chi tiết"

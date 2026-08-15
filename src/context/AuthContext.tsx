@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import type { Permission, RoleType } from '@/constants/permissions';
 
-interface User {
+export interface AuthUser {
     _id: string;
     name: string;
     email: string;
@@ -16,12 +16,17 @@ interface User {
     customPermissions?: Permission[];
     staffCode?: string;
     referralCode?: string;
+    encodedAffiliateCode?: string;
+    walletBalance?: number;
+    totalCommission?: number;
+    saleType?: 'agent' | 'collaborator' | null;
+    affiliateLevel?: 'staff' | 'collaborator';
 }
 
 interface AuthContextType {
-    user: User | null;
+    user: AuthUser | null;
     loading: boolean;
-    login: (userData: User) => void;
+    login: (userData: AuthUser) => void;
     logout: () => Promise<boolean>;
     checkUser: () => Promise<void>;
     isAdmin: boolean;
@@ -33,7 +38,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -58,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         checkUser();
     }, []);
 
-    const login = (userData: User) => {
+    const login = (userData: AuthUser) => {
         setUser(userData);
         checkUser();
     };

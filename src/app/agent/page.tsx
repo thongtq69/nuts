@@ -11,8 +11,6 @@ import {
     DollarSign,
     ShoppingCart,
     Copy,
-    TrendingUp,
-    TrendingDown,
     ChevronRight,
     Sparkles,
     Link as LinkIcon,
@@ -20,7 +18,8 @@ import {
     Clock,
     ExternalLink,
     BarChart3,
-    Package
+    Package,
+    Users
 } from 'lucide-react';
 import {
     AreaChart,
@@ -59,7 +58,7 @@ export default function AgentDashboard() {
     const [stats, setStats] = useState<AgentStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
-    const [selectedPeriod, setSelectedPeriod] = useState(7);
+    const [loadError, setLoadError] = useState('');
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -79,47 +78,37 @@ export default function AgentDashboard() {
     const fetchAgentStats = async () => {
         try {
             setLoading(true);
-            const res = await fetch('/api/agent/stats');
+            setLoadError('');
+            const res = await fetch('/api/agent/stats', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setStats(data);
             } else {
-                setStats(mockStats);
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Không thể tải số liệu Đại lý');
             }
         } catch (error) {
             console.error('Error fetching stats:', error);
-            setStats(mockStats);
+            setLoadError(error instanceof Error ? error.message : 'Không thể tải số liệu Đại lý');
+            setStats(null);
         } finally {
             setLoading(false);
         }
     };
 
-    // Mock data for demo
-    const mockStats: AgentStats = {
-        referralCode: (user as any)?.referralCode || 'AGENT001',
-        encodedAffiliateCode: (user as any)?.encodedAffiliateCode || '',
-        walletBalance: 1500000,
-        totalCommission: 3200000,
-        totalReferrals: 28,
-        pendingOrders: 5,
-        totalRevenue: 32000000,
-        commissionData: [
-            { date: '13/01', commission: 120000 },
-            { date: '14/01', commission: 250000 },
-            { date: '15/01', commission: 180000 },
-            { date: '16/01', commission: 320000 },
-            { date: '17/01', commission: 280000 },
-            { date: '18/01', commission: 450000 },
-            { date: '19/01', commission: 380000 },
-        ],
-        recentOrders: [
-            { _id: '1', orderId: 'ORD001', customerName: 'Nguyen Van A', totalAmount: 500000, commissionAmount: 50000, status: 'completed', createdAt: '2026-01-19T10:00:00' },
-            { _id: '2', orderId: 'ORD002', customerName: 'Tran Thi B', totalAmount: 750000, commissionAmount: 75000, status: 'shipping', createdAt: '2026-01-18T14:30:00' },
-            { _id: '3', orderId: 'ORD003', customerName: 'Le Van C', totalAmount: 320000, commissionAmount: 32000, status: 'pending', createdAt: '2026-01-17T09:15:00' },
-        ]
+    const emptyStats: AgentStats = {
+        referralCode: user?.referralCode || '',
+        encodedAffiliateCode: user?.encodedAffiliateCode || '',
+        walletBalance: 0,
+        totalCommission: 0,
+        totalReferrals: 0,
+        pendingOrders: 0,
+        totalRevenue: 0,
+        commissionData: [],
+        recentOrders: [],
     };
 
-    const displayStats = stats || mockStats;
+    const displayStats = stats || emptyStats;
     
     // Generate encoded referral link
     const referralLink = displayStats.encodedAffiliateCode 
@@ -170,6 +159,17 @@ export default function AgentDashboard() {
         return (
             <div className="w-full">
                 <DashboardSkeleton />
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div className="grid min-h-[60vh] place-items-center rounded-2xl border border-red-100 bg-white p-8 text-center">
+                <div>
+                    <p className="font-semibold text-red-600">{loadError}</p>
+                    <button onClick={fetchAgentStats} className="mt-4 rounded-xl bg-[#9C7044] px-5 py-2.5 font-semibold text-white hover:bg-[#7d5a36]">Thử tải lại</button>
+                </div>
             </div>
         );
     }
@@ -241,7 +241,7 @@ export default function AgentDashboard() {
                         </div>
                         <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
                             <span className="text-amber-500">*</span>
-                            Chia sẻ link tiếp thị để nhận hoa hồng 10% từ đơn hàng của khách
+                            Chia sẻ link tiếp thị để nhận hoa hồng theo chính sách hiện hành
                         </p>
                     </div>
                 </div>
@@ -281,24 +281,18 @@ export default function AgentDashboard() {
                     icon={Wallet}
                     label="Số dư ví"
                     value={`${formatPrice(displayStats.walletBalance)}đ`}
-                    trend="+12.5%"
-                    trendUp={true}
                     color="green"
                 />
                 <StatCard
                     icon={DollarSign}
                     label="Tổng hoa hồng"
                     value={`${formatPrice(displayStats.totalCommission)}đ`}
-                    trend="+8.2%"
-                    trendUp={true}
                     color="blue"
                 />
                 <StatCard
                     icon={ShoppingCart}
                     label="Đơn hàng giới thiệu"
                     value={displayStats.totalReferrals?.toString() || '0'}
-                    trend="+5"
-                    trendUp={true}
                     color="purple"
                     href="/agent/orders"
                 />
@@ -307,8 +301,6 @@ export default function AgentDashboard() {
                     label="Chờ xử lý"
                     value={displayStats.pendingOrders?.toString() || '0'}
                     subtitle="đơn hàng"
-                    trend=""
-                    trendUp={true}
                     color="orange"
                 />
             </div>
@@ -326,21 +318,6 @@ export default function AgentDashboard() {
                             <p className="text-slate-500 text-sm mt-1">Tổng quan thu nhập từ giới thiệu</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="flex bg-slate-100 rounded-lg p-1">
-                                {[7, 14, 30].map((period) => (
-                                    <button
-                                        key={period}
-                                        onClick={() => setSelectedPeriod(period)}
-                                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                                            selectedPeriod === period
-                                                ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
-                                                : 'text-slate-600 hover:text-slate-900'
-                                        }`}
-                                    >
-                                        {period}D
-                                    </button>
-                                ))}
-                            </div>
                             <button
                                 onClick={fetchAgentStats}
                                 className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -417,6 +394,15 @@ export default function AgentDashboard() {
                             title="Số dư ví"
                             subtitle={`${formatPrice(displayStats.walletBalance)}đ`}
                             color="green"
+                        />
+
+                        <QuickAction
+                            href="/agent/collaborators"
+                            icon={Users}
+                            title="Cộng tác viên"
+                            subtitle="Tạo và quản lý CTV trực thuộc"
+                            color="orange"
+                            variant="outline"
                         />
 
                         {/* Bank Info for Withdrawal */}
@@ -534,8 +520,6 @@ function StatCard({
     label, 
     value, 
     subtitle,
-    trend, 
-    trendUp,
     color,
     href 
 }: { 
@@ -543,8 +527,6 @@ function StatCard({
     label: string; 
     value: string;
     subtitle?: string;
-    trend: string;
-    trendUp: boolean;
     color: 'blue' | 'green' | 'purple' | 'orange';
     href?: string;
 }) {
@@ -561,12 +543,6 @@ function StatCard({
                 <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
                     <Icon className="w-5 h-5" />
                 </div>
-                {trend && (
-                    <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${trendUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                        {trendUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                        {trend}
-                    </span>
-                )}
             </div>
             <p className="text-xl font-bold text-slate-900">{value}</p>
             <p className="text-slate-500 text-sm mt-1">

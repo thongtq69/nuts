@@ -1,242 +1,55 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-    LayoutDashboard,
-    Wallet,
-    ShoppingCart,
-    Package,
-    Copy,
-    ExternalLink,
-    Menu,
-    X,
-    ChevronRight,
-    DollarSign,
-    Users
-} from 'lucide-react';
+import { ChevronRight, Copy, DollarSign, ExternalLink, LayoutDashboard, Menu, Package, ShoppingCart, Users, Wallet, X } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import type { AuthUser } from '@/context/AuthContext';
 
 const menuItems = [
     { href: '/agent', icon: LayoutDashboard, label: 'Tổng quan' },
     { href: '/agent/orders', icon: ShoppingCart, label: 'Đơn hàng Đại lý' },
     { href: '/agent/commissions', icon: Wallet, label: 'Hoa hồng' },
+    { href: '/agent/collaborators', icon: Users, label: 'Cộng tác viên' },
 ];
 
-export default function AgentLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function AgentLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const { user, loading } = useAuth();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
-        if (!loading) {
-            if (!user) {
-                router.push('/login');
-            } else if (user.role !== 'sale' && user.role !== 'admin') {
-                router.push('/');
-            }
-        }
-    }, [user, loading, router]);
+        if (loading) return;
+        if (!user) router.push('/login');
+        else if (user.role !== 'sale' && user.role !== 'admin') router.push('/');
+    }, [loading, router, user]);
 
-    // Check authorization after loading
-    const isUserAuthorized = !loading && user && (user.role === 'sale' || user.role === 'admin');
+    const authorized = !loading && user && (user.role === 'sale' || user.role === 'admin');
+    if (!authorized) return <div className="grid min-h-screen place-items-center bg-slate-50"><div className="text-center"><div className="mx-auto mb-3 h-11 w-11 animate-spin rounded-full border-4 border-[#E3C88D] border-t-[#9C7044]" /><p className="text-slate-600">Đang tải...</p></div></div>;
 
-    if (loading || !isUserAuthorized) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="relative">
-                        <div className="w-12 h-12 border-4 border-[#E3C88D] rounded-full" />
-                        <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#9C7044] border-t-transparent rounded-full animate-spin" />
-                    </div>
-                    <div className="text-slate-600 font-medium">Đang tải...</div>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen bg-slate-50 lg:flex">
-            {/* Mobile Header */}
-            <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4">
-                <button
-                    onClick={() => setIsSidebarOpen(true)}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                    <Menu className="w-5 h-5 text-slate-600" />
-                </button>
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#9C7044] flex items-center justify-center text-white font-bold text-sm">
-                        {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-                    </div>
-                    <span className="font-semibold text-slate-800">Đại lý</span>
-                </div>
-                <div className="w-10" />
-            </header>
-
-            {/* Mobile Sidebar Overlay */}
-            {isSidebarOpen && (
-                <div className="fixed inset-0 z-50 lg:hidden">
-                    <div
-                        className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"
-                        onClick={() => setIsSidebarOpen(false)}
-                    />
-                    <div className="absolute inset-y-0 left-0 w-72 bg-white shadow-xl animate-in slide-in-from-left duration-300">
-                        <SidebarContent pathname={pathname} onClose={() => setIsSidebarOpen(false)} user={user} />
-                    </div>
-                </div>
-            )}
-
-            {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex w-64 shrink-0 bg-white border-r border-slate-200 flex-col">
-                <SidebarContent pathname={pathname} user={user} />
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 min-h-screen pt-16 lg:pt-0">
-                <div className="p-4 sm:p-6 lg:p-8 w-full max-w-[1400px] mx-auto">
-                    {children}
-                </div>
-            </main>
-        </div>
-    );
+    return <div className="min-h-screen bg-slate-50 lg:flex">
+        <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden"><button onClick={() => setSidebarOpen(true)} className="rounded-lg p-2 hover:bg-slate-100" aria-label="Mở menu"><Menu size={21} /></button><strong>Đại lý</strong><div className="w-9" /></header>
+        {sidebarOpen && <div className="fixed inset-0 z-50 lg:hidden"><button className="absolute inset-0 bg-slate-900/40" onClick={() => setSidebarOpen(false)} aria-label="Đóng menu" /><aside className="absolute inset-y-0 left-0 w-72 bg-white shadow-xl"><Sidebar pathname={pathname} user={user} close={() => setSidebarOpen(false)} /></aside></div>}
+        <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:flex"><Sidebar pathname={pathname} user={user} /></aside>
+        <main className="min-h-screen flex-1 pt-16 lg:pt-0"><div className="mx-auto w-full max-w-[1400px] p-4 sm:p-6 lg:p-8">{children}</div></main>
+    </div>;
 }
 
-function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose?: () => void; user: any }) {
+function Sidebar({ pathname, user, close }: { pathname: string; user: AuthUser; close?: () => void }) {
     const [copied, setCopied] = useState(false);
+    async function copyCode() {
+        if (!user?.referralCode) return;
+        await navigator.clipboard.writeText(user.referralCode);
+        setCopied(true); setTimeout(() => setCopied(false), 1600);
+    }
 
-    const copyReferralCode = () => {
-        if (user?.referralCode) {
-            navigator.clipboard.writeText(user.referralCode);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
-    };
-
-    return (
-        <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200">
-                <Link href="/agent" className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-[#9C7044] flex items-center justify-center text-white font-bold text-sm">
-                        GN
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 text-base">Go Nuts</span>
-                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">
-                            Đại lý
-                        </span>
-                    </div>
-                </Link>
-                {onClose && (
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                        <X className="w-5 h-5 text-slate-500" />
-                    </button>
-                )}
-            </div>
-
-            {/* User Profile Card */}
-            <div className="p-4">
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-[#E3C88D] flex items-center justify-center text-[#7d5a36] font-bold text-sm">
-                            {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-                        </div>
-                        <div className="min-w-0">
-                            <div className="font-semibold text-slate-900 text-sm truncate">{user?.name}</div>
-                            <div className="text-slate-500 text-xs truncate">{user?.email}</div>
-                        </div>
-                    </div>
-
-                    {user?.referralCode && (
-                        <div className="bg-white rounded-lg px-3 py-2 border border-slate-200 flex items-center gap-2 mb-3">
-                            <div className="flex-1 min-w-0">
-                                <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Mã đại lý</div>
-                                <div className="font-mono font-semibold text-slate-700 text-sm truncate">{user.referralCode}</div>
-                            </div>
-                            <button
-                                onClick={copyReferralCode}
-                                className="p-1.5 hover:bg-slate-100 rounded-md transition-colors"
-                            >
-                                {copied ? (
-                                    <span className="text-xs text-green-600 font-medium">Đã copy</span>
-                                ) : (
-                                    <Copy className="w-4 h-4 text-slate-400" />
-                                )}
-                            </button>
-                        </div>
-                    )}
-                    
-                    {/* Wallet Balance */}
-                    <div className="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-slate-200">
-                        <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-green-600" />
-                            <span className="text-xs text-slate-500">Số dư ví</span>
-                        </div>
-                        <span className="font-semibold text-green-600 text-sm">
-                            {new Intl.NumberFormat('vi-VN').format(user?.walletBalance || 0)}đ
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto px-3">
-                <div className="space-y-1">
-                    {menuItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                onClick={onClose}
-                                className={`
-                                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    ${isActive
-                                        ? 'bg-[#F5EFE6] text-[#7d5a36]'
-                                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                    }
-                                `}
-                            >
-                                <item.icon size={18} className={isActive ? 'text-[#9C7044]' : 'text-slate-500'} />
-                                <span className="flex-1">{item.label}</span>
-                                {isActive && <ChevronRight size={14} className="text-[#9C7044]" />}
-                            </Link>
-                        );
-                    })}
-                </div>
-
-                {/* Quick Links */}
-                <div className="mt-6 px-3">
-                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Liên kết nhanh</div>
-                    <Link href="/products" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-[#9C7044] hover:bg-slate-50 rounded-lg transition-colors">
-                        <Package size={16} />
-                        <span>Xem sản phẩm</span>
-                    </Link>
-                    <Link href="/staff" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-[#9C7044] hover:bg-slate-50 rounded-lg transition-colors">
-                        <Users size={16} />
-                        <span>Trang Nhân viên</span>
-                    </Link>
-                </div>
-            </nav>
-
-            {/* Footer */}
-            <div className="p-4 border-t border-slate-200">
-                <Link
-                    href="/"
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all text-sm font-medium"
-                >
-                    <ExternalLink size={16} />
-                    <span className="flex-1">Về trang chủ</span>
-                    <ChevronRight size={14} className="opacity-50" />
-                </Link>
-            </div>
-        </div>
-    );
+    return <div className="flex h-full w-full flex-col">
+        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5"><Link href="/agent" onClick={close} className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-lg bg-[#9C7044] text-sm font-bold text-white">GN</span><span><b className="block text-slate-900">Go Nuts</b><small className="block uppercase tracking-wider text-slate-500">Đại lý</small></span></Link>{close && <button onClick={close} className="rounded-lg p-2 hover:bg-slate-100" aria-label="Đóng menu"><X size={20} /></button>}</div>
+        <div className="p-4"><div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="mb-3 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-lg bg-[#E3C88D] font-bold text-[#7d5a36]">{user?.name?.charAt(0)?.toUpperCase() || 'A'}</span><span className="min-w-0"><b className="block truncate text-sm text-slate-900">{user?.name}</b><small className="block truncate text-slate-500">{user?.email}</small></span></div>{user?.referralCode && <button onClick={() => void copyCode()} className="mb-3 flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left"><span className="min-w-0 flex-1"><small className="block uppercase text-slate-500">Mã Đại lý</small><b className="block truncate font-mono text-sm">{user.referralCode}</b></span>{copied ? <small className="text-emerald-600">Đã chép</small> : <Copy size={16} className="text-slate-400" />}</button>}<div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"><span className="flex items-center gap-2 text-xs text-slate-500"><DollarSign size={16} className="text-emerald-600" />Số dư ví</span><b className="text-sm text-emerald-600">{new Intl.NumberFormat('vi-VN').format(user?.walletBalance || 0)}đ</b></div></div></div>
+        <nav className="flex-1 overflow-y-auto px-3"><div className="space-y-1">{menuItems.map((item) => { const active = pathname === item.href || (item.href !== '/agent' && pathname.startsWith(`${item.href}/`)); return <Link key={item.href} href={item.href} onClick={close} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${active ? 'bg-[#F5EFE6] text-[#7d5a36]' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}><item.icon size={18} /><span className="flex-1">{item.label}</span>{active && <ChevronRight size={14} />}</Link>; })}</div>
+        <div className="mt-6 px-3"><div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Liên kết nhanh</div><Link href="/products" onClick={close} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 hover:text-[#9C7044]"><Package size={16} />Xem sản phẩm</Link><Link href="/agent/collaborators" onClick={close} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 hover:text-[#9C7044]"><Users size={16} />Tạo cộng tác viên</Link></div></nav>
+        <div className="border-t border-slate-200 p-4"><Link href="/" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100"><ExternalLink size={16} /><span className="flex-1">Về trang chủ</span><ChevronRight size={14} /></Link></div>
+    </div>;
 }

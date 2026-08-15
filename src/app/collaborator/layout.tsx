@@ -70,6 +70,7 @@ export default function CollaboratorLayout({
             <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-amber-100/50 h-16 flex items-center justify-between px-4 shadow-sm">
                 <button
                     onClick={() => setIsSidebarOpen(true)}
+                    aria-label="Mở menu"
                     className="p-2.5 hover:bg-amber-50 rounded-xl transition-colors"
                 >
                     <Menu className="w-6 h-6 text-slate-700" />
@@ -138,7 +139,7 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                     </div>
                 </Link>
                 {onClose && (
-                    <button onClick={onClose} className="p-2 hover:bg-amber-50 rounded-xl transition-colors">
+                    <button onClick={onClose} aria-label="Đóng menu" className="p-2 hover:bg-amber-50 rounded-xl transition-colors">
                         <X className="w-5 h-5 text-slate-500" />
                     </button>
                 )}
@@ -169,6 +170,7 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                                 </div>
                                 <button
                                     onClick={copyReferralCode}
+                                    aria-label="Sao chép mã giới thiệu"
                                     className="p-1.5 hover:bg-gray-800/10 rounded-lg transition-colors"
                                 >
                                     {copied ? (
@@ -187,7 +189,7 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
             <nav className="flex-1 overflow-y-auto px-3">
                 <div className="space-y-1.5">
                     {menuItems.map((item) => {
-                        const isActive = pathname === item.href;
+                        const isActive = pathname === item.href || (item.href !== '/collaborator' && pathname.startsWith(`${item.href}/`));
                         return (
                             <Link
                                 key={item.href}
@@ -217,9 +219,9 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
                             <Package size={16} />
                             <span>Xem sản phẩm</span>
                         </Link>
-                        <Link href="/staff" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-brand hover:bg-amber-50 rounded-xl transition-colors">
+                        <Link href="/collaborator/orders" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-brand hover:bg-amber-50 rounded-xl transition-colors">
                             <Users size={16} />
-                            <span>Trang Nhân viên</span>
+                            <span>Đơn hàng của tôi</span>
                         </Link>
                     </div>
                 </div>
