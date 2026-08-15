@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import Order from '@/models/Order';
@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { generateNextStaffCode } from '@/lib/staff-identity';
 import { sendAccountCredentialsEmail } from '@/lib/email';
+import { notifyAdminOfNewAccount } from '@/lib/admin-email-notifications';
 import type { HydratedDocument } from 'mongoose';
 import type { IUser } from '@/models/User';
 
@@ -238,6 +239,7 @@ export async function POST(req: Request) {
         }
 
         if (!staff) throw new Error('Không thể tạo mã nhân viên duy nhất');
+        after(() => notifyAdminOfNewAccount(String(staff._id)));
 
         let emailSent = true;
         try {

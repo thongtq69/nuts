@@ -62,6 +62,9 @@ export interface IUser {
     resetPasswordExpires?: Date;
     isActive?: boolean;
     deletedAt?: Date;
+    adminNewAccountNotificationStatus?: 'processing' | 'sent' | 'failed' | 'skipped';
+    adminNewAccountNotificationSentAt?: Date;
+    adminNewAccountNotificationLastAttemptAt?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -162,6 +165,12 @@ const UserSchema: Schema<IUser> = new Schema(
         resetPasswordExpires: { type: Date },
         isActive: { type: Boolean, default: true },
         deletedAt: { type: Date },
+        adminNewAccountNotificationStatus: {
+            type: String,
+            enum: ['processing', 'sent', 'failed', 'skipped'],
+        },
+        adminNewAccountNotificationSentAt: { type: Date },
+        adminNewAccountNotificationLastAttemptAt: { type: Date },
     },
     {
         timestamps: true,

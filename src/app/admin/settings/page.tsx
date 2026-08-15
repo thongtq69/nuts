@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import {
     Settings,
     Phone,
-    Mail,
-    MapPin,
     Facebook,
     Instagram,
     Youtube,
@@ -18,7 +16,9 @@ import {
     Shield,
     RefreshCw,
     Package,
-    ImageIcon
+    ImageIcon,
+    BellRing,
+    Send
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -77,6 +77,12 @@ interface SiteSettings {
     };
 }
 
+interface AdminNotificationSettings {
+    recipients: string[];
+    notifyNewAccount: boolean;
+    notifyNewOrder: boolean;
+}
+
 export default function AdminSettingsPage() {
     const [settings, setSettings] = useState<SiteSettings>({
         hotline: '096 118 5753',
@@ -127,6 +133,12 @@ export default function AdminSettingsPage() {
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [sendingTestEmail, setSendingTestEmail] = useState(false);
+    const [notificationSettings, setNotificationSettings] = useState<AdminNotificationSettings>({
+        recipients: ['contact.gonuts@gmail.com'],
+        notifyNewAccount: true,
+        notifyNewOrder: true,
+    });
     const [uploadingBanner, setUploadingBanner] = useState(false);
     const [bannerType, setBannerType] = useState<'products' | 'homePromo'>('products');
     const toast = useToast();
@@ -138,7 +150,10 @@ export default function AdminSettingsPage() {
 
     const fetchSettings = async () => {
         try {
-            const res = await fetch('/api/settings', { cache: 'no-store' });
+            const [res, notificationRes] = await Promise.all([
+                fetch('/api/settings', { cache: 'no-store' }),
+                fetch('/api/admin/notification-settings', { cache: 'no-store' }),
+            ]);
             if (res.ok) {
                 const data = await res.json();
                 setSettings({
@@ -161,6 +176,14 @@ export default function AdminSettingsPage() {
                     },
                 });
             }
+            if (notificationRes.ok) {
+                const data = await notificationRes.json();
+                setNotificationSettings({
+                    recipients: Array.isArray(data.recipients) ? data.recipients : [],
+                    notifyNewAccount: data.notifyNewAccount !== false,
+                    notifyNewOrder: data.notifyNewOrder !== false,
+                });
+            }
         } catch (error) {
             console.error('Error fetching settings:', error);
         } finally {
@@ -171,30 +194,76 @@ export default function AdminSettingsPage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await fetch('/api/settings', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(settings),
-            });
+            const [res, notificationRes] = await Promise.all([
+                fetch('/api/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings),
+                }),
+                fetch('/api/admin/notification-settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(notificationSettings),
+                }),
+            ]);
 
-            const payload = await res.json();
-            if (res.ok) {
+            const [payload, notificationPayload] = await Promise.all([
+                res.json(),
+                notificationRes.json(),
+            ]);
+            if (res.ok && notificationRes.ok) {
                 if (payload.settings) {
                     setSettings({
                         ...payload.settings,
                         homeFeatures: normalizeHomeFeatures(payload.settings.homeFeatures),
                     });
                 }
+                if (notificationPayload.settings) {
+                    setNotificationSettings(notificationPayload.settings);
+                }
                 await refreshSettings();
                 window.localStorage.setItem('gonuts-settings-updated-at', Date.now().toString());
                 toast.success('Đã lưu cài đặt thành công');
             } else {
-                toast.error('Lỗi khi lưu cài đặt', payload.error || 'Vui lòng thử lại.');
+                toast.error(
+                    'Lỗi khi lưu cài đặt',
+                    payload.error || notificationPayload.error || 'Vui lòng thử lại.',
+                );
             }
-        } catch (error) {
+        } catch {
             toast.error('Lỗi kết nối', 'Vui lòng thử lại.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSendTestEmail = async () => {
+        setSendingTestEmail(true);
+        try {
+            const saveResponse = await fetch('/api/admin/notification-settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(notificationSettings),
+            });
+            const savePayload = await saveResponse.json();
+            if (!saveResponse.ok) {
+                toast.error('Không thể gửi email thử', savePayload.error || 'Cấu hình email không hợp lệ.');
+                return;
+            }
+            if (savePayload.settings) setNotificationSettings(savePayload.settings);
+
+            const testResponse = await fetch('/api/admin/notification-settings/test', { method: 'POST' });
+            const testPayload = await testResponse.json();
+            if (!testResponse.ok) {
+                toast.error('Gửi email thử thất bại', testPayload.error || 'Vui lòng thử lại.');
+                return;
+            }
+            toast.success(testPayload.message || 'Đã gửi email thử thành công');
+        } catch (error) {
+            console.error('Send notification test email failed:', error);
+            toast.error('Lỗi kết nối', 'Không thể gửi email thử. Vui lòng thử lại.');
+        } finally {
+            setSendingTestEmail(false);
         }
     };
 
@@ -388,6 +457,86 @@ export default function AdminSettingsPage() {
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://tiktok.com/..."
                             />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Admin email notifications */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <BellRing className="text-brand" size={20} />
+                                Email thông báo cho quản trị
+                            </h2>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Hệ thống gửi email khi có tài khoản hoặc đơn hàng mới. Lỗi gửi email không ảnh hưởng đến việc đăng ký và đặt hàng.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleSendTestEmail}
+                            disabled={sendingTestEmail || saving}
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-brand px-4 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {sendingTestEmail
+                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                : <Send className="h-4 w-4" />}
+                            Gửi email thử
+                        </button>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-slate-700">
+                                Email nhận thông báo
+                            </label>
+                            <textarea
+                                rows={4}
+                                value={notificationSettings.recipients.join('\n')}
+                                onChange={event => setNotificationSettings(previous => ({
+                                    ...previous,
+                                    recipients: event.target.value.split(/[\n,;]+/),
+                                }))}
+                                className="w-full resize-y rounded-lg border border-slate-300 px-4 py-3 focus:border-brand focus:ring-2 focus:ring-brand"
+                                placeholder={'admin@gonuts.vn\nquanly@gonuts.vn'}
+                            />
+                            <p className="mt-1 text-xs text-slate-500">
+                                Nhập tối đa 10 email, mỗi email một dòng hoặc ngăn cách bằng dấu phẩy.
+                            </p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={notificationSettings.notifyNewAccount}
+                                    onChange={event => setNotificationSettings(previous => ({
+                                        ...previous,
+                                        notifyNewAccount: event.target.checked,
+                                    }))}
+                                    className="mt-0.5 h-5 w-5 rounded text-brand focus:ring-brand"
+                                />
+                                <span>
+                                    <span className="block font-semibold text-slate-800">Thông báo tài khoản mới</span>
+                                    <span className="mt-1 block text-sm text-slate-500">Gồm thông tin liên hệ, loại tài khoản và nhân viên giới thiệu/quản lý.</span>
+                                </span>
+                            </label>
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={notificationSettings.notifyNewOrder}
+                                    onChange={event => setNotificationSettings(previous => ({
+                                        ...previous,
+                                        notifyNewOrder: event.target.checked,
+                                    }))}
+                                    className="mt-0.5 h-5 w-5 rounded text-brand focus:ring-brand"
+                                />
+                                <span>
+                                    <span className="block font-semibold text-slate-800">Thông báo đơn hàng mới</span>
+                                    <span className="mt-1 block text-sm text-slate-500">Gồm sản phẩm, số tiền, thanh toán, phí vận chuyển và địa chỉ giao hàng.</span>
+                                </span>
+                            </label>
                         </div>
                     </div>
                 </div>

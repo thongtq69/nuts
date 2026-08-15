@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { createPaymentUrl } from '@/lib/vnpay';
+import { notifyAdminOfNewOrder } from '@/lib/admin-email-notifications';
 
 async function getUserId() {
     try {
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest) {
             paymentStatus: 'pending',
             status: 'pending',
         });
+        after(() => notifyAdminOfNewOrder(String(order._id)));
 
         console.log('Order created:', order._id);
 

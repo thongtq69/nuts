@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
 import Order from '@/models/Order';
@@ -7,6 +7,7 @@ import AffiliateSettings from '@/models/AffiliateSettings';
 import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { notifyAdminOfNewOrder } from '@/lib/admin-email-notifications';
 
 export async function POST(req: Request) {
     try {
@@ -137,6 +138,7 @@ export async function POST(req: Request) {
         };
 
         const order = await Order.create(orderData);
+        after(() => notifyAdminOfNewOrder(String(order._id)));
 
         // Create Commission Records - Support 2-level system
         const commissionRecords = [];

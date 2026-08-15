@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import UserVoucher from '@/models/UserVoucher';
@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { sendWelcomeEmail } from '@/lib/email';
 import { findReferrerByCode } from '@/lib/staff-identity';
 import { normalizeReferralCode } from '@/lib/referral-attribution';
+import { notifyAdminOfNewAccount } from '@/lib/admin-email-notifications';
 
 // Generate unique voucher code
 function generateVoucherCode(): string {
@@ -92,6 +93,7 @@ export async function POST(req: Request) {
         }
 
         const user: any = await User.create(userData);
+        after(() => notifyAdminOfNewAccount(String(user._id)));
 
         if (user) {
             let emailSent = false;

@@ -49,6 +49,9 @@ export interface IOrder {
     voucherSource?: 'package' | 'manual' | 'campaign' | 'order_reward';
     voucherDiscountAmount?: number;
     vipSavings?: number;
+    adminNewOrderNotificationStatus?: 'processing' | 'sent' | 'failed' | 'skipped';
+    adminNewOrderNotificationSentAt?: Date;
+    adminNewOrderNotificationLastAttemptAt?: Date;
     createdAt?: Date;
 }
 
@@ -111,6 +114,12 @@ const OrderSchema: Schema<IOrder> = new Schema(
         voucherSource: { type: String, enum: ['package', 'manual', 'campaign', 'order_reward'] },
         voucherDiscountAmount: { type: Number, min: 0 },
         vipSavings: { type: Number, min: 0 },
+        adminNewOrderNotificationStatus: {
+            type: String,
+            enum: ['processing', 'sent', 'failed', 'skipped'],
+        },
+        adminNewOrderNotificationSentAt: { type: Date },
+        adminNewOrderNotificationLastAttemptAt: { type: Date },
     },
     {
         timestamps: true,

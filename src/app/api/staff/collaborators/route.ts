@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import Order from '@/models/Order';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
+import { notifyAdminOfNewAccount } from '@/lib/admin-email-notifications';
 
 // Helper to get current user
 async function getCurrentUser() {
@@ -119,6 +120,7 @@ export async function POST(req: Request) {
             walletBalance: 0,
             totalCommission: 0
         });
+        after(() => notifyAdminOfNewAccount(String(collaborator._id)));
 
         // Update staff's collaborator count
         await User.findByIdAndUpdate(user._id, {

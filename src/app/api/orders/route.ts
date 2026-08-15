@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import User from '@/models/User';
@@ -12,6 +12,7 @@ import { cookies } from 'next/headers';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { reconcileAcbPayments } from '@/lib/acb-payments';
 import { calculateVoucherDiscount, type VoucherDiscountItem } from '@/lib/voucher-discount';
+import { notifyAdminOfNewOrder } from '@/lib/admin-email-notifications';
 
 async function getUserId() {
     try {
@@ -262,6 +263,7 @@ export async function POST(req: Request) {
             voucherDiscountAmount: discountAmount,
             vipSavings: voucherToApply?.source === 'package' ? discountAmount : 0,
         });
+        after(() => notifyAdminOfNewOrder(String(order._id)));
 
         if (paymentMethod === 'banking' && body.paymentReference) {
             try {

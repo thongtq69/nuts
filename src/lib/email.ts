@@ -15,6 +15,9 @@ async function createTransporter() {
     if (GMAIL_APP_PASSWORD) {
         return nodemailer.createTransport({
             service: 'gmail',
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
             auth: {
                 user: GMAIL_USER,
                 pass: GMAIL_APP_PASSWORD,
@@ -41,6 +44,9 @@ async function createTransporter() {
 
         return nodemailer.createTransport({
             service: 'gmail',
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
             auth: {
                 type: 'OAuth2',
                 user: GMAIL_USER,
@@ -501,7 +507,163 @@ export async function sendSaleApprovedEmail(to: string, name: string, referralCo
     });
 }
 
-export default {
+function escapeHtml(value: unknown): string {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function formatVnd(value: unknown): string {
+    const amount = Number(value);
+    return `${(Number.isFinite(amount) ? amount : 0).toLocaleString('vi-VN')}đ`;
+}
+
+async function sendAdminEmail(recipients: string[], subject: string, content: string) {
+    if (recipients.length === 0) throw new Error('No admin notification recipients configured');
+    const transporter = await createTransporter();
+    await transporter.sendMail({
+        from: `"Go Nuts" <${GMAIL_USER}>`,
+        to: GMAIL_USER,
+        bcc: recipients,
+        subject: subject.replace(/[\r\n]+/g, ' ').trim(),
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>${emailStyles}</head>
+            <body>
+                <div class="container">
+                    ${emailHeader}
+                    <div class="content">${content}</div>
+                    ${emailFooter}
+                </div>
+            </body>
+            </html>
+        `,
+    });
+}
+
+export interface AdminNewAccountEmailData {
+    userId: string;
+    name: string;
+    email: string;
+    phone?: string;
+    accountType: string;
+    staffName?: string;
+    staffCode?: string;
+    createdAt?: Date | string;
+}
+
+export async function sendAdminNewAccountEmail(
+    recipients: string[],
+    data: AdminNewAccountEmailData,
+) {
+    const createdAt = data.createdAt
+        ? new Date(data.createdAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })
+        : new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const manager = data.staffName || data.staffCode
+        ? `<p><strong>Nhân viên giới thiệu/quản lý:</strong> ${escapeHtml(data.staffName || 'Chưa có')} ${data.staffCode ? `(${escapeHtml(data.staffCode)})` : ''}</p>`
+        : '<p><strong>Nhân viên giới thiệu/quản lý:</strong> Chưa có</p>';
+
+    await sendAdminEmail(
+        recipients,
+        `[Go Nuts] Có tài khoản mới: ${data.name}`,
+        `
+            <h2>👤 Có tài khoản mới</h2>
+            <div class="info-box">
+                <p><strong>Họ tên:</strong> ${escapeHtml(data.name)}</p>
+                <p><strong>Email:</strong> ${escapeHtml(data.email)}</p>
+                <p><strong>Số điện thoại:</strong> ${escapeHtml(data.phone || 'Chưa cung cấp')}</p>
+                <p><strong>Loại tài khoản:</strong> ${escapeHtml(data.accountType)}</p>
+                ${manager}
+                <p><strong>Thời gian:</strong> ${escapeHtml(createdAt)}</p>
+            </div>
+            <div class="btn-container">
+                <a href="${BASE_URL}/admin/users/${encodeURIComponent(data.userId)}" class="btn">Kiểm tra tài khoản</a>
+            </div>
+        `,
+    );
+}
+
+export interface AdminNewOrderEmailData {
+    orderId: string;
+    customerName: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    items: { name: string; quantity: number; price: number }[];
+    shippingFee: number;
+    discount: number;
+    totalAmount: number;
+    shippingAddress: string;
+    paymentMethod: string;
+    paymentStatus: string;
+    orderType: string;
+    createdAt?: Date | string;
+}
+
+export async function sendAdminNewOrderEmail(
+    recipients: string[],
+    data: AdminNewOrderEmailData,
+) {
+    const shortOrderId = data.orderId.slice(-8).toUpperCase();
+    const createdAt = data.createdAt
+        ? new Date(data.createdAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })
+        : new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const itemRows = data.items.map(item => `
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">${escapeHtml(item.name)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${Math.max(0, Number(item.quantity) || 0)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatVnd((Number(item.price) || 0) * (Number(item.quantity) || 0))}</td>
+        </tr>
+    `).join('');
+
+    await sendAdminEmail(
+        recipients,
+        `[Go Nuts] Đơn hàng mới #${shortOrderId} - ${formatVnd(data.totalAmount)}`,
+        `
+            <h2>🛒 Có đơn hàng mới #${shortOrderId}</h2>
+            <div class="info-box">
+                <p><strong>Khách hàng:</strong> ${escapeHtml(data.customerName)}</p>
+                <p><strong>Email:</strong> ${escapeHtml(data.customerEmail || 'Chưa cung cấp')}</p>
+                <p><strong>Số điện thoại:</strong> ${escapeHtml(data.customerPhone || 'Chưa cung cấp')}</p>
+                <p><strong>Loại đơn:</strong> ${escapeHtml(data.orderType === 'membership' ? 'Gói hội viên' : 'Sản phẩm')}</p>
+                <p><strong>Thanh toán:</strong> ${escapeHtml(data.paymentMethod)} — ${escapeHtml(data.paymentStatus)}</p>
+                <p><strong>Thời gian:</strong> ${escapeHtml(createdAt)}</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead><tr style="background: #f5f5f5;"><th style="padding: 10px; text-align: left;">Sản phẩm</th><th style="padding: 10px;">SL</th><th style="padding: 10px; text-align: right;">Thành tiền</th></tr></thead>
+                <tbody>${itemRows}</tbody>
+            </table>
+            <div class="order-box">
+                <p><strong>Phí vận chuyển:</strong> ${formatVnd(data.shippingFee)}</p>
+                <p><strong>Giảm giá:</strong> ${formatVnd(data.discount)}</p>
+                <p class="order-total">Tổng thanh toán: ${formatVnd(data.totalAmount)}</p>
+                <p><strong>Địa chỉ:</strong> ${escapeHtml(data.shippingAddress)}</p>
+            </div>
+            <div class="btn-container">
+                <a href="${BASE_URL}/admin/orders/${encodeURIComponent(data.orderId)}" class="btn">Mở đơn hàng trong Admin</a>
+            </div>
+        `,
+    );
+}
+
+export async function sendAdminNotificationTestEmail(recipients: string[]) {
+    await sendAdminEmail(
+        recipients,
+        '[Go Nuts] Kiểm tra email thông báo thành công',
+        `
+            <h2>✅ Email thông báo đang hoạt động</h2>
+            <p>Đây là email kiểm tra được gửi từ trang Cài đặt Website.</p>
+            <div class="info-box">
+                <p>Khi có tài khoản mới hoặc đơn hàng mới, hệ thống sẽ gửi thông tin tới các địa chỉ đã cấu hình.</p>
+            </div>
+        `,
+    );
+}
+
+const emailService = {
     generateOTP,
     sendOTPEmail,
     sendOrderConfirmationEmail,
@@ -510,4 +672,9 @@ export default {
     sendAccountCredentialsEmail,
     sendPasswordResetEmail,
     sendSaleApprovedEmail,
+    sendAdminNewAccountEmail,
+    sendAdminNewOrderEmail,
+    sendAdminNotificationTestEmail,
 };
+
+export default emailService;

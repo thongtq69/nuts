@@ -46,6 +46,10 @@ import {
     canTransitionLegacyCommission,
     getLegacyCommissionIntegrity,
 } from '../src/lib/legacy-commission.ts';
+import {
+    normalizeAdminNotificationPreferences,
+    normalizeNotificationEmails,
+} from '../src/lib/admin-notification-settings.ts';
 
 test('legacy commissions enforce integrity and one-way status transitions', () => {
     assert.equal(getLegacyCommissionIntegrity(true, true), 'valid');
@@ -111,6 +115,69 @@ test('new passwords use the same bounded policy on client and server', () => {
     assert.match(getNewPasswordValidationError('x'.repeat(129)) || '', /128/);
     assert.match(getNewPasswordValidationError('secret1', 'secret1') || '', /khác/);
     assert.equal(getNewPasswordValidationError('secret2', 'secret1'), null);
+});
+
+test('admin notification emails are normalized, deduplicated and limited', () => {
+    assert.deepEqual(normalizeNotificationEmails([
+        ' Admin@GoNuts.vn ',
+        'admin@gonuts.vn',
+        'invalid',
+        'sales@gonuts.vn',
+    ]), ['admin@gonuts.vn', 'sales@gonuts.vn']);
+
+    assert.equal(normalizeNotificationEmails(
+        Array.from({ length: 12 }, (_, index) => `admin${index}@gonuts.vn`),
+    ).length, 10);
+
+    assert.deepEqual(normalizeAdminNotificationPreferences({
+        recipients: ['ADMIN@GONUTS.VN'],
+        notifyNewAccount: false,
+    }), {
+        recipients: ['admin@gonuts.vn'],
+        notifyNewAccount: false,
+        notifyNewOrder: true,
+    });
+});
+
+test('admin email notification settings stay private and event delivery is idempotent', async () => {
+    const [
+        settingsApi,
+        publicSettingsApi,
+        notificationHelper,
+        notificationSettingsPage,
+        registrationApi,
+        staffCreationApi,
+        collaboratorCreationApi,
+        productOrderApi,
+        membershipOrderApi,
+        vnpayOrderApi,
+    ] = await Promise.all([
+        readFile(new URL('../src/app/api/admin/notification-settings/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/settings/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/admin-email-notifications.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/admin/settings/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/auth/register/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/staff/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/staff/collaborators/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/orders/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/packages/buy/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/vnpay/create-payment/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(settingsApi, /requireAdminAuth/);
+    assert.doesNotMatch(publicSettingsApi, /notificationEmails|notifyNewAccount|notifyNewOrder/);
+    assert.match(notificationHelper, /adminNewAccountNotificationStatus: \{ \$nin: \['processing', 'sent', 'skipped'\] \}/);
+    assert.match(notificationHelper, /adminNewOrderNotificationStatus: \{ \$nin: \['processing', 'sent', 'skipped'\] \}/);
+    assert.match(notificationSettingsPage, /Gửi email thử/);
+    assert.match(notificationSettingsPage, /Thông báo tài khoản mới/);
+    assert.match(notificationSettingsPage, /Thông báo đơn hàng mới/);
+
+    for (const source of [registrationApi, staffCreationApi, collaboratorCreationApi]) {
+        assert.match(source, /notifyAdminOfNewAccount/);
+    }
+    for (const source of [productOrderApi, membershipOrderApi, vnpayOrderApi]) {
+        assert.match(source, /notifyAdminOfNewOrder/);
+    }
 });
 
 test('customer detail registers the membership package model on cold starts', async () => {
