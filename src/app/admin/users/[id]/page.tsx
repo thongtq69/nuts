@@ -52,6 +52,7 @@ interface UserDetail {
     referralCode?: string;
     staffCode?: string;
     saleType?: 'agent' | 'collaborator' | null;
+    affiliateLevel?: 'staff' | 'collaborator';
     // Statistics
     totalOrders: number;
     totalSpent: number;
@@ -107,10 +108,16 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         }
     };
 
-    const handleRoleChange = async (newRole: string) => {
+    const handleRoleChange = async (newRole: 'user' | 'sale' | 'staff' | 'collaborator') => {
+        const roleLabels = {
+            user: 'Khách hàng',
+            sale: 'Đại lý',
+            staff: 'Nhân viên',
+            collaborator: 'Cộng tác viên',
+        };
         const confirmed = await confirm({
             title: 'Xác nhận đổi quyền',
-            description: `Đổi role thành ${newRole}?`,
+            description: `Chuyển tài khoản này thành ${roleLabels[newRole]}? Tài khoản sẽ được áp dụng đúng quyền và trang quản lý tương ứng.`,
             confirmText: 'Xác nhận',
             cancelText: 'Hủy',
         });
@@ -124,11 +131,16 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ role: newRole }),
             });
+            const data = await res.json();
             if (res.ok) {
-                fetchUserDetail(userId);
+                await fetchUserDetail(userId);
+                toast.success('Đã cập nhật quyền', `Tài khoản đã được chuyển thành ${roleLabels[newRole]}.`);
+            } else {
+                toast.error('Không thể cập nhật quyền', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error changing role:', error);
+            toast.error('Không thể cập nhật quyền', 'Vui lòng thử lại.');
         } finally {
             setUpdating(false);
         }
@@ -331,7 +343,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${getRoleColor(user.role)}`}>
                                             {getRoleIcon(user.role)}
                                             {user.role === 'user' ? 'Khách hàng' :
-                                                user.role === 'sale' ? 'Đại lý' :
+                                                user.role === 'sale' && (user.affiliateLevel === 'collaborator' || user.saleType === 'collaborator') ? 'Cộng tác viên' :
+                                                    user.role === 'sale' ? 'Đại lý' :
                                                     user.role === 'staff' ? 'Nhân viên' : 'Admin'}
 
                                         </span>
@@ -436,7 +449,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                             Quản lý quyền
                         </h3>
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap gap-3">
                             {user.role === 'user' && !user.saleApplicationStatus && (
                                 <div className="flex gap-2">
                                     <button
@@ -453,12 +466,19 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                     >
                                         Nâng cấp Nhân viên
                                     </button>
+                                    <button
+                                        onClick={() => handleRoleChange('collaborator')}
+                                        disabled={updating}
+                                        className="px-4 py-2 bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg font-medium transition-all"
+                                    >
+                                        Chuyển thành Cộng tác viên
+                                    </button>
                                 </div>
                             )}
 
                             {(user.role === 'sale' || user.role === 'staff') && (
-                                <div className="flex gap-2">
-                                    {user.role === 'sale' && (
+                                <div className="flex flex-wrap gap-2">
+                                    {user.role === 'sale' && user.affiliateLevel !== 'collaborator' && user.saleType !== 'collaborator' && (
                                         <button
                                             onClick={() => handleRoleChange('staff')}
                                             disabled={updating}
@@ -476,6 +496,33 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                             Chuyển thành Đại lý
                                         </button>
                                     )}
+                                    {(user.affiliateLevel !== 'collaborator' && user.saleType !== 'collaborator') && (
+                                        <button
+                                            onClick={() => handleRoleChange('collaborator')}
+                                            disabled={updating}
+                                            className="px-4 py-2 bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg font-medium transition-all"
+                                        >
+                                            Chuyển thành Cộng tác viên
+                                        </button>
+                                    )}
+                                    {(user.affiliateLevel === 'collaborator' || user.saleType === 'collaborator') && (
+                                        <>
+                                            <button
+                                                onClick={() => handleRoleChange('sale')}
+                                                disabled={updating}
+                                                className="px-4 py-2 bg-amber-100 text-amber-700 hover:bg-amber-200 rounded-lg font-medium transition-all"
+                                            >
+                                                Chuyển thành Đại lý
+                                            </button>
+                                            <button
+                                                onClick={() => handleRoleChange('staff')}
+                                                disabled={updating}
+                                                className="px-4 py-2 bg-violet-100 text-violet-700 hover:bg-violet-200 rounded-lg font-medium transition-all"
+                                            >
+                                                Chuyển thành Nhân viên
+                                            </button>
+                                        </>
+                                    )}
                                     <button
                                         onClick={() => handleRoleChange('user')}
                                         disabled={updating}
@@ -488,7 +535,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
 
 
                             {user.saleApplicationStatus === 'pending' && (
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     <button
                                         onClick={() => {
                                             // Handle approve sale application
@@ -596,7 +643,11 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                                             </button>
                                         </div>
                                         <p className="text-xs text-slate-400 mt-2">
-                                            * Khách hàng đặt hàng qua link này sẽ được ghi nhận doanh số cho {user.role === 'staff' ? 'Nhân viên' : 'Đại lý'}.
+                                            * Khách hàng đặt hàng qua link này sẽ được ghi nhận doanh số cho {user.role === 'staff'
+                                                ? 'Nhân viên'
+                                                : user.affiliateLevel === 'collaborator' || user.saleType === 'collaborator'
+                                                    ? 'Cộng tác viên'
+                                                    : 'Đại lý'}.
                                         </p>
                                     </div>
                                 </div>

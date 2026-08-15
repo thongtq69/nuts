@@ -51,3 +51,23 @@ test('admin commission user detail opens the existing user detail route', async 
     assert.doesNotMatch(page, /\/admin\/commission\/users\/\${user\._id}/);
     assert.doesNotMatch(page, /Tăng 12%/);
 });
+
+test('admin can convert an account into a functional collaborator login', async () => {
+    const [adminUserPage, roleApi, loginApi, loginPage] = await Promise.all([
+        read('src/app/admin/users/[id]/page.tsx'),
+        read('src/app/api/admin/users/[id]/route.ts'),
+        read('src/app/api/auth/login/route.ts'),
+        read('src/app/login/page.tsx'),
+    ]);
+
+    assert.match(adminUserPage, /Chuyển thành Cộng tác viên/);
+    assert.match(adminUserPage, /handleRoleChange\('collaborator'\)/);
+    assert.match(roleApi, /targetRole === 'collaborator'/);
+    assert.match(roleApi, /updateData\.roleType = 'collaborator'/);
+    assert.match(roleApi, /updateData\.affiliateLevel = 'collaborator'/);
+    assert.match(roleApi, /updateData\.saleType = 'collaborator'/);
+    assert.match(roleApi, /createUniqueReferralCode/);
+    assert.match(loginApi, /affiliateLevel: user\.affiliateLevel/);
+    assert.match(loginPage, /new URLSearchParams\(window\.location\.search\)\.get\('redirect'\)/);
+    assert.match(loginPage, /!requestedRedirect\.startsWith\('\/\/'\)/);
+});

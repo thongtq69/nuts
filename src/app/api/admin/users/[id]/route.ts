@@ -5,6 +5,18 @@ import { encodeAffiliateId } from '@/lib/affiliate';
 import { requireAdminAuth } from '@/lib/auth-permissions';
 import { assignStaffIdentity } from '@/lib/staff-identity';
 
+type TargetAccountRole = 'user' | 'sale' | 'staff' | 'collaborator';
+
+async function createUniqueReferralCode() {
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+        const randomCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+        const referralCode = `GN${randomCode}`;
+        if (!await User.exists({ referralCode })) return referralCode;
+    }
+
+    throw new Error('Không thể tạo mã giới thiệu duy nhất');
+}
+
 export async function PATCH(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -24,36 +36,76 @@ export async function PATCH(
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        if (user.role === 'admin' && body.role) {
+            return NextResponse.json(
+                { error: 'Không thể thay đổi vai trò của tài khoản quản trị' },
+                { status: 409 },
+            );
+        }
+
         const updateData: Record<string, unknown> = {};
+        const unsetData: Record<string, 1> = {};
         if (typeof body.isActive === 'boolean') {
             updateData.isActive = body.isActive;
             updateData.deletedAt = body.isActive ? null : new Date();
         }
-        if (['user', 'sale', 'staff'].includes(body.role)) updateData.role = body.role;
 
-        if (body.role === 'sale' && !user.referralCode) {
-            const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            updateData.referralCode = `GN${randomCode}`;
-        }
-
-        if (body.role === 'sale' && !user.encodedAffiliateCode) {
-            updateData.encodedAffiliateCode = encodeAffiliateId(id);
-        }
-
-        if (body.role === 'staff') {
+        const targetRole = body.role as TargetAccountRole | undefined;
+        if (targetRole === 'collaborator') {
+            updateData.role = 'sale';
+            updateData.roleType = 'collaborator';
+            updateData.saleType = 'collaborator';
+            updateData.affiliateLevel = 'collaborator';
+            updateData.saleApplicationStatus = 'approved';
+            updateData.saleApprovedAt = new Date();
+            updateData.referralCode = user.referralCode || await createUniqueReferralCode();
+            updateData.encodedAffiliateCode = user.encodedAffiliateCode || encodeAffiliateId(id);
+            unsetData.staffCode = 1;
+            unsetData.customPermissions = 1;
+        } else if (targetRole === 'sale') {
+            updateData.role = 'sale';
+            updateData.saleType = 'agent';
+            updateData.saleApplicationStatus = 'approved';
+            updateData.saleApprovedAt = new Date();
+            updateData.referralCode = user.referralCode || await createUniqueReferralCode();
+            updateData.encodedAffiliateCode = user.encodedAffiliateCode || encodeAffiliateId(id);
+            unsetData.roleType = 1;
+            unsetData.affiliateLevel = 1;
+            unsetData.staffCode = 1;
+            unsetData.parentStaff = 1;
+            unsetData.customPermissions = 1;
+        } else if (targetRole === 'staff') {
             user.role = 'staff';
             user.affiliateLevel = 'staff';
-            user.roleType = user.roleType || 'sales';
+            user.roleType = user.roleType && !['collaborator', 'viewer'].includes(user.roleType)
+                ? user.roleType
+                : 'sales';
             await assignStaffIdentity(user);
+            updateData.role = 'staff';
             updateData.staffCode = user.staffCode;
             updateData.referralCode = user.referralCode;
             updateData.affiliateLevel = 'staff';
             updateData.roleType = user.roleType;
+            unsetData.saleType = 1;
+            unsetData.parentStaff = 1;
+        } else if (targetRole === 'user') {
+            updateData.role = 'user';
+            updateData.saleApplicationStatus = null;
+            unsetData.roleType = 1;
+            unsetData.saleType = 1;
+            unsetData.affiliateLevel = 1;
+            unsetData.staffCode = 1;
+            unsetData.referralCode = 1;
+            unsetData.encodedAffiliateCode = 1;
+            unsetData.customPermissions = 1;
         }
 
         const updatedUser = await User.findByIdAndUpdate(
             id,
-            { $set: updateData },
+            {
+                ...(Object.keys(updateData).length > 0 ? { $set: updateData } : {}),
+                ...(Object.keys(unsetData).length > 0 ? { $unset: unsetData } : {}),
+            },
             { new: true }
         ).select('-password');
 

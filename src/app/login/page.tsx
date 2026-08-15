@@ -41,7 +41,11 @@ export default function LoginPage() {
             }
 
             login(data);
-            router.push(href('/'));
+            const requestedRedirect = new URLSearchParams(window.location.search).get('redirect');
+            const safeRedirect = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//')
+                ? requestedRedirect
+                : null;
+            router.push(safeRedirect || href('/'));
         } catch (err: any) {
             setError(err.message);
         } finally {

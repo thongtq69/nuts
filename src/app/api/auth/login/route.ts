@@ -39,6 +39,11 @@ export async function POST(req: Request) {
             name: user.name,
             email: user.email,
             role: user.role,
+            roleType: user.roleType,
+            saleType: user.saleType,
+            affiliateLevel: user.affiliateLevel,
+            referralCode: user.referralCode,
+            staffCode: user.staffCode,
             phone: user.phone,
             address: user.address
         });
