@@ -3,8 +3,14 @@ import dbConnect from '@/lib/db';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 
-// Model for user membership purchases - we'll check orders with type 'membership'
 import Order from '@/models/Order';
+import UserMembership from '@/models/UserMembership';
+import UserVoucher from '@/models/UserVoucher';
+import { isConfirmedPaymentStatus } from '@/lib/customer-ownership';
+
+export const dynamic = 'force-dynamic';
+
+export type MembershipState = 'pending_payment' | 'awaiting_activation' | 'active' | 'expired';
 
 export async function GET() {
     try {
@@ -25,45 +31,85 @@ export async function GET() {
             return NextResponse.json({ message: 'Token không hợp lệ' }, { status: 401 });
         }
 
-        // Find membership orders for this user
-        // Support both new orders with orderType and old orders with package info in items
+        // Every package the customer has bought, whatever stage it is at. Hiding
+        // unpaid or not-yet-activated orders is what made this tab look empty
+        // right after a purchase.
         const membershipOrders = await Order.find({
             user: userId,
-            status: { $in: ['completed', 'delivered'] },
-            paymentStatus: { $in: ['paid', 'completed'] },
+            status: { $ne: 'cancelled' },
             $or: [
                 { orderType: 'membership' },
-                { 'items.name': { $regex: /Gói Hội Viên/i } },
-                { packageInfo: { $exists: true, $ne: null } }
-            ]
+                { 'packageInfo.packageId': { $exists: true, $ne: null } },
+                { 'items.name': { $regex: /Gói Hội Viên|Gói VIP/i } },
+            ],
         }).sort({ createdAt: -1 }).lean();
 
-        // Transform to membership package format
+        if (membershipOrders.length === 0) return NextResponse.json([]);
+
+        const orderIds = membershipOrders.map((order: any) => order._id);
+
+        const [memberships, vouchers] = await Promise.all([
+            UserMembership.find({ orderId: { $in: orderIds } }).lean(),
+            UserVoucher.find({ sourceOrderId: { $in: orderIds } })
+                .select('sourceOrderId isUsed expiresAt')
+                .lean(),
+        ]);
+
+        const membershipByOrder = new Map(memberships.map((m: any) => [String(m.orderId), m]));
+        const voucherStatsByOrder = new Map<string, { issued: number; available: number }>();
+        for (const voucher of vouchers as any[]) {
+            const key = String(voucher.sourceOrderId);
+            const stats = voucherStatsByOrder.get(key) || { issued: 0, available: 0 };
+            stats.issued += 1;
+            if (!voucher.isUsed && new Date(voucher.expiresAt) > new Date()) stats.available += 1;
+            voucherStatsByOrder.set(key, stats);
+        }
+
         const packages = membershipOrders.map((order: any) => {
-            // Get package name from packageInfo or from items
+            const orderKey = String(order._id);
+            const membership = membershipByOrder.get(orderKey);
+            const voucherStats = voucherStatsByOrder.get(orderKey) || { issued: 0, available: 0 };
+            const isPaid = isConfirmedPaymentStatus(order.paymentStatus);
+
             let packageName = order.packageInfo?.name;
             if (!packageName && order.items?.length > 0) {
-                const membershipItem = order.items.find((item: any) => 
+                const membershipItem = order.items.find((item: any) =>
                     item.name?.includes('Gói Hội Viên') || item.name?.includes('Gói VIP')
                 );
-                if (membershipItem) {
-                    packageName = membershipItem.name.replace('Gói Hội Viên: ', '').replace('Gói VIP: ', '');
-                }
+                packageName = membershipItem?.name
+                    ?.replace('Gói Hội Viên: ', '')
+                    ?.replace('Gói VIP: ', '');
             }
-            
-            // Calculate expiry - default 30 days from order date if not specified
-            const orderDate = new Date(order.createdAt);
-            const defaultExpiry = new Date(orderDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-            const expiresAt = order.packageInfo?.expiresAt || defaultExpiry;
-            
+
+            const activatedAt = membership?.startDate || order.membershipActivatedAt || null;
+            const expiresAt = membership?.endDate || order.packageInfo?.expiresAt || null;
+            const isExpired = Boolean(expiresAt) && new Date(expiresAt) <= new Date();
+
+            const state: MembershipState = !isPaid
+                ? 'pending_payment'
+                : !activatedAt
+                    ? 'awaiting_activation'
+                    : isExpired
+                        ? 'expired'
+                        : 'active';
+
             return {
-                _id: order._id.toString(),
+                _id: orderKey,
+                orderCode: orderKey.slice(-6).toUpperCase(),
                 packageName: packageName || 'Gói hội viên',
                 price: order.totalAmount,
                 purchasedAt: order.createdAt,
-                expiresAt: expiresAt,
-                vouchersReceived: order.packageInfo?.voucherQuantity || 0,
-                status: new Date(expiresAt) > new Date() ? 'active' : 'expired'
+                activatedAt,
+                expiresAt,
+                state,
+                status: state === 'active' ? 'active' : state === 'expired' ? 'expired' : 'pending',
+                vouchersReceived: voucherStats.issued,
+                vouchersAvailable: voucherStats.available,
+                vouchersExpected: order.packageInfo?.voucherQuantity || 0,
+                // Lets the account page offer "thanh toán tiếp" without a second request.
+                paymentStatus: order.paymentStatus || 'pending',
+                paymentMethod: order.paymentMethod || '',
+                paymentRef: order.paymentRef || '',
             };
         });
 

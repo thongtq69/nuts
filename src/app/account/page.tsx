@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -11,6 +11,13 @@ import { useConfirm } from '@/context/ConfirmContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AffiliateTermsModal from '@/components/affiliate/AffiliateTermsModal';
+import OrderDetailModal, { type AccountOrder } from '@/components/account/OrderDetailModal';
+import {
+    buildResumePaymentUrl,
+    canCustomerCancelOrder,
+    orderStatusLabel,
+    paymentStatusLabel,
+} from '@/lib/order-status';
 
 // Helper functions for vouchers
 function maskVoucherCode(code: string): string {
@@ -48,8 +55,11 @@ export default function AccountPage() {
     const router = useRouter();
 
     // Orders state
-    const [orders, setOrders] = useState<any[]>([]);
+    const [orders, setOrders] = useState<AccountOrder[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<AccountOrder | null>(null);
+    const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+    const [showCancelledOrders, setShowCancelledOrders] = useState(false);
 
     // Vouchers state
     const [vouchers, setVouchers] = useState<any[]>([]);
@@ -105,25 +115,26 @@ export default function AccountPage() {
         }
     }, [user]);
 
+    const fetchOrders = useCallback(async () => {
+        setLoadingOrders(true);
+        try {
+            const res = await fetch('/api/orders', { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                setOrders(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch orders', error);
+        } finally {
+            setLoadingOrders(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (user && activeTab === 'orders') {
-            const fetchOrders = async () => {
-                setLoadingOrders(true);
-                try {
-                    const res = await fetch('/api/orders');
-                    if (res.ok) {
-                        const data = await res.json();
-                        setOrders(data);
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch orders', error);
-                } finally {
-                    setLoadingOrders(false);
-                }
-            };
             fetchOrders();
         }
-    }, [user, activeTab]);
+    }, [user, activeTab, fetchOrders]);
 
     // Fetch vouchers when tab is active
     useEffect(() => {
@@ -247,6 +258,35 @@ export default function AccountPage() {
         }
     };
 
+    const handleCancelOrder = async (order: AccountOrder) => {
+        const confirmed = await confirm({
+            title: 'Hủy đơn hàng',
+            description: `Bạn chắc chắn muốn hủy đơn #${order._id.slice(-6).toUpperCase()}? Voucher đã dùng cho đơn này (nếu có) sẽ được hoàn lại.`,
+            confirmText: 'Hủy đơn',
+            cancelText: 'Giữ đơn',
+        });
+        if (!confirmed) return;
+
+        setCancellingOrderId(order._id);
+        try {
+            const res = await fetch(`/api/orders/${order._id}/cancel`, { method: 'POST' });
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok) {
+                toast.error('Không thể hủy đơn', data?.message || 'Vui lòng thử lại sau.');
+                return;
+            }
+
+            toast.success('Đã hủy đơn hàng', data?.message);
+            setSelectedOrder(null);
+            await fetchOrders();
+        } catch (error) {
+            toast.error('Lỗi kết nối', 'Không thể kết nối server');
+        } finally {
+            setCancellingOrderId(null);
+        }
+    };
+
     const openTermsModal = (type: 'agent' | 'collaborator') => {
         setAffiliateType(type);
         setShowTermsModal(true);
@@ -356,6 +396,20 @@ export default function AccountPage() {
 
         return result;
     }, [vouchers, voucherFilter]);
+
+    // A cancelled order should read as "gone" to the customer, but stays on file
+    // for accounting, so it is hidden behind a toggle instead of deleted.
+    const cancelledOrderCount = useMemo(
+        () => orders.filter(order => String(order.status).toLowerCase() === 'cancelled').length,
+        [orders],
+    );
+
+    const visibleOrders = useMemo(
+        () => (showCancelledOrders
+            ? orders
+            : orders.filter(order => String(order.status).toLowerCase() !== 'cancelled')),
+        [orders, showCancelledOrders],
+    );
 
     // Voucher stats
     const voucherStats = useMemo(() => {
@@ -477,31 +531,95 @@ export default function AccountPage() {
                                         <Link href="/products" className="continue-btn">Mua sắm ngay</Link>
                                     </div>
                                 ) : (
-                                    <div className="orders-list">
-                                        {orders.map((order: any) => (
-                                            <div key={order._id} className="order-item">
-                                                <div className="order-header">
-                                                    <span className="order-id">Đơn hàng #{order._id.slice(-6).toUpperCase()}</span>
-                                                    <span className={`order-status ${order.status}`}>
-                                                        {order.status === 'pending' ? 'Đang xử lý' :
-                                                            order.status === 'confirmed' ? 'Đã xác nhận' :
-                                                                order.status === 'shipping' ? 'Đang giao' :
-                                                                    order.status === 'completed' ? 'Hoàn thành' :
-                                                                        order.status === 'cancelled' ? 'Đã hủy' : order.status}
-                                                    </span>
-                                                </div>
-                                                <div className="order-body">
-                                                    <div className="order-date">Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')}</div>
-                                                    <div className="order-total">
-                                                        Tổng tiền: <strong>{order.totalAmount.toLocaleString()}₫</strong>
+                                    <>
+                                        {cancelledOrderCount > 0 && (
+                                            <label className="cancelled-toggle">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={showCancelledOrders}
+                                                    onChange={e => setShowCancelledOrders(e.target.checked)}
+                                                />
+                                                Hiện {cancelledOrderCount} đơn đã hủy
+                                            </label>
+                                        )}
+                                        {visibleOrders.length === 0 && (
+                                            <p className="orders-empty-note">
+                                                Tất cả đơn hàng của bạn đã bị hủy. Bật tùy chọn phía trên để xem lại.
+                                            </p>
+                                        )}
+                                        <div className="orders-list">
+                                            {visibleOrders.map(order => {
+                                                const resumeUrl = buildResumePaymentUrl(order);
+                                                const cancellable = canCustomerCancelOrder(order);
+                                                const isCancelled = String(order.status).toLowerCase() === 'cancelled';
+
+                                                return (
+                                                    <div
+                                                        key={order._id}
+                                                        className={`order-item order-item-clickable${isCancelled ? ' order-item-cancelled' : ''}`}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onClick={() => setSelectedOrder(order)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                                e.preventDefault();
+                                                                setSelectedOrder(order);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <div className="order-header">
+                                                            <span className="order-id">Đơn hàng #{order._id.slice(-6).toUpperCase()}</span>
+                                                            <span className="order-badges">
+                                                                <span className={`order-status ${order.status}`}>
+                                                                    {orderStatusLabel(order.status)}
+                                                                </span>
+                                                                {!isCancelled && (
+                                                                    <span className={`payment-status payment-${String(order.paymentStatus || 'pending').toLowerCase()}`}>
+                                                                        {paymentStatusLabel(order.paymentStatus)}
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                        <div className="order-body">
+                                                            <div className="order-date">
+                                                                Ngày đặt: {order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '—'}
+                                                            </div>
+                                                            <div className="order-total">
+                                                                Tổng tiền: <strong>{(order.totalAmount || 0).toLocaleString('vi-VN')}₫</strong>
+                                                            </div>
+                                                            <div className="order-items-preview">
+                                                                {(order.items || []).map(i => i.name).join(', ')}
+                                                            </div>
+                                                        </div>
+                                                        <div className="order-actions" onClick={e => e.stopPropagation()}>
+                                                            <button
+                                                                type="button"
+                                                                className="order-action order-action-ghost"
+                                                                onClick={() => setSelectedOrder(order)}
+                                                            >
+                                                                Xem chi tiết
+                                                            </button>
+                                                            {resumeUrl && (
+                                                                <Link href={resumeUrl} className="order-action order-action-primary">
+                                                                    Thanh toán tiếp
+                                                                </Link>
+                                                            )}
+                                                            {cancellable && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="order-action order-action-danger"
+                                                                    onClick={() => handleCancelOrder(order)}
+                                                                    disabled={cancellingOrderId === order._id}
+                                                                >
+                                                                    {cancellingOrderId === order._id ? 'Đang hủy...' : 'Hủy đơn'}
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div className="order-items-preview">
-                                                        {order.items.map((i: any) => i.name).join(', ')}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         )}
@@ -911,33 +1029,76 @@ export default function AccountPage() {
                                 ) : (
                                     <div className="membership-list">
                                         {membershipPackages.map((pkg: any) => {
-                                            const isActive = new Date(pkg.expiresAt) > new Date();
+                                            const state = pkg.state || (pkg.status === 'active' ? 'active' : 'expired');
+                                            const stateLabel = state === 'active' ? '✓ Đang hoạt động'
+                                                : state === 'expired' ? '✗ Đã hết hạn'
+                                                    : state === 'awaiting_activation' ? '⏳ Chờ kích hoạt'
+                                                        : '⏳ Chờ thanh toán';
+                                            const resumeUrl = buildResumePaymentUrl({
+                                                _id: pkg._id,
+                                                paymentRef: pkg.paymentRef,
+                                                paymentMethod: pkg.paymentMethod,
+                                                paymentStatus: pkg.paymentStatus,
+                                                totalAmount: pkg.price,
+                                            });
+
                                             return (
-                                                <div key={pkg._id} className={`membership-card ${isActive ? 'active' : 'expired'}`}>
+                                                <div key={pkg._id} className={`membership-card ${state === 'active' ? 'active' : 'expired'}`}>
                                                     <div className="membership-header">
                                                         <h3>{pkg.packageName}</h3>
-                                                        <span className={`membership-status ${isActive ? 'active' : 'expired'}`}>
-                                                            {isActive ? '✓ Đang hoạt động' : '✗ Đã hết hạn'}
+                                                        <span className={`membership-status ${state === 'active' ? 'active' : 'expired'}`}>
+                                                            {stateLabel}
                                                         </span>
                                                     </div>
                                                     <div className="membership-body">
                                                         <div className="membership-info">
+                                                            <span>Mã đơn:</span>
+                                                            <strong>#{pkg.orderCode || pkg._id.slice(-6).toUpperCase()}</strong>
+                                                        </div>
+                                                        <div className="membership-info">
                                                             <span>Ngày mua:</span>
                                                             <strong>{new Date(pkg.purchasedAt).toLocaleDateString('vi-VN')}</strong>
                                                         </div>
-                                                        <div className="membership-info">
-                                                            <span>Ngày hết hạn:</span>
-                                                            <strong>{new Date(pkg.expiresAt).toLocaleDateString('vi-VN')}</strong>
-                                                        </div>
+                                                        {pkg.expiresAt && (
+                                                            <div className="membership-info">
+                                                                <span>Ngày hết hạn:</span>
+                                                                <strong>{new Date(pkg.expiresAt).toLocaleDateString('vi-VN')}</strong>
+                                                            </div>
+                                                        )}
                                                         <div className="membership-info">
                                                             <span>Voucher đã nhận:</span>
-                                                            <strong>{pkg.vouchersReceived || 0} mã</strong>
+                                                            <strong>
+                                                                {pkg.vouchersReceived || 0} mã
+                                                                {pkg.vouchersReceived > 0 ? ` (còn ${pkg.vouchersAvailable || 0} dùng được)` : ''}
+                                                            </strong>
                                                         </div>
                                                         <div className="membership-info">
                                                             <span>Giá trị:</span>
-                                                            <strong>{pkg.price?.toLocaleString() || 0}đ</strong>
+                                                            <strong>{pkg.price?.toLocaleString('vi-VN') || 0}đ</strong>
                                                         </div>
                                                     </div>
+
+                                                    {state === 'pending_payment' && (
+                                                        <div className="membership-pending">
+                                                            <p>
+                                                                Gói này chưa được thanh toán nên {pkg.vouchersExpected || 0} voucher chưa được phát hành.
+                                                            </p>
+                                                            {resumeUrl && (
+                                                                <Link href={resumeUrl} className="order-action order-action-primary">
+                                                                    Thanh toán tiếp
+                                                                </Link>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {state === 'awaiting_activation' && (
+                                                        <div className="membership-pending">
+                                                            <p>
+                                                                Đã nhận thanh toán. Cửa hàng sẽ kích hoạt gói và phát {pkg.vouchersExpected || 0} voucher
+                                                                trong thời gian sớm nhất.
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })}
@@ -1004,11 +1165,122 @@ export default function AccountPage() {
                         onClose={() => setShowTermsModal(false)}
                         affiliateType={affiliateType}
                     />
+
+                    {selectedOrder && (
+                        <OrderDetailModal
+                            order={selectedOrder}
+                            onClose={() => setSelectedOrder(null)}
+                            onCancelOrder={handleCancelOrder}
+                            cancelling={cancellingOrderId === selectedOrder._id}
+                        />
+                    )}
                 </div>
             </div>
             <Footer />
 
             <style jsx>{`
+                .cancelled-toggle {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 13px;
+                    color: #6b7280;
+                    margin-bottom: 16px;
+                    cursor: pointer;
+                }
+                .orders-empty-note {
+                    font-size: 14px;
+                    color: #6b7280;
+                    padding: 20px 0;
+                }
+                .order-item-clickable {
+                    cursor: pointer;
+                    transition: border-color 0.2s, box-shadow 0.2s;
+                }
+                .order-item-clickable:hover,
+                .order-item-clickable:focus-visible {
+                    border-color: var(--color-primary-brown, #9C7043);
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+                    outline: none;
+                }
+                .order-item-cancelled {
+                    opacity: 0.65;
+                }
+                .order-badges {
+                    display: inline-flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    justify-content: flex-end;
+                }
+                .payment-status {
+                    font-size: 13px;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    background: #fef3c7;
+                    color: #92400e;
+                    white-space: nowrap;
+                }
+                .payment-status.payment-paid,
+                .payment-status.payment-completed {
+                    background: #d1fae5;
+                    color: #065f46;
+                }
+                .payment-status.payment-failed {
+                    background: #fee2e2;
+                    color: #b91c1c;
+                }
+                .order-actions {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    padding-top: 14px;
+                    border-top: 1px solid #f3f3f3;
+                }
+                .order-action {
+                    padding: 8px 14px;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    border: 1px solid transparent;
+                    cursor: pointer;
+                    text-decoration: none;
+                    display: inline-flex;
+                    align-items: center;
+                }
+                .order-action:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+                .order-action-primary {
+                    background: var(--color-primary-brown, #9C7043);
+                    color: #fff;
+                }
+                .order-action-ghost {
+                    background: #f3f4f6;
+                    color: #374151;
+                }
+                .order-action-danger {
+                    background: #fff;
+                    color: #dc2626;
+                    border-color: #fecaca;
+                }
+                .membership-pending {
+                    margin-top: 14px;
+                    padding-top: 14px;
+                    border-top: 1px solid #f3f3f3;
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .membership-pending p {
+                    margin: 0;
+                    font-size: 13px;
+                    color: #92400e;
+                    flex: 1;
+                    min-width: 200px;
+                }
                 .benefits-desc {
                     color: #666;
                     font-size: 14px;

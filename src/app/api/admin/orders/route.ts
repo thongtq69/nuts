@@ -6,6 +6,9 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { sendOrderStatusEmail } from '@/lib/email';
 import { syncAffiliateCommissionsForOrderStatus } from '@/lib/affiliate-commission-lifecycle';
+import { activateMembershipOrder, MembershipActivationError } from '@/lib/membership-activation';
+import { isConfirmedPaymentStatus } from '@/lib/customer-ownership';
+import { cancelOrder } from '@/lib/order-cancellation';
 
 // Helper to check if user is admin
 async function isAdmin() {
@@ -78,9 +81,27 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ message: 'Order not found' }, { status: 404 });
         }
 
-        order.status = status;
-        await syncAffiliateCommissionsForOrderStatus(order, status);
-        await order.save();
+        if (status === 'cancelled') {
+            await cancelOrder(order, 'admin');
+        } else {
+            // A membership order is only "completed" once the money is in and the
+            // package has actually been issued, otherwise the customer ends up with
+            // a finished order but no membership and no vouchers.
+            if (order.orderType === 'membership' && status === 'completed') {
+                if (!isConfirmedPaymentStatus(order.paymentStatus)) {
+                    return NextResponse.json({
+                        message: 'Đơn gói hội viên chưa xác nhận thanh toán. Mở chi tiết đơn và bấm "Xác nhận đã thanh toán" trước khi hoàn thành.',
+                    }, { status: 409 });
+                }
+
+                await activateMembershipOrder(String(order._id));
+                order.status = 'completed';
+            } else {
+                order.status = status;
+                await syncAffiliateCommissionsForOrderStatus(order, status);
+                await order.save();
+            }
+        }
 
         // Gửi email thông báo khi đơn hàng được xác nhận
         if (status === 'confirmed' || status === 'shipping' || status === 'completed' || status === 'cancelled') {
@@ -126,6 +147,9 @@ export async function PATCH(req: Request) {
             }
         });
     } catch (error) {
+        if (error instanceof MembershipActivationError) {
+            return NextResponse.json({ message: error.message }, { status: error.status });
+        }
         console.error('Update order status error:', error);
         return NextResponse.json(
             { message: 'Lỗi khi cập nhật trạng thái' },

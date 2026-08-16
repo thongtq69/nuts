@@ -8,6 +8,7 @@ import {
     removeAffiliateCommissionsForOrder,
     syncAffiliateCommissionsForOrderStatus,
 } from '@/lib/affiliate-commission-lifecycle';
+import { applyOrderCancellationEffects, cancelOrder } from '@/lib/order-cancellation';
 
 // GET single order
 export async function GET(
@@ -15,12 +16,25 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const decoded = await verifyToken(request);
+        if (!decoded) {
+            return NextResponse.json({ error: 'Vui lòng đăng nhập' }, { status: 401 });
+        }
+
         const { id } = await params;
         await dbConnect();
         const order = await Order.findById(id).populate('user', 'name email');
-        
+
         if (!order) {
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+        }
+
+        // An order carries the customer's name, phone and address, so only the
+        // owner or a back-office account may read it.
+        const ownerId = (order.user as any)?._id ?? order.user;
+        const isOwner = ownerId && String(ownerId) === String(decoded.id);
+        if (!isOwner && !['admin', 'staff', 'sale'].includes(decoded.role)) {
+            return NextResponse.json({ error: 'Không có quyền xem đơn hàng này' }, { status: 403 });
         }
 
         return NextResponse.json(order);
@@ -67,6 +81,16 @@ export async function PATCH(
                 message: 'Đã hoàn thành và kích hoạt gói hội viên',
                 order: activatedOrder,
                 activation,
+            });
+        }
+
+        if (body.status === 'cancelled') {
+            const effects = await cancelOrder(order, 'admin');
+            return NextResponse.json({
+                success: true,
+                message: 'Đã hủy đơn hàng',
+                order,
+                effects,
             });
         }
 
@@ -121,12 +145,15 @@ export async function DELETE(
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
 
+        // Give back stock and vouchers before the order disappears, otherwise
+        // the customer silently loses both.
+        await applyOrderCancellationEffects(order, 'admin');
         await removeAffiliateCommissionsForOrder(order);
         await order.deleteOne();
 
-        return NextResponse.json({ 
-            success: true, 
-            message: 'Order deleted successfully' 
+        return NextResponse.json({
+            success: true,
+            message: 'Order deleted successfully'
         });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to delete order' }, { status: 500 });

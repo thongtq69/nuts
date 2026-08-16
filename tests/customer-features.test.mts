@@ -32,6 +32,11 @@ import {
 } from '../src/lib/staff-commission-rules.ts';
 import { calculateLegacyVipSavings } from '../src/lib/vip-savings.ts';
 import {
+    buildResumePaymentUrl,
+    canCustomerCancelOrder,
+    describeCustomerCancelBlock,
+} from '../src/lib/order-status.ts';
+import {
     buildManagedCustomerQuery,
     buildManagedOrderQuery,
     buildMembershipVoucherCode,
@@ -910,4 +915,81 @@ test('new category names are normalized before they are saved', () => {
 test('short product descriptions preserve an intentional VAT line break', () => {
     const description = 'Đông Trùng Hạ Thảo khô 300mg.\nGiá bán đã bao gồm VAT';
     assert.equal(cleanHTMLContent(description), description);
+});
+
+test('a customer can cancel their own unpaid order', () => {
+    assert.equal(canCustomerCancelOrder({ status: 'pending', paymentStatus: 'pending' }), true);
+    assert.equal(canCustomerCancelOrder({ status: 'confirmed', paymentStatus: 'pending' }), true);
+});
+
+test('a paid order can no longer be cancelled by the customer', () => {
+    assert.equal(canCustomerCancelOrder({ status: 'pending', paymentStatus: 'paid' }), false);
+    assert.match(
+        describeCustomerCancelBlock({ status: 'pending', paymentStatus: 'paid' }) || '',
+        /liên hệ cửa hàng/,
+    );
+});
+
+test('an order already on its way cannot be cancelled by the customer', () => {
+    assert.equal(canCustomerCancelOrder({ status: 'shipping', paymentStatus: 'pending' }), false);
+    assert.equal(canCustomerCancelOrder({ status: 'completed', paymentStatus: 'pending' }), false);
+});
+
+test('an unpaid membership order stays cancellable until the package is activated', () => {
+    assert.equal(
+        canCustomerCancelOrder({ status: 'pending', paymentStatus: 'pending', orderType: 'membership' }),
+        true,
+    );
+    assert.equal(
+        canCustomerCancelOrder({
+            status: 'pending',
+            paymentStatus: 'pending',
+            orderType: 'membership',
+            membershipActivatedAt: '2026-08-15T00:00:00.000Z',
+        }),
+        false,
+    );
+});
+
+test('an order cannot be cancelled twice', () => {
+    assert.match(
+        describeCustomerCancelBlock({ status: 'cancelled', paymentStatus: 'pending' }) || '',
+        /đã được hủy/,
+    );
+});
+
+test('an unpaid bank transfer order links back to its own payment screen', () => {
+    const url = buildResumePaymentUrl({
+        _id: '6890aa11bb22cc33dd44a91bf8',
+        paymentRef: 'VIP33DD44A91B',
+        paymentMethod: 'banking',
+        paymentStatus: 'pending',
+        status: 'pending',
+        totalAmount: 498999,
+        shippingInfo: { fullName: 'Trần Văn An', email: 'an@example.com', phone: '0900000000' },
+    });
+
+    assert.ok(url);
+    const params = new URLSearchParams(url.split('?')[1]);
+    assert.equal(params.get('order'), 'A91BF8');
+    assert.equal(params.get('ref'), 'VIP33DD44A91B');
+    assert.equal(params.get('amount'), '498999');
+    assert.equal(params.get('name'), 'Trần Văn An');
+});
+
+test('an order that cannot be resumed offers no payment link', () => {
+    const base = {
+        _id: '6890aa11bb22cc33dd44a91bf8',
+        paymentRef: 'GO123456',
+        paymentMethod: 'banking',
+        paymentStatus: 'pending',
+        status: 'pending',
+        totalAmount: 250000,
+    };
+
+    assert.equal(buildResumePaymentUrl({ ...base, paymentStatus: 'paid' }), null);
+    assert.equal(buildResumePaymentUrl({ ...base, status: 'cancelled' }), null);
+    assert.equal(buildResumePaymentUrl({ ...base, paymentMethod: 'cod' }), null);
+    assert.equal(buildResumePaymentUrl({ ...base, paymentRef: '' }), null);
+    assert.equal(buildResumePaymentUrl({ ...base, totalAmount: 0 }), null);
 });

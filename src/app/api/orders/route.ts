@@ -420,7 +420,10 @@ export async function GET(req: Request) {
             );
         }
 
-        const orders = await Order.find({ user: userId }).sort({ createdAt: -1 });
+        // Legacy orders were stored under `userId` before the schema settled on `user`.
+        const orders = await Order.find({ $or: [{ user: userId }, { userId }] })
+            .sort({ createdAt: -1 })
+            .lean();
         return NextResponse.json(orders);
     } catch (error) {
         console.error('Get orders error:', error);

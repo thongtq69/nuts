@@ -4,6 +4,7 @@ import SubscriptionPackage from '@/models/SubscriptionPackage';
 import UserMembership from '@/models/UserMembership';
 import UserVoucher from '@/models/UserVoucher';
 import { buildMembershipVoucherCode, isConfirmedPaymentStatus } from '@/lib/customer-ownership';
+import { syncAffiliateCommissionsForOrderStatus } from '@/lib/affiliate-commission-lifecycle';
 
 export class MembershipActivationError extends Error {
     status: number;
@@ -81,6 +82,7 @@ export async function activateMembershipOrder(orderId: string) {
 
     order.status = 'completed';
     order.membershipActivatedAt = membership.startDate;
+    await syncAffiliateCommissionsForOrderStatus(order, 'completed');
     await order.save();
 
     return {

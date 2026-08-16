@@ -2,16 +2,27 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import { sendOrderStatusEmail } from '@/lib/email';
+import { verifyToken } from '@/lib/auth';
 import {
     removeAffiliateCommissionsForOrder,
     syncAffiliateCommissionsForOrderStatus,
 } from '@/lib/affiliate-commission-lifecycle';
+import { applyOrderCancellationEffects, cancelOrder } from '@/lib/order-cancellation';
+
+async function requireAdmin(req: Request) {
+    const decoded = await verifyToken(req);
+    return decoded && ['admin', 'staff'].includes(decoded.role) ? decoded : null;
+}
 
 export async function PATCH(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        if (!(await requireAdmin(req))) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         await dbConnect();
         const { id } = await params;
         const { status } = await req.json();
@@ -22,10 +33,13 @@ export async function PATCH(
         }
 
         // Update order status
-        order.status = status;
-        await syncAffiliateCommissionsForOrderStatus(order, status);
-
-        await order.save();
+        if (status === 'cancelled') {
+            await cancelOrder(order, 'admin');
+        } else {
+            order.status = status;
+            await syncAffiliateCommissionsForOrderStatus(order, status);
+            await order.save();
+        }
 
         const statusMessages: Record<string, string> = {
             'pending': 'đang chờ xử lý',
@@ -62,6 +76,11 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const decoded = await requireAdmin(req);
+        if (!decoded || decoded.role !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         await dbConnect();
         const { id } = await params;
 
@@ -70,6 +89,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
 
+        await applyOrderCancellationEffects(order, 'admin');
         await removeAffiliateCommissionsForOrder(order);
         await order.deleteOne();
 

@@ -44,6 +44,9 @@ export interface IOrder {
     isAgentOrder?: boolean;
     paymentRef?: string;
     membershipActivatedAt?: Date;
+    cancelledAt?: Date;
+    cancelledBy?: 'customer' | 'admin' | 'system';
+    cancellationEffectsAppliedAt?: Date;
     voucherId?: mongoose.Types.ObjectId;
     voucherCode?: string;
     voucherSource?: 'package' | 'manual' | 'campaign' | 'order_reward';
@@ -107,8 +110,11 @@ const OrderSchema: Schema<IOrder> = new Schema(
         originalTotalAmount: { type: Number, default: 0 },
         agentSavings: { type: Number, default: 0 },
         isAgentOrder: { type: Boolean, default: false },
-        paymentRef: { type: String },
+        paymentRef: { type: String, index: true },
         membershipActivatedAt: { type: Date },
+        cancelledAt: { type: Date },
+        cancelledBy: { type: String, enum: ['customer', 'admin', 'system'] },
+        cancellationEffectsAppliedAt: { type: Date },
         voucherId: { type: Schema.Types.ObjectId, ref: 'UserVoucher' },
         voucherCode: { type: String },
         voucherSource: { type: String, enum: ['package', 'manual', 'campaign', 'order_reward'] },

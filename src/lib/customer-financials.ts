@@ -8,10 +8,14 @@ export async function getCustomerFinancialSummary(userId: string) {
         .select('_id items shippingFee totalAmount status paymentStatus orderType createdAt voucherSource vipSavings voucherDiscountAmount')
         .sort({ createdAt: -1 })
         .lean();
-    const settledOrders = orders.filter((order) => (
-        ['paid', 'completed'].includes(String(order.paymentStatus || '').toLowerCase())
-        || ['completed', 'delivered'].includes(String(order.status || '').toLowerCase())
-    ));
+    const settledOrders = orders.filter((order) => {
+        const status = String(order.status || '').toLowerCase();
+        // A cancelled order is money that never stayed with the shop, even if it
+        // was marked paid before the cancellation.
+        if (status === 'cancelled') return false;
+        return ['paid', 'completed'].includes(String(order.paymentStatus || '').toLowerCase())
+            || ['completed', 'delivered'].includes(status);
+    });
     const settledOrderIds = settledOrders.map((order) => order._id);
     const legacyVipVouchers = settledOrderIds.length > 0
         ? await UserVoucher.find({

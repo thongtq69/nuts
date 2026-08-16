@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import { verifyReturnUrl } from '@/lib/vnpay';
+import { cancelOrder } from '@/lib/order-cancellation';
 
 // VNPay IPN (Instant Payment Notification) handler
 export async function GET(req: NextRequest) {
@@ -53,9 +54,8 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ RspCode: '00', Message: 'Confirm Success' });
         } else {
             order.paymentStatus = 'failed';
-            order.status = 'cancelled';
-            await order.save();
-            
+            await cancelOrder(order, 'system');
+
             return NextResponse.json({ RspCode: '00', Message: 'Confirm Success' });
         }
     } catch (error) {
