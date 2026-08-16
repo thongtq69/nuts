@@ -3,6 +3,12 @@ import dbConnect from '@/lib/db';
 import { getAcbTransactionHistory } from '@/lib/acb';
 import Order from '@/models/Order';
 import AffiliateCommission from '@/models/AffiliateCommission';
+import {
+    BANK_PAYMENT_REF_PATTERN,
+    extractBankPaymentRef,
+    isBankPaymentRef,
+} from '@/lib/payment-reference';
+import { activateMembershipOrder } from '@/lib/membership-activation';
 
 export interface ParsedAcbTransaction {
     transactionId: string;
@@ -135,8 +141,13 @@ function parseTransaction(txn: any, fallback: any = {}): ParsedAcbTransaction {
 }
 
 export function extractPaymentRef(description: string): string | null {
-    const match = description.match(/GO[A-Z0-9]{6}/i);
-    return match ? match[0].toUpperCase() : null;
+    return extractBankPaymentRef(description);
+}
+
+async function activatePaidMembership(order: any): Promise<void> {
+    if (order?.orderType === 'membership' && !order.membershipActivatedAt) {
+        await activateMembershipOrder(String(order._id));
+    }
 }
 
 export function extractAcbTransactions(body: any): ParsedAcbTransaction[] {
@@ -286,9 +297,10 @@ export async function applyAcbTransactionToOrder(
         const duplicate = await Order.findOne({
             acbTransactionNo: txn.transactionId,
             paymentStatus: 'paid',
-        }).select('_id paymentRef').lean();
+        }).select('_id paymentRef orderType membershipActivatedAt').lean();
 
         if (duplicate) {
+            await activatePaidMembership(duplicate);
             return {
                 applied: false,
                 reason: 'duplicate_transaction',
@@ -332,6 +344,7 @@ export async function applyAcbTransactionToOrder(
         order.status = order.orderType === 'membership' ? 'paid' : 'confirmed';
     }
     await order.save();
+    await activatePaidMembership(order);
 
     await AffiliateCommission.updateMany(
         { orderId: order._id },
@@ -382,7 +395,7 @@ export async function reconcileAcbPayments(options: {
     const pendingRefs = await Order.find({
         paymentMethod: 'banking',
         paymentStatus: { $ne: 'paid' },
-        paymentRef: /^GO[A-Z0-9]{6,12}$/i,
+        paymentRef: BANK_PAYMENT_REF_PATTERN,
         createdAt: { $gte: new Date(Date.now() - (options.daysBack || 1) * 24 * 60 * 60 * 1000) },
     }).select('paymentRef totalAmount').lean();
 
@@ -438,7 +451,7 @@ export async function reconcileAcbPaymentRef(
     } = {}
 ) {
     const normalizedRef = paymentRef.trim().toUpperCase();
-    if (!/^GO[A-Z0-9]{6,12}$/i.test(normalizedRef)) {
+    if (!isBankPaymentRef(normalizedRef)) {
         throw new Error('Invalid payment reference');
     }
 

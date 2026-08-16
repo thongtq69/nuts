@@ -9,7 +9,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Suspense } from 'react';
-import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
 import { useLocale } from '@/context/LocaleContext';
 
 interface Package {
@@ -50,9 +49,6 @@ function MembershipCheckoutContent() {
     const [pkg, setPkg] = useState<Package | null>(null);
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-    const [orderPlaced, setOrderPlaced] = useState(false);
-    const [orderInfo, setOrderInfo] = useState<{orderId: string, vouchersCount: number} | null>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -96,16 +92,11 @@ function MembershipCheckoutContent() {
     const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN').format(price);
 
     const handlePlaceOrder = async () => {
-        if (isProcessing) return;
-
-        if (!paymentConfirmed) {
-            toast.info('Xác nhận thanh toán', 'Vui lòng quét mã QR và xác nhận đã chuyển khoản');
-            return;
-        }
+        if (isProcessing || !pkg) return;
 
         try {
             setIsProcessing(true);
-            const res = await fetch('/api/packages/buy', {
+            const res = await fetch(apiPath('/api/packages/buy'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -117,11 +108,22 @@ function MembershipCheckoutContent() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Lỗi đặt hàng');
 
-            setOrderInfo({
-                orderId: data.orderId,
-                vouchersCount: data.vouchersCount
+            const orderId = String(data.orderId || '');
+            const paymentRef = String(data.paymentRef || '');
+            if (!orderId || !paymentRef) {
+                throw new Error('Không tạo được mã thanh toán');
+            }
+
+            const params = new URLSearchParams({
+                order: orderId.slice(-6).toUpperCase(),
+                ref: paymentRef,
+                amount: String(pkg.price),
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
             });
-            setOrderPlaced(true);
+
+            router.push(`${href('/checkout/bank-pending')}?${params.toString()}`);
         } catch (error: any) {
             toast.error('Lỗi đặt hàng', error.message);
         } finally {
@@ -241,47 +243,18 @@ function MembershipCheckoutContent() {
                                     <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">Đã chọn</span>
                                 </div>
                                 
-                                {/* Bank Transfer Info */}
-                                <div className="mt-4">
-                                    <BankInfoDisplay
-                                        amount={pkg.price}
-                                        description={`VIP${pkg._id.slice(-6).toUpperCase()}${Date.now().toString().slice(-4)}`}
-                                    />
+                                <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                                    Sau khi tạo đơn, hệ thống sẽ mở mã QR có đúng số tiền và nội dung chuyển khoản riêng cho đơn này.
                                 </div>
                             </div>
-
-                            {/* Payment Confirmation for Banking */}
-                            {!paymentConfirmed && (
-                                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-xl">✓</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="font-semibold text-green-800 mb-1">Xác nhận đã chuyển khoản</h4>
-                                            <p className="text-sm text-green-700 mb-3">
-                                                Sau khi quét mã QR và chuyển khoản, hãy xác nhận để hoàn tất đăng ký.
-                                            </p>
-                                            <button
-                                                type="button"
-                                                onClick={() => setPaymentConfirmed(true)}
-                                                className="w-full py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <span>✓</span>
-                                                <span>Đã chuyển khoản - Xác nhận</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Submit Button */}
                             <button
                                 type="button"
                                 onClick={handlePlaceOrder}
-                                disabled={isProcessing || !paymentConfirmed}
+                                disabled={isProcessing}
                                 className={`w-full py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
-                                    isProcessing || !paymentConfirmed
+                                    isProcessing
                                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         : 'bg-gradient-to-r from-brand to-brand-light text-white hover:shadow-lg hover:shadow-brand/30'
                                 }`}
@@ -293,21 +266,10 @@ function MembershipCheckoutContent() {
                                     </>
                                 ) : (
                                     <>
-                                        ✅ Gửi yêu cầu xác nhận thanh toán - {formatPrice(pkg.price)}đ
+                                        Tạo đơn và mở mã QR - {formatPrice(pkg.price)}đ
                                     </>
                                 )}
                             </button>
-
-                            {/* Cancel Confirmation Button */}
-                            {paymentConfirmed && (
-                                <button
-                                    type="button"
-                                    onClick={() => setPaymentConfirmed(false)}
-                                    className="w-full py-3 text-gray-500 font-medium hover:text-gray-700 transition-all"
-                                >
-                                    ← Quay lại
-                                </button>
-                            )}
 
                             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                                 <ShieldIcon className="w-5 h-5 text-green-500" />
@@ -315,57 +277,6 @@ function MembershipCheckoutContent() {
                             </div>
                         </form>
 
-                        {/* Order Placed Success View */}
-                        {orderPlaced && (
-                            <div className="p-6 animate-in fade-in duration-500">
-                                <div className="text-center py-8">
-                                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <span className="text-4xl">✓</span>
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Đơn hàng đang chờ xác nhận</h2>
-                                    
-                                    <div className="space-y-4">
-                                        <p className="text-gray-600">
-                                            Cảm ơn bạn đã đăng ký! Đơn hàng của bạn đang chờ hệ thống kiểm tra và xác nhận thanh toán.
-                                        </p>
-                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left">
-                                            <div className="flex items-start gap-3">
-                                                <span className="text-xl">ℹ️</span>
-                                                <div className="text-sm text-amber-800">
-                                                    <p className="font-semibold mb-1">Quy trình xác nhận:</p>
-                                                    <ol className="list-decimal list-inside space-y-1">
-                                                        <li>Hệ thống kiểm tra khoản chuyển</li>
-                                                        <li>Xác nhận và kích hoạt gói VIP</li>
-                                                        <li>Gửi email thông báo qua {formData.email}</li>
-                                                    </ol>
-                                                    <p className="mt-2">Thời gian xử lý: 1-24 giờ</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                                        <p className="text-sm text-gray-500 mb-1">Mã đơn hàng</p>
-                                        <p className="font-mono font-bold text-lg">{orderInfo?.orderId}</p>
-                                    </div>
-
-                                    <div className="mt-6 flex gap-4 justify-center">
-                                        <button
-                                            onClick={() => router.push('/account')}
-                                            className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-all"
-                                        >
-                                            Xem tài khoản
-                                        </button>
-                                        <button
-                                            onClick={() => router.push('/')}
-                                            className="px-6 py-3 bg-brand text-white font-medium rounded-xl hover:bg-brand/90 transition-all"
-                                        >
-                                            Về trang chủ
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 

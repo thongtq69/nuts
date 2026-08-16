@@ -54,7 +54,9 @@ function BankPendingContent() {
                 if (!active) return;
                 if (response.ok && data?.paid) {
                     setAutoCheckStatus('paid');
-                    router.push('/checkout/success');
+                    router.push(data?.orderType === 'membership'
+                        ? '/checkout/membership/success'
+                        : '/checkout/success');
                     return;
                 }
 

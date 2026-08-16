@@ -4,6 +4,7 @@ import Order from '@/models/Order';
 import { reconcileAcbPaymentRef } from '@/lib/acb-payments';
 import mongoose from 'mongoose';
 import { randomUUID } from 'crypto';
+import { isBankPaymentRef } from '@/lib/payment-reference';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -41,7 +42,7 @@ export async function GET(req: Request) {
     const orderCode = (searchParams.get('order') || '').trim().toUpperCase();
     const amount = Number(searchParams.get('amount') || 0);
 
-    if (!/^GO[A-Z0-9]{6,12}$/i.test(paymentRef)) {
+    if (!isBankPaymentRef(paymentRef)) {
         return noStoreJson({ error: 'invalid_payment_ref' }, { status: 400 });
     }
 
@@ -49,7 +50,7 @@ export async function GET(req: Request) {
     const order = await Order.findOne({
         paymentRef: new RegExp(`^${escapeRegExp(paymentRef)}$`, 'i'),
         paymentMethod: 'banking',
-    }).select('_id paymentRef paymentStatus status totalAmount acbTransactionNo').lean();
+    }).select('_id paymentRef paymentStatus status totalAmount acbTransactionNo orderType').lean();
 
     if (!order) {
         return noStoreJson({ error: 'order_not_found' }, { status: 404 });
@@ -89,7 +90,7 @@ export async function GET(req: Request) {
     }
 
     const latestOrder = await Order.findById(order._id)
-        .select('_id paymentRef paymentStatus status totalAmount acbTransactionNo')
+        .select('_id paymentRef paymentStatus status totalAmount acbTransactionNo orderType')
         .lean();
 
     const reconciliationLog = {
@@ -115,6 +116,7 @@ export async function GET(req: Request) {
         paid: latestOrder?.paymentStatus === 'paid',
         paymentStatus: latestOrder?.paymentStatus || order.paymentStatus,
         status: latestOrder?.status || order.status,
+        orderType: latestOrder?.orderType || order.orderType,
         acbTransactionNo: latestOrder?.acbTransactionNo || order.acbTransactionNo || null,
         checkedAt: new Date().toISOString(),
         reconciliation,

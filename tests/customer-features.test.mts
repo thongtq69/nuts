@@ -50,6 +50,11 @@ import {
     normalizeAdminNotificationPreferences,
     normalizeNotificationEmails,
 } from '../src/lib/admin-notification-settings.ts';
+import {
+    buildMembershipPaymentRef,
+    extractBankPaymentRef,
+    isBankPaymentRef,
+} from '../src/lib/payment-reference.ts';
 
 test('legacy commissions enforce integrity and one-way status transitions', () => {
     assert.equal(getLegacyCommissionIntegrity(true, true), 'valid');
@@ -394,17 +399,40 @@ test('membership vouchers can only be activated after confirmed payment', () => 
 });
 
 test('membership packages only accept bank transfer payments', async () => {
-    const [checkoutSource, buyPackageSource] = await Promise.all([
+    const [checkoutSource, buyPackageSource, acbPaymentsSource, bankPendingSource, paymentStatusSource] = await Promise.all([
         readFile(new URL('../src/app/checkout/membership/page.tsx', import.meta.url), 'utf8'),
         readFile(new URL('../src/app/api/packages/buy/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/acb-payments.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/checkout/bank-pending/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/bank/payment-status/route.ts', import.meta.url), 'utf8'),
     ]);
 
     assert.match(checkoutSource, /paymentMethod: 'banking'/);
     assert.match(checkoutSource, /Phương thức thanh toán duy nhất/);
+    assert.match(checkoutSource, /\/checkout\/bank-pending/);
     assert.doesNotMatch(checkoutSource, /setPaymentMethod\('cod'\)/);
     assert.doesNotMatch(checkoutSource, /Với phương thức COD/);
+    assert.doesNotMatch(checkoutSource, /BankInfoDisplay/);
+    assert.doesNotMatch(checkoutSource, /Đã chuyển khoản - Xác nhận/);
     assert.match(buyPackageSource, /requestedPaymentMethod !== 'banking'/);
     assert.match(buyPackageSource, /Gói hội viên chỉ hỗ trợ thanh toán chuyển khoản/);
+    assert.match(buyPackageSource, /buildMembershipPaymentRef/);
+    assert.match(buyPackageSource, /paymentRef/);
+    assert.match(acbPaymentsSource, /activateMembershipOrder/);
+    assert.match(bankPendingSource, /data\?\.orderType === 'membership'/);
+    assert.match(paymentStatusSource, /orderType: latestOrder\?\.orderType \|\| order\.orderType/);
+});
+
+test('bank payment references support product and membership orders', () => {
+    assert.equal(isBankPaymentRef('GOABC123'), true);
+    assert.equal(isBankPaymentRef('VIP6E78227770'), true);
+    assert.equal(isBankPaymentRef('VIP123'), false);
+    assert.equal(
+        extractBankPaymentRef('MBVCB VIP6E78227770 toi 621588'),
+        'VIP6E78227770',
+    );
+    assert.equal(extractBankPaymentRef('thanh toan GOABC123'), 'GOABC123');
+    assert.equal(buildMembershipPaymentRef('6a80966935236197ada91bf8'), 'VIP97ADA91BF8');
 });
 
 test('membership voucher codes are stable per order and voucher position', () => {

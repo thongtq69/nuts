@@ -8,6 +8,8 @@ import AffiliateCommission from '@/models/AffiliateCommission';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { notifyAdminOfNewOrder } from '@/lib/admin-email-notifications';
+import { buildMembershipPaymentRef } from '@/lib/payment-reference';
+import mongoose from 'mongoose';
 
 export async function POST(req: Request) {
     try {
@@ -100,13 +102,15 @@ export async function POST(req: Request) {
             commissionStatus = 'pending';
         }
 
-        // Determine payment status
-        // For membership packages, always set to pending - admin will confirm after checking payment
+        // Create the stable reference before checkout so a bank callback can match this order.
         const orderStatus = 'pending';
         const paymentStatus = 'pending';
+        const orderId = new mongoose.Types.ObjectId();
+        const paymentRef = buildMembershipPaymentRef(String(orderId));
 
         // Create Order with membership type
         const orderData: any = {
+            _id: orderId,
             user: userId,
             orderType: 'membership',
             shippingInfo: {
@@ -130,6 +134,7 @@ export async function POST(req: Request) {
                 expiresAt: expiresAt
             },
             paymentMethod: paymentMethod,
+            paymentRef,
             paymentStatus: paymentStatus,
             totalAmount: Number(pkg.price),
             shippingFee: 0,
@@ -203,6 +208,7 @@ export async function POST(req: Request) {
         return NextResponse.json({
             message: 'Đã tạo yêu cầu mua gói. Voucher chỉ được phát hành sau khi thanh toán được xác nhận.',
             orderId: order._id,
+            paymentRef,
             vouchersCount: 0,
             pendingVouchersCount: pkg.voucherQuantity,
             paymentStatus: order.paymentStatus,
