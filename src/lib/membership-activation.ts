@@ -5,6 +5,7 @@ import UserMembership from '@/models/UserMembership';
 import UserVoucher from '@/models/UserVoucher';
 import { buildMembershipVoucherCode, isConfirmedPaymentStatus } from '@/lib/customer-ownership';
 import { syncAffiliateCommissionsForOrderStatus } from '@/lib/affiliate-commission-lifecycle';
+import { buildMembershipVoucherIssuance } from '@/lib/membership-vouchers';
 
 export class MembershipActivationError extends Error {
     status: number;
@@ -51,43 +52,48 @@ export async function activateMembershipOrder(orderId: string) {
         { upsert: true, new: true },
     );
 
-    const voucherOperations = Array.from(
-        { length: Number(pkg.voucherQuantity || 0) },
-        (_, index) => ({
+    const voucherIssuance = buildMembershipVoucherIssuance(pkg);
+    const voucherOperations = voucherIssuance.map((voucher) => ({
             updateOne: {
-                filter: { sourceOrderId: order._id, sourceIndex: index },
+                filter: { sourceOrderId: order._id, sourceIndex: voucher.sourceIndex },
                 update: {
                     $setOnInsert: {
                         userId: order.user,
-                        code: buildMembershipVoucherCode(String(order._id), index),
-                        discountType: pkg.discountType,
-                        discountValue: pkg.discountValue,
-                        maxDiscount: pkg.maxDiscount,
-                        minOrderValue: pkg.minOrderValue,
-                        expiresAt: membership.endDate,
+                        code: buildMembershipVoucherCode(String(order._id), voucher.sourceIndex),
+                        discountType: voucher.discountType,
+                        discountValue: voucher.discountValue,
+                        maxDiscount: voucher.maxDiscount,
+                        minOrderValue: voucher.minOrderValue,
                         isUsed: false,
                         source: 'package' as const,
                         sourceId: pkg._id,
                         sourceOrderId: order._id,
-                        sourceIndex: index,
+                        sourceIndex: voucher.sourceIndex,
+                    },
+                    $set: {
+                        isUnlimited: voucher.isUnlimited,
+                        expiresAt: membership.endDate,
                     },
                 },
                 upsert: true,
             },
-        }),
-    );
+        }));
     if (voucherOperations.length > 0) {
         await UserVoucher.bulkWrite(voucherOperations, { ordered: false });
     }
 
     order.status = 'completed';
     order.membershipActivatedAt = membership.startDate;
+    if (order.packageInfo) {
+        order.packageInfo.isUnlimitedVoucher = Boolean(pkg.isUnlimitedVoucher);
+    }
     await syncAffiliateCommissionsForOrderStatus(order, 'completed');
     await order.save();
 
     return {
         membershipId: String(membership._id),
-        vouchersIssued: Number(pkg.voucherQuantity || 0),
+        vouchersIssued: voucherIssuance.length,
+        isUnlimitedVoucher: Boolean(pkg.isUnlimitedVoucher),
         activatedAt: membership.startDate,
     };
 }

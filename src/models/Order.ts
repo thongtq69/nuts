@@ -25,6 +25,7 @@ export interface IOrder {
         packageId: mongoose.Types.ObjectId;
         name: string;
         voucherQuantity: number;
+        isUnlimitedVoucher?: boolean;
         expiresAt: Date;
     };
     paymentMethod: string;
@@ -89,6 +90,7 @@ const OrderSchema: Schema<IOrder> = new Schema(
             packageId: { type: Schema.Types.ObjectId, ref: 'SubscriptionPackage' },
             name: { type: String },
             voucherQuantity: { type: Number },
+            isUnlimitedVoucher: { type: Boolean, default: false },
             expiresAt: { type: Date },
         },
         paymentMethod: { type: String, required: true, default: 'banking' },

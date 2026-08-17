@@ -60,6 +60,10 @@ import {
     extractBankPaymentRef,
     isBankPaymentRef,
 } from '../src/lib/payment-reference.ts';
+import {
+    buildMembershipVoucherIssuance,
+    normalizeUnlimitedVoucherPackage,
+} from '../src/lib/membership-vouchers.ts';
 
 test('legacy commissions enforce integrity and one-way status transitions', () => {
     assert.equal(getLegacyCommissionIntegrity(true, true), 'valid');
@@ -443,6 +447,80 @@ test('bank payment references support product and membership orders', () => {
 test('membership voucher codes are stable per order and voucher position', () => {
     assert.equal(buildMembershipVoucherCode('698abc1234567890', 0), 'VIP3456789001');
     assert.equal(buildMembershipVoucherCode('698abc1234567890', 1), 'VIP3456789002');
+});
+
+test('an unlimited VIP package creates reusable codes instead of a million records', () => {
+    const issuance = buildMembershipVoucherIssuance({
+        discountType: 'percent',
+        discountValue: 30,
+        maxDiscount: 50_000,
+        minOrderValue: 0,
+        voucherQuantity: 1_000_000,
+        isUnlimitedVoucher: true,
+        vouchers: [{
+            discountType: 'percent',
+            discountValue: 30,
+            maxDiscount: 50_000,
+            minOrderValue: 0,
+            quantity: 1_000_000,
+        }],
+    });
+
+    assert.equal(issuance.length, 1);
+    assert.equal(issuance[0].isUnlimited, true);
+    assert.equal(issuance[0].sourceIndex, 0);
+});
+
+test('an unlimited VIP package is persisted without a fake million-code quantity', () => {
+    const normalized = normalizeUnlimitedVoucherPackage({
+        discountType: 'percent',
+        discountValue: 30,
+        voucherQuantity: 1_000_000,
+        isUnlimitedVoucher: true,
+        vouchers: [{
+            discountType: 'percent',
+            discountValue: 30,
+            quantity: 1_000_000,
+        }],
+    });
+
+    assert.equal(normalized.voucherQuantity, 1);
+    assert.equal(normalized.vouchers?.[0].quantity, 1);
+});
+
+test('a finite VIP package creates the configured number and kinds of vouchers', () => {
+    const issuance = buildMembershipVoucherIssuance({
+        discountType: 'percent',
+        discountValue: 10,
+        voucherQuantity: 3,
+        vouchers: [
+            { discountType: 'percent', discountValue: 10, quantity: 2 },
+            { discountType: 'fixed', discountValue: 20_000, quantity: 1 },
+        ],
+    });
+
+    assert.equal(issuance.length, 3);
+    assert.deepEqual(issuance.map(voucher => voucher.sourceIndex), [0, 1, 2]);
+    assert.deepEqual(issuance.map(voucher => voucher.discountType), ['percent', 'percent', 'fixed']);
+    assert.equal(issuance.every(voucher => !voucher.isUnlimited), true);
+});
+
+test('customer order actions are backed by real payment, cancellation and voucher logic', async () => {
+    const [accountPage, orderApi, cancelApi, cancellationHelper, activationHelper] = await Promise.all([
+        readFile(new URL('../src/app/account/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/orders/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/orders/[id]/cancel/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/order-cancellation.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/membership-activation.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(accountPage, /Xem chi tiết/);
+    assert.match(accountPage, /Thanh toán tiếp/);
+    assert.match(accountPage, /Xóa đơn/);
+    assert.match(cancelApi, /await cancelOrder/);
+    assert.match(cancellationHelper, /orderId: order\._id, isUsed: true/);
+    assert.match(orderApi, /!voucherToApply\?\.isUnlimited/);
+    assert.match(activationHelper, /buildMembershipVoucherIssuance/);
 });
 
 test('salary is reduced by the missing KPI percentage when KPI is not reached', () => {

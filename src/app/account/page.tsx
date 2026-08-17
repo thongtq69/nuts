@@ -262,9 +262,9 @@ export default function AccountPage() {
 
     const handleCancelOrder = async (order: AccountOrder) => {
         const confirmed = await confirm({
-            title: 'Hủy đơn hàng',
-            description: `Bạn chắc chắn muốn hủy đơn #${order._id.slice(-6).toUpperCase()}? Voucher đã dùng cho đơn này (nếu có) sẽ được hoàn lại.`,
-            confirmText: 'Hủy đơn',
+            title: 'Xóa đơn hàng',
+            description: `Đơn #${order._id.slice(-6).toUpperCase()} sẽ được hủy và ẩn khỏi danh sách. Voucher đã dùng cho đơn này (nếu có) sẽ được hoàn lại để tiếp tục sử dụng.`,
+            confirmText: 'Xóa đơn',
             cancelText: 'Giữ đơn',
         });
         if (!confirmed) return;
@@ -279,7 +279,7 @@ export default function AccountPage() {
                 return;
             }
 
-            toast.success('Đã hủy đơn hàng', data?.message);
+            toast.success('Đã xóa đơn khỏi danh sách', data?.message);
             setSelectedOrder(null);
             await fetchOrders();
         } catch (error) {
@@ -616,7 +616,7 @@ export default function AccountPage() {
                                                                     onClick={() => handleCancelOrder(order)}
                                                                     disabled={cancellingOrderId === order._id}
                                                                 >
-                                                                    {cancellingOrderId === order._id ? 'Đang hủy...' : 'Hủy đơn'}
+                                                                    {cancellingOrderId === order._id ? 'Đang xóa...' : 'Xóa đơn'}
                                                                 </button>
                                                             )}
                                                         </div>
@@ -920,7 +920,8 @@ export default function AccountPage() {
                                                                                                    status === 'expiring' ? '#854d0e' :
                                                                                                    status === 'used' ? '#6b7280' : '#dc2626',
                                                                                          }}>
-                                                                                             {status === 'available' ? 'Con hieu luc' :
+                                                                                             {voucher.isUnlimited ? 'Không giới hạn lượt dùng' :
+                                                                                              status === 'available' ? 'Con hieu luc' :
                                                                                               status === 'expiring' ? `Con ${daysRemaining} ngay` :
                                                                                               status === 'used' ? 'Da dung' : 'Het han'}
                                                                                          </span>
@@ -1073,8 +1074,9 @@ export default function AccountPage() {
                                                         <div className="membership-info">
                                                             <span>Voucher đã nhận:</span>
                                                             <strong>
-                                                                {pkg.vouchersReceived || 0} mã
-                                                                {pkg.vouchersReceived > 0 ? ` (còn ${pkg.vouchersAvailable || 0} dùng được)` : ''}
+                                                                {pkg.isUnlimitedVoucher
+                                                                    ? `${pkg.vouchersReceived || 0} mã dùng không giới hạn`
+                                                                    : `${pkg.vouchersReceived || 0} mã${pkg.vouchersReceived > 0 ? ` (còn ${pkg.vouchersAvailable || 0} dùng được)` : ''}`}
                                                             </strong>
                                                         </div>
                                                         <div className="membership-info">
@@ -1086,7 +1088,9 @@ export default function AccountPage() {
                                                     {state === 'pending_payment' && (
                                                         <div className="membership-pending">
                                                             <p>
-                                                                Gói này chưa được thanh toán nên {pkg.vouchersExpected || 0} voucher chưa được phát hành.
+                                                                {pkg.isUnlimitedVoucher
+                                                                    ? 'Gói này chưa được thanh toán nên mã VIP dùng không giới hạn chưa được phát hành.'
+                                                                    : `Gói này chưa được thanh toán nên ${pkg.vouchersExpected || 0} voucher chưa được phát hành.`}
                                                             </p>
                                                             {resumeUrl && (
                                                                 <Link href={resumeUrl} className="order-action order-action-primary">
@@ -1099,8 +1103,9 @@ export default function AccountPage() {
                                                     {state === 'awaiting_activation' && (
                                                         <div className="membership-pending">
                                                             <p>
-                                                                Đã nhận thanh toán. Cửa hàng sẽ kích hoạt gói và phát {pkg.vouchersExpected || 0} voucher
-                                                                trong thời gian sớm nhất.
+                                                                {pkg.isUnlimitedVoucher
+                                                                    ? 'Đã nhận thanh toán. Cửa hàng sẽ kích hoạt gói và mã VIP dùng không giới hạn trong thời gian sớm nhất.'
+                                                                    : `Đã nhận thanh toán. Cửa hàng sẽ kích hoạt gói và phát ${pkg.vouchersExpected || 0} voucher trong thời gian sớm nhất.`}
                                                             </p>
                                                         </div>
                                                     )}

@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
 import { getUrlLocale } from '@/i18n/server';
 import { localizePackage } from '@/lib/localized-content';
+import { normalizeUnlimitedVoucherPackage } from '@/lib/membership-vouchers';
 // Since we don't have NextAuth, we rely on our own token. 
 // For now, I'll assume public GET, protected POST (Admin).
 
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const body = await req.json();
+        const body = normalizeUnlimitedVoucherPackage(await req.json());
         const pkg = await SubscriptionPackage.create(body);
         return NextResponse.json(pkg.toObject(), { status: 201 });
     } catch (error) {
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
     try {
         await dbConnect();
-        const body = await req.json();
+        const body = normalizeUnlimitedVoucherPackage(await req.json());
         const { id, ...updateData } = body;
 
         if (!id) {

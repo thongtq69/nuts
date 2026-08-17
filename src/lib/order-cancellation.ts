@@ -41,7 +41,7 @@ export async function applyOrderCancellationEffects(
     // Claim the order first so two concurrent cancels cannot both restock it.
     const appliedAt = new Date();
     const claim = await Order.updateOne(
-        { _id: order._id, cancellationEffectsAppliedAt: { $exists: false } },
+        { _id: order._id, cancellationEffectsAppliedAt: null },
         { $set: { cancellationEffectsAppliedAt: appliedAt, cancelledBy: actor } },
     );
     if (claim.modifiedCount === 0) return effects;
@@ -72,7 +72,7 @@ export async function applyOrderCancellationEffects(
     // 3. Give the customer back the voucher this order consumed.
     if (order.voucherId) {
         const restored = await UserVoucher.updateOne(
-            { _id: String(order.voucherId), isUsed: true },
+            { _id: String(order.voucherId), orderId: order._id, isUsed: true },
             { $set: { isUsed: false }, $unset: { usedAt: 1, orderId: 1 } },
         );
         effects.voucherRestored = restored.modifiedCount > 0;

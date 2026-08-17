@@ -39,7 +39,7 @@ interface OrderItem {
 
 type VoucherForOrder = Pick<
     IUserVoucher,
-    'discountType' | 'discountValue' | 'maxDiscount' | 'minOrderValue' | 'source'
+    'discountType' | 'discountValue' | 'maxDiscount' | 'minOrderValue' | 'source' | 'isUnlimited'
 >;
 
 function calculateFinalPrice(
@@ -288,7 +288,9 @@ export async function POST(req: Request) {
             }
         }
 
-        if (appliedVoucherId) {
+        // Unlimited VIP codes remain reusable for the whole membership period.
+        // Normal vouchers are still consumed exactly once.
+        if (appliedVoucherId && !voucherToApply?.isUnlimited) {
             await UserVoucher.findByIdAndUpdate(appliedVoucherId, {
                 isUsed: true,
                 usedAt: new Date(),

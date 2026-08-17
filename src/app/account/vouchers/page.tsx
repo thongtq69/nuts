@@ -17,6 +17,7 @@ interface Voucher {
     minOrderValue: number;
     expiresAt: string;
     isUsed: boolean;
+    isUnlimited?: boolean;
     usedAt?: string;
     source?: 'package' | 'manual' | 'campaign' | 'order_reward';
     // Extension fields
@@ -457,7 +458,9 @@ export default function UserVouchersPage() {
                                                             <div className="flex-1 p-4">
                                                                 {/* Status Badge */}
                                                                 <div className="mb-2">
-                                                                    {getStatusBadge(voucher)}
+                                                                    {voucher.isUnlimited
+                                                                        ? <span className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full">Không giới hạn lượt dùng</span>
+                                                                        : getStatusBadge(voucher)}
                                                                 </div>
 
                                                                 {/* Code Section */}

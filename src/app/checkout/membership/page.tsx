@@ -18,6 +18,7 @@ interface Package {
     description: string;
     terms: string;
     voucherQuantity: number;
+    isUnlimitedVoucher?: boolean;
     discountValue: number;
     discountType: 'percent' | 'fixed';
     maxDiscount: number;
@@ -157,7 +158,7 @@ function MembershipCheckoutContent() {
         );
     }
 
-    const maxSavings = pkg.maxDiscount > 0 
+    const maxSavings = pkg.maxDiscount > 0
         ? pkg.maxDiscount * pkg.voucherQuantity 
         : Math.floor(pkg.minOrderValue * pkg.discountValue / 100) * pkg.voucherQuantity;
 
@@ -318,7 +319,11 @@ function MembershipCheckoutContent() {
                                             <CheckIcon className="w-4 h-4 text-green-600" />
                                         </div>
                                         <span className="text-gray-700">
-                                            <strong>{pkg.voucherQuantity}</strong> voucher giảm giá
+                                            {pkg.isUnlimitedVoucher ? (
+                                                <strong>Không giới hạn lượt dùng voucher</strong>
+                                            ) : (
+                                                <><strong>{pkg.voucherQuantity}</strong> voucher giảm giá</>
+                                            )}
                                         </span>
                                     </li>
                                     <li className="flex items-center gap-3 text-sm">
@@ -347,7 +352,9 @@ function MembershipCheckoutContent() {
                                     <span className="text-lg">💰</span>
                                     <span className="font-semibold text-green-700">Tiết kiệm tối đa</span>
                                 </div>
-                                <div className="text-2xl font-black text-green-600">{formatPrice(maxSavings)}đ</div>
+                                <div className="text-2xl font-black text-green-600">
+                                    {pkg.isUnlimitedVoucher ? 'Không giới hạn' : `${formatPrice(maxSavings)}đ`}
+                                </div>
                             </div>
 
                             {/* Notes */}

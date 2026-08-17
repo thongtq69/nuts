@@ -51,24 +51,28 @@ export async function GET() {
         const [memberships, vouchers] = await Promise.all([
             UserMembership.find({ orderId: { $in: orderIds } }).lean(),
             UserVoucher.find({ sourceOrderId: { $in: orderIds } })
-                .select('sourceOrderId isUsed expiresAt')
+                .select('sourceOrderId isUsed isUnlimited expiresAt')
                 .lean(),
         ]);
 
         const membershipByOrder = new Map(memberships.map((m: any) => [String(m.orderId), m]));
-        const voucherStatsByOrder = new Map<string, { issued: number; available: number }>();
+        const voucherStatsByOrder = new Map<string, { issued: number; available: number; isUnlimited: boolean }>();
         for (const voucher of vouchers as any[]) {
             const key = String(voucher.sourceOrderId);
-            const stats = voucherStatsByOrder.get(key) || { issued: 0, available: 0 };
+            const stats = voucherStatsByOrder.get(key) || { issued: 0, available: 0, isUnlimited: false };
             stats.issued += 1;
             if (!voucher.isUsed && new Date(voucher.expiresAt) > new Date()) stats.available += 1;
+            if (voucher.isUnlimited) stats.isUnlimited = true;
             voucherStatsByOrder.set(key, stats);
         }
 
         const packages = membershipOrders.map((order: any) => {
             const orderKey = String(order._id);
             const membership = membershipByOrder.get(orderKey);
-            const voucherStats = voucherStatsByOrder.get(orderKey) || { issued: 0, available: 0 };
+            const voucherStats = voucherStatsByOrder.get(orderKey) || { issued: 0, available: 0, isUnlimited: false };
+            const isUnlimitedVoucher = Boolean(
+                order.packageInfo?.isUnlimitedVoucher || voucherStats.isUnlimited,
+            );
             const isPaid = isConfirmedPaymentStatus(order.paymentStatus);
 
             let packageName = order.packageInfo?.name;
@@ -105,7 +109,8 @@ export async function GET() {
                 status: state === 'active' ? 'active' : state === 'expired' ? 'expired' : 'pending',
                 vouchersReceived: voucherStats.issued,
                 vouchersAvailable: voucherStats.available,
-                vouchersExpected: order.packageInfo?.voucherQuantity || 0,
+                vouchersExpected: isUnlimitedVoucher ? voucherStats.issued : order.packageInfo?.voucherQuantity || 0,
+                isUnlimitedVoucher,
                 // Lets the account page offer "thanh toán tiếp" without a second request.
                 paymentStatus: order.paymentStatus || 'pending',
                 paymentMethod: order.paymentMethod || '',

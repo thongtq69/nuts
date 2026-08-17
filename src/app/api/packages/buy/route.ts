@@ -131,6 +131,7 @@ export async function POST(req: Request) {
                 packageId: pkg._id,
                 name: pkg.name,
                 voucherQuantity: pkg.voucherQuantity,
+                isUnlimitedVoucher: Boolean(pkg.isUnlimitedVoucher),
                 expiresAt: expiresAt
             },
             paymentMethod: paymentMethod,
@@ -210,7 +211,8 @@ export async function POST(req: Request) {
             orderId: order._id,
             paymentRef,
             vouchersCount: 0,
-            pendingVouchersCount: pkg.voucherQuantity,
+            pendingVouchersCount: pkg.isUnlimitedVoucher ? null : pkg.voucherQuantity,
+            isUnlimitedVoucher: Boolean(pkg.isUnlimitedVoucher),
             paymentStatus: order.paymentStatus,
         }, { status: 201 });
 

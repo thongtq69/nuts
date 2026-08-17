@@ -211,7 +211,7 @@ export default function OrderDetailModal({ order, onClose, onCancelOrder, cancel
                             onClick={() => onCancelOrder(order)}
                             disabled={cancelling}
                         >
-                            {cancelling ? 'Đang hủy...' : 'Hủy đơn hàng'}
+                            {cancelling ? 'Đang xóa...' : 'Xóa đơn hàng'}
                         </button>
                     )}
                     <button type="button" className="odm-btn odm-btn-ghost" onClick={onClose}>Đóng</button>

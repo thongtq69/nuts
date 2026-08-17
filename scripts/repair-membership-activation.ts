@@ -14,8 +14,11 @@
 import mongoose from 'mongoose';
 import dbConnect from '../src/lib/db';
 import Order from '../src/models/Order';
+import SubscriptionPackage from '../src/models/SubscriptionPackage';
+import UserVoucher from '../src/models/UserVoucher';
 import { activateMembershipOrder } from '../src/lib/membership-activation';
 import { isConfirmedPaymentStatus } from '../src/lib/customer-ownership';
+import { buildMembershipVoucherIssuance } from '../src/lib/membership-vouchers';
 
 const APPLY = process.argv.includes('--apply');
 
@@ -51,8 +54,26 @@ async function main() {
                 await order.save();
             }
 
+            const pkg = order.packageInfo?.packageId
+                ? await SubscriptionPackage.findById(order.packageInfo.packageId)
+                : null;
+            if (pkg?.isUnlimitedVoucher) {
+                const expectedCodes = buildMembershipVoucherIssuance(pkg).length;
+                const cleanup = await UserVoucher.deleteMany({
+                    sourceOrderId: order._id,
+                    source: 'package',
+                    sourceIndex: { $gte: expectedCodes },
+                });
+                if (cleanup.deletedCount > 0) {
+                    console.log(`  [dọn dữ liệu cũ] #${code} → xóa ${cleanup.deletedCount} voucher sinh dư`);
+                }
+            }
+
             const activation = await activateMembershipOrder(String(order._id));
-            console.log(`  [đã kích hoạt] ${label} → ${activation.vouchersIssued} voucher`);
+            console.log(
+                `  [đã kích hoạt] ${label} → ${activation.vouchersIssued} mã`
+                + (activation.isUnlimitedVoucher ? ' dùng không giới hạn' : ''),
+            );
         } catch (error: any) {
             console.error(`  [lỗi] ${label} → ${error?.message || error}`);
         }

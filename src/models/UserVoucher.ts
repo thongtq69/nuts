@@ -10,6 +10,7 @@ export interface IUserVoucher {
     minOrderValue: number;
     expiresAt: Date;
     isUsed: boolean;
+    isUnlimited?: boolean;
     usedAt?: Date;
     orderId?: mongoose.Types.ObjectId;
     source?: 'package' | 'manual' | 'campaign' | 'order_reward'; // Where did this voucher come from?
@@ -37,6 +38,7 @@ const UserVoucherSchema: Schema<IUserVoucher> = new Schema(
         minOrderValue: { type: Number, default: 0 },
         expiresAt: { type: Date, required: true },
         isUsed: { type: Boolean, default: false },
+        isUnlimited: { type: Boolean, default: false },
         usedAt: { type: Date },
         orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
         source: { type: String, enum: ['package', 'manual', 'campaign', 'order_reward'], default: 'manual' },
