@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import Order from '@/models/Order';
 import { notFound } from 'next/navigation';
@@ -6,6 +7,8 @@ import OrderDetailClient from './OrderDetailClient';
 export const dynamic = 'force-dynamic';
 
 async function getOrderById(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+
     await dbConnect();
     const order = await Order.findById(id)
         .populate('user', 'name email')
@@ -51,7 +54,16 @@ async function getOrderById(id: string) {
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const order = await getOrderById(id);
+
+    let order: Awaited<ReturnType<typeof getOrderById>>;
+    try {
+        order = await getOrderById(id);
+    } catch (error) {
+        // Next only shows a digest to the browser, so record the real cause here
+        // or an intermittent database drop stays undiagnosable.
+        console.error(`Admin order detail failed for ${id}:`, error);
+        throw error;
+    }
 
     if (!order) {
         notFound();
