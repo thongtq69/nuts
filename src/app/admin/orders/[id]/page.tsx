@@ -41,6 +41,9 @@ async function getOrderById(id: string) {
         paymentStatus: order.paymentStatus || 'pending',
         note: order.note || '',
         voucherCode: (order as any).voucherCode || '',
+        membershipActivatedAt: (order as any).membershipActivatedAt
+            ? new Date((order as any).membershipActivatedAt).toISOString()
+            : null,
         createdAt: order.createdAt ? new Date(order.createdAt).toISOString() : new Date().toISOString(),
         updatedAt: (order as any).updatedAt ? new Date((order as any).updatedAt).toISOString() : new Date().toISOString(),
     };

@@ -61,6 +61,7 @@ interface OrderDetailProps {
         paymentStatus: string;
         note: string;
         voucherCode: string;
+        membershipActivatedAt?: string | null;
         createdAt: string;
         updatedAt: string;
     };
@@ -84,6 +85,8 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
             ? 'paid'
             : order.status,
     );
+    const [isPaid, setIsPaid] = useState(['paid', 'completed'].includes(order.paymentStatus));
+    const [isActivated, setIsActivated] = useState(Boolean(order.membershipActivatedAt));
     const [isUpdating, setIsUpdating] = useState(false);
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [adminNote, setAdminNote] = useState('');
@@ -92,6 +95,10 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
 
     // Check if this is a membership order
     const isMembershipOrder = membershipOrderFromProps;
+    const isCancelled = currentStatus === 'cancelled';
+    // Orders completed by the old admin list button were left unpaid and never
+    // activated, which used to leave this screen with no action at all.
+    const membershipNeedsRescue = isMembershipOrder && !isCancelled && !isActivated;
 
     const config = statusConfig[currentStatus] || statusConfig.pending;
     const StatusIcon = config.icon;
@@ -117,7 +124,16 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
             const data = await res.json();
             if (res.ok) {
                 setCurrentStatus(newStatus);
-                toast.success('Cập nhật trạng thái thành công');
+                if (newStatus === 'paid') setIsPaid(true);
+                if (data.activation) {
+                    setIsActivated(true);
+                    toast.success(
+                        'Đã kích hoạt gói hội viên',
+                        `Đã phát ${data.activation.vouchersIssued} voucher cho khách hàng.`,
+                    );
+                } else {
+                    toast.success('Cập nhật trạng thái thành công');
+                }
                 router.refresh();
             } else {
                 toast.error('Không thể cập nhật trạng thái', data.error || 'Vui lòng thử lại.');
@@ -311,9 +327,11 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                 {/* Status Actions */}
                 <div className="flex flex-wrap gap-3">
                     {isMembershipOrder ? (
-                        // Membership Order: Only confirm payment → complete
+                        // Membership order: confirm the payment, then activate the package.
+                        // Driven by whether the money arrived and whether the package was
+                        // issued, so an order left in any odd status still has a way forward.
                         <>
-                            {currentStatus === 'pending' && (
+                            {membershipNeedsRescue && !isPaid && (
                                 <>
                                     <button
                                         onClick={() => handleStatusChange('paid')}
@@ -333,15 +351,21 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                                     </button>
                                 </>
                             )}
-                            {currentStatus === 'paid' && (
+                            {membershipNeedsRescue && isPaid && (
                                 <button
                                     onClick={() => handleStatusChange('completed')}
                                     disabled={isUpdating}
                                     className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
                                 >
                                     <CheckCircle size={18} />
-                                    Hoàn thành & Kích hoạt gói
+                                    Hoàn thành &amp; Kích hoạt gói
                                 </button>
+                            )}
+                            {isActivated && (
+                                <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg border border-green-200">
+                                    <CheckCircle size={18} />
+                                    Gói đã kích hoạt, voucher đã phát cho khách
+                                </div>
                             )}
                         </>
                     ) : (
@@ -403,6 +427,17 @@ export default function OrderDetailClient({ order }: OrderDetailProps) {
                                 </span>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {membershipNeedsRescue && currentStatus === 'completed' && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                        <p className="font-semibold">Đơn ghi &quot;Hoàn thành&quot; nhưng gói chưa được kích hoạt.</p>
+                        <p className="mt-1">
+                            Khách chưa nhận được voucher nào. {isPaid
+                                ? 'Bấm "Hoàn thành & Kích hoạt gói" ở trên để phát voucher cho khách.'
+                                : 'Bấm "Xác nhận đã thanh toán" ở trên, rồi bấm "Hoàn thành & Kích hoạt gói" để phát voucher.'}
+                        </p>
                     </div>
                 )}
             </div>
