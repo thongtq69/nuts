@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import type { AuthUser } from '@/context/AuthContext';
 import Link from 'next/link';
 import {
     LayoutDashboard,
@@ -14,12 +15,12 @@ import {
     Menu,
     X,
     ChevronRight,
-    TrendingUp,
-    DollarSign,
     Users,
-    Settings,
-    FileText
+    KeyRound,
+    LogOut,
+    LoaderCircle,
 } from 'lucide-react';
+import ChangePasswordModal from '@/components/account/ChangePasswordModal';
 
 const menuItems = [
     { href: '/collaborator', icon: LayoutDashboard, label: 'Tổng quan' },
@@ -34,9 +35,17 @@ export default function CollaboratorLayout({
 }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { user, loading } = useAuth();
-    const [isAuthorized, setIsAuthorized] = useState(false);
+    const { user, loading, logout } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const handleLogout = async () => {
+        if (isLoggingOut) return;
+        setIsLoggingOut(true);
+        const succeeded = await logout();
+        if (!succeeded) setIsLoggingOut(false);
+    };
 
     useEffect(() => {
         if (!loading) {
@@ -44,11 +53,18 @@ export default function CollaboratorLayout({
                 router.push('/login');
             } else if (user.role !== 'staff' && user.roleType !== 'collaborator' && user.role !== 'admin' && user.role !== 'sale') {
                 router.push('/');
-            } else {
-                setIsAuthorized(true);
             }
         }
     }, [user, loading, router]);
+
+    const isAuthorized = Boolean(
+        user && (
+            user.role === 'staff'
+            || user.roleType === 'collaborator'
+            || user.role === 'admin'
+            || user.role === 'sale'
+        ),
+    );
 
     if (loading || !isAuthorized) {
         return (
@@ -92,14 +108,30 @@ export default function CollaboratorLayout({
                         onClick={() => setIsSidebarOpen(false)}
                     />
                     <div className="absolute inset-y-0 left-0 w-80 bg-white shadow-2xl animate-in slide-in-from-left duration-300">
-                        <SidebarContent pathname={pathname} onClose={() => setIsSidebarOpen(false)} user={user} />
+                        <SidebarContent
+                            pathname={pathname}
+                            onClose={() => setIsSidebarOpen(false)}
+                            onChangePassword={() => {
+                                setIsSidebarOpen(false);
+                                setIsChangePasswordOpen(true);
+                            }}
+                            onLogout={handleLogout}
+                            isLoggingOut={isLoggingOut}
+                            user={user}
+                        />
                     </div>
                 </div>
             )}
 
             {/* Desktop Sidebar */}
             <aside className="hidden lg:block w-72 shrink-0 bg-white border-r border-amber-100/50 z-30 shadow-xl">
-                <SidebarContent pathname={pathname} user={user} />
+                <SidebarContent
+                    pathname={pathname}
+                    onChangePassword={() => setIsChangePasswordOpen(true)}
+                    onLogout={handleLogout}
+                    isLoggingOut={isLoggingOut}
+                    user={user}
+                />
             </aside>
 
             {/* Main Content */}
@@ -108,11 +140,24 @@ export default function CollaboratorLayout({
                     {children}
                 </div>
             </main>
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => setIsChangePasswordOpen(false)}
+            />
         </div>
     );
 }
 
-function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose?: () => void; user: any }) {
+interface SidebarContentProps {
+    pathname: string;
+    onClose?: () => void;
+    onChangePassword: () => void;
+    onLogout: () => void;
+    isLoggingOut: boolean;
+    user: AuthUser | null;
+}
+
+function SidebarContent({ pathname, onClose, onChangePassword, onLogout, isLoggingOut, user }: SidebarContentProps) {
     const [copied, setCopied] = useState(false);
 
     const copyReferralCode = () => {
@@ -228,7 +273,25 @@ function SidebarContent({ pathname, onClose, user }: { pathname: string; onClose
             </nav>
 
             {/* Footer */}
-            <div className="p-4 border-t border-amber-100/50">
+            <div className="space-y-1 border-t border-amber-100/50 p-4">
+                <button
+                    type="button"
+                    onClick={onChangePassword}
+                    className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition-all hover:bg-amber-50 hover:text-brand"
+                >
+                    <KeyRound size={18} />
+                    <span className="flex-1 text-left">Đổi mật khẩu</span>
+                    <ChevronRight size={16} className="opacity-50" />
+                </button>
+                <button
+                    type="button"
+                    onClick={onLogout}
+                    disabled={isLoggingOut}
+                    className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-red-600 transition-all hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    {isLoggingOut ? <LoaderCircle size={18} className="animate-spin" /> : <LogOut size={18} />}
+                    <span className="flex-1 text-left">{isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
+                </button>
                 <Link
                     href="/"
                     className="flex items-center gap-2 px-4 py-3 rounded-2xl text-slate-500 hover:text-brand hover:bg-amber-50 transition-all text-sm font-medium"

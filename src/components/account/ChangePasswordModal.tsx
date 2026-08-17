@@ -98,7 +98,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
             <div
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="agent-change-password-title"
+                aria-labelledby="change-password-title"
                 className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl sm:p-6"
                 onMouseDown={(event) => event.stopPropagation()}
             >
@@ -108,7 +108,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
                             <KeyRound size={20} />
                         </div>
                         <div>
-                            <h2 id="agent-change-password-title" className="text-lg font-bold text-slate-900">Đổi mật khẩu</h2>
+                            <h2 id="change-password-title" className="text-lg font-bold text-slate-900">Đổi mật khẩu</h2>
                             <p className="mt-1 text-sm text-slate-500">Bạn sẽ cần đăng nhập lại sau khi đổi thành công.</p>
                         </div>
                     </div>

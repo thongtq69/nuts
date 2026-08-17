@@ -5,12 +5,14 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ChangePasswordModal from '@/components/account/ChangePasswordModal';
 
 export default function AccountMembershipPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, logout } = useAuth();
     const router = useRouter();
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -77,6 +79,12 @@ export default function AccountMembershipPage() {
                             <li className="active">
                                 🎁 Gói hội viên
                             </li>
+                            <li onClick={() => setIsChangePasswordOpen(true)}>
+                                🔑 Đổi mật khẩu
+                            </li>
+                            <li className="logout-btn" onClick={() => void logout()}>
+                                🚪 Đăng xuất
+                            </li>
                         </ul>
                     </aside>
 
@@ -125,6 +133,10 @@ export default function AccountMembershipPage() {
                     </div>
                 </div>
             </div>
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => setIsChangePasswordOpen(false)}
+            />
         </>
     );
 }

@@ -18,6 +18,7 @@ import {
     orderStatusLabel,
     paymentStatusLabel,
 } from '@/lib/order-status';
+import ChangePasswordModal from '@/components/account/ChangePasswordModal';
 
 // Helper functions for vouchers
 function maskVoucherCode(code: string): string {
@@ -95,6 +96,7 @@ export default function AccountPage() {
     // Terms modal state
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [affiliateType, setAffiliateType] = useState<'agent' | 'collaborator'>('collaborator');
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -511,7 +513,10 @@ export default function AccountPage() {
                                     🔒 Trang Admin
                                 </li>
                             )}
-                            <li className="logout-btn" onClick={logout}>
+                            <li onClick={() => setIsChangePasswordOpen(true)}>
+                                🔑 Đổi mật khẩu
+                            </li>
+                            <li className="logout-btn" onClick={() => void logout()}>
                                 🚪 Đăng xuất
                             </li>
                         </ul>
@@ -1177,6 +1182,11 @@ export default function AccountPage() {
                 </div>
             </div>
             <Footer />
+
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => setIsChangePasswordOpen(false)}
+            />
 
             <style jsx>{`
                 .cancelled-toggle {

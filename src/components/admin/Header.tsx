@@ -10,10 +10,13 @@ import {
     Settings,
     ExternalLink,
     ChevronDown,
-    Search
+    Search,
+    KeyRound,
+    LoaderCircle,
 } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import NotificationDropdown from './NotificationDropdown';
+import ChangePasswordModal from '@/components/account/ChangePasswordModal';
 
 interface HeaderProps {
     onMenuClick: () => void;
@@ -22,9 +25,14 @@ interface HeaderProps {
 export default function AdminHeader({ onMenuClick }: HeaderProps) {
     const { user, logout } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const handleLogout = async () => {
-        await logout();
+        if (isLoggingOut) return;
+        setIsLoggingOut(true);
+        const succeeded = await logout();
+        if (!succeeded) setIsLoggingOut(false);
     };
 
     return (
@@ -124,16 +132,28 @@ export default function AdminHeader({ onMenuClick }: HeaderProps) {
                                             <Settings className="w-5 h-5 text-slate-400" />
                                             <span className="font-medium">Cài đặt</span>
                                         </Link>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowUserMenu(false);
+                                                setIsChangePasswordOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-700 transition-colors hover:bg-slate-50"
+                                        >
+                                            <KeyRound className="h-5 w-5 text-slate-400" />
+                                            <span className="font-medium">Đổi mật khẩu</span>
+                                        </button>
                                     </div>
 
                                     {/* Logout */}
                                     <div className="border-t border-slate-100 p-2">
                                         <button
                                             onClick={handleLogout}
-                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            disabled={isLoggingOut}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                            <LogOut className="w-5 h-5" />
-                                            <span className="font-medium">Đăng xuất</span>
+                                            {isLoggingOut ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
+                                            <span className="font-medium">{isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -142,6 +162,10 @@ export default function AdminHeader({ onMenuClick }: HeaderProps) {
                     </div>
                 </div>
             </div>
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => setIsChangePasswordOpen(false)}
+            />
         </header>
     );
 }

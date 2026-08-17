@@ -5,6 +5,8 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
+import ChangePasswordModal from '@/components/account/ChangePasswordModal';
+import { KeyRound, LogOut } from 'lucide-react';
 
 interface Voucher {
     _id: string;
@@ -52,7 +54,7 @@ function getDaysRemaining(expiresAt: string): number {
 }
 
 export default function UserVouchersPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, logout } = useAuth();
     const router = useRouter();
     const toast = useToast();
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
@@ -66,6 +68,7 @@ export default function UserVouchersPage() {
     
     // State for collapsed groups
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -327,9 +330,19 @@ export default function UserVouchersPage() {
 
             <div className="container py-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Voucher cua toi</h1>
-                    <p className="text-gray-500">Quan ly va su dung cac ma giam gia cua ban</p>
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800 mb-2">Voucher cua toi</h1>
+                        <p className="text-gray-500">Quan ly va su dung cac ma giam gia cua ban</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => setIsChangePasswordOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-[#9C7044]/30 bg-white px-4 py-2.5 text-sm font-semibold text-[#7d5a36] transition-colors hover:bg-[#F5EFE6]">
+                            <KeyRound size={17} /> Đổi mật khẩu
+                        </button>
+                        <button type="button" onClick={() => void logout()} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50">
+                            <LogOut size={17} /> Đăng xuất
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Cards */}
@@ -602,6 +615,11 @@ export default function UserVouchersPage() {
             )}
 
             {/* Custom Styles */}
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => setIsChangePasswordOpen(false)}
+            />
+
             <style jsx>{`
                 @keyframes pulse {
                     0%, 100% { opacity: 1; }
