@@ -82,8 +82,11 @@ export async function GET(
         );
         const orderOwnerId = String(order.user || order.get('userId') || '');
         const hasAccess = user.role === 'admin'
-            || hasReferralAccess
-            || managedCustomerIds.has(orderOwnerId);
+            || managedCustomerIds.has(orderOwnerId)
+            // Referral ownership is only used for guest orders. Once an order
+            // belongs to a registered customer, that customer's current staff
+            // assignment is the sole source of access.
+            || (!orderOwnerId && hasReferralAccess);
 
         if (!hasAccess) {
             return NextResponse.json({ message: 'Bạn không có quyền xem đơn hàng này' }, { status: 403 });

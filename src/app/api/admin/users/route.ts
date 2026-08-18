@@ -16,6 +16,7 @@ interface AdminUserListItem {
     _id: { toString(): string };
     isActive?: boolean;
     parentStaff?: PopulatedManager;
+    assignedStaff?: PopulatedManager;
     commissionSettings?: { managerId?: PopulatedManager };
     referrer?: PopulatedManager & {
         role?: string;
@@ -44,6 +45,7 @@ export async function GET(request: Request) {
         const users = await User.find(query)
             .select('-password')
             .populate('parentStaff', 'name email staffCode')
+            .populate('assignedStaff', 'name email staffCode')
             .populate('commissionSettings.managerId', 'name email staffCode')
             .populate({
                 path: 'referrer',
@@ -55,7 +57,7 @@ export async function GET(request: Request) {
 
 
         return NextResponse.json(users.map((user) => {
-            const directManager = user.parentStaff || user.commissionSettings?.managerId;
+            const directManager = user.assignedStaff || user.commissionSettings?.managerId || user.parentStaff;
             const referrerManager = user.referrer && (
                 user.referrer.role === 'staff' || user.referrer.affiliateLevel === 'staff'
                     ? user.referrer
@@ -77,6 +79,10 @@ export async function GET(request: Request) {
                         staffCode: manager.staffCode,
                     }
                     : null,
+                assignedStaffId: user.assignedStaff && typeof user.assignedStaff === 'object'
+                    ? String(user.assignedStaff._id)
+                    : null,
+                managerAssignmentMode: user.assignedStaff ? 'manual' : 'automatic',
             };
         }));
     } catch (error) {

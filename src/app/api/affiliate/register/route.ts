@@ -57,6 +57,9 @@ export async function POST(req: Request) {
         }
 
         user.role = 'sale'; // Upgrade to sale/affiliate
+        user.roleType = 'collaborator';
+        user.saleType = 'collaborator';
+        user.affiliateLevel = 'collaborator';
         user.referralCode = refCode;
         
         // Generate encoded affiliate code

@@ -100,6 +100,39 @@ export async function PATCH(
             unsetData.customPermissions = 1;
         }
 
+        if (Object.prototype.hasOwnProperty.call(body, 'assignedStaffId')) {
+            if (user.role !== 'user') {
+                return NextResponse.json(
+                    { error: 'Chỉ có thể phân công tài khoản khách hàng cho nhân viên' },
+                    { status: 409 },
+                );
+            }
+
+            const assignedStaffId = typeof body.assignedStaffId === 'string'
+                ? body.assignedStaffId.trim()
+                : '';
+
+            if (!assignedStaffId) {
+                unsetData.assignedStaff = 1;
+            } else {
+                const staff = await User.findOne({
+                    _id: assignedStaffId,
+                    role: 'staff',
+                    affiliateLevel: 'staff',
+                    isActive: { $ne: false },
+                }).select('_id');
+
+                if (!staff) {
+                    return NextResponse.json(
+                        { error: 'Nhân viên không tồn tại hoặc đã bị vô hiệu hóa' },
+                        { status: 404 },
+                    );
+                }
+
+                updateData.assignedStaff = staff._id;
+            }
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             id,
             {

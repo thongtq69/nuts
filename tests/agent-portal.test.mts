@@ -1,8 +1,43 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { isCollaboratorAccount } from '../src/lib/account-role.ts';
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+
+test('collaborator identity is consistent across every supported account field', () => {
+    assert.equal(isCollaboratorAccount({ roleType: 'collaborator' }), true);
+    assert.equal(isCollaboratorAccount({ saleType: 'collaborator' }), true);
+    assert.equal(isCollaboratorAccount({ affiliateLevel: 'collaborator' }), true);
+    assert.equal(isCollaboratorAccount({ role: 'sale', saleType: 'agent' }), false);
+});
+
+test('collaborators are redirected away from the agent portal using current database identity', async () => {
+    const [agentLayout, collaboratorLayout, accountPage] = await Promise.all([
+        read('src/app/agent/layout.tsx'),
+        read('src/app/collaborator/layout.tsx'),
+        read('src/app/account/page.tsx'),
+    ]);
+
+    assert.match(agentLayout, /isCollaboratorAccount\(user\)[\s\S]*router\.replace\('\/collaborator'\)/);
+    assert.match(collaboratorLayout, /isCollaboratorAccount\(user\)/);
+    assert.match(accountPage, /Bảng điều khiển Cộng tác viên/);
+});
+
+test('every collaborator creation and approval flow persists the complete identity', async () => {
+    const sources = await Promise.all([
+        read('src/app/api/admin/users/[id]/approve-sale/route.ts'),
+        read('src/app/api/staff/collaborators/route.ts'),
+        read('src/app/api/agent/collaborators/route.ts'),
+        read('src/app/api/affiliate/register/route.ts'),
+    ]);
+
+    for (const source of sources) {
+        assert.match(source, /roleType[\s\S]{0,80}collaborator/);
+        assert.match(source, /saleType[\s\S]{0,80}collaborator/);
+        assert.match(source, /affiliateLevel[\s\S]{0,80}collaborator/);
+    }
+});
 
 test('agent commission navigation has a real page and authenticated API', async () => {
     const [layout, page, api] = await Promise.all([

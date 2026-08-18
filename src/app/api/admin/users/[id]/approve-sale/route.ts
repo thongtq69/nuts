@@ -3,12 +3,18 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import { sendSaleApprovedEmail } from '@/lib/email';
 import { encodeAffiliateId } from '@/lib/affiliate';
+import { requireAdminAuth } from '@/lib/auth-permissions';
 
 export async function POST(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAdminAuth();
+        if (!auth.user) {
+            return NextResponse.json({ error: auth.error }, { status: 401 });
+        }
+
         await dbConnect();
         const { id } = await params;
 
@@ -24,6 +30,15 @@ export async function POST(
         user.role = 'sale';
         user.saleApplicationStatus = 'approved';
         user.saleApprovedAt = new Date();
+
+        if (user.saleType === 'collaborator') {
+            user.roleType = 'collaborator';
+            user.affiliateLevel = 'collaborator';
+        } else {
+            user.saleType = 'agent';
+            user.roleType = undefined;
+            user.affiliateLevel = undefined;
+        }
 
         // Generate Referal Code if not exists
         if (!user.referralCode) {

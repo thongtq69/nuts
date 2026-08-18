@@ -47,6 +47,7 @@ export interface IUser {
         accountName: string;
     };
     parentStaff?: Types.ObjectId;
+    assignedStaff?: Types.ObjectId;
     affiliateLevel?: 'staff' | 'collaborator';
     staffCode?: string;
     collaboratorCount?: number;
@@ -123,6 +124,10 @@ const UserSchema: Schema<IUser> = new Schema(
             accountName: String,
         },
         parentStaff: { type: Schema.Types.ObjectId, ref: 'User' },
+        // Manual customer assignment made by Admin. This takes precedence over
+        // referral-based ownership without changing the original referrer or
+        // any commission attribution.
+        assignedStaff: { type: Schema.Types.ObjectId, ref: 'User' },
         affiliateLevel: {
             type: String,
             enum: ['staff', 'collaborator'],
@@ -182,6 +187,7 @@ UserSchema.index({ role: 1, roleType: 1 });
 UserSchema.index({ 'commissionSettings.tier': 1 });
 UserSchema.index({ 'commissionSettings.teamId': 1 });
 UserSchema.index({ 'commissionSettings.managerId': 1 });
+UserSchema.index({ assignedStaff: 1 });
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 

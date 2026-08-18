@@ -69,6 +69,15 @@ interface UserDetail {
         phone?: string;
         staffCode?: string;
     } | null;
+    assignedStaffId?: string | null;
+    managerAssignmentMode?: 'manual' | 'automatic';
+}
+
+interface StaffOption {
+    id: string;
+    name: string;
+    email: string;
+    staffCode?: string;
 }
 
 export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -82,6 +91,9 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     const prompt = usePrompt();
     const [copied, setCopied] = useState(false);
     const [activeStat, setActiveStat] = useState<'orders' | 'spent' | 'savings' | 'membership' | 'vouchers'>('orders');
+    const [staffOptions, setStaffOptions] = useState<StaffOption[]>([]);
+    const [selectedStaffId, setSelectedStaffId] = useState('');
+    const [assigningStaff, setAssigningStaff] = useState(false);
 
     useEffect(() => {
         params.then(({ id }) => {
@@ -90,6 +102,22 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         });
     }, [params]);
 
+    useEffect(() => {
+        const fetchStaffOptions = async () => {
+            try {
+                const response = await fetch('/api/admin/staff');
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Không thể tải danh sách nhân viên');
+                setStaffOptions(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error('Error fetching staff options:', error);
+                toast.error('Không thể tải nhân viên', 'Vui lòng tải lại trang và thử lại.');
+            }
+        };
+
+        void fetchStaffOptions();
+    }, [toast]);
+
     const fetchUserDetail = async (id: string) => {
         try {
             setLoading(true);
@@ -97,6 +125,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
             if (res.ok) {
                 const data = await res.json();
                 setUser(data);
+                setSelectedStaffId(data.assignedStaffId || '');
             } else {
                 router.push('/admin/users');
             }
@@ -105,6 +134,40 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
             router.push('/admin/users');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAssignStaff = async () => {
+        if (!user || user.role !== 'user') return;
+
+        try {
+            setAssigningStaff(true);
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assignedStaffId: selectedStaffId || null }),
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Không thể lưu phân công');
+            }
+
+            await fetchUserDetail(userId);
+            toast.success(
+                'Đã lưu phân công',
+                selectedStaffId
+                    ? 'Khách hàng đã được chuyển cho nhân viên đã chọn quản lý.'
+                    : 'Khách hàng sẽ được tự động quản lý theo link giới thiệu.',
+            );
+        } catch (error) {
+            console.error('Error assigning customer:', error);
+            toast.error(
+                'Không thể lưu phân công',
+                error instanceof Error ? error.message : 'Vui lòng thử lại.',
+            );
+        } finally {
+            setAssigningStaff(false);
         }
     };
 
@@ -441,6 +504,55 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                             </div>
                         </div>
                     </div>
+
+                    {user.role === 'user' && (
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                <Users className="text-[#9C7044]" size={20} />
+                                Phân khách hàng cho nhân viên
+                            </h3>
+                            <p className="mb-4 text-sm text-slate-500">
+                                Nhân viên được chọn sẽ thấy khách hàng này trong “Khách hàng của tôi”.
+                                Nhân viên khác sẽ không thể xem thông tin và đơn hàng của khách hàng này.
+                            </p>
+
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                                <label className="flex-1">
+                                    <span className="mb-1.5 block text-sm font-semibold text-slate-700">Nhân viên quản lý</span>
+                                    <select
+                                        value={selectedStaffId}
+                                        onChange={(event) => setSelectedStaffId(event.target.value)}
+                                        disabled={assigningStaff}
+                                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#9C7044] focus:ring-2 focus:ring-[#9C7044]/20 disabled:bg-slate-100"
+                                    >
+                                        <option value="">Tự động theo link giới thiệu</option>
+                                        {staffOptions.map((staff) => (
+                                            <option key={staff.id} value={staff.id}>
+                                                {staff.name} — {staff.staffCode || staff.email}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => void handleAssignStaff()}
+                                    disabled={assigningStaff}
+                                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#9C7044] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#7d5a36] disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {assigningStaff && <Loader2 size={17} className="animate-spin" />}
+                                    {assigningStaff ? 'Đang lưu...' : 'Lưu phân công'}
+                                </button>
+                            </div>
+
+                            <p className="mt-3 text-xs text-slate-500">
+                                Trạng thái hiện tại: {user.managerAssignmentMode === 'manual'
+                                    ? `Được Admin phân công${user.managedBy ? ` cho ${user.managedBy.name}` : ''}.`
+                                    : user.managedBy
+                                        ? `Tự động theo link giới thiệu — ${user.managedBy.name}.`
+                                        : 'Chưa có nhân viên quản lý.'}
+                            </p>
+                        </div>
+                    )}
 
                     {/* Quản lý Role */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">

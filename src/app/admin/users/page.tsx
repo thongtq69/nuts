@@ -16,6 +16,8 @@ interface User {
     email: string;
     phone?: string;
     role: 'user' | 'sale' | 'admin' | 'staff';
+    saleType?: 'agent' | 'collaborator' | null;
+    affiliateLevel?: 'staff' | 'collaborator';
     saleApplicationStatus?: 'pending' | 'approved' | 'rejected' | null;
     isActive?: boolean;
     createdAt: string;
@@ -212,7 +214,7 @@ export default function AdminUsersPage() {
         },
         {
             key: 'role', label: 'Vai trò', format: (v) =>
-                v === 'admin' ? 'Admin' : v === 'staff' ? 'Nhân viên' : v === 'sale' ? 'Đại lý' : 'Khách hàng'
+                v === 'admin' ? 'Admin' : v === 'staff' ? 'Nhân viên' : v === 'sale' ? 'Đại lý/CTV' : 'Khách hàng'
         },
         {
             key: 'saleApplicationStatus', label: 'Trạng thái', format: (v) =>
@@ -277,7 +279,7 @@ export default function AdminUsersPage() {
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'sale' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                             onClick={() => setFilter('sale')}
                         >
-                            Đại lý ({users.filter(u => u.role === 'sale').length})
+                            Đại lý/CTV ({users.filter(u => u.role === 'sale').length})
                         </button>
                         <button
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'staff' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
@@ -367,7 +369,8 @@ export default function AdminUsersPage() {
                                                             'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {user.role === 'user' ? 'Khách hàng' :
-                                                    user.role === 'sale' ? 'Đại lý' :
+                                                    user.role === 'sale'
+                                                        ? (user.affiliateLevel === 'collaborator' || user.saleType === 'collaborator' ? 'Cộng tác viên' : 'Đại lý') :
                                                         user.role === 'staff' ? 'Nhân viên' : 'Admin'}
                                             </span>
                                         </td>

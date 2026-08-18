@@ -23,6 +23,7 @@ import ChangePasswordModal from '@/components/account/ChangePasswordModal';
 import { useAuth } from '@/context/AuthContext';
 import type { AuthUser } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { isCollaboratorAccount } from '@/lib/account-role';
 
 const menuItems = [
     { href: '/agent', icon: LayoutDashboard, label: 'Tổng quan' },
@@ -43,6 +44,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         if (loading) return;
         if (!user) router.push('/login');
+        else if (isCollaboratorAccount(user)) router.replace('/collaborator');
         else if (user.role !== 'sale' && user.role !== 'admin') router.push('/');
     }, [loading, router, user]);
 
@@ -58,7 +60,8 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         }
     };
 
-    const authorized = !loading && user && (user.role === 'sale' || user.role === 'admin');
+    const authorized = !loading && user && !isCollaboratorAccount(user)
+        && (user.role === 'sale' || user.role === 'admin');
     if (!authorized) {
         return (
             <div className="grid min-h-screen place-items-center bg-slate-50">

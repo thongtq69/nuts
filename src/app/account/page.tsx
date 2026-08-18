@@ -11,6 +11,7 @@ import { useConfirm } from '@/context/ConfirmContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AffiliateTermsModal from '@/components/affiliate/AffiliateTermsModal';
+import { isCollaboratorAccount } from '@/lib/account-role';
 import OrderDetailModal, { type AccountOrder } from '@/components/account/OrderDetailModal';
 import {
     buildResumePaymentUrl,
@@ -471,7 +472,8 @@ export default function AccountPage() {
                                 {user.role !== 'user' && (
                                     <span className="user-role-badge">
                                         {user.role === 'admin' ? '👑 Admin' : 
-                                         user.role === 'staff' ? '👨‍💼 Nhân viên' : '🏪 Đại lý'}
+                                         user.role === 'staff' ? '👨‍💼 Nhân viên' :
+                                         isCollaboratorAccount(user) ? '🤝 Cộng tác viên' : '🏪 Đại lý'}
                                     </span>
                                 )}
                             </div>
@@ -499,8 +501,8 @@ export default function AccountPage() {
                                 </li>
                             )}
                             {user.role === 'sale' && (
-                                <li onClick={() => router.push('/agent')}>
-                                    📊 Bảng điều khiển Đại lý
+                                <li onClick={() => router.push(isCollaboratorAccount(user) ? '/collaborator' : '/agent')}>
+                                    📊 {isCollaboratorAccount(user) ? 'Bảng điều khiển Cộng tác viên' : 'Bảng điều khiển Đại lý'}
                                 </li>
                             )}
                             {user.role === 'staff' && (

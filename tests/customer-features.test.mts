@@ -366,9 +366,19 @@ test('staff customer scope includes only direct and team referral relationships'
     const query = buildManagedCustomerQuery('staff-1', ['collab-1']);
     assert.equal(query.role, 'user');
     assert.deepEqual(query.$or, [
-        { parentStaff: 'staff-1' },
-        { 'commissionSettings.managerId': 'staff-1' },
-        { referrer: { $in: ['staff-1', 'collab-1'] } },
+        { assignedStaff: 'staff-1' },
+        { assignedStaff: null, 'commissionSettings.managerId': 'staff-1' },
+        {
+            assignedStaff: null,
+            'commissionSettings.managerId': null,
+            parentStaff: 'staff-1',
+        },
+        {
+            assignedStaff: null,
+            'commissionSettings.managerId': null,
+            parentStaff: null,
+            referrer: { $in: ['staff-1', 'collab-1'] },
+        },
     ]);
 });
 
@@ -380,10 +390,32 @@ test('staff order scope includes only team referrals and managed customers', () 
     );
 
     assert.deepEqual(query.$or, [
-        { referrer: { $in: ['staff-1', 'collab-1', 'collab-2'] } },
         { user: { $in: ['customer-1'] } },
         { userId: { $in: ['customer-1'] } },
+        {
+            user: null,
+            userId: null,
+            referrer: { $in: ['staff-1', 'collab-1', 'collab-2'] },
+        },
     ]);
+});
+
+test('admin customer assignment is persisted and exposed as a working control', async () => {
+    const [userModel, roleApi, detailPage, detailApi, listApi] = await Promise.all([
+        readFile(new URL('../src/models/User.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/users/[id]/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/admin/users/[id]/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/customer-detail.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/users/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(userModel, /assignedStaff: \{ type: Schema\.Types\.ObjectId, ref: 'User' \}/);
+    assert.match(roleApi, /assignedStaffId/);
+    assert.match(roleApi, /role: 'staff'/);
+    assert.match(detailPage, /Phân khách hàng cho nhân viên/);
+    assert.match(detailPage, /Lưu phân công/);
+    assert.match(detailApi, /user\.assignedStaff \|\| user\.commissionSettings\?\.managerId/);
+    assert.match(listApi, /populate\('assignedStaff'/);
 });
 
 test('staff orders page loads scoped API data instead of sample orders', async () => {

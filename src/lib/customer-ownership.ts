@@ -8,9 +8,24 @@ export function buildManagedCustomerQuery(
         role: 'user',
         affiliateLevel: { $ne: 'collaborator' },
         $or: [
-            { parentStaff: staffId },
-            { 'commissionSettings.managerId': staffId },
-            { referrer: { $in: referrerIds } },
+            // A manual Admin assignment always wins over every legacy or
+            // referral-derived relationship.
+            { assignedStaff: staffId },
+            {
+                assignedStaff: null,
+                'commissionSettings.managerId': staffId,
+            },
+            {
+                assignedStaff: null,
+                'commissionSettings.managerId': null,
+                parentStaff: staffId,
+            },
+            {
+                assignedStaff: null,
+                'commissionSettings.managerId': null,
+                parentStaff: null,
+                referrer: { $in: referrerIds },
+            },
         ],
     };
 }
@@ -21,9 +36,7 @@ export function buildManagedOrderQuery(
     customerIds: string[] = [],
 ) {
     const referrerIds = [staffId, ...collaboratorIds];
-    const relationships: Record<string, unknown>[] = [
-        { referrer: { $in: referrerIds } },
-    ];
+    const relationships: Record<string, unknown>[] = [];
 
     if (customerIds.length > 0) {
         relationships.push(
@@ -32,6 +45,15 @@ export function buildManagedOrderQuery(
             { userId: { $in: customerIds } },
         );
     }
+
+    // Referral access is retained for guest orders. Registered customers are
+    // scoped by the customer assignment above so an old referrer cannot keep
+    // viewing a customer after Admin assigns that customer to another staff.
+    relationships.push({
+        user: null,
+        userId: null,
+        referrer: { $in: referrerIds },
+    });
 
     return { $or: relationships };
 }

@@ -21,6 +21,7 @@ import {
     LoaderCircle,
 } from 'lucide-react';
 import ChangePasswordModal from '@/components/account/ChangePasswordModal';
+import { isCollaboratorAccount } from '@/lib/account-role';
 
 const menuItems = [
     { href: '/collaborator', icon: LayoutDashboard, label: 'Tổng quan' },
@@ -51,7 +52,9 @@ export default function CollaboratorLayout({
         if (!loading) {
             if (!user) {
                 router.push('/login');
-            } else if (user.role !== 'staff' && user.roleType !== 'collaborator' && user.role !== 'admin' && user.role !== 'sale') {
+            } else if (user.role === 'sale' && !isCollaboratorAccount(user)) {
+                router.replace('/agent');
+            } else if (user.role !== 'staff' && !isCollaboratorAccount(user) && user.role !== 'admin') {
                 router.push('/');
             }
         }
@@ -60,9 +63,8 @@ export default function CollaboratorLayout({
     const isAuthorized = Boolean(
         user && (
             user.role === 'staff'
-            || user.roleType === 'collaborator'
+            || isCollaboratorAccount(user)
             || user.role === 'admin'
-            || user.role === 'sale'
         ),
     );
 

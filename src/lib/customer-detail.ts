@@ -15,7 +15,7 @@ function publicUser(user: any) {
 }
 
 async function resolveManagingStaff(user: any) {
-    const directManagerId = user.parentStaff || user.commissionSettings?.managerId;
+    const directManagerId = user.assignedStaff || user.commissionSettings?.managerId || user.parentStaff;
     if (directManagerId) {
         const manager = await User.findById(directManagerId)
             .select('name email phone staffCode')
@@ -105,5 +105,7 @@ export async function getCustomerDetail(
                 staffCode: (managingStaff as any).staffCode,
             }
             : null,
+        assignedStaffId: user.assignedStaff ? String(user.assignedStaff) : null,
+        managerAssignmentMode: user.assignedStaff ? 'manual' : 'automatic',
     };
 }

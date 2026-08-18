@@ -114,6 +114,8 @@ export async function POST(req: Request) {
             phone: phone || '',
             password: hashedPassword,
             role: 'sale', // CTV has sale role for affiliate functionality
+            roleType: 'collaborator',
+            saleType: 'collaborator',
             parentStaff: user._id,
             affiliateLevel: 'collaborator',
             referralCode: newCode,
