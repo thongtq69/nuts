@@ -26,6 +26,7 @@ import { isCollaboratorAccount } from '@/lib/account-role';
 const menuItems = [
     { href: '/collaborator', icon: LayoutDashboard, label: 'Tổng quan' },
     { href: '/collaborator/orders', icon: ShoppingCart, label: 'Đơn hàng CTV' },
+    { href: '/collaborator/customers', icon: Users, label: 'Khách hàng của tôi' },
     { href: '/collaborator/commissions', icon: Wallet, label: 'Hoa hồng' },
 ];
 
@@ -266,9 +267,9 @@ function SidebarContent({ pathname, onClose, onChangePassword, onLogout, isLoggi
                             <Package size={16} />
                             <span>Xem sản phẩm</span>
                         </Link>
-                        <Link href="/collaborator/orders" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-brand hover:bg-amber-50 rounded-xl transition-colors">
+                        <Link href="/collaborator/customers" className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-brand hover:bg-amber-50 rounded-xl transition-colors">
                             <Users size={16} />
-                            <span>Đơn hàng của tôi</span>
+                            <span>Khách hàng của tôi</span>
                         </Link>
                     </div>
                 </div>

@@ -3,6 +3,7 @@ import User from '@/models/User';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { Permission, getDefaultPermissions } from '@/constants/permissions';
 import { cookies as nextCookies } from 'next/headers';
+import { isCollaboratorAccount } from '@/lib/account-role';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_change_me';
 
@@ -12,6 +13,8 @@ export interface AuthenticatedUser {
     email: string;
     role: 'user' | 'sale' | 'admin' | 'staff';
     roleType?: 'admin' | 'manager' | 'sales' | 'support' | 'warehouse' | 'accountant' | 'collaborator' | 'viewer';
+    saleType?: 'agent' | 'collaborator' | null;
+    affiliateLevel?: 'staff' | 'collaborator';
     customPermissions?: Permission[];
 }
 
@@ -34,6 +37,8 @@ export async function getAuthUser(): Promise<AuthenticatedUser | null> {
             email: user.email,
             role: user.role,
             roleType: user.roleType,
+            saleType: user.saleType,
+            affiliateLevel: user.affiliateLevel,
             customPermissions: user.customPermissions || []
         };
     } catch (error) {
@@ -127,6 +132,14 @@ export async function requireStaffAuth(): Promise<{ user: AuthenticatedUser | nu
     const user = await getAuthUser();
     if (!user || (user.role !== 'staff' && user.role !== 'admin')) {
         return { user: null, error: 'Unauthorized: Staff access required' };
+    }
+    return { user };
+}
+
+export async function requireCollaboratorAuth(): Promise<{ user: AuthenticatedUser | null; error?: string }> {
+    const user = await getAuthUser();
+    if (!user || !isCollaboratorAccount(user)) {
+        return { user: null, error: 'Unauthorized: Collaborator access required' };
     }
     return { user };
 }

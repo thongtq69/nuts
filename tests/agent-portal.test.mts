@@ -74,6 +74,27 @@ test('collaborator commission menu no longer points at a missing route', async (
     assert.doesNotMatch(layout, /href="\/staff"/);
 });
 
+test('collaborators can manage only customers attributed to their own referral identity', async () => {
+    const [layout, page, detailPage, listApi, detailApi, permissions] = await Promise.all([
+        read('src/app/collaborator/layout.tsx'),
+        read('src/app/collaborator/customers/page.tsx'),
+        read('src/app/collaborator/customers/[id]/page.tsx'),
+        read('src/app/api/collaborator/customers/route.ts'),
+        read('src/app/api/collaborator/customers/[id]/route.ts'),
+        read('src/lib/auth-permissions.ts'),
+    ]);
+
+    assert.match(layout, /href: '\/collaborator\/customers'/);
+    assert.match(page, /\/api\/collaborator\/customers\?search=/);
+    assert.match(page, /\/collaborator\/customers\/\$\{customer\._id\}/);
+    assert.match(detailPage, /\/api\/collaborator\/customers\/\$\{id\}/);
+    assert.match(listApi, /referrer: auth\.user\._id/);
+    assert.match(detailApi, /referrer: auth\.user\._id/);
+    assert.match(detailApi, /includeVouchers: false/);
+    assert.match(permissions, /requireCollaboratorAuth/);
+    assert.doesNotMatch(listApi, /parentStaff: auth\.user\._id/);
+});
+
 test('agent dashboard never falls back to fabricated sales data', async () => {
     const dashboard = await read('src/app/agent/page.tsx');
     assert.doesNotMatch(dashboard, /mockStats/);
