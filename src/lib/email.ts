@@ -526,8 +526,7 @@ async function sendAdminEmail(recipients: string[], subject: string, content: st
     const transporter = await createTransporter();
     await transporter.sendMail({
         from: `"Go Nuts" <${GMAIL_USER}>`,
-        to: GMAIL_USER,
-        bcc: recipients,
+        to: recipients,
         subject: subject.replace(/[\r\n]+/g, ' ').trim(),
         html: `
             <!DOCTYPE html>

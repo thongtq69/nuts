@@ -135,7 +135,7 @@ export default function AdminSettingsPage() {
     const [saving, setSaving] = useState(false);
     const [sendingTestEmail, setSendingTestEmail] = useState(false);
     const [notificationSettings, setNotificationSettings] = useState<AdminNotificationSettings>({
-        recipients: ['contact.gonuts@gmail.com'],
+        recipients: ['euptravel@gmail.com'],
         notifyNewAccount: true,
         notifyNewOrder: true,
     });

@@ -7,17 +7,8 @@ import {
     normalizeNotificationEmails,
 } from '@/lib/admin-notification-settings';
 import AdminNotificationSettings from '@/models/AdminNotificationSettings';
-import SiteSettings from '@/models/SiteSettings';
 
 export const dynamic = 'force-dynamic';
-
-async function defaultRecipients() {
-    const siteSettings = await SiteSettings.findOne().sort({ updatedAt: -1 }).select('email').lean();
-    return normalizeNotificationEmails([
-        siteSettings?.email,
-        process.env.GMAIL_USER,
-    ]);
-}
 
 export async function GET() {
     const auth = await requireAdminAuth();
@@ -31,10 +22,7 @@ export async function GET() {
         return NextResponse.json(normalizeAdminNotificationPreferences(existing));
     }
 
-    return NextResponse.json({
-        ...DEFAULT_ADMIN_NOTIFICATION_PREFERENCES,
-        recipients: await defaultRecipients(),
-    });
+    return NextResponse.json(DEFAULT_ADMIN_NOTIFICATION_PREFERENCES);
 }
 
 export async function PUT(request: Request) {

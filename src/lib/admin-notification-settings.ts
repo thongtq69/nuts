@@ -4,8 +4,10 @@ export interface AdminNotificationPreferences {
     notifyNewOrder: boolean;
 }
 
+export const DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS = ['euptravel@gmail.com'];
+
 export const DEFAULT_ADMIN_NOTIFICATION_PREFERENCES: AdminNotificationPreferences = {
-    recipients: [],
+    recipients: [...DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS],
     notifyNewAccount: true,
     notifyNewOrder: true,
 };

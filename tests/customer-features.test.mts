@@ -52,6 +52,8 @@ import {
     getLegacyCommissionIntegrity,
 } from '../src/lib/legacy-commission.ts';
 import {
+    DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS,
+    DEFAULT_ADMIN_NOTIFICATION_PREFERENCES,
     normalizeAdminNotificationPreferences,
     normalizeNotificationEmails,
 } from '../src/lib/admin-notification-settings.ts';
@@ -132,6 +134,9 @@ test('new passwords use the same bounded policy on client and server', () => {
 });
 
 test('admin notification emails are normalized, deduplicated and limited', () => {
+    assert.deepEqual(DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS, ['euptravel@gmail.com']);
+    assert.deepEqual(DEFAULT_ADMIN_NOTIFICATION_PREFERENCES.recipients, ['euptravel@gmail.com']);
+
     assert.deepEqual(normalizeNotificationEmails([
         ' Admin@GoNuts.vn ',
         'admin@gonuts.vn',
@@ -151,6 +156,26 @@ test('admin notification emails are normalized, deduplicated and limited', () =>
         notifyNewAccount: false,
         notifyNewOrder: true,
     });
+});
+
+test('admin notifications go directly to the configured customer inbox', async () => {
+    const [emailSource, preferenceSource, settingsApiSource, settingsPageSource] = await Promise.all([
+        readFile(new URL('../src/lib/email.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/admin-email-notifications.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/notification-settings/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/admin/settings/page.tsx', import.meta.url), 'utf8'),
+    ]);
+
+    const sendAdminEmailSource = emailSource.slice(
+        emailSource.indexOf('async function sendAdminEmail'),
+        emailSource.indexOf('export async function sendAdminNewAccountEmail'),
+    );
+    assert.match(sendAdminEmailSource, /to: recipients/);
+    assert.doesNotMatch(sendAdminEmailSource, /to: GMAIL_USER|bcc:/);
+    assert.match(preferenceSource, /DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS/);
+    assert.doesNotMatch(preferenceSource, /process\.env\.GMAIL_USER|SiteSettings/);
+    assert.doesNotMatch(settingsApiSource, /process\.env\.GMAIL_USER|SiteSettings/);
+    assert.match(settingsPageSource, /recipients: \['euptravel@gmail\.com'\]/);
 });
 
 test('admin email notification settings stay private and event delivery is idempotent', async () => {

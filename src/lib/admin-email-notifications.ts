@@ -1,7 +1,7 @@
 import dbConnect from '@/lib/db';
 import {
+    DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS,
     normalizeAdminNotificationPreferences,
-    normalizeNotificationEmails,
     type AdminNotificationPreferences,
 } from '@/lib/admin-notification-settings';
 import {
@@ -10,7 +10,6 @@ import {
 } from '@/lib/email';
 import AdminNotificationSettings from '@/models/AdminNotificationSettings';
 import Order from '@/models/Order';
-import SiteSettings from '@/models/SiteSettings';
 import User, { type IUser } from '@/models/User';
 
 export interface AdminNotificationResult {
@@ -25,13 +24,9 @@ export async function getAdminNotificationPreferences(): Promise<AdminNotificati
 
     if (preferences.recipients.length > 0) return preferences;
 
-    const siteSettings = await SiteSettings.findOne().sort({ updatedAt: -1 }).select('email').lean();
     return {
         ...preferences,
-        recipients: normalizeNotificationEmails([
-            siteSettings?.email,
-            process.env.GMAIL_USER,
-        ]),
+        recipients: [...DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS],
     };
 }
 
