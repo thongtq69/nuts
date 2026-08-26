@@ -66,6 +66,39 @@ import {
     buildMembershipVoucherIssuance,
     normalizeUnlimitedVoucherPackage,
 } from '../src/lib/membership-vouchers.ts';
+import { DEFAULT_BANK_SETTINGS, normalizeBankSettings } from '../src/lib/bank-settings.ts';
+
+test('bank settings are normalized for persistent checkout and VietQR use', () => {
+    assert.deepEqual(normalizeBankSettings(null), DEFAULT_BANK_SETTINGS);
+    assert.deepEqual(normalizeBankSettings({
+        bankName: '  Ngân hàng ACB  ',
+        bankCode: ' acb ',
+        bankAccountNumber: ' 621 588 ',
+        bankAccountName: ' CÔNG TY GO NUTS ',
+    }), {
+        bankName: 'Ngân hàng ACB',
+        bankCode: 'ACB',
+        bankAccountNumber: '621588',
+        bankAccountName: 'CÔNG TY GO NUTS',
+    });
+});
+
+test('bank settings are wired from admin persistence to payment and ACB reconciliation', async () => {
+    const [settingsPage, settingsApi, paymentDisplay, reconciliation] = await Promise.all([
+        readFile(new URL('../src/app/admin/settings/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/settings/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/components/payment/BankInfoDisplay.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/acb-payments.ts', import.meta.url), 'utf8'),
+    ]);
+
+    for (const field of ['bankName', 'bankCode', 'bankAccountNumber', 'bankAccountName']) {
+        assert.match(settingsPage, new RegExp(field));
+        assert.match(settingsApi, new RegExp(field));
+    }
+    assert.match(paymentDisplay, /settings\?\.bankAccountNumber/);
+    assert.match(paymentDisplay, /resolvedBankCode/);
+    assert.match(reconciliation, /getConfiguredAcbAccountNumber/);
+});
 
 test('legacy commissions enforce integrity and one-way status transitions', () => {
     assert.equal(getLegacyCommissionIntegrity(true, true), 'valid');

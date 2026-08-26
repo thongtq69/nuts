@@ -18,13 +18,15 @@ import {
     Package,
     ImageIcon,
     BellRing,
-    Send
+    Send,
+    Landmark
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useSettings } from '@/context/SettingsContext';
 import { DEFAULT_HOME_FEATURES, HomeFeature, normalizeHomeFeatures } from '@/lib/site-features';
 import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
 import { OFFICIAL_COMPANY_NAME } from '@/constants/company';
+import { DEFAULT_BANK_SETTINGS } from '@/lib/bank-settings';
 
 interface ProductFeature {
     title: string;
@@ -49,6 +51,10 @@ interface SiteSettings {
     agentRegistrationUrl: string;
     ctvRegistrationUrl: string;
     freeShippingThreshold: number;
+    bankName: string;
+    bankCode: string;
+    bankAccountNumber: string;
+    bankAccountName: string;
     homeFeatures: HomeFeature[];
     logoUrl: string;
     siteName: string;
@@ -100,6 +106,7 @@ export default function AdminSettingsPage() {
         agentRegistrationUrl: '/agent/register',
         ctvRegistrationUrl: '/agent/register',
         freeShippingThreshold: 2000000,
+        ...DEFAULT_BANK_SETTINGS,
         homeFeatures: DEFAULT_HOME_FEATURES.map(feature => ({ ...feature })),
         logoUrl: '/assets/logo.png',
         siteName: OFFICIAL_COMPANY_NAME,
@@ -456,6 +463,79 @@ export default function AdminSettingsPage() {
                                 onChange={e => setSettings(prev => ({ ...prev, tiktokUrl: e.target.value }))}
                                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
                                 placeholder="https://tiktok.com/..."
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bank transfer settings */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+                    <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <Landmark className="text-brand" size={20} />
+                        Thông tin tài khoản ngân hàng
+                    </h2>
+                    <p className="mb-5 text-sm text-slate-500">
+                        Thông tin sau khi lưu sẽ được dùng tại trang thanh toán, mã VietQR và khu vực tài khoản Đại lý/CTV.
+                    </p>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Tên ngân hàng</label>
+                            <input
+                                type="text"
+                                value={settings.bankName}
+                                onChange={event => setSettings(previous => ({
+                                    ...previous,
+                                    bankName: event.target.value,
+                                }))}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                placeholder="ACB"
+                                maxLength={80}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Mã ngân hàng VietQR</label>
+                            <input
+                                type="text"
+                                value={settings.bankCode}
+                                onChange={event => setSettings(previous => ({
+                                    ...previous,
+                                    bankCode: event.target.value.toUpperCase(),
+                                }))}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                placeholder="ACB"
+                                maxLength={20}
+                            />
+                            <p className="mt-1 text-xs text-slate-500">
+                                Dùng để tạo mã QR. Đối soát tự động hiện hỗ trợ tài khoản ACB.
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Số tài khoản</label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                value={settings.bankAccountNumber}
+                                onChange={event => setSettings(previous => ({
+                                    ...previous,
+                                    bankAccountNumber: event.target.value.replace(/\s+/g, ''),
+                                }))}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                placeholder="621588"
+                                maxLength={34}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Tên chủ tài khoản</label>
+                            <input
+                                type="text"
+                                value={settings.bankAccountName}
+                                onChange={event => setSettings(previous => ({
+                                    ...previous,
+                                    bankAccountName: event.target.value,
+                                }))}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+                                placeholder="CÔNG TY TNHH GO NUTS VIỆT NAM"
+                                maxLength={150}
                             />
                         </div>
                     </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAcbBalance } from '@/lib/acb';
+import { getConfiguredAcbAccountNumber } from '@/lib/server-bank-settings';
 
 const ADMIN_TOKEN = process.env.ACB_INQUIRY_TOKEN;
 
@@ -16,16 +17,13 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const accountNumber = searchParams.get('account') || process.env.ACB_DEFAULT_ACCOUNT;
-    if (!accountNumber) {
-        return NextResponse.json({ error: 'missing account number' }, { status: 400 });
-    }
-
     try {
+        const { searchParams } = new URL(req.url);
+        const accountNumber = searchParams.get('account') || await getConfiguredAcbAccountNumber();
         const result = await getAcbBalance(accountNumber);
         return NextResponse.json(result);
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message || 'inquiry failed' }, { status: 502 });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'inquiry failed';
+        return NextResponse.json({ error: message }, { status: 502 });
     }
 }

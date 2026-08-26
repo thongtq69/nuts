@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 import { DEFAULT_HOME_FEATURES, HomeFeature, HOME_FEATURE_ICONS } from '@/lib/site-features';
 import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
 import { OFFICIAL_COMPANY_NAME } from '@/constants/company';
+import { DEFAULT_BANK_SETTINGS } from '@/lib/bank-settings';
 
 export interface IProductFeature {
     title: string;
@@ -38,6 +39,12 @@ export interface ISiteSettings {
 
     // Free Shipping
     freeShippingThreshold: number;
+
+    // Bank transfer
+    bankName: string;
+    bankCode: string;
+    bankAccountNumber: string;
+    bankAccountName: string;
 
     // Home Page Features
     homeFeatures: HomeFeature[];
@@ -130,6 +137,11 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         ctvRegistrationUrl: { type: String, default: '/agent/register' },
 
         freeShippingThreshold: { type: Number, default: 500000 },
+
+        bankName: { type: String, default: DEFAULT_BANK_SETTINGS.bankName, trim: true, maxlength: 80 },
+        bankCode: { type: String, default: DEFAULT_BANK_SETTINGS.bankCode, trim: true, maxlength: 20 },
+        bankAccountNumber: { type: String, default: DEFAULT_BANK_SETTINGS.bankAccountNumber, trim: true, maxlength: 34 },
+        bankAccountName: { type: String, default: DEFAULT_BANK_SETTINGS.bankAccountName, trim: true, maxlength: 150 },
 
         homeFeatures: {
             type: [HomeFeatureSchema],

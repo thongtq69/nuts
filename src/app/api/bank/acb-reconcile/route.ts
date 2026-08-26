@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { reconcileAcbPayments } from '@/lib/acb-payments';
+import { getConfiguredAcbAccountNumber } from '@/lib/server-bank-settings';
 
 const ADMIN_TOKEN = process.env.ACB_INQUIRY_TOKEN;
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -19,12 +20,11 @@ async function run(req: Request) {
         return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const accountNumber = searchParams.get('account') || process.env.ACB_DEFAULT_ACCOUNT || undefined;
-    const daysBack = Math.min(Number(searchParams.get('daysBack') || 1), 7);
-    const pageSize = Math.min(Number(searchParams.get('pageSize') || 100), 1000);
-
     try {
+        const { searchParams } = new URL(req.url);
+        const accountNumber = searchParams.get('account') || await getConfiguredAcbAccountNumber();
+        const daysBack = Math.min(Number(searchParams.get('daysBack') || 1), 7);
+        const pageSize = Math.min(Number(searchParams.get('pageSize') || 100), 1000);
         const result = await reconcileAcbPayments({ accountNumber, daysBack, pageSize });
         return NextResponse.json(result);
     } catch (err) {

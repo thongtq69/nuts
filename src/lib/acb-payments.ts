@@ -9,6 +9,7 @@ import {
     isBankPaymentRef,
 } from '@/lib/payment-reference';
 import { activateMembershipOrder } from '@/lib/membership-activation';
+import { getConfiguredAcbAccountNumber } from '@/lib/server-bank-settings';
 
 export interface ParsedAcbTransaction {
     transactionId: string;
@@ -67,11 +68,6 @@ function isCredit(value?: string): boolean {
     const direction = normalizeStatus(value);
     if (!direction) return true;
     return ['credit', 'c', 'deposit', 'cr'].includes(direction);
-}
-
-function sameAccount(account?: string): boolean {
-    if (!DEFAULT_ACCOUNT || !account) return true;
-    return account.replace(/\D/g, '') === DEFAULT_ACCOUNT.replace(/\D/g, '');
 }
 
 function escapeRegExp(value: string): string {
@@ -265,21 +261,30 @@ export function normalizeHistoryTransaction(txn: any): ParsedAcbTransaction {
     return parseTransaction(txn);
 }
 
-export function validateAcbTransaction(txn: ParsedAcbTransaction): string | null {
+export function validateAcbTransaction(
+    txn: ParsedAcbTransaction,
+    expectedAccount: string | undefined = DEFAULT_ACCOUNT,
+): string | null {
     if (!txn.description) return 'missing_description';
     if (!extractPaymentRef(txn.description)) return 'missing_payment_ref';
     if (!txn.amount || txn.amount <= 0) return 'invalid_amount';
     if (!isCompletedStatus(txn.status)) return 'not_completed';
     if (!isCredit(txn.debitOrCredit)) return 'not_credit';
-    if (!sameAccount(txn.accountNumber)) return 'wrong_account';
+    if (
+        expectedAccount
+        && txn.accountNumber
+        && txn.accountNumber.replace(/\D/g, '') !== expectedAccount.replace(/\D/g, '')
+    ) return 'wrong_account';
     return null;
 }
 
 export async function applyAcbTransactionToOrder(
     txn: ParsedAcbTransaction,
-    source: 'callback' | 'reconcile'
+    source: 'callback' | 'reconcile',
+    expectedAccount?: string,
 ): Promise<AcbApplyResult> {
-    const invalidReason = validateAcbTransaction(txn);
+    const configuredAccount = expectedAccount || await getConfiguredAcbAccountNumber();
+    const invalidReason = validateAcbTransaction(txn, configuredAccount);
     const paymentRef = extractPaymentRef(txn.description);
     if (invalidReason || !paymentRef) {
         return {
@@ -386,7 +391,7 @@ export async function reconcileAcbPayments(options: {
     daysBack?: number;
     pageSize?: number;
 } = {}) {
-    const accountNumber = options.accountNumber || DEFAULT_ACCOUNT;
+    const accountNumber = options.accountNumber || await getConfiguredAcbAccountNumber();
     if (!accountNumber) {
         throw new Error('Missing ACB account number');
     }
@@ -424,7 +429,7 @@ export async function reconcileAcbPayments(options: {
             const paymentRef = extractPaymentRef(txn.description);
             if (!paymentRef || !pendingRefSet.has(paymentRef)) continue;
             matchingPendingRefs.add(paymentRef);
-            results.push(await applyAcbTransactionToOrder(txn, 'reconcile'));
+            results.push(await applyAcbTransactionToOrder(txn, 'reconcile', accountNumber));
         }
         historyChecks.push({
             date,
@@ -455,7 +460,7 @@ export async function reconcileAcbPaymentRef(
         throw new Error('Invalid payment reference');
     }
 
-    const accountNumber = options.accountNumber || DEFAULT_ACCOUNT;
+    const accountNumber = options.accountNumber || await getConfiguredAcbAccountNumber();
     if (!accountNumber) {
         throw new Error('Missing ACB account number');
     }
@@ -501,7 +506,7 @@ export async function reconcileAcbPaymentRef(
             const txnPaymentRef = extractPaymentRef(txn.description);
             if (txnPaymentRef !== normalizedRef) continue;
             matchingTransactions += 1;
-            results.push(await applyAcbTransactionToOrder(txn, 'reconcile'));
+            results.push(await applyAcbTransactionToOrder(txn, 'reconcile', accountNumber));
         }
         historyChecks.push({
             date,

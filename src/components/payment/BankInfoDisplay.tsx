@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSettings } from '@/context/SettingsContext';
+import { DEFAULT_BANK_SETTINGS } from '@/lib/bank-settings';
 
 interface BankInfoProps {
     bankName?: string;
+    bankCode?: string;
     accountNumber?: string;
     accountName?: string;
     qrCodeUrl?: string;
@@ -12,14 +15,6 @@ interface BankInfoProps {
     compact?: boolean;
     customerName?: string;
 }
-
-const BANK_INFO = {
-    name: 'ACB',
-    shortName: 'ACB',
-    accountNumber: '621588',
-    accountName: 'CÔNG TY TNHH GO NUTS VIỆT NAM',
-    qrCodeUrl: 'https://img.vietqr.io/image/ACB-621588-compact.png'
-};
 
 // Hàm tạo URL VietQR động với thông tin chuyển khoản
 const generateVietQRUrl = (
@@ -58,15 +53,33 @@ const generateVietQRUrl = (
 };
 
 export default function BankInfoDisplay({ 
-    bankName = BANK_INFO.name,
-    accountNumber = BANK_INFO.accountNumber,
-    accountName = BANK_INFO.accountName,
+    bankName,
+    bankCode,
+    accountNumber,
+    accountName,
     qrCodeUrl,
     amount,
     description,
     compact = false
 }: BankInfoProps) {
     const [copied, setCopied] = useState<string | null>(null);
+    const { settings, loading } = useSettings();
+    const resolvedBankName = bankName || settings?.bankName || DEFAULT_BANK_SETTINGS.bankName;
+    const resolvedBankCode = bankCode || settings?.bankCode || DEFAULT_BANK_SETTINGS.bankCode;
+    const resolvedAccountNumber = accountNumber
+        || settings?.bankAccountNumber
+        || DEFAULT_BANK_SETTINGS.bankAccountNumber;
+    const resolvedAccountName = accountName
+        || settings?.bankAccountName
+        || DEFAULT_BANK_SETTINGS.bankAccountName;
+
+    if (loading && !settings && !bankName && !bankCode && !accountNumber && !accountName) {
+        return (
+            <div className="flex min-h-28 items-center justify-center rounded-xl border border-slate-200 bg-white text-sm text-slate-500">
+                Đang tải thông tin chuyển khoản...
+            </div>
+        );
+    }
 
     // Nội dung QR chỉ dùng mã thanh toán để ngân hàng không nối tên khách vào mã đơn.
     const generateTransferContent = () => {
@@ -78,11 +91,11 @@ export default function BankInfoDisplay({
     
     // Tạo URL QR động với thông tin chuyển khoản
     const dynamicQrUrl = qrCodeUrl || generateVietQRUrl(
-        'ACB', // Bank BIN code
-        accountNumber,
+        resolvedBankCode,
+        resolvedAccountNumber,
         amount,
         transferContent,
-        accountName
+        resolvedAccountName
     );
 
     const copyToClipboard = async (text: string, field: string) => {
@@ -98,17 +111,17 @@ export default function BankInfoDisplay({
                     <img src={dynamicQrUrl} alt="VietQR" />
                 </div>
                 <div className="bank-details">
-                    <div className="bank-name">{bankName}</div>
+                    <div className="bank-name">{resolvedBankName}</div>
                     <div className="account-number">
-                        <span>STK: {accountNumber}</span>
+                        <span>STK: {resolvedAccountNumber}</span>
                         <button 
-                            onClick={() => copyToClipboard(accountNumber, 'stk')}
+                            onClick={() => copyToClipboard(resolvedAccountNumber, 'stk')}
                             className="copy-btn"
                         >
                             {copied === 'stk' ? '✓' : '📋'}
                         </button>
                     </div>
-                    <div className="account-name">{accountName}</div>
+                    <div className="account-name">{resolvedAccountName}</div>
                 </div>
                 <style jsx>{`
                     .bank-info-compact {
@@ -172,7 +185,7 @@ export default function BankInfoDisplay({
         <div className="bank-info-container">
             <div className="bank-header">
                 <h4>🏦 Thông tin chuyển khoản</h4>
-                <span className="bank-badge">{bankName}</span>
+                <span className="bank-badge">{resolvedBankName}</span>
             </div>
 
             <div className="bank-content">
@@ -191,15 +204,15 @@ export default function BankInfoDisplay({
                 <div className="details-section">
                     <div className="detail-row">
                         <span className="label">Ngân hàng</span>
-                        <span className="value bank">{bankName}</span>
+                        <span className="value bank">{resolvedBankName}</span>
                     </div>
 
                     <div className="detail-row">
                         <span className="label">Số tài khoản</span>
                         <div className="value-with-copy">
-                            <span className="value number">{accountNumber}</span>
+                            <span className="value number">{resolvedAccountNumber}</span>
                             <button 
-                                onClick={() => copyToClipboard(accountNumber, 'stk')}
+                                onClick={() => copyToClipboard(resolvedAccountNumber, 'stk')}
                                 className="copy-btn"
                                 title="Sao chép"
                             >
@@ -211,9 +224,9 @@ export default function BankInfoDisplay({
                     <div className="detail-row">
                         <span className="label">Chủ tài khoản</span>
                         <div className="value-with-copy">
-                            <span className="value name">{accountName}</span>
+                            <span className="value name">{resolvedAccountName}</span>
                             <button 
-                                onClick={() => copyToClipboard(accountName, 'name')}
+                                onClick={() => copyToClipboard(resolvedAccountName, 'name')}
                                 className="copy-btn"
                                 title="Sao chép"
                             >

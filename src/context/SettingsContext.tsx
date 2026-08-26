@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import type { HomeFeature } from '@/lib/site-features';
 import { DEFAULT_HOME_PROMOTION_TEXT } from '@/lib/home-promotion';
 import { useLocale } from '@/context/LocaleContext';
+import { DEFAULT_BANK_SETTINGS } from '@/lib/bank-settings';
 
 interface ProductFeature {
     title: string;
@@ -31,6 +32,10 @@ interface Settings {
     homeFeatures?: HomeFeature[];
     freeShippingThreshold?: number;
     supportHotline?: string;
+    bankName?: string;
+    bankCode?: string;
+    bankAccountNumber?: string;
+    bankAccountName?: string;
 }
 
 interface SettingsContextType {
@@ -63,6 +68,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                     topBarPromoText: 'Giảm giá 8% khi mua hàng từ 899k trở lên với mã "SAVER8"',
                     homePromotionText: DEFAULT_HOME_PROMOTION_TEXT,
                     homePromotionEnabled: true,
+                    ...DEFAULT_BANK_SETTINGS,
                 });
             }
         } catch (error) {
@@ -74,6 +80,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                 zaloLink: 'https://zalo.me/0961185753',
                 homePromotionText: DEFAULT_HOME_PROMOTION_TEXT,
                 homePromotionEnabled: true,
+                ...DEFAULT_BANK_SETTINGS,
             });
         } finally {
             setLoading(false);

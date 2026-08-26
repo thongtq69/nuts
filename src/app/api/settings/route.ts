@@ -7,6 +7,7 @@ import { DEFAULT_HOME_PROMOTION_TEXT, normalizeHomePromotionText } from '@/lib/h
 import { LEGACY_COMPANY_NAMES, OFFICIAL_COMPANY_NAME } from '@/constants/company';
 import { getUrlLocale } from '@/i18n/server';
 import { localizeSettings } from '@/lib/localized-content';
+import { DEFAULT_BANK_SETTINGS, normalizeBankSettings } from '@/lib/bank-settings';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -52,6 +53,7 @@ export async function GET(request: Request) {
                 agentRegistrationUrl: '/register?type=agent',
                 ctvRegistrationUrl: '/register?type=collaborator',
                 freeShippingThreshold: 500000,
+                ...DEFAULT_BANK_SETTINGS,
                 homeFeatures: DEFAULT_HOME_FEATURES,
                 logoUrl: '/assets/logo.png',
                 siteName: OFFICIAL_COMPANY_NAME,
@@ -103,6 +105,17 @@ export async function GET(request: Request) {
             await settings.save();
         }
 
+        const normalizedBankSettings = normalizeBankSettings(settings.toObject());
+        if (
+            settings.bankName !== normalizedBankSettings.bankName
+            || settings.bankCode !== normalizedBankSettings.bankCode
+            || settings.bankAccountNumber !== normalizedBankSettings.bankAccountNumber
+            || settings.bankAccountName !== normalizedBankSettings.bankAccountName
+        ) {
+            Object.assign(settings, normalizedBankSettings);
+            await settings.save();
+        }
+
         const responseSettings = localizeSettings(settings.toObject(), getUrlLocale(request));
         return NextResponse.json(responseSettings, {
             headers: { 'Cache-Control': 'no-store, max-age=0' }
@@ -124,9 +137,17 @@ export async function PUT(request: NextRequest) {
         const { _id, __v, createdAt, updatedAt: bodyUpdatedAt, ...updateData } = await request.json();
         await dbConnect();
 
+        // Always update the latest document to avoid duplicates.
+        const latest = await Settings.findOne().sort({ updatedAt: -1 });
+        const bankSettings = normalizeBankSettings({
+            ...(latest?.toObject() || {}),
+            ...updateData,
+        });
+
         // Sanitize updateData - remove any fields that shouldn't be updated or cause issues
         const sanitizedUpdateData = {
             ...updateData,
+            ...bankSettings,
             freeShippingThreshold: Math.max(0, Number(updateData.freeShippingThreshold) || 0),
             homeFeatures: normalizeHomeFeatures(updateData.homeFeatures),
             homePromotionText: normalizeHomePromotionText(updateData.homePromotionText),
@@ -134,8 +155,6 @@ export async function PUT(request: NextRequest) {
             updatedAt: new Date()
         };
 
-        // Always update the latest document to avoid duplicates
-        const latest = await Settings.findOne().sort({ updatedAt: -1 });
         const filter = latest ? { _id: latest._id } : {};
 
         const settings = await Settings.findOneAndUpdate(

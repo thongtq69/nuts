@@ -158,7 +158,7 @@ export default function CollaboratorCustomerDetailPage({ params }: { params: Pro
                                 ? <p className="text-sm text-slate-500">Chưa có gói đã kích hoạt.</p>
                                 : customer.membershipPackages.map(item => (
                                     <div key={item._id} className="rounded-lg bg-purple-50 p-3 text-sm">
-                                        {item.packageId?.name || item.packageInfo?.name || 'Gói hội viên'} · {item.endDate ? `Hết hạn ${new Date(item.endDate).toLocaleDateString('vi-VN')}` : money(item.totalAmount)}
+                                        {item.packageId?.name || item.packageInfo?.name || 'Gói hội viên'} · {item.endDate ? `Hết hạn ${new Date(item.endDate).toLocaleDateString('vi-VN')}` : money(item.totalAmount || 0)}
                                     </div>
                                 ))}
                         </div>
