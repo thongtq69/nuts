@@ -45,6 +45,7 @@ export interface ISiteSettings {
     bankCode: string;
     bankAccountNumber: string;
     bankAccountName: string;
+    bankQrCodeUrl: string;
 
     // Home Page Features
     homeFeatures: HomeFeature[];
@@ -142,6 +143,7 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         bankCode: { type: String, default: DEFAULT_BANK_SETTINGS.bankCode, trim: true, maxlength: 20 },
         bankAccountNumber: { type: String, default: DEFAULT_BANK_SETTINGS.bankAccountNumber, trim: true, maxlength: 34 },
         bankAccountName: { type: String, default: DEFAULT_BANK_SETTINGS.bankAccountName, trim: true, maxlength: 150 },
+        bankQrCodeUrl: { type: String, default: DEFAULT_BANK_SETTINGS.bankQrCodeUrl, trim: true, maxlength: 2000 },
 
         homeFeatures: {
             type: [HomeFeatureSchema],

@@ -80,6 +80,7 @@ test('bank settings are normalized for persistent checkout and VietQR use', () =
         bankCode: 'ACB',
         bankAccountNumber: '621588',
         bankAccountName: 'CÔNG TY GO NUTS',
+        bankQrCodeUrl: '',
     });
 });
 
@@ -91,11 +92,12 @@ test('bank settings are wired from admin persistence to payment and ACB reconcil
         readFile(new URL('../src/lib/acb-payments.ts', import.meta.url), 'utf8'),
     ]);
 
-    for (const field of ['bankName', 'bankCode', 'bankAccountNumber', 'bankAccountName']) {
+    for (const field of ['bankName', 'bankCode', 'bankAccountNumber', 'bankAccountName', 'bankQrCodeUrl']) {
         assert.match(settingsPage, new RegExp(field));
         assert.match(settingsApi, new RegExp(field));
     }
     assert.match(paymentDisplay, /settings\?\.bankAccountNumber/);
+    assert.match(paymentDisplay, /settings\?\.bankQrCodeUrl/);
     assert.match(paymentDisplay, /resolvedBankCode/);
     assert.match(reconciliation, /getConfiguredAcbAccountNumber/);
 });

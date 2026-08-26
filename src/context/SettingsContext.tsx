@@ -36,6 +36,7 @@ interface Settings {
     bankCode?: string;
     bankAccountNumber?: string;
     bankAccountName?: string;
+    bankQrCodeUrl?: string;
 }
 
 interface SettingsContextType {

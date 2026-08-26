@@ -3,6 +3,7 @@ export interface BankSettings {
     bankCode: string;
     bankAccountNumber: string;
     bankAccountName: string;
+    bankQrCodeUrl: string;
 }
 
 export const DEFAULT_BANK_SETTINGS: BankSettings = {
@@ -10,6 +11,7 @@ export const DEFAULT_BANK_SETTINGS: BankSettings = {
     bankCode: 'ACB',
     bankAccountNumber: '621588',
     bankAccountName: 'CÔNG TY TNHH GO NUTS VIỆT NAM',
+    bankQrCodeUrl: '',
 };
 
 function cleanText(value: unknown, fallback: string, maxLength: number): string {
@@ -36,6 +38,8 @@ export function normalizeBankSettings(value: Partial<BankSettings> | null | unde
             DEFAULT_BANK_SETTINGS.bankAccountName,
             150,
         ),
+        bankQrCodeUrl: typeof value?.bankQrCodeUrl === 'string'
+            ? value.bankQrCodeUrl.trim().slice(0, 2000)
+            : DEFAULT_BANK_SETTINGS.bankQrCodeUrl,
     };
 }
-

@@ -72,6 +72,7 @@ export default function BankInfoDisplay({
     const resolvedAccountName = accountName
         || settings?.bankAccountName
         || DEFAULT_BANK_SETTINGS.bankAccountName;
+    const resolvedQrCodeUrl = qrCodeUrl || settings?.bankQrCodeUrl || '';
 
     if (loading && !settings && !bankName && !bankCode && !accountNumber && !accountName) {
         return (
@@ -90,13 +91,19 @@ export default function BankInfoDisplay({
     const transferContent = generateTransferContent();
     
     // Tạo URL QR động với thông tin chuyển khoản
-    const dynamicQrUrl = qrCodeUrl || generateVietQRUrl(
+    const generatedQrUrl = generateVietQRUrl(
         resolvedBankCode,
         resolvedAccountNumber,
         amount,
         transferContent,
         resolvedAccountName
     );
+    const dynamicQrUrl = resolvedQrCodeUrl || generatedQrUrl;
+
+    const handleQrImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+        event.currentTarget.onerror = null;
+        event.currentTarget.src = generatedQrUrl;
+    };
 
     const copyToClipboard = async (text: string, field: string) => {
         await navigator.clipboard.writeText(text);
@@ -108,7 +115,7 @@ export default function BankInfoDisplay({
         return (
             <div className="bank-info-compact">
                 <div className="bank-qr">
-                    <img src={dynamicQrUrl} alt="VietQR" />
+                    <img src={dynamicQrUrl} alt="VietQR" onError={handleQrImageError} />
                 </div>
                 <div className="bank-details">
                     <div className="bank-name">{resolvedBankName}</div>
@@ -190,7 +197,7 @@ export default function BankInfoDisplay({
 
             <div className="bank-content">
                 <div className="qr-section">
-                    <img src={dynamicQrUrl} alt="VietQR Code" className="qr-image" />
+                    <img src={dynamicQrUrl} alt="VietQR Code" className="qr-image" onError={handleQrImageError} />
                     {amount && (
                         <div className="amount-display">
                             {amount.toLocaleString()}đ

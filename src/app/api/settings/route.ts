@@ -111,6 +111,7 @@ export async function GET(request: Request) {
             || settings.bankCode !== normalizedBankSettings.bankCode
             || settings.bankAccountNumber !== normalizedBankSettings.bankAccountNumber
             || settings.bankAccountName !== normalizedBankSettings.bankAccountName
+            || settings.bankQrCodeUrl !== normalizedBankSettings.bankQrCodeUrl
         ) {
             Object.assign(settings, normalizedBankSettings);
             await settings.save();

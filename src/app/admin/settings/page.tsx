@@ -55,6 +55,7 @@ interface SiteSettings {
     bankCode: string;
     bankAccountNumber: string;
     bankAccountName: string;
+    bankQrCodeUrl: string;
     homeFeatures: HomeFeature[];
     logoUrl: string;
     siteName: string;
@@ -147,6 +148,7 @@ export default function AdminSettingsPage() {
         notifyNewOrder: true,
     });
     const [uploadingBanner, setUploadingBanner] = useState(false);
+    const [uploadingBankQr, setUploadingBankQr] = useState(false);
     const [bannerType, setBannerType] = useState<'products' | 'homePromo'>('products');
     const toast = useToast();
     const { refreshSettings } = useSettings();
@@ -312,6 +314,53 @@ export default function AdminSettingsPage() {
         }
     };
 
+    const handleBankQrUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const input = event.currentTarget;
+        const file = input.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Tệp không hợp lệ', 'Vui lòng chọn một tệp hình ảnh.');
+            input.value = '';
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('Ảnh quá lớn', 'Ảnh QR không được vượt quá 10MB.');
+            input.value = '';
+            return;
+        }
+
+        setUploadingBankQr(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', 'gonuts/payment');
+            formData.append('type', 'bank_qr');
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success || !result.data?.url) {
+                toast.error('Upload ảnh QR thất bại', result.message || result.error || 'Vui lòng thử lại.');
+                return;
+            }
+
+            setSettings(previous => ({
+                ...previous,
+                bankQrCodeUrl: result.data.url,
+            }));
+            toast.success('Đã tải ảnh QR lên', 'Bấm “Lưu thông tin ngân hàng” để đồng bộ ra website.');
+        } catch (error) {
+            console.error('Error uploading bank QR:', error);
+            toast.error('Lỗi khi upload ảnh QR', 'Vui lòng thử lại.');
+        } finally {
+            setUploadingBankQr(false);
+            input.value = '';
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -333,7 +382,7 @@ export default function AdminSettingsPage() {
                 </div>
                 <button
                     onClick={handleSave}
-                    disabled={saving || uploadingBanner}
+                    disabled={saving || uploadingBanner || uploadingBankQr}
                     className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand to-brand-dark hover:from-brand-dark hover:to-brand-dark text-white font-semibold rounded-xl shadow-lg transition-all disabled:opacity-50"
                 >
                     {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
@@ -537,6 +586,82 @@ export default function AdminSettingsPage() {
                                 placeholder="CÔNG TY TNHH GO NUTS VIỆT NAM"
                                 maxLength={150}
                             />
+                        </div>
+                        <div className="md:col-span-2 mt-2 border-t border-slate-200 pt-5">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Ảnh mã QR chuyển khoản</label>
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-[220px_1fr] md:items-start">
+                                <div className="flex min-h-[220px] items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-3">
+                                    {settings.bankQrCodeUrl ? (
+                                        <img
+                                            src={settings.bankQrCodeUrl}
+                                            alt="Xem trước mã QR ngân hàng"
+                                            className="h-48 w-48 rounded-lg bg-white object-contain"
+                                        />
+                                    ) : (
+                                        <div className="px-4 text-center text-sm text-slate-500">
+                                            <ImageIcon className="mx-auto mb-2 text-slate-400" size={36} />
+                                            Chưa có ảnh QR riêng.<br />Hệ thống đang tự tạo VietQR.
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex flex-col gap-3 sm:flex-row">
+                                        <label className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 font-semibold text-white transition-colors hover:bg-brand-dark ${uploadingBankQr ? 'pointer-events-none opacity-50' : ''}`}>
+                                            {uploadingBankQr
+                                                ? <Loader2 className="h-5 w-5 animate-spin" />
+                                                : <ImageIcon className="h-5 w-5" />}
+                                            {uploadingBankQr
+                                                ? 'Đang tải ảnh...'
+                                                : settings.bankQrCodeUrl ? 'Thay ảnh QR' : 'Tải ảnh QR lên'}
+                                            <input
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                                                className="hidden"
+                                                onChange={handleBankQrUpload}
+                                                disabled={uploadingBankQr || saving}
+                                            />
+                                        </label>
+                                        {settings.bankQrCodeUrl && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSettings(previous => ({ ...previous, bankQrCodeUrl: '' }))}
+                                                disabled={uploadingBankQr || saving}
+                                                className="rounded-xl border border-red-200 px-4 py-3 font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                                            >
+                                                Xóa ảnh QR riêng
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-slate-600">Hoặc chỉnh sửa URL ảnh QR</label>
+                                        <input
+                                            type="url"
+                                            value={settings.bankQrCodeUrl}
+                                            onChange={event => setSettings(previous => ({
+                                                ...previous,
+                                                bankQrCodeUrl: event.target.value,
+                                            }))}
+                                            className="w-full rounded-lg border border-slate-300 px-4 py-2 focus:border-brand focus:ring-2 focus:ring-brand"
+                                            placeholder="https://.../ma-qr.png"
+                                            maxLength={2000}
+                                        />
+                                    </div>
+                                    <p className="text-xs leading-5 text-slate-500">
+                                        Ảnh tải lên sẽ thay mã VietQR tự động trên trang thanh toán và tài khoản Đại lý/CTV. Xóa URL để quay lại dùng mã VietQR tự động.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={handleSave}
+                                        disabled={saving || uploadingBankQr || uploadingBanner}
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand to-brand-dark px-5 py-3 font-semibold text-white shadow-sm disabled:opacity-50"
+                                    >
+                                        {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                                        Lưu thông tin ngân hàng
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

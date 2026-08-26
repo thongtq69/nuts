@@ -11,7 +11,7 @@ export async function getConfiguredBankSettings(): Promise<BankSettings> {
         await dbConnect();
         const settings = await SiteSettings.findOne()
             .sort({ updatedAt: -1 })
-            .select('bankName bankCode bankAccountNumber bankAccountName')
+            .select('bankName bankCode bankAccountNumber bankAccountName bankQrCodeUrl')
             .lean();
 
         return normalizeBankSettings(settings as Partial<BankSettings> | null);
@@ -28,4 +28,3 @@ export async function getConfiguredAcbAccountNumber(): Promise<string> {
     }
     return settings.bankAccountNumber;
 }
-
