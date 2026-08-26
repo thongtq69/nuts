@@ -13,6 +13,11 @@ import { sendOrderConfirmationEmail } from '@/lib/email';
 import { reconcileAcbPayments } from '@/lib/acb-payments';
 import { calculateVoucherDiscount, type VoucherDiscountItem } from '@/lib/voucher-discount';
 import { notifyAdminOfNewOrder } from '@/lib/admin-email-notifications';
+import {
+    isValidOptionalOrderEmail,
+    normalizeOrderEmail,
+    resolveOrderNotificationEmail,
+} from '@/lib/order-notification-email';
 
 async function getUserId() {
     try {
@@ -93,10 +98,10 @@ export async function POST(req: Request) {
             );
         }
 
-        // Bắt buộc email cho khách vãng lai
-        if (!userId && !shippingInfo?.email) {
+        const submittedEmail = normalizeOrderEmail(shippingInfo?.email);
+        if (!isValidOptionalOrderEmail(submittedEmail)) {
             return NextResponse.json(
-                { message: 'Vui lòng nhập email để nhận thông tin đơn hàng' },
+                { message: 'Email không hợp lệ. Vui lòng kiểm tra lại định dạng email.' },
                 { status: 400 }
             );
         }
@@ -111,6 +116,11 @@ export async function POST(req: Request) {
         const cookieStore = await cookies();
 
         const user = userId ? await User.findById(userId) : null;
+        const notificationEmail = resolveOrderNotificationEmail(submittedEmail, user?.email);
+        const normalizedShippingInfo = {
+            ...shippingInfo,
+            email: notificationEmail,
+        };
         const isAgent = user?.role === 'sale';
         const affiliateSettings = await AffiliateSettings.findOne();
         const settings = affiliateSettings || {
@@ -244,7 +254,7 @@ export async function POST(req: Request) {
 
         const order = await Order.create({
             user: userId || undefined,
-            shippingInfo,
+            shippingInfo: normalizedShippingInfo,
             items: processedItems,
             paymentMethod,
             shippingFee,
@@ -337,25 +347,22 @@ export async function POST(req: Request) {
             }
         }
 
-        if (shippingInfo.email || (userId && user)) {
+        if (notificationEmail) {
             try {
-                const email = shippingInfo.email || user?.email;
-                if (email) {
-                    await sendOrderConfirmationEmail(email, {
-                        orderId: order._id.toString().slice(-6).toUpperCase(),
-                        customerName: shippingInfo.fullName,
-                        items: processedItems.map((item: any) => ({
-                            name: item.name,
-                            quantity: item.quantity,
-                            price: item.price
-                        })),
-                        shippingFee,
-                        discount: discountAmount,
-                        totalAmount: finalTotal,
-                        shippingAddress: `${shippingInfo.address}, ${shippingInfo.ward || ''}, ${shippingInfo.district}, ${shippingInfo.city}`,
-                        paymentMethod
-                    });
-                }
+                await sendOrderConfirmationEmail(notificationEmail, {
+                    orderId: order._id.toString().slice(-6).toUpperCase(),
+                    customerName: shippingInfo.fullName,
+                    items: processedItems.map((item: any) => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price
+                    })),
+                    shippingFee,
+                    discount: discountAmount,
+                    totalAmount: finalTotal,
+                    shippingAddress: `${shippingInfo.address}, ${shippingInfo.ward || ''}, ${shippingInfo.district}, ${shippingInfo.city}`,
+                    paymentMethod
+                });
             } catch (emailError) {
                 console.error('Failed to send order confirmation email:', emailError);
             }

@@ -67,6 +67,39 @@ import {
     normalizeUnlimitedVoucherPackage,
 } from '../src/lib/membership-vouchers.ts';
 import { DEFAULT_BANK_SETTINGS, normalizeBankSettings } from '../src/lib/bank-settings.ts';
+import {
+    isValidOptionalOrderEmail,
+    normalizeOrderEmail,
+    resolveOrderNotificationEmail,
+} from '../src/lib/order-notification-email.ts';
+
+test('checkout email is optional and falls back to the login email', () => {
+    assert.equal(normalizeOrderEmail('  customer@example.com  '), 'customer@example.com');
+    assert.equal(isValidOptionalOrderEmail(''), true);
+    assert.equal(isValidOptionalOrderEmail('not-an-email'), false);
+    assert.equal(
+        resolveOrderNotificationEmail('shipping@example.com', 'login@example.com'),
+        'shipping@example.com',
+    );
+    assert.equal(
+        resolveOrderNotificationEmail('', 'login@example.com'),
+        'login@example.com',
+    );
+    assert.equal(resolveOrderNotificationEmail('', ''), undefined);
+});
+
+test('product checkout and order API use the optional email fallback', async () => {
+    const [checkoutSource, orderApiSource] = await Promise.all([
+        readFile(new URL('../src/app/checkout/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/orders/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.doesNotMatch(checkoutSource, /required=\{!user\}/);
+    assert.doesNotMatch(orderApiSource, /if \(!userId && !shippingInfo\?\.email\)/);
+    assert.match(checkoutSource, /resolveOrderNotificationEmail\(formData\.email, user\?\.email\)/);
+    assert.match(orderApiSource, /resolveOrderNotificationEmail\(submittedEmail, user\?\.email\)/);
+    assert.match(orderApiSource, /sendOrderConfirmationEmail\(notificationEmail/);
+});
 
 test('bank settings are normalized for persistent checkout and VietQR use', () => {
     assert.deepEqual(normalizeBankSettings(null), DEFAULT_BANK_SETTINGS);

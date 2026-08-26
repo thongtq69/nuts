@@ -11,6 +11,10 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
 import { useLocale } from '@/context/LocaleContext';
+import {
+    isValidOptionalOrderEmail,
+    resolveOrderNotificationEmail,
+} from '@/lib/order-notification-email';
 
 interface Province {
     code: number;
@@ -375,12 +379,7 @@ export default function CheckoutPage() {
             toast.warning(t('Thiếu thông tin'), t('Vui lòng điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ.'));
             return;
         }
-        // Bắt buộc email cho khách vãng lai (chưa đăng nhập)
-        if (!user && !formData.email.trim()) {
-            toast.warning(t('Thiếu thông tin'), t('Vui lòng nhập email để nhận thông tin đơn hàng.'));
-            return;
-        }
-        if (!user && formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        if (!isValidOptionalOrderEmail(formData.email)) {
             toast.warning(t('Email không hợp lệ'), t('Vui lòng kiểm tra lại định dạng email.'));
             return;
         }
@@ -399,6 +398,7 @@ export default function CheckoutPage() {
             const provinceName = provinces.find(p => p.code.toString() === selectedProvince)?.name || '';
             const districtName = districts.find(d => d.code.toString() === selectedDistrict)?.name || '';
             const wardName = wards.find(w => w.code.toString() === selectedWard)?.name || '';
+            const notificationEmail = resolveOrderNotificationEmail(formData.email, user?.email);
 
             const orderData = {
                 items: cartItems.map(item => ({
@@ -446,7 +446,7 @@ export default function CheckoutPage() {
                     paymentReference: data?.paymentRef || paymentReference,
                     customerName: formData.name,
                     orderCode,
-                    customerEmail: formData.email.trim() || undefined,
+                    customerEmail: notificationEmail,
                     customerPhone: formData.phone.trim() || undefined,
                 });
                 clearCart();
@@ -493,21 +493,19 @@ export default function CheckoutPage() {
                                 <div className="form-group">
                                     <label>
                                         Email
-                                        {!user && <span className="text-red-500">*</span>}
-                                        {user && <span className="text-gray-400 text-xs ml-1">{t('(tùy chọn)')}</span>}
+                                        <span className="text-gray-400 text-xs ml-1">{t('(tùy chọn)')}</span>
                                     </label>
                                     <input
                                         type="email"
-                                        placeholder={!user ? t('Nhập email để nhận thông tin đơn hàng') : t('Nhập email')}
-                                        required={!user}
+                                        placeholder={t('Nhập email nhận thông báo (nếu có)')}
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     />
-                                    {!user && (
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {t('Email sẽ được dùng để tra cứu đơn hàng và nhận thông báo')}
-                                        </p>
-                                    )}
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {user?.email
+                                            ? t('Bỏ trống để nhận thông báo qua email đăng nhập: {email}', { email: user.email })
+                                            : t('Nếu nhập email, hệ thống sẽ dùng email này để nhận thông báo và tra cứu đơn hàng')}
+                                    </p>
                                 </div>
                                 <div className="form-group">
                                     <label>{t('Số điện thoại')} <span className="text-red-500">*</span></label>
