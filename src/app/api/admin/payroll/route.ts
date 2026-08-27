@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
     const [staffList, configs] = await Promise.all([
-        User.find({ role: 'staff' }).select('name email staffCode').sort({ name: 1 }).lean(),
+        User.find({ role: 'staff', isActive: { $ne: false } }).select('name email staffCode').sort({ name: 1 }).lean(),
         StaffPayroll.find(period).lean(),
     ]);
     const configByStaff = new Map(configs.map((config) => [String(config.staffId), config]));
@@ -89,7 +89,11 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: 'Dữ liệu lương, KPI hoặc hoa hồng không hợp lệ' }, { status: 400 });
     }
 
-    const staff = await User.findOne({ _id: staffId, role: 'staff' }).select('_id');
+    const staff = await User.findOne({
+        _id: staffId,
+        role: 'staff',
+        isActive: { $ne: false },
+    }).select('_id');
     if (!staff) return NextResponse.json({ error: 'Không tìm thấy nhân viên' }, { status: 404 });
 
     const revenue = await getStaffMonthlyRevenue(staffId, year, month);

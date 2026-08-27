@@ -25,6 +25,7 @@ export async function GET(
         role: 'user',
         affiliateLevel: { $ne: 'collaborator' },
         referrer: auth.user._id,
+        isActive: { $ne: false },
     });
 
     if (!customer) {

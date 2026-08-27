@@ -4,6 +4,7 @@ import User from '@/models/User';
 import { encodeAffiliateId } from '@/lib/affiliate';
 import { requireAdminAuth } from '@/lib/auth-permissions';
 import { assignStaffIdentity } from '@/lib/staff-identity';
+import Team from '@/models/Team';
 
 type TargetAccountRole = 'user' | 'sale' | 'staff' | 'collaborator';
 
@@ -162,28 +163,88 @@ export async function DELETE(
         await dbConnect();
         const { id } = await params;
 
-        const existingUser = await User.findById(id).select('role');
+        const existingUser = await User.findOne({
+            _id: id,
+            isActive: { $ne: false },
+        }).select('role affiliateLevel parentStaff');
         if (!existingUser) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Người dùng không tồn tại hoặc đã được xóa' }, { status: 404 });
         }
         if (existingUser.role === 'admin' || auth.user._id === id) {
             return NextResponse.json(
-                { error: 'Không thể vô hiệu hóa tài khoản quản trị này' },
+                { error: 'Không thể xóa tài khoản quản trị này' },
                 { status: 409 },
             );
         }
 
-        await User.findByIdAndUpdate(
-            id,
-            {
-                $set: {
-                    isActive: false,
-                    deletedAt: new Date(),
+        const deletedAt = new Date();
+        const [deletedUser, assignedCustomers, managedCollaborators, managedUsers, teamMembers, ledTeams] = await Promise.all([
+            User.findOneAndUpdate(
+                { _id: id, isActive: { $ne: false } },
+                {
+                    $set: { isActive: false, deletedAt },
+                    $unset: {
+                        resetPasswordToken: 1,
+                        resetPasswordExpires: 1,
+                    },
                 },
+                { new: true },
+            ),
+            User.updateMany(
+                { assignedStaff: id },
+                { $unset: { assignedStaff: 1 } },
+            ),
+            User.updateMany(
+                { parentStaff: id },
+                { $unset: { parentStaff: 1 } },
+            ),
+            User.updateMany(
+                { 'commissionSettings.managerId': id },
+                { $unset: { 'commissionSettings.managerId': 1 } },
+            ),
+            Team.updateMany(
+                { 'members.userId': id },
+                { $set: { 'members.$[member].status': 'inactive' } },
+                { arrayFilters: [{ 'member.userId': id }] },
+            ),
+            Team.updateMany(
+                { leaderId: id },
+                { $set: { status: 'inactive' } },
+            ),
+        ]);
+
+        if (!deletedUser) {
+            return NextResponse.json({ error: 'Người dùng đã được xóa trước đó' }, { status: 409 });
+        }
+
+        if (existingUser.affiliateLevel === 'collaborator' && existingUser.parentStaff) {
+            await User.updateOne(
+                { _id: existingUser.parentStaff.toString() },
+                [{
+                    $set: {
+                        collaboratorCount: {
+                            $max: [
+                                0,
+                                { $subtract: [{ $ifNull: ['$collaboratorCount', 0] }, 1] },
+                            ],
+                        },
+                    },
+                }],
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: 'Đã xóa người dùng và đồng bộ dữ liệu liên quan',
+            deletedUserId: id,
+            synchronized: {
+                assignedCustomers: assignedCustomers.modifiedCount,
+                managedCollaborators: managedCollaborators.modifiedCount,
+                managedUsers: managedUsers.modifiedCount,
+                teamMembers: teamMembers.modifiedCount,
+                ledTeams: ledTeams.modifiedCount,
             },
-            { new: true },
-        );
-        return NextResponse.json({ message: 'User deactivated successfully' });
+        });
     } catch (error) {
         console.error('Error deleting user:', error);
         return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });

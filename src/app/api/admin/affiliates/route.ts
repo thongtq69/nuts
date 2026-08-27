@@ -15,6 +15,7 @@ export async function GET(req: Request) {
         */
 
         const affiliates = await User.find({
+            isActive: { $ne: false },
             $or: [{ role: 'sale' }, { referralCode: { $exists: true, $ne: null } }]
         })
             .select('name email phone referralCode walletBalance totalCommission saleApplicationStatus createdAt')

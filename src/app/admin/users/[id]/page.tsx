@@ -287,7 +287,9 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 method: 'DELETE',
             });
             if (res.ok) {
-                router.push('/admin/users');
+                toast.success('Đã xóa người dùng', 'Danh sách và các quan hệ quản lý đã được đồng bộ.');
+                router.replace('/admin/users');
+                router.refresh();
             } else {
                 const data = await res.json();
                 toast.error('Lỗi xóa người dùng', data.error || 'Vui lòng thử lại.');

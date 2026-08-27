@@ -93,7 +93,8 @@ export async function GET(req: Request) {
 
         const staffList = await User.find({
             role: 'staff',
-            affiliateLevel: 'staff'
+            affiliateLevel: 'staff',
+            isActive: { $ne: false },
         }).select('name email phone staffCode roleType customPermissions collaboratorCount walletBalance totalCommission createdAt').sort({ createdAt: -1 });
 
         const view = new URL(req.url).searchParams.get('view');
@@ -101,7 +102,8 @@ export async function GET(req: Request) {
             const staffById = new Map(staffList.map(staff => [staff._id.toString(), staff]));
             const collaborators = await User.find({
                 parentStaff: { $in: staffList.map(staff => staff._id) },
-                affiliateLevel: 'collaborator'
+                affiliateLevel: 'collaborator',
+                isActive: { $ne: false },
             })
                 .select('name email phone referralCode parentStaff walletBalance totalCommission createdAt')
                 .sort({ createdAt: -1 });
@@ -133,7 +135,8 @@ export async function GET(req: Request) {
                 // Get all collaborators under this staff
                 const collaborators = await User.find({
                     parentStaff: staff._id,
-                    affiliateLevel: 'collaborator'
+                    affiliateLevel: 'collaborator',
+                    isActive: { $ne: false },
                 }).select('_id');
 
                 const collaboratorIds = collaborators.map(c => c._id);

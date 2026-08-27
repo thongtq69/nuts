@@ -511,6 +511,29 @@ test('admin customer assignment is persisted and exposed as a working control', 
     assert.match(listApi, /populate\('assignedStaff'/);
 });
 
+test('admin user deletion hides the account and synchronizes active relationships', async () => {
+    const [deleteApi, listApi, detailApi, listPage, detailPage, staffApi] = await Promise.all([
+        readFile(new URL('../src/app/api/admin/users/[id]/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/users/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/users/[id]/detail/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/admin/users/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/admin/users/[id]/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/admin/staff/route.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(deleteApi, /isActive: false, deletedAt/);
+    assert.match(deleteApi, /\{ assignedStaff: id \}/);
+    assert.match(deleteApi, /\{ parentStaff: id \}/);
+    assert.match(deleteApi, /'commissionSettings\.managerId': id/);
+    assert.match(deleteApi, /'members\.\$\[member\]\.status': 'inactive'/);
+    assert.doesNotMatch(deleteApi, /Order\.delete|AffiliateCommission\.delete/);
+    assert.match(listApi, /query\.isActive = \{ \$ne: false \}/);
+    assert.match(detailApi, /isActive: \{ \$ne: false \}/);
+    assert.match(staffApi, /isActive: \{ \$ne: false \}/);
+    assert.match(listPage, /prev\.filter\(user => user\._id !== deleteModal\.userId\)/);
+    assert.match(detailPage, /router\.replace\('\/admin\/users'\)/);
+});
+
 test('staff orders page loads scoped API data instead of sample orders', async () => {
     const [apiSource, pageSource] = await Promise.all([
         readFile(new URL('../src/app/api/staff/orders/route.ts', import.meta.url), 'utf8'),

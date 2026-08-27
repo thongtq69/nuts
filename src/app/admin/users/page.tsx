@@ -141,7 +141,7 @@ export default function AdminUsersPage() {
 
     const openDeleteModal = (userId: string, userName: string, userRole: string) => {
         if (userRole === 'admin') {
-            showWarning('Không thể vô hiệu hóa tài khoản Admin', 'Hãy chọn tài khoản khác.');
+            showWarning('Không thể xóa tài khoản Admin', 'Hãy chọn tài khoản khác.');
             return;
         }
         setDeleteModal({ isOpen: true, userId, userName });
@@ -155,20 +155,17 @@ export default function AdminUsersPage() {
                 method: 'DELETE',
             });
             if (res.ok) {
-                setUsers(prev => prev.map(user => (
-                    user._id === deleteModal.userId
-                        ? { ...user, isActive: false }
-                        : user
-                )));
+                setUsers(prev => prev.filter(user => user._id !== deleteModal.userId));
                 setDeleteModal({ isOpen: false, userId: null, userName: '' });
-                showSuccess('Đã vô hiệu hóa tài khoản', 'Dữ liệu đơn hàng và hoa hồng vẫn được giữ nguyên.');
+                showSuccess('Đã xóa người dùng', 'Danh sách và các quan hệ quản lý đã được đồng bộ.');
+                await fetchUsers();
             } else {
                 const data = await res.json();
-                showError('Lỗi vô hiệu hóa người dùng', data.error || 'Vui lòng thử lại.');
+                showError('Lỗi xóa người dùng', data.error || 'Vui lòng thử lại.');
             }
         } catch (error) {
             console.error('Error deleting user:', error);
-            showError('Lỗi vô hiệu hóa người dùng', 'Vui lòng thử lại.');
+            showError('Lỗi xóa người dùng', 'Vui lòng thử lại.');
         } finally {
             setDeleting(null);
         }
@@ -237,9 +234,9 @@ export default function AdminUsersPage() {
                 isOpen={deleteModal.isOpen}
                 onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
                 onConfirm={handleDelete}
-                title="Vô hiệu hóa tài khoản"
-                message={`Vô hiệu hóa tài khoản "${deleteModal.userName}"? Người dùng sẽ không thể đăng nhập, nhưng toàn bộ đơn hàng và hoa hồng vẫn được giữ lại.`}
-                confirmText="Vô hiệu hóa"
+                title="Xóa người dùng"
+                message={`Xóa tài khoản "${deleteModal.userName}"? Tài khoản sẽ bị xóa khỏi danh sách và không thể đăng nhập; lịch sử đơn hàng, thanh toán và hoa hồng vẫn được giữ để đối soát.`}
+                confirmText="Xóa người dùng"
                 variant="danger"
                 isLoading={deleting !== null}
             />
@@ -429,7 +426,7 @@ export default function AdminUsersPage() {
                                                         className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
                                                         onClick={() => openDeleteModal(user._id, user.name, user.role)}
                                                         disabled={deleting === user._id}
-                                                        title="Vô hiệu hóa tài khoản"
+                                                        title="Xóa người dùng"
                                                     >
                                                         {deleting === user._id ? (
                                                             <Loader2 size={16} className="animate-spin" />

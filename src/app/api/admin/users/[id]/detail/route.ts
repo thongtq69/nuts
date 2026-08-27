@@ -19,7 +19,10 @@ export async function GET(
         const { id } = await params;
 
         // Lấy thông tin user
-        const user = await User.findById(id);
+        const user = await User.findOne({
+            _id: id,
+            isActive: { $ne: false },
+        });
         if (!user) {
             return NextResponse.json({ error: 'Không tìm thấy người dùng' }, { status: 404 });
         }

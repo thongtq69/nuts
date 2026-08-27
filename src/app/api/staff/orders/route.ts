@@ -56,11 +56,15 @@ export async function GET() {
             const collaborators = await User.find({
                 parentStaff: auth.user._id,
                 affiliateLevel: 'collaborator',
+                isActive: { $ne: false },
             }).select('_id').lean();
             const collaboratorIds = collaborators.map((collaborator) => String(collaborator._id));
-            const managedCustomers = await User.find(
-                buildManagedCustomerQuery(auth.user._id, collaboratorIds),
-            ).select('_id').lean();
+            const managedCustomers = await User.find({
+                $and: [
+                    buildManagedCustomerQuery(auth.user._id, collaboratorIds),
+                    { isActive: { $ne: false } },
+                ],
+            }).select('_id').lean();
             const managedCustomerIds = managedCustomers.map((customer) => String(customer._id));
 
             orderQuery = buildManagedOrderQuery(

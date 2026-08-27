@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
                 role: 'user',
                 affiliateLevel: { $ne: 'collaborator' },
                 referrer: auth.user._id,
+                isActive: { $ne: false },
             },
             searchQuery,
         ],

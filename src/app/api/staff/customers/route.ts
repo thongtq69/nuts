@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
 
     const collaborators = auth.user.role === 'admin'
         ? []
-        : await User.find({ parentStaff: auth.user._id, affiliateLevel: 'collaborator' })
+        : await User.find({
+            parentStaff: auth.user._id,
+            affiliateLevel: 'collaborator',
+            isActive: { $ne: false },
+        })
             .select('_id')
             .lean();
     const ownershipQuery = auth.user.role === 'admin'
@@ -37,7 +41,9 @@ export async function GET(request: NextRequest) {
         }
         : {};
 
-    const customers: any[] = await User.find({ $and: [ownershipQuery, searchQuery] })
+    const customers: any[] = await User.find({
+        $and: [ownershipQuery, searchQuery, { isActive: { $ne: false } }],
+    })
         .select('name email phone createdAt referrer parentStaff')
         .populate('referrer', 'name referralCode staffCode affiliateLevel')
         .sort({ createdAt: -1 })

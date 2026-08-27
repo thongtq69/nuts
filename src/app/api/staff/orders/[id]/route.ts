@@ -41,16 +41,22 @@ export async function GET(
         // Get all collaborators under this staff
         const collaborators = await User.find({
             parentStaff: userId,
-            affiliateLevel: 'collaborator'
+            affiliateLevel: 'collaborator',
+            isActive: { $ne: false },
         } as any).select('_id');
 
         const collaboratorIds = collaborators.map((c: any) => c._id);
         const allAffiliates = [userId, ...collaboratorIds];
         const managedCustomers = user.role === 'staff'
-            ? await User.find(buildManagedCustomerQuery(
-                String(userId),
-                collaboratorIds.map((collaboratorId: mongoose.Types.ObjectId) => String(collaboratorId)),
-            )).select('_id').lean()
+            ? await User.find({
+                $and: [
+                    buildManagedCustomerQuery(
+                        String(userId),
+                        collaboratorIds.map((collaboratorId: mongoose.Types.ObjectId) => String(collaboratorId)),
+                    ),
+                    { isActive: { $ne: false } },
+                ],
+            }).select('_id').lean()
             : [];
         const managedCustomerIds = new Set(managedCustomers.map((customer) => String(customer._id)));
 

@@ -40,7 +40,8 @@ export async function GET() {
         // Get all collaborators under this staff
         const collaborators = await User.find({
             parentStaff: user._id,
-            affiliateLevel: 'collaborator'
+            affiliateLevel: 'collaborator',
+            isActive: { $ne: false },
         } as any).select('name email referralCode createdAt');
 
         // Get all referral codes (staff's own + all collaborators')
@@ -51,7 +52,8 @@ export async function GET() {
 
         // Get orders with these referral codes
         const referrers = await User.find({
-            referralCode: { $in: allCodes }
+            referralCode: { $in: allCodes },
+            isActive: { $ne: false },
         } as any).select('_id referralCode');
 
         const referrerIds = referrers.map(r => r._id);

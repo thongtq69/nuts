@@ -38,7 +38,8 @@ export async function GET() {
 
         const collaborators = await User.find({
             parentStaff: user._id,
-            affiliateLevel: 'collaborator'
+            affiliateLevel: 'collaborator',
+            isActive: { $ne: false },
         }).select('name email phone referralCode walletBalance totalCommission createdAt').sort({ createdAt: -1 });
 
         // Get order stats for each collaborator
@@ -99,7 +100,8 @@ export async function POST(req: Request) {
         // Generate collaborator code based on staff code
         const collaboratorCount = await User.countDocuments({
             parentStaff: user._id,
-            affiliateLevel: 'collaborator'
+            affiliateLevel: 'collaborator',
+            isActive: { $ne: false },
         });
 
         const newCode = `${user.staffCode}-CTV${collaboratorCount + 1}`;
@@ -167,7 +169,8 @@ export async function DELETE(req: Request) {
         const collaborator = await User.findOne({
             _id: collaboratorId,
             parentStaff: user._id,
-            affiliateLevel: 'collaborator'
+            affiliateLevel: 'collaborator',
+            isActive: { $ne: false },
         });
 
         if (!collaborator) {

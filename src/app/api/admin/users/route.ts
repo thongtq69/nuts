@@ -37,9 +37,16 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const roles = searchParams.get('role')?.split(',') || [];
 
-        const query: { role?: { $in: string[] } } = {};
+        const includeDeleted = searchParams.get('includeDeleted') === '1';
+        const query: {
+            role?: { $in: string[] };
+            isActive?: { $ne: false };
+        } = {};
         if (roles.length > 0) {
             query.role = { $in: roles };
+        }
+        if (!includeDeleted) {
+            query.isActive = { $ne: false };
         }
 
         const users = await User.find(query)
