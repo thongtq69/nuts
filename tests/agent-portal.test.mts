@@ -2,8 +2,40 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { isCollaboratorAccount } from '../src/lib/account-role.ts';
+import { resolveRegistrationManagerId } from '../src/lib/referral-attribution.ts';
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+
+test('collaborator applications belong to the referring agent directly', () => {
+    assert.equal(resolveRegistrationManagerId({
+        _id: 'agent-1',
+        role: 'sale',
+        saleType: 'agent',
+        parentStaff: 'staff-1',
+    }, 'collaborator'), 'agent-1');
+    assert.equal(resolveRegistrationManagerId({
+        _id: 'staff-1',
+        role: 'staff',
+    }, 'collaborator'), 'staff-1');
+    assert.equal(resolveRegistrationManagerId({
+        _id: 'collaborator-1',
+        role: 'sale',
+        saleType: 'collaborator',
+        parentStaff: 'agent-1',
+    }, 'collaborator'), 'agent-1');
+});
+
+test('registration makes the selected account type unmistakable', async () => {
+    const [page, api] = await Promise.all([
+        read('src/app/register/page.tsx'),
+        read('src/app/api/auth/register/route.ts'),
+    ]);
+
+    assert.match(page, /role-selected/);
+    assert.match(page, /Bạn đang đăng ký làm/);
+    assert.match(page, /registerAs === 'collaborator' \? t\('Cộng tác viên'\) : t\('Đại lý'\)/);
+    assert.match(api, /Đăng ký \$\{applicationLabel\} thành công!/);
+});
 
 test('collaborator identity is consistent across every supported account field', () => {
     assert.equal(isCollaboratorAccount({ roleType: 'collaborator' }), true);
@@ -60,6 +92,10 @@ test('agent collaborator management is scoped to the signed-in agent', async () 
     assert.match(layout, /href: '\/agent\/collaborators'/);
     assert.match(page, /fetch\('\/api\/agent\/collaborators'/);
     assert.match(api, /parentStaff: agent!?\._id/);
+    assert.match(api, /referrer: agent!?\._id, saleType: 'collaborator'/);
+    assert.match(api, /saleApplicationStatus: \{ \$in: \['pending', 'rejected'\] \}/);
+    assert.match(page, /Chờ Admin duyệt/);
+    assert.match(page, /StatusBadge status=\{item\.status\}/);
     assert.match(api, /sendAccountCredentialsEmail/);
     assert.doesNotMatch(layout, /href="\/staff"/);
 });

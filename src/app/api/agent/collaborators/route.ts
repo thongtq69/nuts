@@ -61,10 +61,28 @@ export async function GET() {
         }
 
         const collaborators = await User.find({
-            parentStaff: agent!._id,
-            affiliateLevel: 'collaborator',
             isActive: { $ne: false },
-        }).select('name email phone referralCode walletBalance totalCommission createdAt').sort({ createdAt: -1 }).lean();
+            $and: [
+                {
+                    $or: [
+                        { parentStaff: agent!._id },
+                        // Compatibility for applications created before the
+                        // registration ownership fix. Their referrer is still
+                        // the correct agent even if parentStaff was inherited.
+                        { referrer: agent!._id, saleType: 'collaborator' },
+                    ],
+                },
+                {
+                    $or: [
+                        { affiliateLevel: 'collaborator' },
+                        {
+                            saleType: 'collaborator',
+                            saleApplicationStatus: { $in: ['pending', 'rejected'] },
+                        },
+                    ],
+                },
+            ],
+        }).select('name email phone referralCode walletBalance totalCommission saleApplicationStatus affiliateLevel createdAt').sort({ createdAt: -1 }).lean();
 
         const result = await Promise.all(collaborators.map(async (collaborator) => {
             const orders = await Order.find({ referrer: collaborator._id })
@@ -72,6 +90,11 @@ export async function GET() {
                 .lean();
             const validOrders = orders.filter((order) => !['cancelled', 'canceled', 'refunded', 'returned']
                 .includes(String(order.status || '').toLowerCase()));
+            const status = collaborator.saleApplicationStatus === 'pending'
+                ? 'pending'
+                : collaborator.saleApplicationStatus === 'rejected'
+                    ? 'rejected'
+                    : 'approved';
             return {
                 id: String(collaborator._id),
                 name: collaborator.name,
@@ -82,6 +105,7 @@ export async function GET() {
                 totalCommission: Number(collaborator.totalCommission || 0),
                 orders: validOrders.length,
                 revenue: validOrders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0),
+                status,
                 createdAt: collaborator.createdAt,
             };
         }));
@@ -163,9 +187,12 @@ export async function DELETE(request: Request) {
         const { collaboratorId } = await request.json();
         const collaborator = await User.findOne({
             _id: collaboratorId,
-            parentStaff: agent!._id,
             affiliateLevel: 'collaborator',
             isActive: { $ne: false },
+            $or: [
+                { parentStaff: agent!._id },
+                { referrer: agent!._id, saleType: 'collaborator' },
+            ],
         });
         if (!collaborator) {
             return NextResponse.json({ message: 'Không tìm thấy cộng tác viên' }, { status: 404 });

@@ -5,7 +5,7 @@ import UserVoucher from '@/models/UserVoucher';
 import bcrypt from 'bcryptjs';
 import { sendWelcomeEmail } from '@/lib/email';
 import { findReferrerByCode } from '@/lib/staff-identity';
-import { normalizeReferralCode } from '@/lib/referral-attribution';
+import { normalizeReferralCode, resolveRegistrationManagerId } from '@/lib/referral-attribution';
 import { notifyAdminOfNewAccount } from '@/lib/admin-email-notifications';
 
 // Generate unique voucher code
@@ -41,12 +41,14 @@ export async function POST(req: Request) {
             );
         }
 
+        const isAgentOrCollaborator = registerAs === 'agent' || registerAs === 'collaborator';
+
         // Check referrer
         const cookieStore = await cookies();
         const refCode = normalizeReferralCode(referralCode) ||
             normalizeReferralCode(cookieStore.get('gonuts_ref')?.value);
-        let referrerId: any = undefined;
-        let managingStaffId: any = undefined;
+        let referrerId: unknown;
+        let managingStaffId: unknown;
 
         if (refCode) {
             const referrerUser = await findReferrerByCode(refCode);
@@ -58,20 +60,13 @@ export async function POST(req: Request) {
             }
 
             referrerId = referrerUser._id;
-            if (referrerUser.role === 'staff' || referrerUser.affiliateLevel === 'staff') {
-                managingStaffId = referrerUser._id;
-            } else if (referrerUser.parentStaff) {
-                managingStaffId = referrerUser.parentStaff;
-            }
+            managingStaffId = resolveRegistrationManagerId(referrerUser, registerAs);
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Check if registering as agent/collaborator
-        const isAgentOrCollaborator = registerAs === 'agent' || registerAs === 'collaborator';
-
-        const userData: any = {
+        const userData: Record<string, unknown> = {
             name,
             email,
             password: hashedPassword,
@@ -92,7 +87,7 @@ export async function POST(req: Request) {
             userData.saleType = registerAs === 'agent' ? 'agent' : 'collaborator';
         }
 
-        const user: any = await User.create(userData);
+        const user = await User.create(userData);
         after(() => notifyAdminOfNewAccount(String(user._id)));
 
         if (user) {
@@ -135,7 +130,8 @@ export async function POST(req: Request) {
             }
             
             if (isAgentOrCollaborator) {
-                message = 'Đăng ký thành công! Tài khoản của bạn đang chờ admin duyệt. Sau khi được duyệt, bạn sẽ nhận được email thông báo và có thể truy cập trang đại lý/CTV.';
+                const applicationLabel = registerAs === 'collaborator' ? 'Cộng tác viên' : 'Đại lý';
+                message = `Đăng ký ${applicationLabel} thành công! Tài khoản của bạn đang chờ admin duyệt. Sau khi được duyệt, bạn sẽ nhận được email thông báo.`;
             }
 
             return NextResponse.json({

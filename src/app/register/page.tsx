@@ -72,8 +72,8 @@ function RegisterForm() {
 
             toast.success(t('Đăng ký thành công!'), data.message);
             router.push(href('/login'));
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('Đăng ký thất bại'));
         } finally {
             setIsLoading(false);
         }
@@ -144,10 +144,11 @@ function RegisterForm() {
                                             name="registerAs"
                                             value="user"
                                             checked={registerAs === 'user'}
-                                            onChange={(e) => setRegisterAs(e.target.value as any)}
+                                            onChange={(e) => setRegisterAs(e.target.value as typeof registerAs)}
                                         />
                                         <span className="role-label">{t('Khách hàng')}</span>
                                         <span className="role-desc">{t('Mua hàng và nhận ưu đãi')}</span>
+                                        {registerAs === 'user' && <span className="role-selected">✓ {t('Đã chọn')}</span>}
                                     </label>
                                     <label className={`role-option ${registerAs === 'collaborator' ? 'active' : ''}`}>
                                         <input
@@ -155,10 +156,11 @@ function RegisterForm() {
                                             name="registerAs"
                                             value="collaborator"
                                             checked={registerAs === 'collaborator'}
-                                            onChange={(e) => setRegisterAs(e.target.value as any)}
+                                            onChange={(e) => setRegisterAs(e.target.value as typeof registerAs)}
                                         />
                                         <span className="role-label">{t('Cộng tác viên')}</span>
                                         <span className="role-desc">{t('Nhận hoa hồng từ giới thiệu')}</span>
+                                        {registerAs === 'collaborator' && <span className="role-selected">✓ {t('Đã chọn')}</span>}
                                     </label>
                                     <label className={`role-option ${registerAs === 'agent' ? 'active' : ''}`}>
                                         <input
@@ -166,14 +168,16 @@ function RegisterForm() {
                                             name="registerAs"
                                             value="agent"
                                             checked={registerAs === 'agent'}
-                                            onChange={(e) => setRegisterAs(e.target.value as any)}
+                                            onChange={(e) => setRegisterAs(e.target.value as typeof registerAs)}
                                         />
                                         <span className="role-label">{t('Đại lý')}</span>
                                         <span className="role-desc">{t('Hoa hồng cao + quản lý CTV')}</span>
+                                        {registerAs === 'agent' && <span className="role-selected">✓ {t('Đã chọn')}</span>}
                                     </label>
                                 </div>
                                 {registerAs !== 'user' && (
                                     <p className="role-notice">
+                                        <strong>{t('Bạn đang đăng ký làm')} {registerAs === 'collaborator' ? t('Cộng tác viên') : t('Đại lý')}.</strong>{' '}
                                         {t('* Tài khoản sẽ được admin duyệt trong 24-48 giờ. Bạn sẽ nhận email thông báo khi được duyệt.')}
                                     </p>
                                 )}
@@ -199,7 +203,11 @@ function RegisterForm() {
                             </div>
 
                             <button type="submit" className="auth-btn" disabled={isLoading}>
-                                {isLoading ? t('Đang xử lý...') : t('Đăng ký')}
+                                {isLoading
+                                    ? t('Đang xử lý...')
+                                    : registerAs === 'user'
+                                        ? t('Đăng ký')
+                                        : `${t('Đăng ký')} ${registerAs === 'collaborator' ? t('Cộng tác viên') : t('Đại lý')}`}
                             </button>
                         </form>
 
@@ -254,7 +262,8 @@ function RegisterForm() {
                 }
                 .role-option.active {
                     border-color: #9C7043;
-                    background: #f8f4f0;
+                    background: #f5eadb;
+                    box-shadow: 0 0 0 3px rgba(156, 112, 67, 0.14);
                 }
                 .role-option input {
                     position: absolute;
@@ -271,6 +280,15 @@ function RegisterForm() {
                 }
                 .role-option.active .role-label {
                     color: #9C7043;
+                }
+                .role-selected {
+                    margin-top: 8px;
+                    padding: 3px 9px;
+                    border-radius: 999px;
+                    background: #9C7043;
+                    color: #fff;
+                    font-size: 11px;
+                    font-weight: 700;
                 }
                 .role-notice {
                     margin-top: 12px;

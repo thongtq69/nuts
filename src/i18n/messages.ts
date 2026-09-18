@@ -188,6 +188,8 @@ const englishMessages: Record<string, string> = {
     'Nhập họ tên của bạn': 'Enter your full name',
     'Nhập số điện thoại': 'Enter your phone number',
     'Đăng ký với tư cách': 'Register as',
+    'Đã chọn': 'Selected',
+    'Bạn đang đăng ký làm': 'You are registering as',
     'Khách hàng': 'Customer',
     'Mua hàng và nhận ưu đãi': 'Shop and receive exclusive offers',
     'Nhận hoa hồng từ giới thiệu': 'Earn commission from referrals',
