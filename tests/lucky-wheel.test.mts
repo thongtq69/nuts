@@ -10,6 +10,7 @@ import {
     withdrawalRequestDecision,
 } from '../src/lib/lucky-wheel-rules.ts';
 import { matchesWithdrawalTransaction } from '../src/lib/lucky-wheel-withdrawal-rules.ts';
+import { findVietnamBank, searchVietnamBanks, VIETNAM_BANKS } from '../src/lib/vietnam-banks.ts';
 
 test('every five reveals follow the exact published order', () => {
     for (let cycle = 0; cycle < 20; cycle += 1) {
@@ -85,4 +86,22 @@ test('customer and admin pages fail closed instead of rendering empty wheel data
     assert.match(customerPage, /Tải lại dữ liệu/);
     assert.match(adminPage, /if \(!data\)[\s\S]*Không thể tải cấu hình vòng quay/);
     assert.match(adminPage, /Thử tải lại/);
+});
+
+test('withdrawal bank selector contains the full bank directory and searches without accents', () => {
+    assert.equal(VIETNAM_BANKS.length, 61);
+    assert.equal(searchVietnamBanks('ngoai thuong')[0]?.shortName, 'Vietcombank');
+    assert.equal(searchVietnamBanks('970416')[0]?.shortName, 'ACB');
+    assert.equal(searchVietnamBanks('quan doi')[0]?.shortName, 'MBBank');
+    assert.equal(findVietnamBank('TCB')?.shortName, 'Techcombank');
+    assert.equal(findVietnamBank('MoMo'), undefined);
+});
+
+test('withdrawal form uses an accessible searchable bank combobox', () => {
+    const component = readFileSync(new URL('../src/components/payment/BankCombobox.tsx', import.meta.url), 'utf8');
+    const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    assert.match(component, /role="combobox"/);
+    assert.match(component, /aria-autocomplete="list"/);
+    assert.match(component, /ArrowDown/);
+    assert.match(customerPage, /<BankCombobox/);
 });

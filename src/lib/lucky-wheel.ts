@@ -9,6 +9,7 @@ import LuckyWheelMilestone from '@/models/LuckyWheelMilestone';
 import LuckyWheelTopUp from '@/models/LuckyWheelTopUp';
 import LuckyWheelWithdrawal from '@/models/LuckyWheelWithdrawal';
 import { verifyWithdrawalInAcbHistory } from '@/lib/lucky-wheel-withdrawal-verification';
+import { findVietnamBank } from '@/lib/vietnam-banks';
 import {
     DEFAULT_MILESTONE_REWARDS,
     DEFAULT_REGULAR_SPIN_PRIZES,
@@ -105,11 +106,12 @@ export async function requestLuckyWheelWithdrawal(userId: string, input: { amoun
     await dbConnect();
     const amount = Math.floor(Number(input.amount));
     const settings = await getLuckyWheelSettings();
-    const bankName = String(input.bankName || '').trim();
+    const bank = findVietnamBank(String(input.bankName || '').trim());
+    const bankName = bank?.shortName || '';
     const accountNumber = String(input.accountNumber || '').trim();
     const accountName = String(input.accountName || '').trim().toUpperCase();
     if (!Number.isFinite(amount) || amount < 1 || amount % 1_000 !== 0) throw new Error('INVALID_WITHDRAWAL_AMOUNT');
-    if (!bankName || !/^\d{6,30}$/.test(accountNumber) || !accountName) throw new Error('INVALID_BANK_INFO');
+    if (!bank || !/^\d{6,30}$/.test(accountNumber) || !accountName) throw new Error('INVALID_BANK_INFO');
     await ensureWithdrawalAccountingV2(userId);
     const payoutReference = createLuckyWheelWithdrawalRef();
     if (amount < LUCKY_WHEEL_MINIMUM_WITHDRAWAL || amount < settings.minimumWithdrawal) {
