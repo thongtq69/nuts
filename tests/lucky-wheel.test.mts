@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
     availablePrizeBalance,
@@ -70,4 +71,9 @@ test('withdrawal requests reserve availability but only deduct the total balance
     assert.equal(withdrawalRequestDecision(50_000, 300_000, 0), 'below_minimum');
     assert.equal(withdrawalRequestDecision(250_000, 300_000, 100_000), 'insufficient_balance');
     assert.equal(withdrawalRequestDecision(200_000, 300_000, 100_000), 'pending');
+});
+
+test('withdrawal accounting migration explicitly enables MongoDB update pipelines', () => {
+    const source = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
+    assert.match(source, /LuckyWheelAccount\.updateMany\([\s\S]*?\{ updatePipeline: true \}\)/);
 });

@@ -65,7 +65,7 @@ export async function ensureWithdrawalAccountingV2(userId?: string) {
             prizeBalance: { $add: [{ $ifNull: ['$prizeBalance', 0] }, { $ifNull: ['$pendingWithdrawal', 0] }] },
             withdrawalAccountingVersion: 2,
         },
-    }]);
+    }], { updatePipeline: true });
 }
 
 export async function createLuckyWheelTopUp(userId: string, amount: number) {
