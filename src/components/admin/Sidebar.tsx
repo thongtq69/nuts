@@ -46,6 +46,7 @@ const menuSections = [
             { href: '/admin/orders', icon: ShoppingBag, label: 'Đơn hàng' },
             { href: '/admin/products', icon: Package, label: 'Sản phẩm' },
             { href: '/admin/vouchers', icon: Ticket, label: 'Voucher' },
+            { href: '/admin/lucky-wheel', icon: Gift, label: 'Vòng quay tri ân' },
         ],
     },
     {

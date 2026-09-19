@@ -9,6 +9,7 @@ import {
     syncAffiliateCommissionsForOrderStatus,
 } from '@/lib/affiliate-commission-lifecycle';
 import { applyOrderCancellationEffects, cancelOrder } from '@/lib/order-cancellation';
+import { grantLuckyWheelSpinsForCompletedOrder } from '@/lib/lucky-wheel';
 
 // GET single order
 export async function GET(
@@ -110,6 +111,14 @@ export async function PATCH(
         }
 
         await order.save();
+
+        if (body.status === 'completed' || body.status === 'delivered') {
+            try {
+                await grantLuckyWheelSpinsForCompletedOrder(String(order._id));
+            } catch (grantError) {
+                console.error('Failed to grant lucky-wheel spins:', grantError);
+            }
+        }
 
         return NextResponse.json({ 
             success: true, 

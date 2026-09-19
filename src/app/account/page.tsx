@@ -79,6 +79,7 @@ export default function AccountPage() {
         vipSavingsOrderCount: 0,
     });
     const [loadingFinancialSummary, setLoadingFinancialSummary] = useState(true);
+    const [luckyWheelWinnings, setLuckyWheelWinnings] = useState(0);
 
     // Profile form state
     const [profileForm, setProfileForm] = useState<ProfileFormData>({
@@ -195,6 +196,10 @@ export default function AccountPage() {
             }
         };
         fetchFinancialSummary();
+        fetch('/api/lucky-wheel', { cache: 'no-store' })
+            .then(response => response.ok ? response.json() : null)
+            .then(result => setLuckyWheelWinnings(result?.account?.lifetimeVoucherWinnings || 0))
+            .catch(() => undefined);
     }, [user]);
 
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -448,7 +453,7 @@ export default function AccountPage() {
             <div className="container">
                 <h1 className="page-title">Quản lý tài khoản</h1>
 
-                <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <p className="text-sm text-slate-500">Tổng tiền đã chi tiêu</p>
                         <p className="mt-1 text-2xl font-bold text-slate-900">{loadingFinancialSummary ? 'Đang tính...' : `${financialSummary.totalSpent.toLocaleString('vi-VN')}đ`}</p>
@@ -459,6 +464,11 @@ export default function AccountPage() {
                         <p className="mt-1 text-2xl font-bold text-emerald-800">{loadingFinancialSummary ? 'Đang tính...' : `${financialSummary.totalVipSavings.toLocaleString('vi-VN')}đ`}</p>
                         <p className="mt-2 text-xs text-emerald-600">Từ {financialSummary.vipSavingsOrderCount} đơn đã sử dụng voucher VIP.</p>
                     </div>
+                    <Link href="/lucky-wheel" className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm transition hover:-translate-y-0.5">
+                        <p className="text-sm text-amber-700">Tổng voucher đã trúng</p>
+                        <p className="mt-1 text-2xl font-bold text-amber-800">{luckyWheelWinnings.toLocaleString('vi-VN')}đ</p>
+                        <p className="mt-2 text-xs font-semibold text-amber-700">Mở vòng quay tri ân →</p>
+                    </Link>
                 </div>
 
                 <div className="account-layout">
