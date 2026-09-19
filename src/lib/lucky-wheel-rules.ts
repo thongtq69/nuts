@@ -1,22 +1,12 @@
-import { createHmac } from 'node:crypto';
-
 export const LUCKY_WHEEL_PRIZES = [0, 1000, 0, 5000, 0] as const;
 export const LUCKY_WHEEL_SPINS_PER_ORDER = 5;
-export const LUCKY_WHEEL_MINIMUM_ORDER = 10_000;
+export const LUCKY_WHEEL_MINIMUM_ORDER = 20_000;
 export const LUCKY_WHEEL_MILESTONE_REVENUE = 1_000_000_000;
 
-export function prizeForSpin(userId: string, sequence: number, secret: string): number {
+export function prizeForSpin(sequence: number): number {
     if (!Number.isInteger(sequence) || sequence < 1) throw new Error('Invalid spin sequence');
-    const cycle = Math.floor((sequence - 1) / LUCKY_WHEEL_SPINS_PER_ORDER);
     const position = (sequence - 1) % LUCKY_WHEEL_SPINS_PER_ORDER;
-    const values = [...LUCKY_WHEEL_PRIZES];
-    const digest = createHmac('sha256', secret).update(`${userId}:${cycle}`).digest();
-
-    for (let index = values.length - 1; index > 0; index -= 1) {
-        const swapIndex = digest[index] % (index + 1);
-        [values[index], values[swapIndex]] = [values[swapIndex], values[index]];
-    }
-    return values[position];
+    return LUCKY_WHEEL_PRIZES[position];
 }
 
 export function voucherMinimumOrder(prize: number): number {
@@ -32,11 +22,10 @@ export function milestonePrizeValues(): number[] {
 
 export function isCampaignActive(settings: {
     enabled?: boolean;
-    legalApprovalReference?: string;
     campaignStartAt?: Date | string | null;
     campaignEndAt?: Date | string | null;
 }, now = new Date()): boolean {
-    if (!settings.enabled || !settings.legalApprovalReference?.trim()) return false;
+    if (!settings.enabled) return false;
     if (settings.campaignStartAt && new Date(settings.campaignStartAt) > now) return false;
     if (settings.campaignEndAt && new Date(settings.campaignEndAt) < now) return false;
     return true;

@@ -7,22 +7,21 @@ import {
     voucherMinimumOrder,
 } from '../src/lib/lucky-wheel-rules.ts';
 
-test('every five spins contain exactly the advertised prizes', () => {
+test('every five reveals follow the exact published order', () => {
     for (let cycle = 0; cycle < 20; cycle += 1) {
-        const prizes = Array.from({ length: 5 }, (_, index) => prizeForSpin('customer-1', cycle * 5 + index + 1, 'secret'));
-        assert.deepEqual([...prizes].sort((a, b) => a - b), [0, 0, 0, 1000, 5000]);
+        const prizes = Array.from({ length: 5 }, (_, index) => prizeForSpin(cycle * 5 + index + 1));
+        assert.deepEqual(prizes, [0, 1000, 0, 5000, 0]);
         assert.equal(prizes.reduce((sum, value) => sum + value, 0), 6000);
     }
 });
 
-test('spin result is deterministic for audit and idempotency', () => {
-    assert.equal(prizeForSpin('customer-9', 7, 'secret'), prizeForSpin('customer-9', 7, 'secret'));
+test('reveal result is deterministic for audit and idempotency', () => {
+    assert.equal(prizeForSpin(7), 1000);
 });
 
-test('campaign cannot run without legal approval reference', () => {
-    assert.equal(isCampaignActive({ enabled: true }), false);
-    assert.equal(isCampaignActive({ enabled: true, legalApprovalReference: 'XN-123' }), true);
-    assert.equal(isCampaignActive({ enabled: false, legalApprovalReference: 'XN-123' }), false);
+test('fixed-benefit program can be activated without a random-draw approval field', () => {
+    assert.equal(isCampaignActive({ enabled: true }), true);
+    assert.equal(isCampaignActive({ enabled: false }), false);
 });
 
 test('voucher conditions and milestone prize pool are fixed', () => {

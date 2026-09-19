@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { requireAdminAuth } from '@/lib/auth-permissions';
-import { drawLuckyWheelMilestone, getLuckyWheelAdminSummary, grantLuckyWheelSpinsForCompletedOrder, getLuckyWheelSettings } from '@/lib/lucky-wheel';
+import { awardLuckyWheelMilestone, getLuckyWheelAdminSummary, grantLuckyWheelSpinsForCompletedOrder, getLuckyWheelSettings } from '@/lib/lucky-wheel';
 import Order from '@/models/Order';
 import mongoose from 'mongoose';
 
@@ -15,17 +15,12 @@ export async function PATCH(request: Request) {
     const { user } = await requireAdminAuth();
     if (!user) return NextResponse.json({ message: 'Không có quyền truy cập' }, { status: 401 });
     const body = await request.json();
-    const legalApprovalReference = String(body.legalApprovalReference || '').trim();
-    if (body.enabled && !legalApprovalReference) {
-        return NextResponse.json({ message: 'Phải nhập số/xác nhận đăng ký khuyến mại trước khi kích hoạt.' }, { status: 400 });
-    }
     if (body.campaignStartAt && body.campaignEndAt && new Date(body.campaignStartAt) >= new Date(body.campaignEndAt)) {
         return NextResponse.json({ message: 'Thời gian kết thúc phải sau thời gian bắt đầu.' }, { status: 400 });
     }
     const settings = await getLuckyWheelSettings();
     settings.enabled = Boolean(body.enabled);
-    settings.legalApprovalReference = legalApprovalReference;
-    settings.campaignName = String(body.campaignName || 'Vòng quay tri ân khách hàng').trim();
+    settings.campaignName = String(body.campaignName || 'Vòng quà tri ân cố định').trim();
     settings.campaignStartAt = body.campaignStartAt ? new Date(body.campaignStartAt) : undefined;
     settings.campaignEndAt = body.campaignEndAt ? new Date(body.campaignEndAt) : undefined;
     settings.updatedBy = new mongoose.Types.ObjectId(user._id);
@@ -38,15 +33,15 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ message: 'Không có quyền truy cập' }, { status: 401 });
     const { action } = await request.json();
     try {
-        if (action === 'draw') {
-            const milestone = await drawLuckyWheelMilestone(user._id);
-            return NextResponse.json({ message: 'Đã quay thưởng mốc doanh thu và cấp voucher cho 15 khách hàng.', milestone });
+        if (action === 'award') {
+            const milestone = await awardLuckyWheelMilestone(user._id);
+            return NextResponse.json({ message: 'Đã trao voucher theo bảng xếp hạng mua hàng cho 15 thành viên.', milestone });
         }
         if (action === 'reconcile') {
             await dbConnect();
             const settings = await getLuckyWheelSettings();
-            if (!settings.enabled || !settings.legalApprovalReference) {
-                return NextResponse.json({ message: 'Chỉ đồng bộ sau khi chương trình đã được kích hoạt hợp lệ.' }, { status: 409 });
+            if (!settings.enabled) {
+                return NextResponse.json({ message: 'Chương trình đang tạm dừng.' }, { status: 409 });
             }
             const query: Record<string, unknown> = {
                 orderType: { $ne: 'membership' },

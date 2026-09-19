@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
-import { isCampaignActive, milestonePrizeValues, prizeForSpin, voucherMinimumOrder } from '@/lib/lucky-wheel-rules';
+import { isCampaignActive, prizeForSpin, voucherMinimumOrder } from '@/lib/lucky-wheel-rules';
 import LuckyWheelAccount from '@/models/LuckyWheelAccount';
 import LuckyWheelGrant from '@/models/LuckyWheelGrant';
 import LuckyWheelSettings from '@/models/LuckyWheelSettings';
@@ -12,11 +12,21 @@ import UserVoucher from '@/models/UserVoucher';
 
 export async function getLuckyWheelSettings() {
     await dbConnect();
-    return LuckyWheelSettings.findOneAndUpdate(
+    const settings = await LuckyWheelSettings.findOneAndUpdate(
         { key: 'default' },
-        { $setOnInsert: { key: 'default' } },
+        { $setOnInsert: { key: 'default', enabled: true, programVersion: 2 } },
         { new: true, upsert: true, setDefaultsOnInsert: true },
     );
+    // One-time migration from the earlier chance-based draft. It intentionally
+    // activates only once; an admin can still pause the program afterwards.
+    if ((settings.programVersion || 0) < 2) {
+        settings.programVersion = 2;
+        settings.enabled = true;
+        settings.campaignName = 'Vòng quà tri ân cố định';
+        settings.qualifyingOrderMinimum = 20_000;
+        await settings.save();
+    }
+    return settings;
 }
 
 export async function grantLuckyWheelSpinsForCompletedOrder(orderId: string) {
@@ -87,7 +97,7 @@ export async function spinLuckyWheel(userId: string, requestId: string) {
             if (!account) throw new Error('NO_SPINS');
 
             const sequence = account.lifetimeSpinsUsed;
-            const prizeValue = prizeForSpin(userId, sequence, process.env.JWT_SECRET || 'lucky-wheel');
+            const prizeValue = prizeForSpin(sequence);
             const [spin] = await LuckyWheelSpin.create([{
                 userId,
                 requestId,
@@ -189,7 +199,7 @@ export async function getLuckyWheelAdminSummary() {
     };
 }
 
-export async function drawLuckyWheelMilestone(adminUserId: string) {
+export async function awardLuckyWheelMilestone(adminUserId: string) {
     await dbConnect();
     const settings = await getLuckyWheelSettings();
     if (!isCampaignActive(settings)) throw new Error('CAMPAIGN_INACTIVE');
@@ -198,18 +208,14 @@ export async function drawLuckyWheelMilestone(adminUserId: string) {
     const cycle = drawnCycles + 1;
     if (revenue < cycle * settings.milestoneRevenue) throw new Error('MILESTONE_NOT_REACHED');
 
-    const userIds = await LuckyWheelGrant.distinct('userId');
-    if (userIds.length < 15) throw new Error('NOT_ENOUGH_CUSTOMERS');
-    const candidates = [...userIds];
-    for (let index = candidates.length - 1; index > 0; index -= 1) {
-        const swapIndex = crypto.randomInt(index + 1);
-        [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
-    }
-    const prizes = milestonePrizeValues();
-    for (let index = prizes.length - 1; index > 0; index -= 1) {
-        const swapIndex = crypto.randomInt(index + 1);
-        [prizes[index], prizes[swapIndex]] = [prizes[swapIndex], prizes[index]];
-    }
+    // No random draw: rank members by eligible purchase value, then by the
+    // earliest qualifying order. The published rule makes every award auditable.
+    const candidates = await LuckyWheelGrant.aggregate([
+        { $group: { _id: '$userId', total: { $sum: '$orderAmount' }, firstOrderAt: { $min: '$createdAt' } } },
+        { $sort: { total: -1, firstOrderAt: 1, _id: 1 } },
+        { $limit: 15 },
+    ]);
+    if (candidates.length < 15) throw new Error('NOT_ENOUGH_CUSTOMERS');
 
     const session = await mongoose.startSession();
     let milestone: mongoose.HydratedDocument<import('@/models/LuckyWheelMilestone').ILuckyWheelMilestone> | null = null;
@@ -225,8 +231,8 @@ export async function drawLuckyWheelMilestone(adminUserId: string) {
             const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + 30);
             for (let index = 0; index < 15; index += 1) {
-                const userId = candidates[index];
-                const prizeValue = prizes[index];
+                const userId = candidates[index]._id;
+                const prizeValue = index < 10 ? 100_000 : 50_000;
                 const [voucher] = await UserVoucher.create([{
                     userId,
                     code: createVoucherCode(),
