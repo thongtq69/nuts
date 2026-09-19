@@ -44,7 +44,7 @@ export async function PATCH(request: Request) {
 
     const minimumTopUp = positiveInteger(body.minimumTopUp, 1_000);
     const spinsPerTopUpUnit = positiveInteger(body.spinsPerTopUpUnit, 1, 100);
-    const minimumWithdrawal = positiveInteger(body.minimumWithdrawal, 1_000);
+    const minimumWithdrawal = positiveInteger(body.minimumWithdrawal, 100_000);
     const milestoneTopUps = positiveInteger(body.milestoneTopUps, 1);
     if (!minimumTopUp || !spinsPerTopUpUnit || !minimumWithdrawal || !milestoneTopUps) {
         return NextResponse.json({ message: 'Các mức tiền, lượt quay và mốc thưởng phải là số nguyên dương hợp lệ.' }, { status: 400 });
@@ -141,6 +141,7 @@ export async function POST(request: Request) {
             NOT_ENOUGH_CUSTOMERS: 'Chưa đủ số khách hàng đã nạp để trao thưởng theo cơ cấu hiện tại.',
             ACCOUNT_NOT_FOUND: 'Không tìm thấy tài khoản vòng quay của thành viên.',
             INVALID_ACCOUNT_VALUES: 'Lượt quay và các số tiền phải là số nguyên không âm.',
+            BALANCE_BELOW_PENDING_WITHDRAWALS: 'Số dư thưởng không được thấp hơn tổng tiền đang chờ rút.',
             WITHDRAWAL_NOT_FOUND: 'Yêu cầu rút tiền không còn ở trạng thái chờ xử lý.',
             INVALID_BANK_TRANSACTION_ID: 'Mã giao dịch ngân hàng không hợp lệ.',
             BANK_TRANSACTION_ALREADY_USED: 'Mã giao dịch ngân hàng này đã được dùng cho một yêu cầu khác.',

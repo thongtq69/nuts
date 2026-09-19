@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+    availablePrizeBalance,
     isCampaignActive,
     milestonePrizeValues,
     prizeForSpin,
     spinsForTopUp,
+    withdrawalRequestDecision,
 } from '../src/lib/lucky-wheel-rules.ts';
 import { matchesWithdrawalTransaction } from '../src/lib/lucky-wheel-withdrawal-rules.ts';
 
@@ -61,4 +63,11 @@ test('withdrawal is only settled by an exact posted ACB debit', () => {
     assert.equal(matchesWithdrawalTransaction({ ...transaction, beneficiaryAccount: '000000000' }, target), false);
     assert.equal(matchesWithdrawalTransaction({ ...transaction, transactionDescription: 'Chi thuong khac' }, target), false);
     assert.equal(matchesWithdrawalTransaction({ ...transaction, transactionCode: 'TRACE-OTHER' }, target), false);
+});
+
+test('withdrawal requests reserve availability but only deduct the total balance after approval', () => {
+    assert.equal(availablePrizeBalance(300_000, 100_000), 200_000);
+    assert.equal(withdrawalRequestDecision(50_000, 300_000, 0), 'below_minimum');
+    assert.equal(withdrawalRequestDecision(250_000, 300_000, 100_000), 'insufficient_balance');
+    assert.equal(withdrawalRequestDecision(200_000, 300_000, 100_000), 'pending');
 });

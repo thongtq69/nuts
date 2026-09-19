@@ -128,7 +128,7 @@ export default function CheckoutPage() {
                 .finally(() => setLoadingVouchers(false));
             fetch('/api/lucky-wheel', { cache: 'no-store' })
                 .then(res => res.ok ? res.json() : null)
-                .then(result => setPrizeBalance(Number(result?.account?.prizeBalance || 0)))
+                .then(result => setPrizeBalance(Number(result?.account?.availablePrizeBalance || 0)))
                 .catch(() => undefined);
 
         }

@@ -11,6 +11,9 @@ export interface ILuckyWheelWithdrawal {
     bankTransactionId?: string;
     bankTransactionDate?: Date;
     bankVerifiedAt?: Date;
+    rejectionCode?: 'BELOW_MINIMUM' | 'INSUFFICIENT_BALANCE' | 'ADMIN_REJECTED';
+    rejectionReason?: string;
+    automaticDecision?: boolean;
     note?: string;
     reviewedBy?: mongoose.Types.ObjectId;
     reviewedAt?: Date;
@@ -18,7 +21,7 @@ export interface ILuckyWheelWithdrawal {
 
 const schema = new Schema<ILuckyWheelWithdrawal>({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    amount: { type: Number, required: true, min: 100_000 },
+    amount: { type: Number, required: true, min: 1 },
     bankName: { type: String, required: true, trim: true, maxlength: 100 },
     accountNumber: { type: String, required: true, trim: true, maxlength: 30 },
     accountName: { type: String, required: true, trim: true, maxlength: 100 },
@@ -27,6 +30,9 @@ const schema = new Schema<ILuckyWheelWithdrawal>({
     bankTransactionId: { type: String, trim: true, uppercase: true, maxlength: 120, unique: true, sparse: true },
     bankTransactionDate: Date,
     bankVerifiedAt: Date,
+    rejectionCode: { type: String, enum: ['BELOW_MINIMUM', 'INSUFFICIENT_BALANCE', 'ADMIN_REJECTED'] },
+    rejectionReason: { type: String, trim: true, maxlength: 500 },
+    automaticDecision: { type: Boolean, default: false },
     note: { type: String, trim: true, maxlength: 500 },
     reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     reviewedAt: Date,

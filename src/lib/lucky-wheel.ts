@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
-import { isCampaignActive, prizeForSpin, spinsForTopUp } from '@/lib/lucky-wheel-rules';
+import { availablePrizeBalance, isCampaignActive, LUCKY_WHEEL_MINIMUM_WITHDRAWAL, prizeForSpin, spinsForTopUp } from '@/lib/lucky-wheel-rules';
 import LuckyWheelAccount from '@/models/LuckyWheelAccount';
 import LuckyWheelSettings from '@/models/LuckyWheelSettings';
 import LuckyWheelSpin from '@/models/LuckyWheelSpin';
@@ -22,11 +22,11 @@ export async function getLuckyWheelSettings() {
     await dbConnect();
     const settings = await LuckyWheelSettings.findOneAndUpdate(
         { key: 'default' },
-        { $setOnInsert: { key: 'default', enabled: true, programVersion: 4 } },
+        { $setOnInsert: { key: 'default', enabled: true, programVersion: 5 } },
         { new: true, upsert: true, setDefaultsOnInsert: true },
     );
-    if ((settings.programVersion || 0) < 4) {
-        settings.programVersion = 4;
+    if ((settings.programVersion || 0) < 5) {
+        settings.programVersion = 5;
         settings.memberBadgeText ||= DEFAULT_WHEEL_COPY.memberBadgeText;
         settings.introText ||= DEFAULT_WHEEL_COPY.introText;
         settings.inactiveMessage ||= DEFAULT_WHEEL_COPY.inactiveMessage;
@@ -37,7 +37,7 @@ export async function getLuckyWheelSettings() {
         settings.withdrawalTitle ||= DEFAULT_WHEEL_COPY.withdrawalTitle;
         settings.termsTitle ||= DEFAULT_WHEEL_COPY.termsTitle;
         settings.historyTitle ||= DEFAULT_WHEEL_COPY.historyTitle;
-        settings.minimumWithdrawal ||= 100_000;
+        settings.minimumWithdrawal = Math.max(LUCKY_WHEEL_MINIMUM_WITHDRAWAL, settings.minimumWithdrawal || 0);
         if (!settings.topUpOptions?.length) settings.topUpOptions = DEFAULT_TOP_UP_OPTIONS;
         if (!settings.regularSpinPrizes?.length) settings.regularSpinPrizes = DEFAULT_REGULAR_SPIN_PRIZES;
         if (!settings.wheelSegments?.length) settings.wheelSegments = DEFAULT_WHEEL_SEGMENTS;
@@ -54,6 +54,18 @@ export function createLuckyWheelPaymentRef() {
 
 export function createLuckyWheelWithdrawalRef() {
     return `WD${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
+}
+
+export async function ensureWithdrawalAccountingV2(userId?: string) {
+    await dbConnect();
+    const filter: Record<string, unknown> = { withdrawalAccountingVersion: { $ne: 2 } };
+    if (userId) filter.userId = userId;
+    await LuckyWheelAccount.updateMany(filter, [{
+        $set: {
+            prizeBalance: { $add: [{ $ifNull: ['$prizeBalance', 0] }, { $ifNull: ['$pendingWithdrawal', 0] }] },
+            withdrawalAccountingVersion: 2,
+        },
+    }]);
 }
 
 export async function createLuckyWheelTopUp(userId: string, amount: number) {
@@ -93,20 +105,39 @@ export async function requestLuckyWheelWithdrawal(userId: string, input: { amoun
     await dbConnect();
     const amount = Math.floor(Number(input.amount));
     const settings = await getLuckyWheelSettings();
-    if (amount < settings.minimumWithdrawal || amount % 1_000 !== 0) throw new Error('INVALID_WITHDRAWAL_AMOUNT');
-    if (!input.bankName.trim() || !/^\d{6,30}$/.test(input.accountNumber.trim()) || !input.accountName.trim()) throw new Error('INVALID_BANK_INFO');
+    const bankName = String(input.bankName || '').trim();
+    const accountNumber = String(input.accountNumber || '').trim();
+    const accountName = String(input.accountName || '').trim().toUpperCase();
+    if (!Number.isFinite(amount) || amount < 1 || amount % 1_000 !== 0) throw new Error('INVALID_WITHDRAWAL_AMOUNT');
+    if (!bankName || !/^\d{6,30}$/.test(accountNumber) || !accountName) throw new Error('INVALID_BANK_INFO');
+    await ensureWithdrawalAccountingV2(userId);
+    const payoutReference = createLuckyWheelWithdrawalRef();
+    if (amount < LUCKY_WHEEL_MINIMUM_WITHDRAWAL || amount < settings.minimumWithdrawal) {
+        return LuckyWheelWithdrawal.create({
+            userId, amount, bankName, accountNumber, accountName, payoutReference,
+            status: 'rejected', automaticDecision: true, rejectionCode: 'BELOW_MINIMUM',
+            rejectionReason: `Số tiền rút tối thiểu là ${Math.max(LUCKY_WHEEL_MINIMUM_WITHDRAWAL, settings.minimumWithdrawal).toLocaleString('vi-VN')}đ.`,
+            reviewedAt: new Date(),
+        });
+    }
     const session = await mongoose.startSession();
     let withdrawal = null;
     try {
         await session.withTransaction(async () => {
             const account = await LuckyWheelAccount.findOneAndUpdate(
-                { userId, prizeBalance: { $gte: amount } },
-                { $inc: { prizeBalance: -amount, pendingWithdrawal: amount } },
+                { userId, $expr: { $gte: [{ $subtract: ['$prizeBalance', '$pendingWithdrawal'] }, amount] } },
+                { $inc: { pendingWithdrawal: amount } },
                 { new: true, session },
             );
-            if (!account) throw new Error('INSUFFICIENT_PRIZE_BALANCE');
             [withdrawal] = await LuckyWheelWithdrawal.create([{
-                userId, amount, bankName: input.bankName.trim(), accountNumber: input.accountNumber.trim(), accountName: input.accountName.trim().toUpperCase(), status: 'pending', payoutReference: createLuckyWheelWithdrawalRef(),
+                userId, amount, bankName, accountNumber, accountName, payoutReference,
+                status: account ? 'pending' : 'rejected',
+                ...(account ? {} : {
+                    automaticDecision: true,
+                    rejectionCode: 'INSUFFICIENT_BALANCE',
+                    rejectionReason: 'Số dư thưởng khả dụng không đủ để thực hiện lệnh rút.',
+                    reviewedAt: new Date(),
+                }),
             }], { session });
         });
     } finally { await session.endSession(); }
@@ -115,21 +146,25 @@ export async function requestLuckyWheelWithdrawal(userId: string, input: { amoun
 
 export async function reviewLuckyWheelWithdrawal(adminUserId: string, withdrawalId: string, action: 'rejected', note = '') {
     await dbConnect();
+    const pending = await LuckyWheelWithdrawal.findOne({ _id: withdrawalId, status: 'pending' }).select('userId').lean();
+    if (!pending) throw new Error('WITHDRAWAL_NOT_FOUND');
+    await ensureWithdrawalAccountingV2(String(pending.userId));
     const session = await mongoose.startSession();
     let withdrawal = null;
     try {
         await session.withTransaction(async () => {
             withdrawal = await LuckyWheelWithdrawal.findOneAndUpdate(
                 { _id: withdrawalId, status: 'pending' },
-                { $set: { status: action, note: note.trim(), reviewedBy: adminUserId, reviewedAt: new Date() } },
+                { $set: { status: action, note: note.trim(), rejectionCode: 'ADMIN_REJECTED', rejectionReason: note.trim() || 'Admin từ chối lệnh rút tiền.', reviewedBy: adminUserId, reviewedAt: new Date() } },
                 { new: true, session },
             );
             if (!withdrawal) throw new Error('WITHDRAWAL_NOT_FOUND');
-            await LuckyWheelAccount.updateOne(
-                { userId: withdrawal.userId },
-                { $inc: { pendingWithdrawal: -withdrawal.amount, prizeBalance: withdrawal.amount } },
+            const accountUpdate = await LuckyWheelAccount.updateOne(
+                { userId: withdrawal.userId, pendingWithdrawal: { $gte: withdrawal.amount } },
+                { $inc: { pendingWithdrawal: -withdrawal.amount } },
                 { session },
             );
+            if (accountUpdate.modifiedCount !== 1) throw new Error('ACCOUNT_NOT_FOUND');
         });
     } finally { await session.endSession(); }
     return withdrawal;
@@ -147,6 +182,7 @@ export async function verifyAndCompleteLuckyWheelWithdrawal(
 
     const withdrawal = await LuckyWheelWithdrawal.findOne({ _id: withdrawalId, status: 'pending' });
     if (!withdrawal) throw new Error('WITHDRAWAL_NOT_FOUND');
+    await ensureWithdrawalAccountingV2(String(withdrawal.userId));
     if (!withdrawal.payoutReference) {
         withdrawal.payoutReference = createLuckyWheelWithdrawalRef();
         await withdrawal.save();
@@ -194,8 +230,8 @@ export async function verifyAndCompleteLuckyWheelWithdrawal(
             );
             if (!completed) throw new Error('WITHDRAWAL_NOT_FOUND');
             const accountUpdate = await LuckyWheelAccount.updateOne(
-                { userId: withdrawal.userId, pendingWithdrawal: { $gte: withdrawal.amount } },
-                { $inc: { pendingWithdrawal: -withdrawal.amount, lifetimeWithdrawn: withdrawal.amount } },
+                { userId: withdrawal.userId, pendingWithdrawal: { $gte: withdrawal.amount }, prizeBalance: { $gte: withdrawal.amount } },
+                { $inc: { prizeBalance: -withdrawal.amount, pendingWithdrawal: -withdrawal.amount, lifetimeWithdrawn: withdrawal.amount } },
                 { session },
             );
             if (accountUpdate.modifiedCount !== 1) throw new Error('ACCOUNT_NOT_FOUND');
@@ -270,6 +306,7 @@ export async function spinLuckyWheel(userId: string, requestId: string, adminTes
 
 export async function getLuckyWheelUserSummary(userId: string, adminTestMode = false) {
     await dbConnect();
+    await ensureWithdrawalAccountingV2(userId);
     const [settings, account, history, topUps, withdrawals] = await Promise.all([
         getLuckyWheelSettings(),
         LuckyWheelAccount.findOne({ userId }).lean(),
@@ -302,7 +339,7 @@ export async function getLuckyWheelUserSummary(userId: string, adminTestMode = f
             campaignStartAt: settings.campaignStartAt,
             campaignEndAt: settings.campaignEndAt,
         },
-        account: account || {
+        account: account ? { ...account, availablePrizeBalance: availablePrizeBalance(account.prizeBalance, account.pendingWithdrawal) } : {
             availableSpins: 0,
             lifetimeSpinsGranted: 0,
             lifetimeSpinsUsed: 0,
@@ -313,6 +350,8 @@ export async function getLuckyWheelUserSummary(userId: string, adminTestMode = f
             lifetimeWinnings: 0,
             lifetimeWithdrawn: 0,
             lifetimeSpentOnOrders: 0,
+            withdrawalAccountingVersion: 2,
+            availablePrizeBalance: 0,
         },
         history,
         topUps,
@@ -322,6 +361,7 @@ export async function getLuckyWheelUserSummary(userId: string, adminTestMode = f
 
 export async function getLuckyWheelAdminSummary() {
     await dbConnect();
+    await ensureWithdrawalAccountingV2();
     const pendingWithoutReference = await LuckyWheelWithdrawal.find({
         status: 'pending',
         $or: [{ payoutReference: { $exists: false } }, { payoutReference: '' }],
@@ -330,7 +370,7 @@ export async function getLuckyWheelAdminSummary() {
         { _id: item._id, status: 'pending', $or: [{ payoutReference: { $exists: false } }, { payoutReference: '' }] },
         { $set: { payoutReference: createLuckyWheelWithdrawalRef() } },
     )));
-    const [settings, accountTotals, topUpTotals, spins, milestones, withdrawals, memberAccounts] = await Promise.all([
+    const [settings, accountTotals, topUpTotals, spins, milestones, withdrawals, memberAccounts, recentTopUps] = await Promise.all([
         getLuckyWheelSettings(),
         LuckyWheelAccount.aggregate([{ $group: {
             _id: null,
@@ -346,6 +386,7 @@ export async function getLuckyWheelAdminSummary() {
         LuckyWheelMilestone.find({}).sort({ cycle: -1 }).lean(),
         LuckyWheelWithdrawal.find({}).sort({ createdAt: -1 }).limit(50).populate('userId', 'name email').lean(),
         LuckyWheelAccount.find({}).sort({ updatedAt: -1 }).limit(100).populate('userId', 'name email').lean(),
+        LuckyWheelTopUp.find({}).sort({ createdAt: -1 }).limit(50).populate('userId', 'name email').lean(),
     ]);
     const totals = accountTotals[0] || { customers: 0, availableSpins: 0, spinsGranted: 0, spinsUsed: 0, voucherWinnings: 0 };
     const paid = topUpTotals[0] || { revenue: 0, topUps: 0 };
@@ -363,11 +404,13 @@ export async function getLuckyWheelAdminSummary() {
         recentSpins: spins,
         withdrawals,
         memberAccounts,
+        recentTopUps,
     };
 }
 
 export async function updateLuckyWheelMemberAccount(userId: string, input: { availableSpins: number; prizeBalance: number; lifetimeWinnings: number }) {
     await dbConnect();
+    await ensureWithdrawalAccountingV2(userId);
     if (!mongoose.isValidObjectId(userId)) throw new Error('ACCOUNT_NOT_FOUND');
     const values = {
         availableSpins: Math.floor(Number(input.availableSpins)),
@@ -375,6 +418,9 @@ export async function updateLuckyWheelMemberAccount(userId: string, input: { ava
         lifetimeWinnings: Math.floor(Number(input.lifetimeWinnings)),
     };
     if (Object.values(values).some(value => !Number.isFinite(value) || value < 0)) throw new Error('INVALID_ACCOUNT_VALUES');
+    const existing = await LuckyWheelAccount.findOne({ userId }).select('pendingWithdrawal').lean();
+    if (!existing) throw new Error('ACCOUNT_NOT_FOUND');
+    if (values.prizeBalance < Number(existing.pendingWithdrawal || 0)) throw new Error('BALANCE_BELOW_PENDING_WITHDRAWALS');
     const account = await LuckyWheelAccount.findOneAndUpdate(
         { userId },
         { $set: { ...values, lifetimeVoucherWinnings: values.lifetimeWinnings } },

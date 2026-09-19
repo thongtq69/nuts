@@ -41,7 +41,7 @@ export interface ILuckyWheelSettings {
 
 const schema = new Schema<ILuckyWheelSettings>({
     key: { type: String, default: 'default', unique: true, immutable: true },
-    programVersion: { type: Number, default: 4 },
+    programVersion: { type: Number, default: 5 },
     enabled: { type: Boolean, default: true },
     campaignName: { type: String, default: DEFAULT_WHEEL_COPY.campaignName, trim: true, maxlength: 120 },
     memberBadgeText: { type: String, default: DEFAULT_WHEEL_COPY.memberBadgeText, trim: true, maxlength: 80 },
@@ -59,7 +59,7 @@ const schema = new Schema<ILuckyWheelSettings>({
     minimumTopUp: { type: Number, default: 10_000, min: 1_000 },
     spinsPerTopUpUnit: { type: Number, default: 5, min: 1, max: 100 },
     milestoneTopUps: { type: Number, default: 1_000_000, min: 1 },
-    minimumWithdrawal: { type: Number, default: 100_000, min: 1_000 },
+    minimumWithdrawal: { type: Number, default: 100_000, min: 100_000 },
     topUpOptions: { type: [Number], default: DEFAULT_TOP_UP_OPTIONS },
     regularSpinPrizes: { type: [Number], default: DEFAULT_REGULAR_SPIN_PRIZES },
     wheelSegments: { type: [{ label: { type: String, required: true }, value: { type: Number, required: true, min: 0 }, color: { type: String, required: true } }], default: DEFAULT_WHEEL_SEGMENTS },

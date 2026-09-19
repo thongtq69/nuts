@@ -5,6 +5,21 @@ export const LUCKY_WHEEL_SPINS_PER_TOP_UP_UNIT = 5;
 export const LUCKY_WHEEL_MILESTONE_TOP_UPS = 1_000_000;
 export const LUCKY_WHEEL_MINIMUM_WITHDRAWAL = 100_000;
 
+export function availablePrizeBalance(prizeBalance: number, pendingWithdrawal: number): number {
+    return Math.max(0, Math.floor(Number(prizeBalance) || 0) - Math.max(0, Math.floor(Number(pendingWithdrawal) || 0)));
+}
+
+export function withdrawalRequestDecision(
+    amount: number,
+    prizeBalance: number,
+    pendingWithdrawal: number,
+    minimumWithdrawal = LUCKY_WHEEL_MINIMUM_WITHDRAWAL,
+): 'pending' | 'below_minimum' | 'insufficient_balance' {
+    if (amount < Math.max(LUCKY_WHEEL_MINIMUM_WITHDRAWAL, minimumWithdrawal)) return 'below_minimum';
+    if (amount > availablePrizeBalance(prizeBalance, pendingWithdrawal)) return 'insufficient_balance';
+    return 'pending';
+}
+
 export function prizeForSpin(sequence: number, prizes: readonly number[] = LUCKY_WHEEL_PRIZES): number {
     if (!Number.isInteger(sequence) || sequence < 1) throw new Error('Invalid spin sequence');
     if (!prizes.length) throw new Error('Prize sequence is empty');

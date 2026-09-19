@@ -14,6 +14,8 @@ import { reconcileAcbPayments } from '@/lib/acb-payments';
 import { calculateVoucherDiscount, type VoucherDiscountItem } from '@/lib/voucher-discount';
 import { notifyAdminOfNewOrder } from '@/lib/admin-email-notifications';
 import LuckyWheelAccount from '@/models/LuckyWheelAccount';
+import { ensureWithdrawalAccountingV2 } from '@/lib/lucky-wheel';
+import { availablePrizeBalance } from '@/lib/lucky-wheel-rules';
 import {
     isValidOptionalOrderEmail,
     normalizeOrderEmail,
@@ -226,11 +228,12 @@ export async function POST(req: Request) {
         let finalTotal = Math.max(0, itemsTotal + shippingFee - discountAmount);
         let luckyWheelCreditUsed = 0;
         if (body.useLuckyWheelBalance && userId && finalTotal > 0) {
-            const wheelAccount = await LuckyWheelAccount.findOne({ userId }).select('prizeBalance').lean();
-            luckyWheelCreditUsed = Math.min(finalTotal, Math.max(0, Number(wheelAccount?.prizeBalance || 0)));
+            await ensureWithdrawalAccountingV2(String(userId));
+            const wheelAccount = await LuckyWheelAccount.findOne({ userId }).select('prizeBalance pendingWithdrawal').lean();
+            luckyWheelCreditUsed = Math.min(finalTotal, availablePrizeBalance(Number(wheelAccount?.prizeBalance || 0), Number(wheelAccount?.pendingWithdrawal || 0)));
             if (luckyWheelCreditUsed > 0) {
                 const reserved = await LuckyWheelAccount.updateOne(
-                    { userId, prizeBalance: { $gte: luckyWheelCreditUsed } },
+                    { userId, $expr: { $gte: [{ $subtract: ['$prizeBalance', '$pendingWithdrawal'] }, luckyWheelCreditUsed] } },
                     { $inc: { prizeBalance: -luckyWheelCreditUsed, lifetimeSpentOnOrders: luckyWheelCreditUsed } },
                 );
                 if (reserved.modifiedCount === 0) luckyWheelCreditUsed = 0;
