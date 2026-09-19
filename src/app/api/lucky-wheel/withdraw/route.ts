@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     } catch (error) {
         const code = error instanceof Error ? error.message : '';
         const messages: Record<string, string> = {
-            INVALID_WITHDRAWAL_AMOUNT: 'Mỗi lần rút tối thiểu 100.000đ.',
+            INVALID_WITHDRAWAL_AMOUNT: 'Số tiền rút không phù hợp với mức tối thiểu đang được cấu hình.',
             INVALID_BANK_INFO: 'Thông tin tài khoản ngân hàng không hợp lệ.',
             INSUFFICIENT_PRIZE_BALANCE: 'Số dư tiền thưởng không đủ.',
         };

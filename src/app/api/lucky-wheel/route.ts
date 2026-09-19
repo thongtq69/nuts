@@ -26,7 +26,7 @@ export async function POST(request: Request) {
             CAMPAIGN_INACTIVE: 'Chương trình hiện chưa được mở hoặc đã kết thúc.',
             NO_SPINS: 'Bạn đã dùng hết lượt quay.',
             REQUEST_ID_INVALID: 'Yêu cầu không hợp lệ, vui lòng thử lại.',
-            INVALID_TOP_UP: 'Số tiền nạp phải từ 10.000đ và theo bội số 10.000đ.',
+            INVALID_TOP_UP: 'Số tiền nạp không phù hợp với các mức đang được cấu hình.',
         };
         const message = messages[errorMessage] || 'Không thể quay lúc này, vui lòng thử lại.';
         return NextResponse.json({ message }, { status: errorMessage === 'NO_SPINS' ? 409 : 400 });

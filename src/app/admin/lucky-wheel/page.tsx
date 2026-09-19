@@ -1,67 +1,184 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Gift, Save, Sparkles } from 'lucide-react';
+import { Gift, Minus, Plus, Save, Sparkles } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
-interface WheelForm { enabled: boolean; campaignName: string; campaignStartAt: string; campaignEndAt: string }
+interface WheelSegment { label: string; value: number; color: string }
+interface MilestoneReward { value: number; count: number }
+interface WheelForm {
+    enabled: boolean;
+    campaignName: string;
+    memberBadgeText: string;
+    introText: string;
+    inactiveMessage: string;
+    spinButtonText: string;
+    totalWinningsLabel: string;
+    balanceLabel: string;
+    topUpTitle: string;
+    withdrawalTitle: string;
+    termsTitle: string;
+    historyTitle: string;
+    campaignStartAt: string;
+    campaignEndAt: string;
+    minimumTopUp: number;
+    spinsPerTopUpUnit: number;
+    minimumWithdrawal: number;
+    milestoneTopUps: number;
+    topUpOptions: number[];
+    regularSpinPrizes: number[];
+    wheelSegments: WheelSegment[];
+    terms: string[];
+    milestoneRewards: MilestoneReward[];
+}
 interface RecentSpin { _id: string; createdAt: string; prizeValue: number; sequence: number; userId?: { name?: string; email?: string } }
 interface Withdrawal { _id: string; amount: number; status: string; bankName: string; accountNumber: string; accountName: string; userId?: { name?: string; email?: string } }
+interface MemberAccount { _id: string; availableSpins: number; prizeBalance: number; pendingWithdrawal: number; lifetimeWinnings: number; userId?: { _id?: string; name?: string; email?: string } }
 interface AdminWheelData {
-    settings: WheelForm & { campaignStartAt?: string; campaignEndAt?: string };
+    settings: Omit<WheelForm, 'campaignStartAt' | 'campaignEndAt'> & { campaignStartAt?: string; campaignEndAt?: string };
     totals: { topUpRevenue: number; paidTopUps: number; spinsGranted: number; spinsUsed: number; availableSpins: number; voucherWinnings: number };
     milestone: { remaining: number; completedCycles: number; drawnCycles: number };
     recentSpins: RecentSpin[];
     withdrawals: Withdrawal[];
+    memberAccounts: MemberAccount[];
 }
+
+const emptyForm: WheelForm = {
+    enabled: true,
+    campaignName: '', memberBadgeText: '', introText: '', inactiveMessage: '', spinButtonText: '',
+    totalWinningsLabel: '', balanceLabel: '', topUpTitle: '', withdrawalTitle: '', termsTitle: '', historyTitle: '',
+    campaignStartAt: '', campaignEndAt: '', minimumTopUp: 10_000, spinsPerTopUpUnit: 5,
+    minimumWithdrawal: 100_000, milestoneTopUps: 1_000_000, topUpOptions: [], regularSpinPrizes: [],
+    wheelSegments: [], terms: [], milestoneRewards: [],
+};
+
+const fieldClass = 'mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100';
+const labelClass = 'block text-sm font-semibold text-slate-700';
 
 export default function AdminLuckyWheelPage() {
     const toast = useToast();
     const [data, setData] = useState<AdminWheelData | null>(null);
     const [busy, setBusy] = useState('');
-    const [form, setForm] = useState<WheelForm>({ enabled: true, campaignName: '', campaignStartAt: '', campaignEndAt: '' });
+    const [form, setForm] = useState<WheelForm>(emptyForm);
     const load = useCallback(async () => {
         const response = await fetch('/api/admin/lucky-wheel', { cache: 'no-store' });
         if (!response.ok) return;
-        const result = await response.json();
+        const result: AdminWheelData = await response.json();
         setData(result);
         setForm({
-            enabled: Boolean(result.settings.enabled),
-            campaignName: result.settings.campaignName || '',
+            ...result.settings,
             campaignStartAt: result.settings.campaignStartAt ? String(result.settings.campaignStartAt).slice(0, 16) : '',
             campaignEndAt: result.settings.campaignEndAt ? String(result.settings.campaignEndAt).slice(0, 16) : '',
+            topUpOptions: [...(result.settings.topUpOptions || [])],
+            regularSpinPrizes: [...(result.settings.regularSpinPrizes || [])],
+            wheelSegments: (result.settings.wheelSegments || []).map(segment => ({ label: segment.label, value: segment.value, color: segment.color })),
+            terms: [...(result.settings.terms || [])],
+            milestoneRewards: (result.settings.milestoneRewards || []).map(reward => ({ value: reward.value, count: reward.count })),
         });
     }, []);
-    // Loading is asynchronous; the state changes happen after the request resolves.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { void load(); }, [load]);
 
     const request = async (method: 'PATCH' | 'POST', body: Record<string, unknown>, action: string) => {
         setBusy(action);
-        const response = await fetch('/api/admin/lucky-wheel', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        const result = await response.json();
-        if (response.ok) toast.success('Thành công', result.message);
-        else toast.error('Không thể thực hiện', result.message);
-        if (response.ok) await load();
-        setBusy('');
+        try {
+            const response = await fetch('/api/admin/lucky-wheel', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const result = await response.json().catch(() => ({ message: 'Máy chủ trả về dữ liệu không hợp lệ.' }));
+            if (response.ok) {
+                toast.success('Thành công', result.message);
+                await load();
+            } else toast.error('Không thể thực hiện', result.message);
+        } catch {
+            toast.error('Không thể thực hiện', 'Không thể kết nối máy chủ, vui lòng thử lại.');
+        } finally {
+            setBusy('');
+        }
     };
-    if (!data) return <div className="grid min-h-[50vh] place-items-center">Đang tải cấu hình...</div>;
+
+    const updateText = (field: keyof WheelForm, value: string | number | boolean) => setForm(current => ({ ...current, [field]: value }));
+    const updateSegment = (index: number, patch: Partial<WheelSegment>) => setForm(current => {
+        const previousValue = current.wheelSegments[index]?.value;
+        return {
+            ...current,
+            wheelSegments: current.wheelSegments.map((segment, itemIndex) => itemIndex === index ? { ...segment, ...patch } : segment),
+            regularSpinPrizes: patch.value !== undefined && patch.value !== previousValue
+                ? current.regularSpinPrizes.map(value => value === previousValue ? patch.value as number : value)
+                : current.regularSpinPrizes,
+        };
+    });
+    const updateReward = (index: number, patch: Partial<MilestoneReward>) => setForm(current => ({ ...current, milestoneRewards: current.milestoneRewards.map((reward, itemIndex) => itemIndex === index ? { ...reward, ...patch } : reward) }));
+    const updateMember = (id: string, field: 'availableSpins' | 'prizeBalance' | 'lifetimeWinnings', value: number) => setData(current => current ? ({ ...current, memberAccounts: current.memberAccounts.map(account => account._id === id ? { ...account, [field]: value } : account) }) : current);
     const money = (value: number) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
-    return <div className="mx-auto max-w-7xl space-y-6">
-        <div><p className="text-sm font-semibold uppercase tracking-wider text-amber-600">Vòng quay thành viên</p><h1 className="text-3xl font-bold text-slate-900">Quản lý vòng quay may mắn</h1><p className="mt-2 text-slate-600">Lượt quay chỉ được cấp từ giao dịch nạp riêng, hoàn toàn tách biệt với đơn hàng.</p></div>
+    if (!data) return <div className="grid min-h-[50vh] place-items-center">Đang tải cấu hình...</div>;
+
+    const milestoneDescription = form.milestoneRewards.map(reward => `${reward.count} người nhận ${money(reward.value)}`).join(' và ');
+    const totalMilestoneWinners = form.milestoneRewards.reduce((sum, reward) => sum + Number(reward.count || 0), 0);
+
+    return <div className="mx-auto max-w-7xl space-y-6 pb-10">
+        <div><p className="text-sm font-semibold uppercase tracking-wider text-amber-600">Vòng quay thành viên</p><h1 className="text-3xl font-bold text-slate-900">Quản lý vòng quay may mắn</h1><p className="mt-2 text-slate-600">Mọi nội dung bên dưới được đồng bộ trực tiếp ra trang vòng quay sau khi lưu. Lượt quay vẫn tách biệt hoàn toàn với đơn hàng.</p></div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[['Tiền nạp vòng quay', money(data.totals.topUpRevenue)], ['Lượt đã cấp / đã dùng', `${data.totals.spinsGranted} / ${data.totals.spinsUsed}`], ['Số lần nạp thành công', data.totals.paidTopUps], ['Tổng tiền đã trúng', money(data.totals.voucherWinnings)]].map(([label, value]) => <div key={String(label)} className="rounded-2xl border bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">{label}</p><p className="mt-2 text-2xl font-bold text-slate-900">{value}</p></div>)}
+            {[["Tiền nạp vòng quay", money(data.totals.topUpRevenue)], ['Lượt đã cấp / đã dùng', `${data.totals.spinsGranted} / ${data.totals.spinsUsed}`], ['Số lần nạp thành công', data.totals.paidTopUps], ['Tổng tiền đã trúng', money(data.totals.voucherWinnings)]].map(([label, value]) => <div key={String(label)} className="rounded-2xl border bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">{label}</p><p className="mt-2 text-2xl font-bold text-slate-900">{value}</p></div>)}
         </div>
+
+        <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-7">
+            <div className="flex items-center gap-3"><Gift className="text-amber-500"/><div><h2 className="text-xl font-bold">Nội dung hiển thị trên website</h2><p className="text-sm text-slate-500">Tên, mô tả và toàn bộ nhãn trên trang thành viên.</p></div></div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <label className={labelClass}>Tên chương trình<input className={fieldClass} value={form.campaignName} onChange={e => updateText('campaignName', e.target.value)}/></label>
+                <label className={labelClass}>Nhãn thành viên<input className={fieldClass} value={form.memberBadgeText} onChange={e => updateText('memberBadgeText', e.target.value)}/></label>
+                <label className={`${labelClass} md:col-span-2`}>Mô tả giới thiệu<textarea rows={3} className={fieldClass} value={form.introText} onChange={e => updateText('introText', e.target.value)}/></label>
+                <label className={`${labelClass} md:col-span-2`}>Thông báo khi tạm dừng<input className={fieldClass} value={form.inactiveMessage} onChange={e => updateText('inactiveMessage', e.target.value)}/></label>
+                {([
+                    ['spinButtonText', 'Chữ trên nút quay'], ['totalWinningsLabel', 'Nhãn tổng tiền đã trúng'],
+                    ['balanceLabel', 'Nhãn số dư thưởng'], ['topUpTitle', 'Tiêu đề nạp lượt'],
+                    ['withdrawalTitle', 'Tiêu đề rút tiền'], ['termsTitle', 'Tiêu đề thể lệ'],
+                    ['historyTitle', 'Tiêu đề lịch sử'],
+                ] as [keyof WheelForm, string][]).map(([field, label]) => <label key={field} className={labelClass}>{label}<input className={fieldClass} value={String(form[field])} onChange={e => updateText(field, e.target.value)}/></label>)}
+            </div>
+        </section>
+
+        <div className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
+            <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-7">
+                <h2 className="text-xl font-bold">Quy đổi, thời gian và trạng thái</h2>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <label className={labelClass}>Bắt đầu<input type="datetime-local" className={fieldClass} value={form.campaignStartAt} onChange={e => updateText('campaignStartAt', e.target.value)}/></label>
+                    <label className={labelClass}>Kết thúc<input type="datetime-local" className={fieldClass} value={form.campaignEndAt} onChange={e => updateText('campaignEndAt', e.target.value)}/></label>
+                    <label className={labelClass}>Mức nạp cơ sở (đ)<input type="number" min={1000} step={1000} className={fieldClass} value={form.minimumTopUp} onChange={e => updateText('minimumTopUp', Number(e.target.value))}/><small className="mt-1 block font-normal text-slate-500">Mọi mức nạp nhanh phải là bội số của số này.</small></label>
+                    <label className={labelClass}>Số lượt / mức nạp cơ sở<input type="number" min={1} max={100} className={fieldClass} value={form.spinsPerTopUpUnit} onChange={e => updateText('spinsPerTopUpUnit', Number(e.target.value))}/></label>
+                    <label className={labelClass}>Số tiền rút tối thiểu (đ)<input type="number" min={1000} step={1000} className={fieldClass} value={form.minimumWithdrawal} onChange={e => updateText('minimumWithdrawal', Number(e.target.value))}/></label>
+                    <label className={labelClass}>Mốc số lần nạp thành công<input type="number" min={1} className={fieldClass} value={form.milestoneTopUps} onChange={e => updateText('milestoneTopUps', Number(e.target.value))}/></label>
+                </div>
+                <label className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><input type="checkbox" className="mt-1 h-4 w-4" checked={form.enabled} onChange={e => updateText('enabled', e.target.checked)}/><span><strong>Đang kích hoạt</strong><small className="mt-1 block text-emerald-800">Bỏ chọn để tạm dừng nhận nạp và quay thưởng.</small></span></label>
+            </section>
+
+            <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-7">
+                <div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Các nút nạp nhanh</h2><p className="text-sm text-slate-500">Tối đa 8 mức tiền.</p></div><button type="button" disabled={form.topUpOptions.length >= 8} onClick={() => setForm(current => ({ ...current, topUpOptions: [...current.topUpOptions, current.minimumTopUp] }))} className="rounded-xl border px-3 py-2 text-sm font-bold disabled:opacity-40"><Plus size={16} className="inline"/> Thêm</button></div>
+                <div className="mt-5 space-y-3">{form.topUpOptions.map((amount, index) => <div key={index} className="flex items-center gap-2"><input aria-label={`Mức nạp ${index + 1}`} type="number" min={form.minimumTopUp} step={form.minimumTopUp} className={`${fieldClass} mt-0`} value={amount} onChange={e => setForm(current => ({ ...current, topUpOptions: current.topUpOptions.map((item, itemIndex) => itemIndex === index ? Number(e.target.value) : item) }))}/><button type="button" aria-label="Xóa mức nạp" disabled={form.topUpOptions.length <= 1} onClick={() => setForm(current => ({ ...current, topUpOptions: current.topUpOptions.filter((_, itemIndex) => itemIndex !== index) }))} className="rounded-xl border border-red-200 p-3 text-red-600 disabled:opacity-30"><Minus size={18}/></button></div>)}</div>
+                <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">Ví dụ: nạp <strong>{money(form.minimumTopUp)}</strong> nhận <strong>{form.spinsPerTopUpUnit} lượt</strong>. Mua hàng không làm phát sinh lượt quay.</div>
+            </section>
+        </div>
+
+        <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-7">
+            <div><h2 className="text-xl font-bold">6 ô giải thưởng trên vòng quay</h2><p className="mt-1 text-sm text-slate-500">Sửa tên hiển thị, giá trị tiền và màu từng ô. Giá trị 0 là “chúc may mắn”.</p></div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{form.wheelSegments.map((segment, index) => <div key={index} className="rounded-2xl border p-4"><div className="mb-3 flex items-center gap-2"><span className="h-6 w-6 rounded-full border shadow-sm" style={{ backgroundColor: segment.color }}/><strong>Ô {index + 1}</strong></div><label className={labelClass}>Tên giải<input className={fieldClass} value={segment.label} onChange={e => updateSegment(index, { label: e.target.value })}/></label><div className="mt-3 grid grid-cols-[1fr_64px] gap-3"><label className={labelClass}>Giá trị (đ)<input type="number" min={0} step={1000} className={fieldClass} value={segment.value} onChange={e => updateSegment(index, { value: Number(e.target.value) })}/></label><label className={labelClass}>Màu<input aria-label={`Màu ô ${index + 1}`} type="color" className="mt-1 h-[46px] w-full rounded-lg border bg-white p-1" value={segment.color} onChange={e => updateSegment(index, { color: e.target.value })}/></label></div></div>)}</div>
+        </section>
+
         <div className="grid gap-6 xl:grid-cols-2">
-            <section className="rounded-2xl border bg-white p-6 shadow-sm"><div className="flex items-center gap-3"><Gift className="text-amber-500"/><h2 className="text-xl font-bold">Cấu hình chương trình</h2></div><div className="mt-5 space-y-4">
-                <label className="block text-sm font-medium">Tên chương trình<input className="mt-1 w-full rounded-lg border p-3" value={form.campaignName} onChange={e => setForm({ ...form, campaignName: e.target.value })}/></label>
-                <div className="grid grid-cols-2 gap-3"><label className="text-sm font-medium">Bắt đầu<input type="datetime-local" className="mt-1 w-full rounded-lg border p-3" value={form.campaignStartAt} onChange={e => setForm({ ...form, campaignStartAt: e.target.value })}/></label><label className="text-sm font-medium">Kết thúc<input type="datetime-local" className="mt-1 w-full rounded-lg border p-3" value={form.campaignEndAt} onChange={e => setForm({ ...form, campaignEndAt: e.target.value })}/></label></div>
-                <label className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><input type="checkbox" className="mt-1" checked={form.enabled} onChange={e => setForm({ ...form, enabled: e.target.checked })}/><span><strong>Đang kích hoạt</strong><small className="mt-1 block text-emerald-800">Admin có thể tạm dừng nhận nạp và quay thưởng khi cần.</small></span></label>
-                <button disabled={Boolean(busy)} onClick={() => void request('PATCH', { ...form }, 'save')} className="flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white disabled:opacity-50"><Save size={18}/> {busy === 'save' ? 'Đang lưu...' : 'Lưu cấu hình'}</button>
-            </div></section>
-            <section className="rounded-2xl border bg-white p-6 shadow-sm"><div className="flex items-center gap-3"><Sparkles className="text-amber-500"/><h2 className="text-xl font-bold">Mốc 1.000.000 lượt nạp</h2></div><div className="mt-5 rounded-xl bg-slate-50 p-5"><p className="text-sm text-slate-500">Còn lại đến mốc tiếp theo</p><p className="mt-1 text-3xl font-black text-amber-600">{Number(data.milestone.remaining).toLocaleString('vi-VN')} lượt</p><p className="mt-2 text-sm text-slate-600">Đã đạt {data.milestone.completedCycles} mốc, đã thực hiện {data.milestone.drawnCycles} đợt trao thưởng.</p></div><p className="mt-4 text-sm text-slate-600">Khi đạt mốc, hệ thống chọn ngẫu nhiên 15 khách hàng đã nạp: 10 người nhận 100.000đ và 5 người nhận 50.000đ.</p><button disabled={Boolean(busy) || data.milestone.remaining > 0} onClick={() => void request('POST', { action: 'award' }, 'award')} className="mt-5 rounded-xl bg-amber-500 px-4 py-3 font-bold text-slate-900 disabled:opacity-50">Chọn người trúng và cộng tiền</button></section>
+            <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-7"><div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Cơ cấu quay thông thường</h2><p className="text-sm text-slate-500">Hệ thống lặp lại tuần tự danh sách này cho từng người chơi.</p></div><button type="button" disabled={form.regularSpinPrizes.length >= 100} onClick={() => setForm(current => ({ ...current, regularSpinPrizes: [...current.regularSpinPrizes, current.wheelSegments[0]?.value || 0] }))} className="rounded-xl border px-3 py-2 text-sm font-bold disabled:opacity-40"><Plus size={16} className="inline"/> Thêm lượt</button></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{form.regularSpinPrizes.map((prize, index) => <div key={index} className="flex items-center gap-2"><span className="w-16 text-sm font-bold text-slate-500">Lượt {index + 1}</span><select aria-label={`Giải lượt ${index + 1}`} className={`${fieldClass} mt-0`} value={prize} onChange={e => setForm(current => ({ ...current, regularSpinPrizes: current.regularSpinPrizes.map((item, itemIndex) => itemIndex === index ? Number(e.target.value) : item) }))}>{form.wheelSegments.map((segment, segmentIndex) => <option key={`${segment.value}-${segmentIndex}`} value={segment.value}>{segment.label} ({money(segment.value)})</option>)}</select><button type="button" aria-label="Xóa lượt" disabled={form.regularSpinPrizes.length <= 1} onClick={() => setForm(current => ({ ...current, regularSpinPrizes: current.regularSpinPrizes.filter((_, itemIndex) => itemIndex !== index) }))} className="rounded-xl border border-red-200 p-3 text-red-600 disabled:opacity-30"><Minus size={18}/></button></div>)}</div></section>
+
+            <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-7"><h2 className="text-xl font-bold">Thể lệ hiển thị</h2><p className="mt-1 text-sm text-slate-500">Mỗi dòng sẽ là một gạch đầu dòng trên website (tối đa 10 dòng).</p><textarea rows={11} className={`${fieldClass} mt-5`} value={form.terms.join('\n')} onChange={e => setForm(current => ({ ...current, terms: e.target.value.split('\n') }))}/></section>
         </div>
+
+        <section className="rounded-3xl border bg-white p-5 shadow-sm sm:p-7">
+            <div className="flex flex-wrap items-start justify-between gap-4"><div className="flex items-center gap-3"><Sparkles className="text-amber-500"/><div><h2 className="text-xl font-bold">Thưởng khi đạt mốc</h2><p className="text-sm text-slate-500">Chọn ngẫu nhiên trong các thành viên đã nạp thành công.</p></div></div><button type="button" disabled={form.milestoneRewards.length >= 5} onClick={() => setForm(current => ({ ...current, milestoneRewards: [...current.milestoneRewards, { value: 10_000, count: 1 }] }))} className="rounded-xl border px-3 py-2 text-sm font-bold disabled:opacity-40"><Plus size={16} className="inline"/> Thêm nhóm giải</button></div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">{form.milestoneRewards.map((reward, index) => <div key={index} className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 rounded-2xl border p-4"><label className={labelClass}>Tiền thưởng / người<input type="number" min={0} step={1000} className={fieldClass} value={reward.value} onChange={e => updateReward(index, { value: Number(e.target.value) })}/></label><label className={labelClass}>Số người trúng<input type="number" min={1} max={100} className={fieldClass} value={reward.count} onChange={e => updateReward(index, { count: Number(e.target.value) })}/></label><button type="button" aria-label="Xóa nhóm giải" disabled={form.milestoneRewards.length <= 1} onClick={() => setForm(current => ({ ...current, milestoneRewards: current.milestoneRewards.filter((_, itemIndex) => itemIndex !== index) }))} className="mb-0.5 rounded-xl border border-red-200 p-3 text-red-600 disabled:opacity-30"><Minus size={18}/></button></div>)}</div>
+            <div className="mt-5 rounded-2xl bg-slate-50 p-5"><p className="text-sm text-slate-500">Còn lại đến mốc tiếp theo</p><p className="mt-1 text-3xl font-black text-amber-600">{Number(data.milestone.remaining).toLocaleString('vi-VN')} lượt nạp</p><p className="mt-2 text-sm text-slate-600">Đã đạt {data.milestone.completedCycles} mốc, đã thực hiện {data.milestone.drawnCycles} đợt. Cơ cấu hiện tại: {milestoneDescription || 'chưa cấu hình'}.</p></div>
+            <button disabled={Boolean(busy) || data.milestone.remaining > 0} onClick={() => void request('POST', { action: 'award' }, 'award')} className="mt-5 rounded-xl bg-amber-500 px-4 py-3 font-bold text-slate-900 disabled:opacity-50">{busy === 'award' ? 'Đang chọn...' : `Chọn ${totalMilestoneWinners} người trúng và cộng tiền`}</button>
+        </section>
+
+        <div className="sticky bottom-4 z-20 flex justify-end"><button disabled={Boolean(busy)} onClick={() => void request('PATCH', { ...form }, 'save')} className="flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 font-semibold text-white shadow-xl disabled:opacity-50"><Save size={18}/> {busy === 'save' ? 'Đang lưu và đồng bộ...' : 'Lưu và đồng bộ ra website'}</button></div>
+
+        <section className="rounded-2xl border bg-white p-6 shadow-sm"><div><h2 className="text-xl font-bold">Tài khoản vòng quay của thành viên</h2><p className="mt-1 text-sm text-slate-500">Điều chỉnh số lượt còn lại, tổng tiền đã trúng và số dư thưởng đang hiển thị trên tài khoản khách hàng.</p></div><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">Thành viên</th><th className="p-3">Lượt còn lại</th><th className="p-3">Tổng tiền đã trúng</th><th className="p-3">Số dư thưởng</th><th className="p-3">Đang chờ rút</th><th className="p-3">Thao tác</th></tr></thead><tbody>{data.memberAccounts?.length ? data.memberAccounts.map(account => <tr key={account._id} className="border-b"><td className="p-3"><strong>{account.userId?.name || 'Thành viên'}</strong><br/><span className="text-slate-500">{account.userId?.email || ''}</span></td><td className="p-3"><input aria-label={`Lượt còn lại của ${account.userId?.email || account._id}`} type="number" min={0} className="w-28 rounded-lg border px-3 py-2" value={account.availableSpins} onChange={e => updateMember(account._id, 'availableSpins', Number(e.target.value))}/></td><td className="p-3"><input aria-label={`Tổng tiền đã trúng của ${account.userId?.email || account._id}`} type="number" min={0} step={1000} className="w-40 rounded-lg border px-3 py-2" value={account.lifetimeWinnings} onChange={e => updateMember(account._id, 'lifetimeWinnings', Number(e.target.value))}/></td><td className="p-3"><input aria-label={`Số dư thưởng của ${account.userId?.email || account._id}`} type="number" min={0} step={1000} className="w-40 rounded-lg border px-3 py-2" value={account.prizeBalance} onChange={e => updateMember(account._id, 'prizeBalance', Number(e.target.value))}/></td><td className="p-3 font-semibold text-slate-600">{money(account.pendingWithdrawal)}</td><td className="p-3"><button disabled={Boolean(busy)} onClick={() => void request('POST', { action: 'account-update', userId: account.userId?._id, availableSpins: account.availableSpins, prizeBalance: account.prizeBalance, lifetimeWinnings: account.lifetimeWinnings }, `account-${account._id}`)} className="rounded-lg bg-slate-900 px-4 py-2 font-bold text-white disabled:opacity-50">{busy === `account-${account._id}` ? 'Đang lưu...' : 'Lưu tài khoản'}</button></td></tr>) : <tr><td colSpan={6} className="p-6 text-center text-slate-500">Chưa có thành viên sử dụng vòng quay.</td></tr>}</tbody></table></div></section>
+
         <section className="rounded-2xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-bold">Yêu cầu rút tiền</h2><div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">Khách hàng</th><th className="p-3">Số tiền</th><th className="p-3">Tài khoản</th><th className="p-3">Trạng thái</th><th className="p-3">Thao tác</th></tr></thead><tbody>{data.withdrawals?.length ? data.withdrawals.map(item => <tr key={item._id} className="border-b"><td className="p-3"><strong>{item.userId?.name || 'Thành viên'}</strong><br/><span className="text-slate-500">{item.userId?.email}</span></td><td className="p-3 font-bold">{money(item.amount)}</td><td className="p-3">{item.bankName} · {item.accountNumber}<br/><span>{item.accountName}</span></td><td className="p-3">{item.status}</td><td className="p-3">{item.status === 'pending' && <div className="flex gap-2"><button disabled={Boolean(busy)} onClick={() => void request('POST', { action: 'withdrawal-paid', withdrawalId: item._id }, `paid-${item._id}`)} className="rounded-lg bg-emerald-600 px-3 py-2 font-bold text-white disabled:opacity-50">Đã chuyển</button><button disabled={Boolean(busy)} onClick={() => void request('POST', { action: 'withdrawal-rejected', withdrawalId: item._id }, `reject-${item._id}`)} className="rounded-lg border border-red-200 px-3 py-2 font-bold text-red-600 disabled:opacity-50">Từ chối</button></div>}</td></tr>) : <tr><td colSpan={5} className="p-6 text-center text-slate-500">Chưa có yêu cầu rút tiền.</td></tr>}</tbody></table></div></section>
-        <section className="rounded-2xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-bold">Nhật ký mở quà gần đây</h2><div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">Thời gian</th><th className="p-3">Khách hàng</th><th className="p-3">Quyền lợi</th><th className="p-3">Thứ tự</th></tr></thead><tbody>{data.recentSpins.map(spin => <tr key={spin._id} className="border-b"><td className="p-3">{new Date(spin.createdAt).toLocaleString('vi-VN')}</td><td className="p-3"><strong>{spin.userId?.name || 'Thành viên'}</strong><br/><span className="text-slate-500">{spin.userId?.email || ''}</span></td><td className="p-3">{spin.prizeValue ? money(spin.prizeValue) : 'Không kèm voucher'}</td><td className="p-3">#{spin.sequence}</td></tr>)}</tbody></table></div></section>
+        <section className="rounded-2xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-bold">Nhật ký quay gần đây</h2><div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">Thời gian</th><th className="p-3">Khách hàng</th><th className="p-3">Giải thưởng</th><th className="p-3">Thứ tự</th></tr></thead><tbody>{data.recentSpins.map(spin => <tr key={spin._id} className="border-b"><td className="p-3">{new Date(spin.createdAt).toLocaleString('vi-VN')}</td><td className="p-3"><strong>{spin.userId?.name || 'Thành viên'}</strong><br/><span className="text-slate-500">{spin.userId?.email || ''}</span></td><td className="p-3">{spin.prizeValue ? money(spin.prizeValue) : 'Chúc may mắn'}</td><td className="p-3">#{spin.sequence}</td></tr>)}</tbody></table></div></section>
     </div>;
 }
