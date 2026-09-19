@@ -5,7 +5,7 @@ import { createLuckyWheelTopUp, getLuckyWheelUserSummary, spinLuckyWheel } from 
 export async function GET() {
     const { user } = await requireAuth();
     if (!user) return NextResponse.json({ message: 'Vui lòng đăng nhập để tham gia' }, { status: 401 });
-    return NextResponse.json(await getLuckyWheelUserSummary(user._id));
+    return NextResponse.json(await getLuckyWheelUserSummary(user._id, user.role === 'admin'));
 }
 
 export async function POST(request: Request) {
@@ -17,9 +17,10 @@ export async function POST(request: Request) {
             const topUp = await createLuckyWheelTopUp(user._id, Number(amount));
             return NextResponse.json({ topUp });
         }
-        const spin = await spinLuckyWheel(user._id, String(requestId || ''));
-        const summary = await getLuckyWheelUserSummary(user._id);
-        return NextResponse.json({ spin, account: summary.account });
+        const adminTestMode = user.role === 'admin';
+        const spin = await spinLuckyWheel(user._id, String(requestId || ''), adminTestMode);
+        const summary = await getLuckyWheelUserSummary(user._id, adminTestMode);
+        return NextResponse.json({ spin, account: summary.account, adminTestMode });
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : '';
         const messages: Record<string, string> = {

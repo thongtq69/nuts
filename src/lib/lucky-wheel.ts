@@ -129,7 +129,7 @@ export async function reviewLuckyWheelWithdrawal(adminUserId: string, withdrawal
     return withdrawal;
 }
 
-export async function spinLuckyWheel(userId: string, requestId: string) {
+export async function spinLuckyWheel(userId: string, requestId: string, adminTestMode = false) {
     await dbConnect();
     if (!/^[a-zA-Z0-9_-]{8,80}$/.test(requestId)) throw new Error('REQUEST_ID_INVALID');
 
@@ -137,6 +137,19 @@ export async function spinLuckyWheel(userId: string, requestId: string) {
     if (existing) return existing;
 
     const settings = await getLuckyWheelSettings();
+    if (adminTestMode) {
+        const latestTestSpin = await LuckyWheelSpin.findOne({ userId, isTest: true }).sort({ sequence: -1 }).select('sequence').lean();
+        const testSequence = latestTestSpin ? Math.max(1, latestTestSpin.sequence - 1_000_000_000 + 1) : 1;
+        const prizeValue = prizeForSpin(testSequence, settings.regularSpinPrizes);
+        return LuckyWheelSpin.create({
+            userId,
+            requestId,
+            sequence: 1_000_000_000 + testSequence,
+            prizeValue,
+            result: prizeValue > 0 ? 'cash' : 'try_again',
+            isTest: true,
+        });
+    }
     if (!isCampaignActive(settings)) throw new Error('CAMPAIGN_INACTIVE');
 
     const session = await mongoose.startSession();
@@ -180,7 +193,7 @@ export async function spinLuckyWheel(userId: string, requestId: string) {
     return result;
 }
 
-export async function getLuckyWheelUserSummary(userId: string) {
+export async function getLuckyWheelUserSummary(userId: string, adminTestMode = false) {
     await dbConnect();
     const [settings, account, history, topUps, withdrawals] = await Promise.all([
         getLuckyWheelSettings(),
@@ -202,6 +215,7 @@ export async function getLuckyWheelUserSummary(userId: string) {
             withdrawalTitle: settings.withdrawalTitle,
             termsTitle: settings.termsTitle,
             historyTitle: settings.historyTitle,
+            adminTestMode,
             active: isCampaignActive(settings),
             enabled: settings.enabled,
             minimumTopUp: settings.minimumTopUp,
