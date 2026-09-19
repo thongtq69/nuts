@@ -77,3 +77,12 @@ test('withdrawal accounting migration explicitly enables MongoDB update pipeline
     const source = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
     assert.match(source, /LuckyWheelAccount\.updateMany\([\s\S]*?\{ updatePipeline: true \}\)/);
 });
+
+test('customer and admin pages fail closed instead of rendering empty wheel data', () => {
+    const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const adminPage = readFileSync(new URL('../src/app/admin/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    assert.match(customerPage, /if \(!data\)[\s\S]*Chưa tải được vòng quay/);
+    assert.match(customerPage, /Tải lại dữ liệu/);
+    assert.match(adminPage, /if \(!data\)[\s\S]*Không thể tải cấu hình vòng quay/);
+    assert.match(adminPage, /Thử tải lại/);
+});

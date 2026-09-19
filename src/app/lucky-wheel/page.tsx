@@ -50,6 +50,7 @@ export default function LuckyWheelPage() {
     const { user, loading: authLoading } = useAuth();
     const [data, setData] = useState<WheelData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [spinning, setSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
     const [message, setMessage] = useState('');
@@ -64,18 +65,24 @@ export default function LuckyWheelPage() {
 
     const load = useCallback(async () => {
         if (!user) return;
-        const response = await fetch('/api/lucky-wheel', { cache: 'no-store' });
-        if (response.ok) {
+        setLoadError('');
+        try {
+            const response = await fetch('/api/lucky-wheel', { cache: 'no-store' });
+            if (!response.ok) {
+                const result = await response.json().catch(() => null);
+                throw new Error(result?.message || 'Không thể tải dữ liệu vòng quay.');
+            }
             const result: WheelData = await response.json();
             setData(result);
             setTopUpAmount(current => result.campaign.topUpOptions.includes(current) ? current : result.campaign.topUpOptions[0] || result.campaign.minimumTopUp);
             setWithdrawForm(current => ({ ...current, amount: result.campaign.minimumWithdrawal }));
+        } catch (error) {
+            setLoadError(error instanceof Error ? error.message : 'Không thể tải dữ liệu vòng quay.');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }, [user]);
 
-    // Loading is asynchronous; state updates happen after the request resolves.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { void load(); }, [load]);
 
     useEffect(() => {
@@ -159,6 +166,7 @@ export default function LuckyWheelPage() {
 
     if (authLoading || (user && loading)) return <main><Header /><Navbar /><div className="grid min-h-[60vh] place-items-center text-[#795432]"><RefreshCw className="animate-spin" /></div><Footer /></main>;
     if (!user) return <main><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Vòng quay may mắn' }]} /><section className="mx-auto max-w-xl px-5 py-20 text-center"><Gift className="mx-auto mb-5 text-[#9c7043]" size={52}/><h1 className="text-3xl font-black">Vòng quay may mắn Go Nuts</h1><p className="mt-4 text-slate-600">Vui lòng đăng ký thành viên hoặc đăng nhập để nạp lượt và tham gia.</p><Link href="/login" className="mt-7 inline-flex rounded-full bg-[#9c7043] px-7 py-3 font-bold text-white">Đăng nhập ngay</Link></section><Footer /></main>;
+    if (!data) return <main className="min-h-screen bg-[#fffaf0]"><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Vòng quay may mắn' }]} /><section className="mx-auto grid min-h-[55vh] max-w-xl place-items-center px-5 py-16"><div className="w-full rounded-[28px] border border-amber-200 bg-white p-7 text-center shadow-xl sm:p-10"><RefreshCw className="mx-auto text-amber-600" size={42}/><h1 className="mt-4 text-2xl font-black text-[#2c2119]">Chưa tải được vòng quay</h1><p className="mt-3 text-sm leading-6 text-slate-600">{loadError || 'Kết nối tạm thời chưa ổn định. Dữ liệu cũ sẽ không được hiển thị thành số 0.'}</p><button onClick={() => { setLoading(true); void load(); }} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#2c2119] px-6 py-3 font-bold text-white transition hover:bg-[#9c7043]"><RefreshCw size={17}/> Tải lại dữ liệu</button></div></section><Footer /></main>;
 
     return <main className="min-h-screen overflow-x-hidden bg-[#fffaf0]"><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Vòng quay may mắn' }]} />
         <section className="relative overflow-hidden pb-16 pt-5 sm:pb-24 sm:pt-8"><div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_50%_0%,rgba(235,191,91,.3),transparent_70%)]" /><div className="pointer-events-none absolute -right-28 top-80 h-80 w-80 rounded-full bg-emerald-100/45 blur-3xl" /><div className="relative mx-auto max-w-7xl px-3.5 sm:px-6 lg:px-8">

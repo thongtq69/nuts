@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, Gift, Minus, Plus, Save, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Gift, Minus, Plus, RefreshCw, Save, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
 interface WheelSegment { label: string; value: number; color: string }
@@ -60,25 +60,37 @@ const labelClass = 'block text-sm font-semibold text-slate-700';
 export default function AdminLuckyWheelPage() {
     const toast = useToast();
     const [data, setData] = useState<AdminWheelData | null>(null);
+    const [loadError, setLoadError] = useState('');
+    const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState('');
     const [form, setForm] = useState<WheelForm>(emptyForm);
     const [settlingWithdrawal, setSettlingWithdrawal] = useState<Withdrawal | null>(null);
     const [settlementForm, setSettlementForm] = useState({ bankTransactionId: '', note: '' });
     const load = useCallback(async () => {
-        const response = await fetch('/api/admin/lucky-wheel', { cache: 'no-store' });
-        if (!response.ok) return;
-        const result: AdminWheelData = await response.json();
-        setData(result);
-        setForm({
-            ...result.settings,
-            campaignStartAt: result.settings.campaignStartAt ? String(result.settings.campaignStartAt).slice(0, 16) : '',
-            campaignEndAt: result.settings.campaignEndAt ? String(result.settings.campaignEndAt).slice(0, 16) : '',
-            topUpOptions: [...(result.settings.topUpOptions || [])],
-            regularSpinPrizes: [...(result.settings.regularSpinPrizes || [])],
-            wheelSegments: (result.settings.wheelSegments || []).map(segment => ({ label: segment.label, value: segment.value, color: segment.color })),
-            terms: [...(result.settings.terms || [])],
-            milestoneRewards: (result.settings.milestoneRewards || []).map(reward => ({ value: reward.value, count: reward.count })),
-        });
+        setLoadError('');
+        try {
+            const response = await fetch('/api/admin/lucky-wheel', { cache: 'no-store' });
+            if (!response.ok) {
+                const result = await response.json().catch(() => null);
+                throw new Error(result?.message || 'Không thể tải cấu hình vòng quay.');
+            }
+            const result: AdminWheelData = await response.json();
+            setData(result);
+            setForm({
+                ...result.settings,
+                campaignStartAt: result.settings.campaignStartAt ? String(result.settings.campaignStartAt).slice(0, 16) : '',
+                campaignEndAt: result.settings.campaignEndAt ? String(result.settings.campaignEndAt).slice(0, 16) : '',
+                topUpOptions: [...(result.settings.topUpOptions || [])],
+                regularSpinPrizes: [...(result.settings.regularSpinPrizes || [])],
+                wheelSegments: (result.settings.wheelSegments || []).map(segment => ({ label: segment.label, value: segment.value, color: segment.color })),
+                terms: [...(result.settings.terms || [])],
+                milestoneRewards: (result.settings.milestoneRewards || []).map(reward => ({ value: reward.value, count: reward.count })),
+            });
+        } catch (error) {
+            setLoadError(error instanceof Error ? error.message : 'Không thể tải cấu hình vòng quay.');
+        } finally {
+            setLoading(false);
+        }
     }, []);
     useEffect(() => { void load(); }, [load]);
 
@@ -134,7 +146,8 @@ export default function AdminLuckyWheelPage() {
         : status === 'rejected'
             ? { label: 'Đã từ chối', className: 'bg-red-100 text-red-700' }
             : { label: 'Chờ chuyển khoản', className: 'bg-amber-100 text-amber-700' };
-    if (!data) return <div className="grid min-h-[50vh] place-items-center">Đang tải cấu hình...</div>;
+    if (loading) return <div className="grid min-h-[50vh] place-items-center"><div className="flex items-center gap-3 font-semibold text-slate-600"><RefreshCw className="animate-spin" size={20}/> Đang tải cấu hình...</div></div>;
+    if (!data) return <div className="grid min-h-[60vh] place-items-center px-4"><div className="w-full max-w-xl rounded-3xl border border-red-200 bg-white p-7 text-center shadow-xl sm:p-10"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-red-50 text-red-600"><AlertTriangle size={28}/></span><h1 className="mt-5 text-2xl font-black text-slate-900">Không thể tải cấu hình vòng quay</h1><p className="mt-3 text-sm leading-6 text-slate-600">{loadError || 'Máy chủ tạm thời chưa phản hồi. Hệ thống sẽ không hiển thị dữ liệu rỗng hoặc số 0 giả.'}</p><button onClick={() => { setLoading(true); void load(); }} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-bold text-white transition hover:bg-amber-600"><RefreshCw size={18}/> Thử tải lại</button></div></div>;
 
     const milestoneDescription = form.milestoneRewards.map(reward => `${reward.count} người nhận ${money(reward.value)}`).join(' và ');
     const totalMilestoneWinners = form.milestoneRewards.reduce((sum, reward) => sum + Number(reward.count || 0), 0);
