@@ -1,6 +1,6 @@
-export const BANK_PAYMENT_REF_PATTERN = /^(?:GO|VIP)[A-Z0-9]{6,12}$/i;
+export const BANK_PAYMENT_REF_PATTERN = /^(?:GO|VIP|LW)[A-Z0-9]{6,12}$/i;
 
-const BANK_PAYMENT_REF_IN_TEXT = /(?:^|[^A-Z0-9])((?:GO|VIP)[A-Z0-9]{6,12})(?![A-Z0-9])/i;
+const BANK_PAYMENT_REF_IN_TEXT = /(?:^|[^A-Z0-9])((?:GO|VIP|LW)[A-Z0-9]{6,12})(?![A-Z0-9])/i;
 
 export function isBankPaymentRef(value: string): boolean {
     return BANK_PAYMENT_REF_PATTERN.test(value.trim());

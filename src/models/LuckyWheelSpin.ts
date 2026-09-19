@@ -5,7 +5,7 @@ export interface ILuckyWheelSpin {
     requestId: string;
     sequence: number;
     prizeValue: number;
-    result: 'try_again' | 'voucher';
+    result: 'try_again' | 'cash';
     voucherId?: mongoose.Types.ObjectId;
 }
 
@@ -14,7 +14,7 @@ const schema = new Schema<ILuckyWheelSpin>({
     requestId: { type: String, required: true },
     sequence: { type: Number, required: true, min: 1 },
     prizeValue: { type: Number, required: true, min: 0 },
-    result: { type: String, enum: ['try_again', 'voucher'], required: true },
+    result: { type: String, enum: ['try_again', 'cash', 'voucher'], required: true },
     voucherId: { type: Schema.Types.ObjectId, ref: 'UserVoucher' },
 }, { timestamps: true });
 schema.index({ userId: 1, requestId: 1 }, { unique: true });

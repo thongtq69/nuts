@@ -198,7 +198,7 @@ export default function AccountPage() {
         fetchFinancialSummary();
         fetch('/api/lucky-wheel', { cache: 'no-store' })
             .then(response => response.ok ? response.json() : null)
-            .then(result => setLuckyWheelWinnings(result?.account?.lifetimeVoucherWinnings || 0))
+            .then(result => setLuckyWheelWinnings(result?.account?.lifetimeWinnings || 0))
             .catch(() => undefined);
     }, [user]);
 
@@ -465,9 +465,9 @@ export default function AccountPage() {
                         <p className="mt-2 text-xs text-emerald-600">Từ {financialSummary.vipSavingsOrderCount} đơn đã sử dụng voucher VIP.</p>
                     </div>
                     <Link href="/lucky-wheel" className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm transition hover:-translate-y-0.5">
-                        <p className="text-sm text-amber-700">Tổng voucher đã trúng</p>
+                        <p className="text-sm text-amber-700">Tổng tiền đã trúng thưởng</p>
                         <p className="mt-1 text-2xl font-bold text-amber-800">{luckyWheelWinnings.toLocaleString('vi-VN')}đ</p>
-                        <p className="mt-2 text-xs font-semibold text-amber-700">Mở vòng quà tri ân →</p>
+                        <p className="mt-2 text-xs font-semibold text-amber-700">Mở vòng quay may mắn →</p>
                     </Link>
                 </div>
 

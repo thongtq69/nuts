@@ -7,6 +7,11 @@ export interface ILuckyWheelAccount {
     lifetimeSpinsUsed: number;
     lifetimeVoucherWinnings: number;
     qualifyingRevenue: number;
+    prizeBalance: number;
+    pendingWithdrawal: number;
+    lifetimeWinnings: number;
+    lifetimeWithdrawn: number;
+    lifetimeSpentOnOrders: number;
 }
 
 const schema = new Schema<ILuckyWheelAccount>({
@@ -16,6 +21,11 @@ const schema = new Schema<ILuckyWheelAccount>({
     lifetimeSpinsUsed: { type: Number, default: 0, min: 0 },
     lifetimeVoucherWinnings: { type: Number, default: 0, min: 0 },
     qualifyingRevenue: { type: Number, default: 0, min: 0 },
+    prizeBalance: { type: Number, default: 0, min: 0 },
+    pendingWithdrawal: { type: Number, default: 0, min: 0 },
+    lifetimeWinnings: { type: Number, default: 0, min: 0 },
+    lifetimeWithdrawn: { type: Number, default: 0, min: 0 },
+    lifetimeSpentOnOrders: { type: Number, default: 0, min: 0 },
 }, { timestamps: true });
 
 const LuckyWheelAccount: Model<ILuckyWheelAccount> = mongoose.models.LuckyWheelAccount

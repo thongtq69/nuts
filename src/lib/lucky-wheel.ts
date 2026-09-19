@@ -1,73 +1,112 @@
 import crypto from 'node:crypto';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
-import { isCampaignActive, prizeForSpin, voucherMinimumOrder } from '@/lib/lucky-wheel-rules';
+import { isCampaignActive, prizeForSpin, spinsForTopUp } from '@/lib/lucky-wheel-rules';
 import LuckyWheelAccount from '@/models/LuckyWheelAccount';
-import LuckyWheelGrant from '@/models/LuckyWheelGrant';
 import LuckyWheelSettings from '@/models/LuckyWheelSettings';
 import LuckyWheelSpin from '@/models/LuckyWheelSpin';
 import LuckyWheelMilestone from '@/models/LuckyWheelMilestone';
-import Order from '@/models/Order';
-import UserVoucher from '@/models/UserVoucher';
+import LuckyWheelTopUp from '@/models/LuckyWheelTopUp';
+import LuckyWheelWithdrawal from '@/models/LuckyWheelWithdrawal';
 
 export async function getLuckyWheelSettings() {
     await dbConnect();
     const settings = await LuckyWheelSettings.findOneAndUpdate(
         { key: 'default' },
-        { $setOnInsert: { key: 'default', enabled: true, programVersion: 2 } },
+        { $setOnInsert: { key: 'default', enabled: true, programVersion: 3 } },
         { new: true, upsert: true, setDefaultsOnInsert: true },
     );
-    // One-time migration from the earlier chance-based draft. It intentionally
-    // activates only once; an admin can still pause the program afterwards.
-    if ((settings.programVersion || 0) < 2) {
-        settings.programVersion = 2;
+    if ((settings.programVersion || 0) < 3) {
+        settings.programVersion = 3;
         settings.enabled = true;
-        settings.campaignName = 'Vòng quà tri ân cố định';
-        settings.qualifyingOrderMinimum = 20_000;
+        settings.campaignName = 'Vòng quay may mắn Go Nuts';
+        settings.minimumTopUp = 10_000;
+        settings.spinsPerTopUpUnit = 5;
+        settings.milestoneTopUps = 1_000_000;
         await settings.save();
     }
     return settings;
 }
 
-export async function grantLuckyWheelSpinsForCompletedOrder(orderId: string) {
-    await dbConnect();
-    const settings = await getLuckyWheelSettings();
-    if (!isCampaignActive(settings)) return { granted: false, reason: 'campaign_inactive' };
-
-    const order = await Order.findById(orderId).lean();
-    if (!order?.user || order.orderType === 'membership') return { granted: false, reason: 'ineligible_order' };
-    if (!['completed', 'delivered'].includes(order.status)) return { granted: false, reason: 'order_not_completed' };
-    if (order.totalAmount < settings.qualifyingOrderMinimum) return { granted: false, reason: 'minimum_not_met' };
-
-    try {
-        await LuckyWheelGrant.create({
-            userId: order.user,
-            orderId: order._id,
-            orderAmount: order.totalAmount,
-            spins: settings.spinsPerOrder,
-        });
-    } catch (error: unknown) {
-        if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) return { granted: false, reason: 'already_granted' };
-        throw error;
-    }
-
-    await LuckyWheelAccount.findOneAndUpdate(
-        { userId: order.user },
-        {
-            $inc: {
-                availableSpins: settings.spinsPerOrder,
-                lifetimeSpinsGranted: settings.spinsPerOrder,
-                qualifyingRevenue: order.totalAmount,
-            },
-            $setOnInsert: { lifetimeSpinsUsed: 0, lifetimeVoucherWinnings: 0 },
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
-    );
-    return { granted: true, spins: settings.spinsPerOrder };
+export function createLuckyWheelPaymentRef() {
+    return `LW${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
 }
 
-function createVoucherCode() {
-    return `VQ-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+export async function createLuckyWheelTopUp(userId: string, amount: number) {
+    await dbConnect();
+    const normalizedAmount = Math.floor(Number(amount));
+    const spins = spinsForTopUp(normalizedAmount);
+    if (!spins || normalizedAmount % 10_000 !== 0) throw new Error('INVALID_TOP_UP');
+    const settings = await getLuckyWheelSettings();
+    if (!isCampaignActive(settings)) throw new Error('CAMPAIGN_INACTIVE');
+    return LuckyWheelTopUp.create({ userId, amount: normalizedAmount, spins, paymentRef: createLuckyWheelPaymentRef() });
+}
+
+export async function applyPaidLuckyWheelTopUp(paymentRef: string, amount: number, transactionId: string) {
+    await dbConnect();
+    const session = await mongoose.startSession();
+    let topUp = null;
+    try {
+        await session.withTransaction(async () => {
+            topUp = await LuckyWheelTopUp.findOne({ paymentRef, status: 'pending' }).session(session);
+            if (!topUp) return;
+            if (Number(topUp.amount) !== Number(amount)) throw new Error('TOP_UP_AMOUNT_MISMATCH');
+            topUp.status = 'paid';
+            topUp.acbTransactionNo = transactionId;
+            topUp.paidAt = new Date();
+            await topUp.save({ session });
+            await LuckyWheelAccount.findOneAndUpdate(
+                { userId: topUp.userId },
+                { $inc: { availableSpins: topUp.spins, lifetimeSpinsGranted: topUp.spins, qualifyingRevenue: topUp.amount }, $setOnInsert: { lifetimeSpinsUsed: 0 } },
+                { upsert: true, session, setDefaultsOnInsert: true },
+            );
+        });
+    } finally { await session.endSession(); }
+    return topUp;
+}
+
+export async function requestLuckyWheelWithdrawal(userId: string, input: { amount: number; bankName: string; accountNumber: string; accountName: string }) {
+    await dbConnect();
+    const amount = Math.floor(Number(input.amount));
+    if (amount < 100_000 || amount % 1_000 !== 0) throw new Error('INVALID_WITHDRAWAL_AMOUNT');
+    if (!input.bankName.trim() || !/^\d{6,30}$/.test(input.accountNumber.trim()) || !input.accountName.trim()) throw new Error('INVALID_BANK_INFO');
+    const session = await mongoose.startSession();
+    let withdrawal = null;
+    try {
+        await session.withTransaction(async () => {
+            const account = await LuckyWheelAccount.findOneAndUpdate(
+                { userId, prizeBalance: { $gte: amount } },
+                { $inc: { prizeBalance: -amount, pendingWithdrawal: amount } },
+                { new: true, session },
+            );
+            if (!account) throw new Error('INSUFFICIENT_PRIZE_BALANCE');
+            [withdrawal] = await LuckyWheelWithdrawal.create([{
+                userId, amount, bankName: input.bankName.trim(), accountNumber: input.accountNumber.trim(), accountName: input.accountName.trim().toUpperCase(), status: 'pending',
+            }], { session });
+        });
+    } finally { await session.endSession(); }
+    return withdrawal;
+}
+
+export async function reviewLuckyWheelWithdrawal(adminUserId: string, withdrawalId: string, action: 'paid' | 'rejected', note = '') {
+    await dbConnect();
+    const session = await mongoose.startSession();
+    let withdrawal = null;
+    try {
+        await session.withTransaction(async () => {
+            withdrawal = await LuckyWheelWithdrawal.findOneAndUpdate(
+                { _id: withdrawalId, status: 'pending' },
+                { $set: { status: action, note: note.trim(), reviewedBy: adminUserId, reviewedAt: new Date() } },
+                { new: true, session },
+            );
+            if (!withdrawal) throw new Error('WITHDRAWAL_NOT_FOUND');
+            const update = action === 'paid'
+                ? { $inc: { pendingWithdrawal: -withdrawal.amount, lifetimeWithdrawn: withdrawal.amount } }
+                : { $inc: { pendingWithdrawal: -withdrawal.amount, prizeBalance: withdrawal.amount } };
+            await LuckyWheelAccount.updateOne({ userId: withdrawal.userId }, update, { session });
+        });
+    } finally { await session.endSession(); }
+    return withdrawal;
 }
 
 export async function spinLuckyWheel(userId: string, requestId: string) {
@@ -103,34 +142,17 @@ export async function spinLuckyWheel(userId: string, requestId: string) {
                 requestId,
                 sequence,
                 prizeValue,
-                result: prizeValue > 0 ? 'voucher' : 'try_again',
+                result: prizeValue > 0 ? 'cash' : 'try_again',
             }], { session });
 
-            let voucher = null;
             if (prizeValue > 0) {
-                const expiresAt = new Date();
-                expiresAt.setDate(expiresAt.getDate() + 30);
-                [voucher] = await UserVoucher.create([{
-                    userId,
-                    code: createVoucherCode(),
-                    discountType: 'fixed',
-                    discountValue: prizeValue,
-                    maxDiscount: prizeValue,
-                    minOrderValue: voucherMinimumOrder(prizeValue),
-                    expiresAt,
-                    isUsed: false,
-                    source: 'campaign',
-                    sourceId: spin._id,
-                }], { session });
-                spin.voucherId = voucher._id as unknown as mongoose.Types.ObjectId;
-                await spin.save({ session });
                 await LuckyWheelAccount.updateOne(
                     { userId },
-                    { $inc: { lifetimeVoucherWinnings: prizeValue } },
+                    { $inc: { prizeBalance: prizeValue, lifetimeWinnings: prizeValue, lifetimeVoucherWinnings: prizeValue } },
                     { session },
                 );
             }
-            result = { ...spin.toObject(), voucher: voucher?.toObject() || null };
+            result = spin.toObject();
         });
     } finally {
         await session.endSession();
@@ -140,18 +162,20 @@ export async function spinLuckyWheel(userId: string, requestId: string) {
 
 export async function getLuckyWheelUserSummary(userId: string) {
     await dbConnect();
-    const [settings, account, history] = await Promise.all([
+    const [settings, account, history, topUps, withdrawals] = await Promise.all([
         getLuckyWheelSettings(),
         LuckyWheelAccount.findOne({ userId }).lean(),
         LuckyWheelSpin.find({ userId }).sort({ createdAt: -1 }).limit(20).populate('voucherId').lean(),
+        LuckyWheelTopUp.find({ userId }).sort({ createdAt: -1 }).limit(10).lean(),
+        LuckyWheelWithdrawal.find({ userId }).sort({ createdAt: -1 }).limit(10).lean(),
     ]);
     return {
         campaign: {
             name: settings.campaignName,
             active: isCampaignActive(settings),
             enabled: settings.enabled,
-            qualifyingOrderMinimum: settings.qualifyingOrderMinimum,
-            spinsPerOrder: settings.spinsPerOrder,
+            minimumTopUp: settings.minimumTopUp,
+            spinsPerTopUpUnit: settings.spinsPerTopUpUnit,
             campaignStartAt: settings.campaignStartAt,
             campaignEndAt: settings.campaignEndAt,
         },
@@ -161,14 +185,21 @@ export async function getLuckyWheelUserSummary(userId: string) {
             lifetimeSpinsUsed: 0,
             lifetimeVoucherWinnings: 0,
             qualifyingRevenue: 0,
+            prizeBalance: 0,
+            pendingWithdrawal: 0,
+            lifetimeWinnings: 0,
+            lifetimeWithdrawn: 0,
+            lifetimeSpentOnOrders: 0,
         },
         history,
+        topUps,
+        withdrawals,
     };
 }
 
 export async function getLuckyWheelAdminSummary() {
     await dbConnect();
-    const [settings, accountTotals, grantTotals, spins, milestones] = await Promise.all([
+    const [settings, accountTotals, topUpTotals, spins, milestones, withdrawals] = await Promise.all([
         getLuckyWheelSettings(),
         LuckyWheelAccount.aggregate([{ $group: {
             _id: null,
@@ -177,25 +208,28 @@ export async function getLuckyWheelAdminSummary() {
             spinsGranted: { $sum: '$lifetimeSpinsGranted' },
             spinsUsed: { $sum: '$lifetimeSpinsUsed' },
             voucherWinnings: { $sum: '$lifetimeVoucherWinnings' },
+            prizeBalance: { $sum: '$prizeBalance' },
         } }]),
-        LuckyWheelGrant.aggregate([{ $group: { _id: null, revenue: { $sum: '$orderAmount' }, orders: { $sum: 1 } } }]),
+        LuckyWheelTopUp.aggregate([{ $match: { status: 'paid' } }, { $group: { _id: null, revenue: { $sum: '$amount' }, topUps: { $sum: 1 } } }]),
         LuckyWheelSpin.find({}).sort({ createdAt: -1 }).limit(50).populate('userId', 'name email').lean(),
         LuckyWheelMilestone.find({}).sort({ cycle: -1 }).lean(),
+        LuckyWheelWithdrawal.find({}).sort({ createdAt: -1 }).limit(50).populate('userId', 'name email').lean(),
     ]);
     const totals = accountTotals[0] || { customers: 0, availableSpins: 0, spinsGranted: 0, spinsUsed: 0, voucherWinnings: 0 };
-    const grants = grantTotals[0] || { revenue: 0, orders: 0 };
-    const completedCycles = Math.floor(grants.revenue / settings.milestoneRevenue);
+    const paid = topUpTotals[0] || { revenue: 0, topUps: 0 };
+    const completedCycles = Math.floor(paid.topUps / settings.milestoneTopUps);
     return {
         settings,
-        totals: { ...totals, qualifyingRevenue: grants.revenue, qualifyingOrders: grants.orders },
+        totals: { ...totals, topUpRevenue: paid.revenue, paidTopUps: paid.topUps },
         milestone: {
             completedCycles,
             drawnCycles: milestones.length,
-            nextTarget: (milestones.length + 1) * settings.milestoneRevenue,
-            remaining: Math.max(0, (milestones.length + 1) * settings.milestoneRevenue - grants.revenue),
+            nextTarget: (milestones.length + 1) * settings.milestoneTopUps,
+            remaining: Math.max(0, (milestones.length + 1) * settings.milestoneTopUps - paid.topUps),
         },
         milestones,
         recentSpins: spins,
+        withdrawals,
     };
 }
 
@@ -203,17 +237,15 @@ export async function awardLuckyWheelMilestone(adminUserId: string) {
     await dbConnect();
     const settings = await getLuckyWheelSettings();
     if (!isCampaignActive(settings)) throw new Error('CAMPAIGN_INACTIVE');
-    const revenue = (await LuckyWheelGrant.aggregate([{ $group: { _id: null, total: { $sum: '$orderAmount' } } }]))[0]?.total || 0;
+    const paidTopUps = await LuckyWheelTopUp.countDocuments({ status: 'paid' });
     const drawnCycles = await LuckyWheelMilestone.countDocuments();
     const cycle = drawnCycles + 1;
-    if (revenue < cycle * settings.milestoneRevenue) throw new Error('MILESTONE_NOT_REACHED');
+    if (paidTopUps < cycle * settings.milestoneTopUps) throw new Error('MILESTONE_NOT_REACHED');
 
-    // No random draw: rank members by eligible purchase value, then by the
-    // earliest qualifying order. The published rule makes every award auditable.
-    const candidates = await LuckyWheelGrant.aggregate([
-        { $group: { _id: '$userId', total: { $sum: '$orderAmount' }, firstOrderAt: { $min: '$createdAt' } } },
-        { $sort: { total: -1, firstOrderAt: 1, _id: 1 } },
-        { $limit: 15 },
+    const candidates = await LuckyWheelTopUp.aggregate([
+        { $match: { status: 'paid' } },
+        { $group: { _id: '$userId' } },
+        { $sample: { size: 15 } },
     ]);
     if (candidates.length < 15) throw new Error('NOT_ENOUGH_CUSTOMERS');
 
@@ -223,32 +255,18 @@ export async function awardLuckyWheelMilestone(adminUserId: string) {
         await session.withTransaction(async () => {
             [milestone] = await LuckyWheelMilestone.create([{
                 cycle,
-                revenueTarget: cycle * settings.milestoneRevenue,
+                topUpTarget: cycle * settings.milestoneTopUps,
                 winners: [],
                 drawnBy: adminUserId,
                 drawnAt: new Date(),
             }], { session });
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 30);
             for (let index = 0; index < 15; index += 1) {
                 const userId = candidates[index]._id;
                 const prizeValue = index < 10 ? 100_000 : 50_000;
-                const [voucher] = await UserVoucher.create([{
-                    userId,
-                    code: createVoucherCode(),
-                    discountType: 'fixed',
-                    discountValue: prizeValue,
-                    maxDiscount: prizeValue,
-                    minOrderValue: voucherMinimumOrder(prizeValue),
-                    expiresAt,
-                    isUsed: false,
-                    source: 'campaign',
-                    sourceId: milestone._id,
-                }], { session });
-                milestone.winners.push({ userId, prizeValue, voucherId: voucher._id as unknown as mongoose.Types.ObjectId });
+                milestone.winners.push({ userId, prizeValue });
                 await LuckyWheelAccount.updateOne(
                     { userId },
-                    { $inc: { lifetimeVoucherWinnings: prizeValue }, $setOnInsert: { availableSpins: 0, lifetimeSpinsGranted: 0, lifetimeSpinsUsed: 0, qualifyingRevenue: 0 } },
+                    { $inc: { prizeBalance: prizeValue, lifetimeWinnings: prizeValue, lifetimeVoucherWinnings: prizeValue }, $setOnInsert: { availableSpins: 0, lifetimeSpinsGranted: 0, lifetimeSpinsUsed: 0, qualifyingRevenue: 0 } },
                     { upsert: true, session },
                 );
             }

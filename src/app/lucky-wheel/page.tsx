@@ -1,21 +1,36 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { ArrowDownToLine, Banknote, CheckCircle2, Clock3, Coins, Gift, History, RefreshCw, ShieldCheck, Sparkles, WalletCards, X } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Breadcrumb from '@/components/common/Breadcrumb';
+import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
 import { useAuth } from '@/context/AuthContext';
 
-const labels = ['Quà 1', 'Voucher 1.000đ', 'Quà 3', 'Voucher 5.000đ', 'Quà 5'];
+const segments = [
+    { label: 'Chúc may mắn', short: 'May mắn', value: 0, color: '#fff7db' },
+    { label: '1.000đ', short: '1K', value: 1_000, color: '#f6bd4b' },
+    { label: '5.000đ', short: '5K', value: 5_000, color: '#e96f65' },
+    { label: '10.000đ', short: '10K', value: 10_000, color: '#8bbd75' },
+    { label: '50.000đ', short: '50K', value: 50_000, color: '#73a9d8' },
+    { label: '100.000đ', short: '100K', value: 100_000, color: '#b68ad6' },
+];
 
 interface SpinHistoryItem { _id?: string; requestId: string; prizeValue: number; createdAt?: string }
+interface TopUp { _id: string; paymentRef: string; amount: number; spins: number; status: 'pending' | 'paid' | 'expired'; createdAt: string }
+interface Withdrawal { _id: string; amount: number; status: 'pending' | 'paid' | 'rejected'; createdAt: string }
 interface WheelData {
-    campaign: { name: string; active: boolean; qualifyingOrderMinimum: number };
-    account: { availableSpins: number; lifetimeVoucherWinnings: number };
+    campaign: { name: string; active: boolean; minimumTopUp: number; spinsPerTopUpUnit: number };
+    account: { availableSpins: number; prizeBalance: number; pendingWithdrawal: number; lifetimeWinnings: number };
     history: SpinHistoryItem[];
+    topUps: TopUp[];
+    withdrawals: Withdrawal[];
 }
+
+const money = (value: number) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
 
 export default function LuckyWheelPage() {
     const { user, loading: authLoading } = useAuth();
@@ -24,75 +39,86 @@ export default function LuckyWheelPage() {
     const [spinning, setSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
     const [message, setMessage] = useState('');
+    const [topUpAmount, setTopUpAmount] = useState(10_000);
+    const [topUp, setTopUp] = useState<TopUp | null>(null);
+    const [creatingTopUp, setCreatingTopUp] = useState(false);
+    const [withdrawOpen, setWithdrawOpen] = useState(false);
+    const [withdrawForm, setWithdrawForm] = useState({ amount: 100_000, bankName: '', accountNumber: '', accountName: '' });
+    const [submittingWithdrawal, setSubmittingWithdrawal] = useState(false);
 
     const load = useCallback(async () => {
         if (!user) return;
-        setLoading(true);
         const response = await fetch('/api/lucky-wheel', { cache: 'no-store' });
         if (response.ok) setData(await response.json());
         setLoading(false);
     }, [user]);
 
-    // Loading is asynchronous; the state changes happen after the request resolves.
+    // Loading is asynchronous; state updates happen after the request resolves.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { void load(); }, [load]);
 
+    useEffect(() => {
+        if (!topUp || topUp.status !== 'pending') return;
+        const timer = window.setInterval(async () => {
+            const response = await fetch(`/api/lucky-wheel/top-up/${topUp.paymentRef}`, { cache: 'no-store' });
+            if (!response.ok) return;
+            const result = await response.json();
+            if (result.topUp?.status === 'paid') {
+                setTopUp(result.topUp);
+                setMessage(`Nạp tiền thành công! Bạn đã nhận ${result.topUp.spins} lượt quay.`);
+                await load();
+            }
+        }, 5_000);
+        return () => window.clearInterval(timer);
+    }, [topUp, load]);
+
+    const wheelBackground = useMemo(() => `conic-gradient(${segments.map((segment, index) => `${segment.color} ${index * 60}deg ${index * 60 + 60}deg`).join(',')})`, []);
+
     const spin = async () => {
-        if (spinning || !data?.campaign?.active || data?.account?.availableSpins < 1) return;
-        setSpinning(true);
-        setMessage('');
-        const requestId = crypto.randomUUID().replaceAll('-', '');
-        const response = await fetch('/api/lucky-wheel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ requestId }),
-        });
+        if (spinning || !data?.campaign.active || data.account.availableSpins < 1) return;
+        setSpinning(true); setMessage('');
+        const response = await fetch('/api/lucky-wheel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId: crypto.randomUUID().replaceAll('-', '') }) });
         const outcome = await response.json();
-        if (!response.ok) {
-            setMessage(outcome.message || 'Không thể quay lúc này.');
-            setSpinning(false);
-            return;
-        }
+        if (!response.ok) { setMessage(outcome.message || 'Không thể quay lúc này.'); setSpinning(false); return; }
         const prize = Number(outcome.spin.prizeValue || 0);
-        const selected = (Number(outcome.spin.sequence) - 1) % labels.length;
-        const segmentAngle = 360 / labels.length;
-        setRotation(previous => previous + 1800 + (360 - (selected * segmentAngle + segmentAngle / 2)));
-        window.setTimeout(() => {
-            setData(previous => previous ? ({ ...previous, account: outcome.account, history: [outcome.spin, ...(previous.history || [])].slice(0, 20) }) : previous);
-            setMessage(prize ? `Bạn đã mở voucher ${prize.toLocaleString('vi-VN')}đ.` : 'Ô quà này không kèm voucher. Hãy mở ô tiếp theo!');
-            setSpinning(false);
-        }, 3200);
+        const selected = Math.max(0, segments.findIndex(item => item.value === prize));
+        setRotation(previous => previous + 1800 + (360 - (selected * 60 + 30)) - (previous % 360));
+        window.setTimeout(() => { void load(); setMessage(prize ? `Chúc mừng! ${money(prize)} đã được cộng vào số dư thưởng.` : 'Chúc bạn may mắn ở lượt quay tiếp theo!'); setSpinning(false); }, 3600);
     };
 
-    if (authLoading || (user && loading)) return <main><Header /><Navbar /><div className="min-h-[55vh] grid place-items-center">Đang tải vòng quay...</div><Footer /></main>;
-    if (!user) return (
-        <main><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Vòng quà tri ân' }]} />
-            <section className="mx-auto max-w-xl px-5 py-20 text-center"><h1 className="text-3xl font-bold">Vòng quà tri ân cố định</h1><p className="mt-4 text-slate-600">Bạn cần đăng ký thành viên hoặc đăng nhập để nhận và mở các ô quà.</p><Link href="/login" className="mt-7 inline-block rounded-xl bg-amber-500 px-6 py-3 font-bold text-slate-900">Đăng nhập ngay</Link></section><Footer /></main>
-    );
+    const createTopUp = async () => {
+        setCreatingTopUp(true);
+        const response = await fetch('/api/lucky-wheel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'top-up', amount: topUpAmount }) });
+        const result = await response.json();
+        if (response.ok) setTopUp(result.topUp); else setMessage(result.message || 'Không thể tạo giao dịch nạp tiền.');
+        setCreatingTopUp(false);
+    };
 
-    return (
-        <main className="bg-amber-50/40"><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Vòng quà tri ân' }]} />
-            <section className="mx-auto max-w-6xl px-4 py-10">
-                <div className="text-center"><p className="font-semibold uppercase tracking-widest text-amber-700">Quyền lợi cố định · Không may rủi</p><h1 className="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">{data?.campaign?.name}</h1><p className="mx-auto mt-3 max-w-2xl text-slate-600">Mỗi đơn hàng thật đã hoàn tất từ {Number(data?.campaign?.qualifyingOrderMinimum || 20000).toLocaleString('vi-VN')}đ nhận đúng 5 ô quà theo thứ tự đã công bố. Voucher chỉ dùng mua hàng, không quy đổi thành tiền mặt.</p></div>
-                {!data?.campaign?.active && <div className="mx-auto mt-7 max-w-2xl rounded-xl border border-amber-300 bg-amber-100 p-4 text-center font-medium text-amber-900">Chương trình hiện chưa mở. Bạn có thể xem thể lệ và quay lại sau.</div>}
-                <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_.9fr]">
-                    <div className="rounded-3xl bg-slate-900 p-6 text-center shadow-xl sm:p-10">
-                        <div className="relative mx-auto aspect-square max-w-[430px]">
-                            <div className="absolute left-1/2 top-[-12px] z-10 -translate-x-1/2 text-4xl text-white">▼</div>
-                            <div className="h-full w-full rounded-full border-[10px] border-amber-300 shadow-2xl transition-transform duration-[3000ms] ease-out" style={{ transform: `rotate(${rotation}deg)`, background: 'conic-gradient(#f59e0b 0deg 72deg,#fff7ed 72deg 144deg,#fb7185 144deg 216deg,#fef3c7 216deg 288deg,#f59e0b 288deg 360deg)' }}>
-                                {labels.map((label, index) => <span key={index} className="absolute left-1/2 top-1/2 w-[42%] origin-left text-left text-xs font-extrabold text-slate-900 sm:text-sm" style={{ transform: `rotate(${index * 72 + 36}deg) translateX(18%)` }}>{label}</span>)}
-                            </div>
-                            <button onClick={spin} disabled={spinning || !data?.campaign?.active || data?.account?.availableSpins < 1} className="absolute left-1/2 top-1/2 z-20 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-amber-500 text-lg font-black text-slate-900 shadow-lg disabled:cursor-not-allowed disabled:bg-slate-400">{spinning ? 'ĐANG MỞ' : 'MỞ QUÀ'}</button>
-                        </div>
-                        {message && <p className="mt-6 rounded-xl bg-white/10 p-4 font-bold text-white">{message}</p>}
-                    </div>
-                    <div className="space-y-5">
-                        <div className="grid grid-cols-2 gap-4"><div className="rounded-2xl border bg-white p-5"><p className="text-sm text-slate-500">Lượt còn lại</p><p className="mt-1 text-3xl font-black text-amber-600">{data?.account?.availableSpins || 0}</p></div><div className="rounded-2xl border bg-white p-5"><p className="text-sm text-slate-500">Tổng voucher đã trúng</p><p className="mt-1 text-2xl font-black text-emerald-600">{Number(data?.account?.lifetimeVoucherWinnings || 0).toLocaleString('vi-VN')}đ</p></div></div>
-                        <div className="rounded-2xl border bg-white p-6"><h2 className="text-lg font-bold">Thể lệ minh bạch</h2><ul className="mt-3 space-y-2 text-sm text-slate-600"><li>• Một đơn hàng sản phẩm hoàn tất từ 20.000đ nhận đúng 5 ô quà, mỗi đơn chỉ cấp một lần.</li><li>• Thứ tự cố định: không voucher – 1.000đ – không voucher – 5.000đ – không voucher. Không có quay ngẫu nhiên.</li><li>• Voucher có hạn 30 ngày, không chuyển nhượng, không rút tiền và không dùng để mua lượt.</li><li>• Mỗi mốc doanh thu 1 tỷ đồng trao theo bảng xếp hạng mua hàng: 10 voucher 100.000đ và 5 voucher 50.000đ.</li></ul></div>
-                        <div className="rounded-2xl border bg-white p-6"><h2 className="font-bold">Lịch sử mở quà</h2><div className="mt-3 max-h-64 space-y-2 overflow-auto">{!data?.history?.length ? <p className="text-sm text-slate-500">Chưa mở ô quà nào.</p> : data.history.map(item => <div key={item._id || item.requestId} className="flex justify-between rounded-lg bg-slate-50 p-3 text-sm"><span>{item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : ''}</span><strong className={item.prizeValue ? 'text-emerald-600' : 'text-slate-500'}>{item.prizeValue ? `Voucher ${Number(item.prizeValue).toLocaleString('vi-VN')}đ` : 'Không kèm voucher'}</strong></div>)}</div></div>
-                    </div>
-                </div>
-            </section><Footer />
-        </main>
-    );
+    const requestWithdrawal = async () => {
+        setSubmittingWithdrawal(true);
+        const response = await fetch('/api/lucky-wheel/withdraw', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(withdrawForm) });
+        const result = await response.json();
+        setMessage(result.message);
+        if (response.ok) { setWithdrawOpen(false); await load(); }
+        setSubmittingWithdrawal(false);
+    };
+
+    if (authLoading || (user && loading)) return <main><Header /><Navbar /><div className="grid min-h-[60vh] place-items-center text-[#795432]"><RefreshCw className="animate-spin" /></div><Footer /></main>;
+    if (!user) return <main><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Vòng quay may mắn' }]} /><section className="mx-auto max-w-xl px-5 py-20 text-center"><Gift className="mx-auto mb-5 text-[#9c7043]" size={52}/><h1 className="text-3xl font-black">Vòng quay may mắn Go Nuts</h1><p className="mt-4 text-slate-600">Vui lòng đăng ký thành viên hoặc đăng nhập để nạp lượt và tham gia.</p><Link href="/login" className="mt-7 inline-flex rounded-full bg-[#9c7043] px-7 py-3 font-bold text-white">Đăng nhập ngay</Link></section><Footer /></main>;
+
+    return <main className="min-h-screen bg-[#fffaf0]"><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Vòng quay may mắn' }]} />
+        <section className="relative overflow-hidden pb-20 pt-7"><div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_50%_0%,rgba(235,191,91,.26),transparent_70%)]" /><div className="relative mx-auto max-w-6xl px-4">
+            <div className="mx-auto max-w-3xl text-center"><div className="inline-flex items-center gap-2 rounded-full border border-[#d9bd7c] bg-white/80 px-4 py-2 text-xs font-extrabold uppercase tracking-[.2em] text-[#8b6039]"><Sparkles size={15}/> Thành viên Go Nuts</div><h1 className="mt-5 text-4xl font-black tracking-tight text-[#282019] sm:text-5xl">{data?.campaign.name}</h1><p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[#765f4b]">Nạp 10.000đ nhận 5 lượt quay. Tiền thưởng được cộng thẳng vào tài khoản để rút hoặc dùng khi mua hàng.</p></div>
+            {!data?.campaign.active && <div className="mx-auto mt-7 max-w-2xl rounded-2xl border border-amber-300 bg-amber-100 p-4 text-center font-semibold text-amber-900">Chương trình hiện đang tạm dừng.</div>}
+            {message && <div className="mx-auto mt-7 flex max-w-2xl items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-center font-bold text-emerald-800"><CheckCircle2 size={20}/>{message}</div>}
+            <div className="mt-10 grid items-start gap-7 lg:grid-cols-[1.08fr_.92fr]">
+                <div className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(145deg,#332318,#17130f)] p-5 shadow-[0_24px_70px_rgba(87,56,24,.25)] sm:p-10"><div className="absolute -left-16 -top-16 h-52 w-52 rounded-full bg-[#d6a441]/20 blur-3xl" /><div className="relative mx-auto aspect-square max-w-[500px]"><div className="absolute left-1/2 top-[-5px] z-30 -translate-x-1/2"><div className="h-0 w-0 border-l-[18px] border-r-[18px] border-t-[38px] border-l-transparent border-r-transparent border-t-white drop-shadow-lg" /></div><div className="absolute inset-1 rounded-full bg-[#8a5c2c] shadow-[0_0_0_7px_#e8c761,0_0_0_11px_#694019,0_20px_40px_rgba(0,0,0,.45)]" /><div className="absolute inset-4 rounded-full transition-transform duration-[3400ms] ease-[cubic-bezier(.12,.67,.12,1)]" style={{ transform: `rotate(${rotation}deg)`, background: wheelBackground }}><div className="absolute inset-3 rounded-full border border-white/60" />{segments.map((segment, index) => <div key={segment.label} className="absolute left-1/2 top-1/2 h-1/2 w-[2px] origin-top" style={{ transform: `rotate(${index * 60 + 30}deg)` }}><span className="absolute left-1/2 top-[18%] -translate-x-1/2 whitespace-nowrap rounded-full bg-white/65 px-2 py-1 text-[10px] font-black text-[#35281d] shadow-sm sm:text-sm" style={{ transform: 'rotate(-90deg)' }}>{segment.short}</span></div>)}</div><button onClick={spin} disabled={spinning || !data?.campaign.active || !data?.account.availableSpins} className="absolute left-1/2 top-1/2 z-20 grid h-28 w-28 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[7px] border-white bg-[linear-gradient(145deg,#f0c75f,#bd7a2c)] font-black text-[#2f2117] shadow-[0_10px_30px_rgba(0,0,0,.4),inset_0_2px_4px_rgba(255,255,255,.8)] transition hover:scale-105 disabled:cursor-not-allowed disabled:grayscale sm:h-32 sm:w-32"><span>{spinning ? 'ĐANG QUAY' : 'QUAY NGAY'}</span></button></div><p className="relative mt-7 text-center text-sm font-semibold text-[#e9d9bd]">Bạn còn <strong className="text-xl text-[#f6ca62]">{data?.account.availableSpins || 0}</strong> lượt quay</p></div>
+                <div className="space-y-5"><div className="grid grid-cols-2 gap-4"><div className="rounded-3xl border border-[#eadcc8] bg-white p-5 shadow-sm"><Coins className="text-[#c8872d]"/><p className="mt-4 text-sm text-slate-500">Tổng tiền đã trúng</p><p className="mt-1 text-2xl font-black text-[#6b4425]">{money(data?.account.lifetimeWinnings || 0)}</p></div><div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm"><WalletCards className="text-emerald-600"/><p className="mt-4 text-sm text-emerald-700">Số dư thưởng</p><p className="mt-1 text-2xl font-black text-emerald-700">{money(data?.account.prizeBalance || 0)}</p></div></div><div className="rounded-3xl border border-[#eadcc8] bg-white p-6 shadow-sm"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-[#a16d35]">Nạp lượt chơi</p><h2 className="mt-1 text-xl font-black text-[#33271e]">10.000đ = 5 lượt</h2></div><Banknote className="text-[#b7823f]" size={32}/></div><div className="mt-5 grid grid-cols-4 gap-2">{[10_000,20_000,50_000,100_000].map(amount => <button key={amount} onClick={() => setTopUpAmount(amount)} className={`rounded-xl border px-2 py-3 text-sm font-bold ${topUpAmount === amount ? 'border-[#9c7043] bg-[#9c7043] text-white' : 'border-[#e7dac7] bg-[#fffaf2] text-[#62472f]'}`}>{amount / 1000}K</button>)}</div><button onClick={createTopUp} disabled={creatingTopUp || !data?.campaign.active} className="mt-4 w-full rounded-xl bg-[#2c2119] px-5 py-3.5 font-bold text-white transition hover:bg-[#9c7043] disabled:opacity-50">{creatingTopUp ? 'Đang tạo mã QR...' : `Nạp ${money(topUpAmount)} · Nhận ${(topUpAmount / 10_000) * 5} lượt`}</button></div><button onClick={() => setWithdrawOpen(true)} className="flex w-full items-center justify-between rounded-3xl border border-[#eadcc8] bg-white p-5 text-left shadow-sm transition hover:border-[#9c7043]"><span className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#fff3dc] text-[#a16d35]"><ArrowDownToLine/></span><span><strong className="block text-[#33271e]">Rút tiền thưởng</strong><small className="text-slate-500">Tối thiểu 100.000đ/lần</small></span></span><span className="text-xl">›</span></button></div>
+            </div>
+            <div className="mt-8 grid gap-6 lg:grid-cols-2"><section className="rounded-3xl border border-[#eadcc8] bg-white p-6"><h2 className="flex items-center gap-2 text-lg font-black"><ShieldCheck className="text-emerald-600"/> Thể lệ tham gia</h2><ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600"><li>• Chỉ thành viên đã đăng nhập mới được tham gia.</li><li>• Lượt quay chỉ được cộng từ giao dịch nạp riêng cho vòng quay; mua hàng không được quy đổi thành lượt.</li><li>• Không thể dùng tiền thưởng để mua thêm lượt quay.</li><li>• Tiền thưởng có thể dùng mua hàng hoặc gửi yêu cầu rút về tài khoản ngân hàng.</li></ul></section><section className="rounded-3xl border border-[#eadcc8] bg-white p-6"><h2 className="flex items-center gap-2 text-lg font-black"><History className="text-[#a16d35]"/> Lịch sử gần đây</h2><div className="mt-4 max-h-56 space-y-2 overflow-auto">{!data?.history.length ? <p className="text-sm text-slate-500">Bạn chưa có lượt quay nào.</p> : data.history.map(item => <div key={item._id || item.requestId} className="flex items-center justify-between rounded-xl bg-[#fffaf2] px-4 py-3 text-sm"><span className="text-slate-500">{item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : ''}</span><strong className={item.prizeValue ? 'text-emerald-600' : 'text-slate-500'}>{item.prizeValue ? `+${money(item.prizeValue)}` : 'Chúc may mắn'}</strong></div>)}</div></section></div>
+        </div></section>
+        {topUp && <div className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4"><div className="max-h-[92vh] w-full max-w-2xl overflow-auto rounded-3xl bg-white p-5 sm:p-7"><div className="mb-5 flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-[#9c7043]">Nạp lượt vòng quay</p><h2 className="mt-1 text-2xl font-black">Quét mã để thanh toán</h2></div><button onClick={() => setTopUp(null)} className="rounded-full bg-slate-100 p-2"><X/></button></div>{topUp.status === 'paid' ? <div className="rounded-2xl bg-emerald-50 p-8 text-center text-emerald-800"><CheckCircle2 className="mx-auto mb-3" size={52}/><h3 className="text-xl font-black">Đã nhận thanh toán</h3><p className="mt-2">{topUp.spins} lượt quay đã được cộng vào tài khoản.</p></div> : <><BankInfoDisplay amount={topUp.amount} description={topUp.paymentRef}/><div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-blue-50 p-3 text-sm font-semibold text-blue-700"><Clock3 size={17}/> Hệ thống tự kiểm tra giao dịch mỗi 5 giây</div></>}</div></div>}
+        {withdrawOpen && <div className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4"><div className="w-full max-w-lg rounded-3xl bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-2xl font-black">Rút tiền thưởng</h2><button onClick={() => setWithdrawOpen(false)} className="rounded-full bg-slate-100 p-2"><X/></button></div><p className="mt-2 text-sm text-slate-500">Số dư khả dụng: <strong className="text-emerald-600">{money(data?.account.prizeBalance || 0)}</strong></p><div className="mt-5 space-y-4"><label className="block text-sm font-semibold">Số tiền<input type="number" min={100000} step={1000} value={withdrawForm.amount} onChange={event => setWithdrawForm({...withdrawForm, amount: Number(event.target.value)})} className="mt-1 w-full rounded-xl border p-3"/></label><label className="block text-sm font-semibold">Ngân hàng<input value={withdrawForm.bankName} onChange={event => setWithdrawForm({...withdrawForm, bankName: event.target.value})} className="mt-1 w-full rounded-xl border p-3" placeholder="Ví dụ: ACB"/></label><label className="block text-sm font-semibold">Số tài khoản<input value={withdrawForm.accountNumber} onChange={event => setWithdrawForm({...withdrawForm, accountNumber: event.target.value.replace(/\D/g, '')})} className="mt-1 w-full rounded-xl border p-3"/></label><label className="block text-sm font-semibold">Tên chủ tài khoản<input value={withdrawForm.accountName} onChange={event => setWithdrawForm({...withdrawForm, accountName: event.target.value})} className="mt-1 w-full rounded-xl border p-3"/></label><button onClick={requestWithdrawal} disabled={submittingWithdrawal} className="w-full rounded-xl bg-[#2c2119] px-5 py-3.5 font-bold text-white disabled:opacity-50">{submittingWithdrawal ? 'Đang gửi...' : 'Gửi yêu cầu rút tiền'}</button></div></div></div>}
+        <Footer />
+    </main>;
 }

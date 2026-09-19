@@ -4,7 +4,7 @@ import {
     isCampaignActive,
     milestonePrizeValues,
     prizeForSpin,
-    voucherMinimumOrder,
+    spinsForTopUp,
 } from '../src/lib/lucky-wheel-rules.ts';
 
 test('every five reveals follow the exact published order', () => {
@@ -24,11 +24,10 @@ test('fixed-benefit program can be activated without a random-draw approval fiel
     assert.equal(isCampaignActive({ enabled: false }), false);
 });
 
-test('voucher conditions and milestone prize pool are fixed', () => {
-    assert.equal(voucherMinimumOrder(1000), 50_000);
-    assert.equal(voucherMinimumOrder(5000), 100_000);
-    assert.equal(voucherMinimumOrder(50_000), 500_000);
-    assert.equal(voucherMinimumOrder(100_000), 1_000_000);
+test('top-up conversion and milestone prize pool are fixed', () => {
+    assert.equal(spinsForTopUp(9_999), 0);
+    assert.equal(spinsForTopUp(10_000), 5);
+    assert.equal(spinsForTopUp(50_000), 25);
     const prizes = milestonePrizeValues();
     assert.equal(prizes.length, 15);
     assert.equal(prizes.filter(value => value === 100_000).length, 10);

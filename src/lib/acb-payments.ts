@@ -10,6 +10,8 @@ import {
 } from '@/lib/payment-reference';
 import { activateMembershipOrder } from '@/lib/membership-activation';
 import { getConfiguredAcbAccountNumber } from '@/lib/server-bank-settings';
+import LuckyWheelTopUp from '@/models/LuckyWheelTopUp';
+import { applyPaidLuckyWheelTopUp } from '@/lib/lucky-wheel';
 
 export interface ParsedAcbTransaction {
     transactionId: string;
@@ -298,6 +300,18 @@ export async function applyAcbTransactionToOrder(
 
     await dbConnect();
 
+    if (paymentRef.startsWith('LW')) {
+        const existingTopUp = await LuckyWheelTopUp.findOne({ paymentRef }).lean();
+        if (!existingTopUp) return { applied: false, reason: 'top_up_not_found', paymentRef, transactionId: txn.transactionId, amount: txn.amount };
+        if (existingTopUp.status === 'paid') return { applied: false, reason: 'duplicate_transaction', paymentRef, orderId: String(existingTopUp._id), transactionId: txn.transactionId, amount: txn.amount };
+        try {
+            const topUp = await applyPaidLuckyWheelTopUp(paymentRef, txn.amount, txn.transactionId || txn.traceNumber || `${source}_${Date.now()}`);
+            return { applied: Boolean(topUp), reason: topUp ? 'paid' : 'top_up_not_found', paymentRef, orderId: String(existingTopUp._id), transactionId: txn.transactionId, amount: txn.amount };
+        } catch (error) {
+            return { applied: false, reason: error instanceof Error ? error.message.toLowerCase() : 'top_up_failed', paymentRef, orderId: String(existingTopUp._id), transactionId: txn.transactionId, amount: txn.amount };
+        }
+    }
+
     if (txn.transactionId) {
         const duplicate = await Order.findOne({
             acbTransactionNo: txn.transactionId,
@@ -397,12 +411,17 @@ export async function reconcileAcbPayments(options: {
     }
 
     await dbConnect();
-    const pendingRefs = await Order.find({
+    const pendingOrders = await Order.find({
         paymentMethod: 'banking',
         paymentStatus: { $ne: 'paid' },
         paymentRef: BANK_PAYMENT_REF_PATTERN,
         createdAt: { $gte: new Date(Date.now() - (options.daysBack || 1) * 24 * 60 * 60 * 1000) },
     }).select('paymentRef totalAmount').lean();
+    const pendingTopUps = await LuckyWheelTopUp.find({
+        status: 'pending', paymentRef: BANK_PAYMENT_REF_PATTERN,
+        createdAt: { $gte: new Date(Date.now() - (options.daysBack || 1) * 24 * 60 * 60 * 1000) },
+    }).select('paymentRef amount').lean();
+    const pendingRefs = [...pendingOrders, ...pendingTopUps];
 
     const pendingRefSet = new Set(pendingRefs.map((order: any) => String(order.paymentRef).toUpperCase()));
     const results: AcbApplyResult[] = [];
@@ -471,8 +490,11 @@ export async function reconcileAcbPaymentRef(
         paymentMethod: 'banking',
         paymentStatus: { $ne: 'paid' },
     }).select('paymentRef totalAmount').lean();
+    const pendingTopUp = normalizedRef.startsWith('LW') ? await LuckyWheelTopUp.findOne({
+        paymentRef: new RegExp(`^${escapeRegExp(normalizedRef)}$`, 'i'), status: 'pending',
+    }).select('paymentRef amount').lean() : null;
 
-    if (!pendingOrder) {
+    if (!pendingOrder && !pendingTopUp) {
         return {
             paymentRef: normalizedRef,
             checkedDates: [] as string[],

@@ -9,7 +9,6 @@ import { syncAffiliateCommissionsForOrderStatus } from '@/lib/affiliate-commissi
 import { activateMembershipOrder, MembershipActivationError } from '@/lib/membership-activation';
 import { isConfirmedPaymentStatus } from '@/lib/customer-ownership';
 import { cancelOrder } from '@/lib/order-cancellation';
-import { grantLuckyWheelSpinsForCompletedOrder } from '@/lib/lucky-wheel';
 
 // Helper to check if user is admin
 async function isAdmin() {
@@ -101,14 +100,6 @@ export async function PATCH(req: Request) {
                 order.status = status;
                 await syncAffiliateCommissionsForOrderStatus(order, status);
                 await order.save();
-            }
-        }
-
-        if (status === 'completed') {
-            try {
-                await grantLuckyWheelSpinsForCompletedOrder(String(order._id));
-            } catch (grantError) {
-                console.error('Failed to grant lucky-wheel spins:', grantError);
             }
         }
 

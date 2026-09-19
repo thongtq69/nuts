@@ -8,7 +8,6 @@ import {
     syncAffiliateCommissionsForOrderStatus,
 } from '@/lib/affiliate-commission-lifecycle';
 import { applyOrderCancellationEffects, cancelOrder } from '@/lib/order-cancellation';
-import { grantLuckyWheelSpinsForCompletedOrder } from '@/lib/lucky-wheel';
 
 async function requireAdmin(req: Request) {
     const decoded = await verifyToken(req);
@@ -40,14 +39,6 @@ export async function PATCH(
             order.status = status;
             await syncAffiliateCommissionsForOrderStatus(order, status);
             await order.save();
-        }
-
-        if (status === 'delivered' || status === 'completed') {
-            try {
-                await grantLuckyWheelSpinsForCompletedOrder(String(order._id));
-            } catch (grantError) {
-                console.error('Failed to grant lucky-wheel spins:', grantError);
-            }
         }
 
         const statusMessages: Record<string, string> = {

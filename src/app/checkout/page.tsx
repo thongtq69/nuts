@@ -78,6 +78,7 @@ interface OrderCreateResponse {
     _id?: string;
     paymentRef?: string;
     message?: string;
+    totalAmount?: number;
 }
 
 export default function CheckoutPage() {
@@ -95,6 +96,8 @@ export default function CheckoutPage() {
     const [paymentReference, setPaymentReference] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [bankPaymentModal, setBankPaymentModal] = useState<BankPaymentModalData | null>(null);
+    const [prizeBalance, setPrizeBalance] = useState(0);
+    const [usePrizeBalance, setUsePrizeBalance] = useState(false);
 
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [loadingVouchers, setLoadingVouchers] = useState(false);
@@ -123,6 +126,10 @@ export default function CheckoutPage() {
                 })
                 .catch(err => console.error(err))
                 .finally(() => setLoadingVouchers(false));
+            fetch('/api/lucky-wheel', { cache: 'no-store' })
+                .then(res => res.ok ? res.json() : null)
+                .then(result => setPrizeBalance(Number(result?.account?.prizeBalance || 0)))
+                .catch(() => undefined);
 
         }
 
@@ -424,7 +431,8 @@ export default function CheckoutPage() {
                 totalAmount: total,
                 note: paymentMethod === 'banking' ? `${formData.note} [PaymentRef: ${paymentReference}]`.trim() : formData.note,
                 voucherCode: isVoucherApplied ? voucherCode : undefined,
-                paymentReference
+                paymentReference,
+                useLuckyWheelBalance: usePrizeBalance,
             };
 
             const res = await fetch('/api/orders', {
@@ -440,9 +448,14 @@ export default function CheckoutPage() {
             }
 
             if (paymentMethod === 'banking') {
+                if (Number(data.totalAmount || 0) === 0) {
+                    clearCart();
+                    router.push(href('/checkout/success'));
+                    return;
+                }
                 const orderCode = data?._id ? data._id.toString().slice(-6).toUpperCase() : paymentReference;
                 setBankPaymentModal({
-                    amount: total,
+                    amount: Number(data.totalAmount ?? total),
                     paymentReference: data?.paymentRef || paymentReference,
                     customerName: formData.name,
                     orderCode,
@@ -829,9 +842,18 @@ export default function CheckoutPage() {
                                     <span>- {appliedDiscount.toLocaleString()}₫</span>
                                 </div>
                             )}
+                            {user && prizeBalance > 0 && (
+                                <label className="my-3 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm">
+                                    <span><strong className="block text-emerald-800">Dùng tiền thưởng vòng quay</strong><small className="text-emerald-700">Số dư: {prizeBalance.toLocaleString('vi-VN')}đ</small></span>
+                                    <input type="checkbox" checked={usePrizeBalance} onChange={event => setUsePrizeBalance(event.target.checked)} className="h-5 w-5 accent-emerald-600" />
+                                </label>
+                            )}
+                            {usePrizeBalance && prizeBalance > 0 && (
+                                <div className="summary-row font-medium text-emerald-600"><span>Tiền thưởng sử dụng</span><span>- {Math.min(prizeBalance, total).toLocaleString('vi-VN')}₫</span></div>
+                            )}
                             <div className="summary-row total">
                                 <span>{t('Tổng cộng')}</span>
-                                <span className="total-amount">{total > 0 ? total.toLocaleString() : 0}₫</span>
+                                <span className="total-amount">{Math.max(0, total - (usePrizeBalance ? Math.min(prizeBalance, total) : 0)).toLocaleString()}₫</span>
                             </div>
 
                             <button

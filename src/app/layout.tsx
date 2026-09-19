@@ -6,6 +6,7 @@ import { Providers } from '@/components/Providers';
 import ProductDebugInfo from '@/components/debug/ProductDebugInfo';
 import { OrganizationJsonLd, WebSiteJsonLd, LocalBusinessJsonLd } from '@/components/seo/JsonLd';
 import { LOCALE_HEADER, normalizeLocale } from '@/i18n/config';
+import LuckyWheelFloatingButton from '@/components/lucky-wheel/LuckyWheelFloatingButton';
 
 const montserrat = Montserrat({
   weight: "variable",
@@ -212,6 +213,7 @@ export default async function RootLayout({
           <WebSiteJsonLd locale={locale} />
           <LocalBusinessJsonLd />
           {children}
+          <LuckyWheelFloatingButton />
 
           {process.env.NODE_ENV === 'development' && <ProductDebugInfo />}
         </Providers>

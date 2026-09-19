@@ -4,6 +4,7 @@ import Product from '@/models/Product';
 import UserVoucher from '@/models/UserVoucher';
 import UserMembership from '@/models/UserMembership';
 import { syncAffiliateCommissionsForOrderStatus } from '@/lib/affiliate-commission-lifecycle';
+import LuckyWheelAccount from '@/models/LuckyWheelAccount';
 
 export { canCustomerCancelOrder, describeCustomerCancelBlock } from '@/lib/order-status';
 
@@ -17,6 +18,7 @@ export interface CancellationEffects {
     rewardVouchersRevoked: number;
     membershipRevoked: boolean;
     packageVouchersRevoked: number;
+    luckyWheelCreditRestored: number;
 }
 
 /**
@@ -34,6 +36,7 @@ export async function applyOrderCancellationEffects(
         rewardVouchersRevoked: 0,
         membershipRevoked: false,
         packageVouchersRevoked: 0,
+        luckyWheelCreditRestored: 0,
     };
 
     if (order.cancellationEffectsAppliedAt) return effects;
@@ -100,6 +103,15 @@ export async function applyOrderCancellationEffects(
             isUsed: false,
         });
         effects.packageVouchersRevoked = revokedPackageVouchers.deletedCount || 0;
+    }
+
+    if (order.user && Number(order.luckyWheelCreditUsed || 0) > 0) {
+        const amount = Number(order.luckyWheelCreditUsed);
+        await LuckyWheelAccount.updateOne(
+            { userId: order.user },
+            { $inc: { prizeBalance: amount, lifetimeSpentOnOrders: -amount } },
+        );
+        effects.luckyWheelCreditRestored = amount;
     }
 
     return effects;

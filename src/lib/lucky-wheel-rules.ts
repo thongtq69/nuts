@@ -1,19 +1,19 @@
 export const LUCKY_WHEEL_PRIZES = [0, 1000, 0, 5000, 0] as const;
-export const LUCKY_WHEEL_SPINS_PER_ORDER = 5;
-export const LUCKY_WHEEL_MINIMUM_ORDER = 20_000;
-export const LUCKY_WHEEL_MILESTONE_REVENUE = 1_000_000_000;
+export const LUCKY_WHEEL_VISIBLE_PRIZES = [0, 1000, 5000, 10_000, 50_000, 100_000] as const;
+export const LUCKY_WHEEL_MINIMUM_TOP_UP = 10_000;
+export const LUCKY_WHEEL_SPINS_PER_TOP_UP_UNIT = 5;
+export const LUCKY_WHEEL_MILESTONE_TOP_UPS = 1_000_000;
+export const LUCKY_WHEEL_MINIMUM_WITHDRAWAL = 100_000;
 
 export function prizeForSpin(sequence: number): number {
     if (!Number.isInteger(sequence) || sequence < 1) throw new Error('Invalid spin sequence');
-    const position = (sequence - 1) % LUCKY_WHEEL_SPINS_PER_ORDER;
+    const position = (sequence - 1) % LUCKY_WHEEL_SPINS_PER_TOP_UP_UNIT;
     return LUCKY_WHEEL_PRIZES[position];
 }
 
-export function voucherMinimumOrder(prize: number): number {
-    if (prize >= 100_000) return 1_000_000;
-    if (prize >= 50_000) return 500_000;
-    if (prize >= 5_000) return 100_000;
-    return 50_000;
+export function spinsForTopUp(amount: number): number {
+    if (!Number.isFinite(amount) || amount < LUCKY_WHEEL_MINIMUM_TOP_UP) return 0;
+    return Math.floor(amount / LUCKY_WHEEL_MINIMUM_TOP_UP) * LUCKY_WHEEL_SPINS_PER_TOP_UP_UNIT;
 }
 
 export function milestonePrizeValues(): number[] {

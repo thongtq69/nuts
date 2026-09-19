@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
 import { requireAdminAuth } from '@/lib/auth-permissions';
-import { awardLuckyWheelMilestone, getLuckyWheelAdminSummary, grantLuckyWheelSpinsForCompletedOrder, getLuckyWheelSettings } from '@/lib/lucky-wheel';
-import Order from '@/models/Order';
+import { awardLuckyWheelMilestone, getLuckyWheelAdminSummary, getLuckyWheelSettings, reviewLuckyWheelWithdrawal } from '@/lib/lucky-wheel';
 import mongoose from 'mongoose';
 
 export async function GET() {
@@ -31,43 +29,24 @@ export async function PATCH(request: Request) {
 export async function POST(request: Request) {
     const { user } = await requireAdminAuth();
     if (!user) return NextResponse.json({ message: 'Không có quyền truy cập' }, { status: 401 });
-    const { action } = await request.json();
+    const body = await request.json();
+    const { action } = body;
     try {
         if (action === 'award') {
             const milestone = await awardLuckyWheelMilestone(user._id);
-            return NextResponse.json({ message: 'Đã trao voucher theo bảng xếp hạng mua hàng cho 15 thành viên.', milestone });
+            return NextResponse.json({ message: 'Đã chọn ngẫu nhiên và cộng tiền thưởng cho 15 thành viên.', milestone });
         }
-        if (action === 'reconcile') {
-            await dbConnect();
-            const settings = await getLuckyWheelSettings();
-            if (!settings.enabled) {
-                return NextResponse.json({ message: 'Chương trình đang tạm dừng.' }, { status: 409 });
-            }
-            const query: Record<string, unknown> = {
-                orderType: { $ne: 'membership' },
-                status: { $in: ['completed', 'delivered'] },
-                totalAmount: { $gte: settings.qualifyingOrderMinimum },
-                user: { $exists: true, $ne: null },
-            };
-            const createdAt: Record<string, Date> = {};
-            if (settings.campaignStartAt) createdAt.$gte = settings.campaignStartAt;
-            if (settings.campaignEndAt) createdAt.$lte = settings.campaignEndAt;
-            if (Object.keys(createdAt).length) query.createdAt = createdAt;
-            const orders = await Order.find(query).select('_id').lean();
-            let granted = 0;
-            for (const order of orders) {
-                const outcome = await grantLuckyWheelSpinsForCompletedOrder(String(order._id));
-                if (outcome.granted) granted += 1;
-            }
-            return NextResponse.json({ message: `Đã đồng bộ ${granted} đơn mới, các đơn đã cấp trước đó được giữ nguyên.`, granted });
+        if (action === 'withdrawal-paid' || action === 'withdrawal-rejected') {
+            const withdrawal = await reviewLuckyWheelWithdrawal(user._id, String(body.withdrawalId || ''), action === 'withdrawal-paid' ? 'paid' : 'rejected');
+            return NextResponse.json({ message: action === 'withdrawal-paid' ? 'Đã xác nhận chuyển tiền.' : 'Đã từ chối và hoàn lại số dư.', withdrawal });
         }
         return NextResponse.json({ message: 'Thao tác không hợp lệ' }, { status: 400 });
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : '';
         const messages: Record<string, string> = {
             CAMPAIGN_INACTIVE: 'Chương trình chưa hoạt động.',
-            MILESTONE_NOT_REACHED: 'Chưa đạt mốc doanh thu tiếp theo.',
-            NOT_ENOUGH_CUSTOMERS: 'Cần ít nhất 15 khách hàng hợp lệ để quay thưởng.',
+            MILESTONE_NOT_REACHED: 'Chưa đạt mốc 1.000.000 lượt nạp tiếp theo.',
+            NOT_ENOUGH_CUSTOMERS: 'Cần ít nhất 15 khách hàng đã nạp tiền.',
         };
         return NextResponse.json({ message: messages[errorMessage] || 'Không thể thực hiện thao tác.' }, { status: 409 });
     }

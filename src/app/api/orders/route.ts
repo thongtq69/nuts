@@ -13,6 +13,7 @@ import { sendOrderConfirmationEmail } from '@/lib/email';
 import { reconcileAcbPayments } from '@/lib/acb-payments';
 import { calculateVoucherDiscount, type VoucherDiscountItem } from '@/lib/voucher-discount';
 import { notifyAdminOfNewOrder } from '@/lib/admin-email-notifications';
+import LuckyWheelAccount from '@/models/LuckyWheelAccount';
 import {
     isValidOptionalOrderEmail,
     normalizeOrderEmail,
@@ -85,6 +86,8 @@ function calculateFinalPrice(
 }
 
 export async function POST(req: Request) {
+    let reservedWheelCredit = 0;
+    let reservedWheelUserId: string | null = null;
     try {
         await dbConnect();
         const body = await req.json();
@@ -220,7 +223,24 @@ export async function POST(req: Request) {
             });
         }
 
-        const finalTotal = Math.max(0, itemsTotal + shippingFee - discountAmount);
+        let finalTotal = Math.max(0, itemsTotal + shippingFee - discountAmount);
+        let luckyWheelCreditUsed = 0;
+        if (body.useLuckyWheelBalance && userId && finalTotal > 0) {
+            const wheelAccount = await LuckyWheelAccount.findOne({ userId }).select('prizeBalance').lean();
+            luckyWheelCreditUsed = Math.min(finalTotal, Math.max(0, Number(wheelAccount?.prizeBalance || 0)));
+            if (luckyWheelCreditUsed > 0) {
+                const reserved = await LuckyWheelAccount.updateOne(
+                    { userId, prizeBalance: { $gte: luckyWheelCreditUsed } },
+                    { $inc: { prizeBalance: -luckyWheelCreditUsed, lifetimeSpentOnOrders: luckyWheelCreditUsed } },
+                );
+                if (reserved.modifiedCount === 0) luckyWheelCreditUsed = 0;
+                else {
+                    finalTotal -= luckyWheelCreditUsed;
+                    reservedWheelCredit = luckyWheelCreditUsed;
+                    reservedWheelUserId = String(userId);
+                }
+            }
+        }
 
         const refCode = cookieStore.get('gonuts_ref')?.value;
         let referrerId: any = undefined;
@@ -257,6 +277,8 @@ export async function POST(req: Request) {
             shippingInfo: normalizedShippingInfo,
             items: processedItems,
             paymentMethod,
+            paymentStatus: finalTotal === 0 ? 'paid' : 'pending',
+            status: finalTotal === 0 ? 'confirmed' : 'pending',
             shippingFee,
             totalAmount: finalTotal,
             note,
@@ -272,7 +294,10 @@ export async function POST(req: Request) {
             voucherSource: voucherToApply?.source,
             voucherDiscountAmount: discountAmount,
             vipSavings: voucherToApply?.source === 'package' ? discountAmount : 0,
+            luckyWheelCreditUsed,
         });
+        reservedWheelCredit = 0;
+        reservedWheelUserId = null;
         after(() => notifyAdminOfNewOrder(String(order._id)));
 
         if (paymentMethod === 'banking' && body.paymentReference) {
@@ -408,6 +433,16 @@ export async function POST(req: Request) {
 
         return NextResponse.json(order, { status: 201 });
     } catch (error) {
+        if (reservedWheelCredit > 0 && reservedWheelUserId) {
+            try {
+                await LuckyWheelAccount.updateOne(
+                    { userId: reservedWheelUserId },
+                    { $inc: { prizeBalance: reservedWheelCredit, lifetimeSpentOnOrders: -reservedWheelCredit } },
+                );
+            } catch (refundError) {
+                console.error('Failed to restore reserved lucky-wheel credit:', refundError);
+            }
+        }
         console.error('Create order error:', error);
         return NextResponse.json(
             { message: 'Lỗi khi tạo đơn hàng' },
