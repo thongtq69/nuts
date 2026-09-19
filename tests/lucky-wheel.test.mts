@@ -6,6 +6,7 @@ import {
     prizeForSpin,
     spinsForTopUp,
 } from '../src/lib/lucky-wheel-rules.ts';
+import { matchesWithdrawalTransaction } from '../src/lib/lucky-wheel-withdrawal-rules.ts';
 
 test('every five reveals follow the exact published order', () => {
     for (let cycle = 0; cycle < 20; cycle += 1) {
@@ -36,4 +37,28 @@ test('top-up conversion and milestone prize pool are fixed', () => {
     assert.equal(prizes.length, 15);
     assert.equal(prizes.filter(value => value === 100_000).length, 10);
     assert.equal(prizes.filter(value => value === 50_000).length, 5);
+});
+
+test('withdrawal is only settled by an exact posted ACB debit', () => {
+    const target = {
+        amount: 100_000,
+        beneficiaryAccount: '123456789',
+        payoutReference: 'WDABC123',
+        transactionId: 'TRACE-9988',
+    };
+    const transaction = {
+        transactionCode: 'TRACE-9988',
+        transactionAmount: 100_000,
+        transactionDescription: 'Chi thuong WDABC123',
+        beneficiaryAccount: '123456789',
+        transactionStatus: 'SUCCESS',
+        debitOrCredit: 'D',
+    };
+
+    assert.equal(matchesWithdrawalTransaction(transaction, target), true);
+    assert.equal(matchesWithdrawalTransaction({ ...transaction, debitOrCredit: 'C' }, target), false);
+    assert.equal(matchesWithdrawalTransaction({ ...transaction, transactionAmount: 99_000 }, target), false);
+    assert.equal(matchesWithdrawalTransaction({ ...transaction, beneficiaryAccount: '000000000' }, target), false);
+    assert.equal(matchesWithdrawalTransaction({ ...transaction, transactionDescription: 'Chi thuong khac' }, target), false);
+    assert.equal(matchesWithdrawalTransaction({ ...transaction, transactionCode: 'TRACE-OTHER' }, target), false);
 });

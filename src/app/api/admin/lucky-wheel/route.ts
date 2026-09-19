@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth-permissions';
-import { awardLuckyWheelMilestone, getLuckyWheelAdminSummary, getLuckyWheelSettings, reviewLuckyWheelWithdrawal, updateLuckyWheelMemberAccount } from '@/lib/lucky-wheel';
+import { awardLuckyWheelMilestone, getLuckyWheelAdminSummary, getLuckyWheelSettings, reviewLuckyWheelWithdrawal, updateLuckyWheelMemberAccount, verifyAndCompleteLuckyWheelWithdrawal } from '@/lib/lucky-wheel';
 import mongoose from 'mongoose';
 
 const textFields = [
@@ -111,9 +111,18 @@ export async function POST(request: Request) {
             const milestone = await awardLuckyWheelMilestone(user._id);
             return NextResponse.json({ message: `Đã chọn ngẫu nhiên và cộng tiền thưởng cho ${milestone?.winners.length || 0} thành viên.`, milestone });
         }
-        if (action === 'withdrawal-paid' || action === 'withdrawal-rejected') {
-            const withdrawal = await reviewLuckyWheelWithdrawal(user._id, String(body.withdrawalId || ''), action === 'withdrawal-paid' ? 'paid' : 'rejected');
-            return NextResponse.json({ message: action === 'withdrawal-paid' ? 'Đã xác nhận chuyển tiền.' : 'Đã từ chối và hoàn lại số dư.', withdrawal });
+        if (action === 'withdrawal-verify-paid') {
+            const withdrawal = await verifyAndCompleteLuckyWheelWithdrawal(
+                user._id,
+                String(body.withdrawalId || ''),
+                String(body.bankTransactionId || ''),
+                String(body.note || ''),
+            );
+            return NextResponse.json({ message: 'ACB đã xác nhận giao dịch. Yêu cầu rút tiền đã hoàn tất.', withdrawal });
+        }
+        if (action === 'withdrawal-rejected') {
+            const withdrawal = await reviewLuckyWheelWithdrawal(user._id, String(body.withdrawalId || ''), 'rejected', String(body.note || ''));
+            return NextResponse.json({ message: 'Đã từ chối và hoàn lại số dư.', withdrawal });
         }
         if (action === 'account-update') {
             const account = await updateLuckyWheelMemberAccount(String(body.userId || ''), {
@@ -132,7 +141,15 @@ export async function POST(request: Request) {
             NOT_ENOUGH_CUSTOMERS: 'Chưa đủ số khách hàng đã nạp để trao thưởng theo cơ cấu hiện tại.',
             ACCOUNT_NOT_FOUND: 'Không tìm thấy tài khoản vòng quay của thành viên.',
             INVALID_ACCOUNT_VALUES: 'Lượt quay và các số tiền phải là số nguyên không âm.',
+            WITHDRAWAL_NOT_FOUND: 'Yêu cầu rút tiền không còn ở trạng thái chờ xử lý.',
+            INVALID_BANK_TRANSACTION_ID: 'Mã giao dịch ngân hàng không hợp lệ.',
+            BANK_TRANSACTION_ALREADY_USED: 'Mã giao dịch ngân hàng này đã được dùng cho một yêu cầu khác.',
+            BANK_TRANSACTION_NOT_CONFIRMED: 'Chưa tìm thấy giao dịch ACB đã hoàn tất khớp mã giao dịch, số tiền, tài khoản nhận và nội dung chuyển khoản.',
+            BANK_VERIFICATION_UNAVAILABLE: 'Tạm thời không thể đối soát ACB. Yêu cầu vẫn ở trạng thái chờ, vui lòng thử lại.',
+            ACB_ACCOUNT_NOT_CONFIGURED: 'Chưa cấu hình tài khoản ACB nguồn để đối soát giao dịch.',
+            WITHDRAWAL_REFERENCE_CREATED: 'Đã tạo mã chi cho yêu cầu cũ. Vui lòng chuyển khoản theo mã mới rồi xác minh lại.',
         };
-        return NextResponse.json({ message: messages[errorMessage] || 'Không thể thực hiện thao tác.' }, { status: 409 });
+        const status = errorMessage === 'BANK_VERIFICATION_UNAVAILABLE' ? 503 : 409;
+        return NextResponse.json({ message: messages[errorMessage] || 'Không thể thực hiện thao tác.' }, { status });
     }
 }

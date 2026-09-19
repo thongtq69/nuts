@@ -8,6 +8,7 @@ import LuckyWheelSpin from '@/models/LuckyWheelSpin';
 import LuckyWheelMilestone from '@/models/LuckyWheelMilestone';
 import LuckyWheelTopUp from '@/models/LuckyWheelTopUp';
 import LuckyWheelWithdrawal from '@/models/LuckyWheelWithdrawal';
+import { verifyWithdrawalInAcbHistory } from '@/lib/lucky-wheel-withdrawal-verification';
 import {
     DEFAULT_MILESTONE_REWARDS,
     DEFAULT_REGULAR_SPIN_PRIZES,
@@ -49,6 +50,10 @@ export async function getLuckyWheelSettings() {
 
 export function createLuckyWheelPaymentRef() {
     return `LW${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+}
+
+export function createLuckyWheelWithdrawalRef() {
+    return `WD${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
 }
 
 export async function createLuckyWheelTopUp(userId: string, amount: number) {
@@ -101,14 +106,14 @@ export async function requestLuckyWheelWithdrawal(userId: string, input: { amoun
             );
             if (!account) throw new Error('INSUFFICIENT_PRIZE_BALANCE');
             [withdrawal] = await LuckyWheelWithdrawal.create([{
-                userId, amount, bankName: input.bankName.trim(), accountNumber: input.accountNumber.trim(), accountName: input.accountName.trim().toUpperCase(), status: 'pending',
+                userId, amount, bankName: input.bankName.trim(), accountNumber: input.accountNumber.trim(), accountName: input.accountName.trim().toUpperCase(), status: 'pending', payoutReference: createLuckyWheelWithdrawalRef(),
             }], { session });
         });
     } finally { await session.endSession(); }
     return withdrawal;
 }
 
-export async function reviewLuckyWheelWithdrawal(adminUserId: string, withdrawalId: string, action: 'paid' | 'rejected', note = '') {
+export async function reviewLuckyWheelWithdrawal(adminUserId: string, withdrawalId: string, action: 'rejected', note = '') {
     await dbConnect();
     const session = await mongoose.startSession();
     let withdrawal = null;
@@ -120,13 +125,83 @@ export async function reviewLuckyWheelWithdrawal(adminUserId: string, withdrawal
                 { new: true, session },
             );
             if (!withdrawal) throw new Error('WITHDRAWAL_NOT_FOUND');
-            const update = action === 'paid'
-                ? { $inc: { pendingWithdrawal: -withdrawal.amount, lifetimeWithdrawn: withdrawal.amount } }
-                : { $inc: { pendingWithdrawal: -withdrawal.amount, prizeBalance: withdrawal.amount } };
-            await LuckyWheelAccount.updateOne({ userId: withdrawal.userId }, update, { session });
+            await LuckyWheelAccount.updateOne(
+                { userId: withdrawal.userId },
+                { $inc: { pendingWithdrawal: -withdrawal.amount, prizeBalance: withdrawal.amount } },
+                { session },
+            );
         });
     } finally { await session.endSession(); }
     return withdrawal;
+}
+
+export async function verifyAndCompleteLuckyWheelWithdrawal(
+    adminUserId: string,
+    withdrawalId: string,
+    bankTransactionId: string,
+    note = '',
+) {
+    await dbConnect();
+    const normalizedTransactionId = bankTransactionId.trim().toUpperCase();
+    if (!/^[A-Z0-9._\/-]{4,120}$/.test(normalizedTransactionId)) throw new Error('INVALID_BANK_TRANSACTION_ID');
+
+    const withdrawal = await LuckyWheelWithdrawal.findOne({ _id: withdrawalId, status: 'pending' });
+    if (!withdrawal) throw new Error('WITHDRAWAL_NOT_FOUND');
+    if (!withdrawal.payoutReference) {
+        withdrawal.payoutReference = createLuckyWheelWithdrawalRef();
+        await withdrawal.save();
+        throw new Error('WITHDRAWAL_REFERENCE_CREATED');
+    }
+    const duplicate = await LuckyWheelWithdrawal.exists({
+        bankTransactionId: normalizedTransactionId,
+        _id: { $ne: withdrawal._id },
+    });
+    if (duplicate) throw new Error('BANK_TRANSACTION_ALREADY_USED');
+
+    let verified;
+    try {
+        verified = await verifyWithdrawalInAcbHistory({
+            amount: withdrawal.amount,
+            beneficiaryAccount: withdrawal.accountNumber,
+            payoutReference: withdrawal.payoutReference,
+            transactionId: normalizedTransactionId,
+            createdAt: (withdrawal as typeof withdrawal & { createdAt: Date }).createdAt,
+        });
+    } catch (error) {
+        if (error instanceof Error && ['BANK_TRANSACTION_NOT_CONFIRMED', 'ACB_ACCOUNT_NOT_CONFIGURED'].includes(error.message)) throw error;
+        console.error('ACB withdrawal verification failed', error);
+        throw new Error('BANK_VERIFICATION_UNAVAILABLE');
+    }
+
+    const session = await mongoose.startSession();
+    let completed = null;
+    const bankTransactionDate = verified.transactionDate ? new Date(verified.transactionDate) : new Date();
+    if (Number.isNaN(bankTransactionDate.getTime())) bankTransactionDate.setTime(Date.now());
+    try {
+        await session.withTransaction(async () => {
+            completed = await LuckyWheelWithdrawal.findOneAndUpdate(
+                { _id: withdrawalId, status: 'pending' },
+                { $set: {
+                    status: 'paid',
+                    note: note.trim(),
+                    bankTransactionId: verified.transactionId || normalizedTransactionId,
+                    bankTransactionDate,
+                    bankVerifiedAt: new Date(),
+                    reviewedBy: adminUserId,
+                    reviewedAt: new Date(),
+                } },
+                { new: true, session },
+            );
+            if (!completed) throw new Error('WITHDRAWAL_NOT_FOUND');
+            const accountUpdate = await LuckyWheelAccount.updateOne(
+                { userId: withdrawal.userId, pendingWithdrawal: { $gte: withdrawal.amount } },
+                { $inc: { pendingWithdrawal: -withdrawal.amount, lifetimeWithdrawn: withdrawal.amount } },
+                { session },
+            );
+            if (accountUpdate.modifiedCount !== 1) throw new Error('ACCOUNT_NOT_FOUND');
+        });
+    } finally { await session.endSession(); }
+    return completed;
 }
 
 export async function spinLuckyWheel(userId: string, requestId: string, adminTestMode = false) {
@@ -247,6 +322,14 @@ export async function getLuckyWheelUserSummary(userId: string, adminTestMode = f
 
 export async function getLuckyWheelAdminSummary() {
     await dbConnect();
+    const pendingWithoutReference = await LuckyWheelWithdrawal.find({
+        status: 'pending',
+        $or: [{ payoutReference: { $exists: false } }, { payoutReference: '' }],
+    }).select('_id').lean();
+    await Promise.all(pendingWithoutReference.map(item => LuckyWheelWithdrawal.updateOne(
+        { _id: item._id, status: 'pending', $or: [{ payoutReference: { $exists: false } }, { payoutReference: '' }] },
+        { $set: { payoutReference: createLuckyWheelWithdrawalRef() } },
+    )));
     const [settings, accountTotals, topUpTotals, spins, milestones, withdrawals, memberAccounts] = await Promise.all([
         getLuckyWheelSettings(),
         LuckyWheelAccount.aggregate([{ $group: {
