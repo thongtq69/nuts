@@ -5,10 +5,14 @@ import {
     type AdminNotificationPreferences,
 } from '@/lib/admin-notification-settings';
 import {
+    sendAdminLuckyWheelTopUpEmail,
+    sendAdminLuckyWheelWithdrawalEmail,
     sendAdminNewAccountEmail,
     sendAdminNewOrderEmail,
 } from '@/lib/email';
 import AdminNotificationSettings from '@/models/AdminNotificationSettings';
+import LuckyWheelTopUp from '@/models/LuckyWheelTopUp';
+import LuckyWheelWithdrawal from '@/models/LuckyWheelWithdrawal';
 import Order from '@/models/Order';
 import User, { type IUser } from '@/models/User';
 
@@ -218,6 +222,132 @@ export async function notifyAdminOfNewOrder(orderId: string): Promise<AdminNotif
         await Order.updateOne(
             { _id: orderId },
             { $set: { adminNewOrderNotificationStatus: 'failed' } },
+        ).catch(() => undefined);
+        return { sent: false, reason: 'failed' };
+    }
+}
+
+export async function notifyAdminOfLuckyWheelTopUp(topUpId: string): Promise<AdminNotificationResult> {
+    try {
+        await dbConnect();
+        const topUp = await LuckyWheelTopUp.findOneAndUpdate(
+            {
+                _id: topUpId,
+                status: 'paid',
+                adminNotificationStatus: { $nin: ['processing', 'sent', 'skipped'] },
+            },
+            {
+                $set: {
+                    adminNotificationStatus: 'processing',
+                    adminNotificationLastAttemptAt: new Date(),
+                },
+            },
+            { new: true },
+        ).populate('userId', 'name email').lean();
+
+        if (!topUp) {
+            const exists = await LuckyWheelTopUp.exists({ _id: topUpId });
+            return { sent: false, reason: exists ? 'duplicate' : 'not_found' };
+        }
+
+        const preferences = await getAdminNotificationPreferences();
+        if (!preferences.notifyLuckyWheelTopUp || preferences.recipients.length === 0) {
+            await LuckyWheelTopUp.updateOne(
+                { _id: topUpId },
+                { $set: { adminNotificationStatus: 'skipped' } },
+            );
+            return {
+                sent: false,
+                reason: preferences.notifyLuckyWheelTopUp ? 'no_recipients' : 'disabled',
+            };
+        }
+
+        const customer = topUp.userId as unknown as { name?: string; email?: string };
+        await sendAdminLuckyWheelTopUpEmail(preferences.recipients, {
+            topUpId: String(topUp._id),
+            customerName: customer?.name || 'Khách hàng',
+            customerEmail: customer?.email || 'Không có email',
+            amount: Number(topUp.amount || 0),
+            spins: Number(topUp.spins || 0),
+            paymentRef: topUp.paymentRef,
+            bankTransactionId: topUp.acbTransactionNo,
+            paidAt: topUp.paidAt,
+        });
+
+        await LuckyWheelTopUp.updateOne(
+            { _id: topUpId },
+            { $set: { adminNotificationStatus: 'sent', adminNotificationSentAt: new Date() } },
+        );
+        return { sent: true };
+    } catch (error) {
+        console.error('Admin lucky-wheel top-up email notification failed:', error);
+        await LuckyWheelTopUp.updateOne(
+            { _id: topUpId },
+            { $set: { adminNotificationStatus: 'failed' } },
+        ).catch(() => undefined);
+        return { sent: false, reason: 'failed' };
+    }
+}
+
+export async function notifyAdminOfLuckyWheelWithdrawal(withdrawalId: string): Promise<AdminNotificationResult> {
+    try {
+        await dbConnect();
+        const withdrawal = await LuckyWheelWithdrawal.findOneAndUpdate(
+            {
+                _id: withdrawalId,
+                adminNotificationStatus: { $nin: ['processing', 'sent', 'skipped'] },
+            },
+            {
+                $set: {
+                    adminNotificationStatus: 'processing',
+                    adminNotificationLastAttemptAt: new Date(),
+                },
+            },
+            { new: true },
+        ).populate('userId', 'name email').lean();
+
+        if (!withdrawal) {
+            const exists = await LuckyWheelWithdrawal.exists({ _id: withdrawalId });
+            return { sent: false, reason: exists ? 'duplicate' : 'not_found' };
+        }
+
+        const preferences = await getAdminNotificationPreferences();
+        if (!preferences.notifyLuckyWheelWithdrawal || preferences.recipients.length === 0) {
+            await LuckyWheelWithdrawal.updateOne(
+                { _id: withdrawalId },
+                { $set: { adminNotificationStatus: 'skipped' } },
+            );
+            return {
+                sent: false,
+                reason: preferences.notifyLuckyWheelWithdrawal ? 'no_recipients' : 'disabled',
+            };
+        }
+
+        const customer = withdrawal.userId as unknown as { name?: string; email?: string };
+        await sendAdminLuckyWheelWithdrawalEmail(preferences.recipients, {
+            withdrawalId: String(withdrawal._id),
+            customerName: customer?.name || 'Khách hàng',
+            customerEmail: customer?.email || 'Không có email',
+            amount: Number(withdrawal.amount || 0),
+            bankName: withdrawal.bankName,
+            accountNumber: withdrawal.accountNumber,
+            accountName: withdrawal.accountName,
+            payoutReference: withdrawal.payoutReference,
+            status: withdrawal.status,
+            rejectionReason: withdrawal.rejectionReason,
+            createdAt: (withdrawal as typeof withdrawal & { createdAt?: Date }).createdAt,
+        });
+
+        await LuckyWheelWithdrawal.updateOne(
+            { _id: withdrawalId },
+            { $set: { adminNotificationStatus: 'sent', adminNotificationSentAt: new Date() } },
+        );
+        return { sent: true };
+    } catch (error) {
+        console.error('Admin lucky-wheel withdrawal email notification failed:', error);
+        await LuckyWheelWithdrawal.updateOne(
+            { _id: withdrawalId },
+            { $set: { adminNotificationStatus: 'failed' } },
         ).catch(() => undefined);
         return { sent: false, reason: 'failed' };
     }

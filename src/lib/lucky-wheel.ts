@@ -6,7 +6,7 @@ import LuckyWheelAccount from '@/models/LuckyWheelAccount';
 import LuckyWheelSettings from '@/models/LuckyWheelSettings';
 import LuckyWheelSpin from '@/models/LuckyWheelSpin';
 import LuckyWheelMilestone from '@/models/LuckyWheelMilestone';
-import LuckyWheelTopUp from '@/models/LuckyWheelTopUp';
+import LuckyWheelTopUp, { type ILuckyWheelTopUp } from '@/models/LuckyWheelTopUp';
 import LuckyWheelWithdrawal from '@/models/LuckyWheelWithdrawal';
 import { verifyWithdrawalInAcbHistory } from '@/lib/lucky-wheel-withdrawal-verification';
 import { findVietnamBank } from '@/lib/vietnam-banks';
@@ -79,10 +79,14 @@ export async function createLuckyWheelTopUp(userId: string, amount: number) {
     return LuckyWheelTopUp.create({ userId, amount: normalizedAmount, spins, paymentRef: createLuckyWheelPaymentRef() });
 }
 
-export async function applyPaidLuckyWheelTopUp(paymentRef: string, amount: number, transactionId: string) {
+export async function applyPaidLuckyWheelTopUp(
+    paymentRef: string,
+    amount: number,
+    transactionId: string,
+): Promise<mongoose.HydratedDocument<ILuckyWheelTopUp> | null> {
     await dbConnect();
     const session = await mongoose.startSession();
-    let topUp = null;
+    let topUp: mongoose.HydratedDocument<ILuckyWheelTopUp> | null = null;
     try {
         await session.withTransaction(async () => {
             topUp = await LuckyWheelTopUp.findOne({ paymentRef, status: 'pending' }).session(session);

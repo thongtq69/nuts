@@ -223,6 +223,8 @@ test('admin notification emails are normalized, deduplicated and limited', () =>
         recipients: ['admin@gonuts.vn'],
         notifyNewAccount: false,
         notifyNewOrder: true,
+        notifyLuckyWheelTopUp: true,
+        notifyLuckyWheelWithdrawal: true,
     });
 });
 
@@ -285,6 +287,44 @@ test('admin email notification settings stay private and event delivery is idemp
     for (const source of [productOrderApi, membershipOrderApi, vnpayOrderApi]) {
         assert.match(source, /notifyAdminOfNewOrder/);
     }
+});
+
+test('lucky-wheel top-up and withdrawal notifications use saved admin email settings', async () => {
+    const [
+        settingsApi,
+        settingsPage,
+        notificationHelper,
+        emailSource,
+        acbPayments,
+        withdrawalApi,
+        topUpModel,
+        withdrawalModel,
+    ] = await Promise.all([
+        readFile(new URL('../src/app/api/admin/notification-settings/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/admin/settings/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/admin-email-notifications.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/email.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/acb-payments.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/lucky-wheel/withdraw/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/models/LuckyWheelTopUp.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/models/LuckyWheelWithdrawal.ts', import.meta.url), 'utf8'),
+    ]);
+
+    for (const flag of ['notifyLuckyWheelTopUp', 'notifyLuckyWheelWithdrawal']) {
+        assert.match(settingsApi, new RegExp(flag));
+        assert.match(settingsPage, new RegExp(flag));
+    }
+    assert.match(settingsPage, /Thông báo nạp lượt vòng quay/);
+    assert.match(settingsPage, /Thông báo rút thưởng vòng quay/);
+    assert.match(notificationHelper, /notifyAdminOfLuckyWheelTopUp/);
+    assert.match(notificationHelper, /notifyAdminOfLuckyWheelWithdrawal/);
+    assert.match(notificationHelper, /adminNotificationStatus: \{ \$nin: \['processing', 'sent', 'skipped'\] \}/);
+    assert.match(emailSource, /sendAdminLuckyWheelTopUpEmail/);
+    assert.match(emailSource, /sendAdminLuckyWheelWithdrawalEmail/);
+    assert.match(acbPayments, /notifyAdminOfLuckyWheelTopUp/);
+    assert.match(withdrawalApi, /notifyAdminOfLuckyWheelWithdrawal/);
+    assert.match(topUpModel, /adminNotificationStatus/);
+    assert.match(withdrawalModel, /adminNotificationStatus/);
 });
 
 test('customer detail registers the membership package model on cold starts', async () => {

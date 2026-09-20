@@ -88,6 +88,8 @@ interface AdminNotificationSettings {
     recipients: string[];
     notifyNewAccount: boolean;
     notifyNewOrder: boolean;
+    notifyLuckyWheelTopUp: boolean;
+    notifyLuckyWheelWithdrawal: boolean;
 }
 
 export default function AdminSettingsPage() {
@@ -146,6 +148,8 @@ export default function AdminSettingsPage() {
         recipients: ['euptravel@gmail.com'],
         notifyNewAccount: true,
         notifyNewOrder: true,
+        notifyLuckyWheelTopUp: true,
+        notifyLuckyWheelWithdrawal: true,
     });
     const [uploadingBanner, setUploadingBanner] = useState(false);
     const [uploadingBankQr, setUploadingBankQr] = useState(false);
@@ -191,6 +195,8 @@ export default function AdminSettingsPage() {
                     recipients: Array.isArray(data.recipients) ? data.recipients : [],
                     notifyNewAccount: data.notifyNewAccount !== false,
                     notifyNewOrder: data.notifyNewOrder !== false,
+                    notifyLuckyWheelTopUp: data.notifyLuckyWheelTopUp !== false,
+                    notifyLuckyWheelWithdrawal: data.notifyLuckyWheelWithdrawal !== false,
                 });
             }
         } catch (error) {
@@ -675,7 +681,7 @@ export default function AdminSettingsPage() {
                                 Email thông báo cho quản trị
                             </h2>
                             <p className="mt-1 text-sm text-slate-500">
-                                Hệ thống gửi email khi có tài khoản hoặc đơn hàng mới. Lỗi gửi email không ảnh hưởng đến việc đăng ký và đặt hàng.
+                                Hệ thống gửi email khi có tài khoản, đơn hàng, nạp lượt hoặc yêu cầu rút thưởng vòng quay. Lỗi gửi email không làm gián đoạn thao tác của khách.
                             </p>
                         </div>
                         <button
@@ -740,6 +746,36 @@ export default function AdminSettingsPage() {
                                 <span>
                                     <span className="block font-semibold text-slate-800">Thông báo đơn hàng mới</span>
                                     <span className="mt-1 block text-sm text-slate-500">Gồm sản phẩm, số tiền, thanh toán, phí vận chuyển và địa chỉ giao hàng.</span>
+                                </span>
+                            </label>
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={notificationSettings.notifyLuckyWheelTopUp}
+                                    onChange={event => setNotificationSettings(previous => ({
+                                        ...previous,
+                                        notifyLuckyWheelTopUp: event.target.checked,
+                                    }))}
+                                    className="mt-0.5 h-5 w-5 rounded text-brand focus:ring-brand"
+                                />
+                                <span>
+                                    <span className="block font-semibold text-slate-800">Thông báo nạp lượt vòng quay</span>
+                                    <span className="mt-1 block text-sm text-slate-500">Gửi sau khi ACB xác nhận thanh toán và hệ thống đã cộng lượt cho khách.</span>
+                                </span>
+                            </label>
+                            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <input
+                                    type="checkbox"
+                                    checked={notificationSettings.notifyLuckyWheelWithdrawal}
+                                    onChange={event => setNotificationSettings(previous => ({
+                                        ...previous,
+                                        notifyLuckyWheelWithdrawal: event.target.checked,
+                                    }))}
+                                    className="mt-0.5 h-5 w-5 rounded text-brand focus:ring-brand"
+                                />
+                                <span>
+                                    <span className="block font-semibold text-slate-800">Thông báo rút thưởng vòng quay</span>
+                                    <span className="mt-1 block text-sm text-slate-500">Gửi ngay khi khách tạo yêu cầu, kèm số tiền và tài khoản ngân hàng nhận.</span>
                                 </span>
                             </label>
                         </div>

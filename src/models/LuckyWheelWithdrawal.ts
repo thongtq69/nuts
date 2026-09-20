@@ -17,6 +17,9 @@ export interface ILuckyWheelWithdrawal {
     note?: string;
     reviewedBy?: mongoose.Types.ObjectId;
     reviewedAt?: Date;
+    adminNotificationStatus?: 'processing' | 'sent' | 'failed' | 'skipped';
+    adminNotificationSentAt?: Date;
+    adminNotificationLastAttemptAt?: Date;
 }
 
 const schema = new Schema<ILuckyWheelWithdrawal>({
@@ -36,6 +39,9 @@ const schema = new Schema<ILuckyWheelWithdrawal>({
     note: { type: String, trim: true, maxlength: 500 },
     reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     reviewedAt: Date,
+    adminNotificationStatus: { type: String, enum: ['processing', 'sent', 'failed', 'skipped'] },
+    adminNotificationSentAt: Date,
+    adminNotificationLastAttemptAt: Date,
 }, { timestamps: true });
 
 const LuckyWheelWithdrawal: Model<ILuckyWheelWithdrawal> = mongoose.models.LuckyWheelWithdrawal

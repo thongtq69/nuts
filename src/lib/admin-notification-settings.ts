@@ -2,6 +2,8 @@ export interface AdminNotificationPreferences {
     recipients: string[];
     notifyNewAccount: boolean;
     notifyNewOrder: boolean;
+    notifyLuckyWheelTopUp: boolean;
+    notifyLuckyWheelWithdrawal: boolean;
 }
 
 export const DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS = ['euptravel@gmail.com'];
@@ -10,6 +12,8 @@ export const DEFAULT_ADMIN_NOTIFICATION_PREFERENCES: AdminNotificationPreference
     recipients: [...DEFAULT_ADMIN_NOTIFICATION_RECIPIENTS],
     notifyNewAccount: true,
     notifyNewOrder: true,
+    notifyLuckyWheelTopUp: true,
+    notifyLuckyWheelWithdrawal: true,
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,5 +39,7 @@ export function normalizeAdminNotificationPreferences(
         recipients: normalizeNotificationEmails(value?.recipients),
         notifyNewAccount: value?.notifyNewAccount !== false,
         notifyNewOrder: value?.notifyNewOrder !== false,
+        notifyLuckyWheelTopUp: value?.notifyLuckyWheelTopUp !== false,
+        notifyLuckyWheelWithdrawal: value?.notifyLuckyWheelWithdrawal !== false,
     };
 }

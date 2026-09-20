@@ -5,6 +5,8 @@ export interface IAdminNotificationSettings {
     recipients: string[];
     notifyNewAccount: boolean;
     notifyNewOrder: boolean;
+    notifyLuckyWheelTopUp: boolean;
+    notifyLuckyWheelWithdrawal: boolean;
     updatedBy?: mongoose.Types.ObjectId;
     createdAt?: Date;
     updatedAt?: Date;
@@ -22,6 +24,8 @@ const AdminNotificationSettingsSchema = new Schema<IAdminNotificationSettings>({
     },
     notifyNewAccount: { type: Boolean, default: true },
     notifyNewOrder: { type: Boolean, default: true },
+    notifyLuckyWheelTopUp: { type: Boolean, default: true },
+    notifyLuckyWheelWithdrawal: { type: Boolean, default: true },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 

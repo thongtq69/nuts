@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-permissions';
+import { notifyAdminOfLuckyWheelWithdrawal } from '@/lib/admin-email-notifications';
 import { requestLuckyWheelWithdrawal } from '@/lib/lucky-wheel';
 
 export async function POST(request: Request) {
@@ -8,6 +9,8 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const withdrawal = await requestLuckyWheelWithdrawal(user._id, body);
+        if (!withdrawal) throw new Error('WITHDRAWAL_NOT_CREATED');
+        after(() => notifyAdminOfLuckyWheelWithdrawal(String(withdrawal._id)));
         if (withdrawal?.status === 'rejected') {
             return NextResponse.json({ message: `Lệnh rút đã bị từ chối: ${withdrawal.rejectionReason}`, withdrawal });
         }

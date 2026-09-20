@@ -648,6 +648,99 @@ export async function sendAdminNewOrderEmail(
     );
 }
 
+export interface AdminLuckyWheelTopUpEmailData {
+    topUpId: string;
+    customerName: string;
+    customerEmail: string;
+    amount: number;
+    spins: number;
+    paymentRef: string;
+    bankTransactionId?: string;
+    paidAt?: Date | string;
+}
+
+export async function sendAdminLuckyWheelTopUpEmail(
+    recipients: string[],
+    data: AdminLuckyWheelTopUpEmailData,
+) {
+    const paidAt = data.paidAt
+        ? new Date(data.paidAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })
+        : new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+
+    await sendAdminEmail(
+        recipients,
+        `[Go Nuts] Nạp lượt vòng quay thành công - ${formatVnd(data.amount)}`,
+        `
+            <h2>🎡 Khách đã nạp lượt vòng quay</h2>
+            <div class="info-box">
+                <p><strong>Khách hàng:</strong> ${escapeHtml(data.customerName)}</p>
+                <p><strong>Email:</strong> ${escapeHtml(data.customerEmail)}</p>
+                <p><strong>Số tiền:</strong> ${formatVnd(data.amount)}</p>
+                <p><strong>Số lượt được cộng:</strong> ${Math.max(0, Number(data.spins) || 0)} lượt</p>
+                <p><strong>Mã thanh toán:</strong> ${escapeHtml(data.paymentRef)}</p>
+                <p><strong>Mã giao dịch ACB:</strong> ${escapeHtml(data.bankTransactionId || 'Chưa có')}</p>
+                <p><strong>Thời gian ACB xác nhận:</strong> ${escapeHtml(paidAt)}</p>
+            </div>
+            <div class="btn-container">
+                <a href="${BASE_URL}/admin/lucky-wheel" class="btn">Mở quản trị vòng quay</a>
+            </div>
+        `,
+    );
+}
+
+export interface AdminLuckyWheelWithdrawalEmailData {
+    withdrawalId: string;
+    customerName: string;
+    customerEmail: string;
+    amount: number;
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    payoutReference?: string;
+    status: 'pending' | 'paid' | 'rejected';
+    rejectionReason?: string;
+    createdAt?: Date | string;
+}
+
+export async function sendAdminLuckyWheelWithdrawalEmail(
+    recipients: string[],
+    data: AdminLuckyWheelWithdrawalEmailData,
+) {
+    const createdAt = data.createdAt
+        ? new Date(data.createdAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })
+        : new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const status = data.status === 'pending'
+        ? 'Đang chờ quản trị xử lý'
+        : data.status === 'paid'
+            ? 'Đã thanh toán'
+            : 'Hệ thống từ chối';
+    const rejection = data.rejectionReason
+        ? `<p><strong>Lý do:</strong> ${escapeHtml(data.rejectionReason)}</p>`
+        : '';
+
+    await sendAdminEmail(
+        recipients,
+        `[Go Nuts] Yêu cầu rút thưởng vòng quay - ${formatVnd(data.amount)}`,
+        `
+            <h2>💸 Khách đã yêu cầu rút thưởng vòng quay</h2>
+            <div class="info-box">
+                <p><strong>Khách hàng:</strong> ${escapeHtml(data.customerName)}</p>
+                <p><strong>Email:</strong> ${escapeHtml(data.customerEmail)}</p>
+                <p><strong>Số tiền:</strong> ${formatVnd(data.amount)}</p>
+                <p><strong>Tài khoản nhận:</strong> ${escapeHtml(data.bankName)} · ${escapeHtml(data.accountNumber)}</p>
+                <p><strong>Chủ tài khoản:</strong> ${escapeHtml(data.accountName)}</p>
+                <p><strong>Mã chi:</strong> ${escapeHtml(data.payoutReference || 'Chưa có')}</p>
+                <p><strong>Trạng thái:</strong> ${escapeHtml(status)}</p>
+                ${rejection}
+                <p><strong>Thời gian yêu cầu:</strong> ${escapeHtml(createdAt)}</p>
+            </div>
+            <div class="btn-container">
+                <a href="${BASE_URL}/admin/lucky-wheel" class="btn">Kiểm tra yêu cầu rút</a>
+            </div>
+        `,
+    );
+}
+
 export async function sendAdminNotificationTestEmail(recipients: string[]) {
     await sendAdminEmail(
         recipients,
@@ -656,7 +749,7 @@ export async function sendAdminNotificationTestEmail(recipients: string[]) {
             <h2>✅ Email thông báo đang hoạt động</h2>
             <p>Đây là email kiểm tra được gửi từ trang Cài đặt Website.</p>
             <div class="info-box">
-                <p>Khi có tài khoản mới hoặc đơn hàng mới, hệ thống sẽ gửi thông tin tới các địa chỉ đã cấu hình.</p>
+                <p>Khi có tài khoản, đơn hàng, giao dịch nạp lượt hoặc yêu cầu rút thưởng vòng quay, hệ thống sẽ gửi thông tin theo các mục đã bật tới những địa chỉ đã cấu hình.</p>
             </div>
         `,
     );
@@ -673,6 +766,8 @@ const emailService = {
     sendSaleApprovedEmail,
     sendAdminNewAccountEmail,
     sendAdminNewOrderEmail,
+    sendAdminLuckyWheelTopUpEmail,
+    sendAdminLuckyWheelWithdrawalEmail,
     sendAdminNotificationTestEmail,
 };
 

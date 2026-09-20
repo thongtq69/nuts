@@ -8,6 +8,9 @@ export interface ILuckyWheelTopUp {
     status: 'pending' | 'paid' | 'expired';
     acbTransactionNo?: string;
     paidAt?: Date;
+    adminNotificationStatus?: 'processing' | 'sent' | 'failed' | 'skipped';
+    adminNotificationSentAt?: Date;
+    adminNotificationLastAttemptAt?: Date;
 }
 
 const schema = new Schema<ILuckyWheelTopUp>({
@@ -18,6 +21,9 @@ const schema = new Schema<ILuckyWheelTopUp>({
     status: { type: String, enum: ['pending', 'paid', 'expired'], default: 'pending', index: true },
     acbTransactionNo: { type: String, sparse: true, unique: true },
     paidAt: Date,
+    adminNotificationStatus: { type: String, enum: ['processing', 'sent', 'failed', 'skipped'] },
+    adminNotificationSentAt: Date,
+    adminNotificationLastAttemptAt: Date,
 }, { timestamps: true });
 
 const LuckyWheelTopUp: Model<ILuckyWheelTopUp> = mongoose.models.LuckyWheelTopUp

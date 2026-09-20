@@ -12,6 +12,7 @@ import { activateMembershipOrder } from '@/lib/membership-activation';
 import { getConfiguredAcbAccountNumber } from '@/lib/server-bank-settings';
 import LuckyWheelTopUp from '@/models/LuckyWheelTopUp';
 import { applyPaidLuckyWheelTopUp } from '@/lib/lucky-wheel';
+import { notifyAdminOfLuckyWheelTopUp } from '@/lib/admin-email-notifications';
 
 export interface ParsedAcbTransaction {
     transactionId: string;
@@ -303,9 +304,13 @@ export async function applyAcbTransactionToOrder(
     if (paymentRef.startsWith('LW')) {
         const existingTopUp = await LuckyWheelTopUp.findOne({ paymentRef }).lean();
         if (!existingTopUp) return { applied: false, reason: 'top_up_not_found', paymentRef, transactionId: txn.transactionId, amount: txn.amount };
-        if (existingTopUp.status === 'paid') return { applied: false, reason: 'duplicate_transaction', paymentRef, orderId: String(existingTopUp._id), transactionId: txn.transactionId, amount: txn.amount };
+        if (existingTopUp.status === 'paid') {
+            await notifyAdminOfLuckyWheelTopUp(String(existingTopUp._id));
+            return { applied: false, reason: 'duplicate_transaction', paymentRef, orderId: String(existingTopUp._id), transactionId: txn.transactionId, amount: txn.amount };
+        }
         try {
             const topUp = await applyPaidLuckyWheelTopUp(paymentRef, txn.amount, txn.transactionId || txn.traceNumber || `${source}_${Date.now()}`);
+            if (topUp) await notifyAdminOfLuckyWheelTopUp(String(topUp._id));
             return { applied: Boolean(topUp), reason: topUp ? 'paid' : 'top_up_not_found', paymentRef, orderId: String(existingTopUp._id), transactionId: txn.transactionId, amount: txn.amount };
         } catch (error) {
             return { applied: false, reason: error instanceof Error ? error.message.toLowerCase() : 'top_up_failed', paymentRef, orderId: String(existingTopUp._id), transactionId: txn.transactionId, amount: txn.amount };

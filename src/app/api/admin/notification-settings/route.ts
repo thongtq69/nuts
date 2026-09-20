@@ -64,6 +64,8 @@ export async function PUT(request: Request) {
         recipients,
         notifyNewAccount: raw.notifyNewAccount !== false,
         notifyNewOrder: raw.notifyNewOrder !== false,
+        notifyLuckyWheelTopUp: raw.notifyLuckyWheelTopUp !== false,
+        notifyLuckyWheelWithdrawal: raw.notifyLuckyWheelWithdrawal !== false,
     });
     const settings = await AdminNotificationSettings.findOneAndUpdate(
         { key: 'default' },
