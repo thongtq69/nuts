@@ -32,7 +32,7 @@ export const DEFAULT_MILESTONE_REWARDS: LuckyWheelMilestoneRewardConfig[] = [
 ];
 
 export const DEFAULT_WHEEL_COPY = {
-    campaignName: 'Vòng quay may mắn Go Nuts',
+    campaignName: 'Vòng quay may mắn GO NUTS',
     memberBadgeText: 'Thành viên Go Nuts',
     introText: 'Nạp 10.000đ nhận 5 lượt quay. Tiền thưởng được cộng thẳng vào tài khoản để rút hoặc dùng khi mua hàng.',
     inactiveMessage: 'Chương trình hiện đang tạm dừng.',

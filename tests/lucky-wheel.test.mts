@@ -12,6 +12,18 @@ import {
 } from '../src/lib/lucky-wheel-rules.ts';
 import { matchesWithdrawalTransaction } from '../src/lib/lucky-wheel-withdrawal-rules.ts';
 import { findVietnamBank, searchVietnamBanks, VIETNAM_BANKS } from '../src/lib/vietnam-banks.ts';
+import { DEFAULT_WHEEL_COPY } from '../src/lib/lucky-wheel-config.ts';
+
+test('lucky wheel title uses GO NUTS and stays on one line for the default campaign', () => {
+    const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const wheelService = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
+
+    assert.equal(DEFAULT_WHEEL_COPY.campaignName, 'Vòng quay may mắn GO NUTS');
+    assert.match(customerPage, /whitespace-nowrap text-\[clamp\(1rem,4vw,3\.4rem\)\]/);
+    assert.match(customerPage, /Vòng quay may mắn GO NUTS/);
+    assert.match(wheelService, /settings\.campaignName === 'Vòng quay may mắn Go Nuts'/);
+    assert.match(wheelService, /settings\.campaignName = DEFAULT_WHEEL_COPY\.campaignName/);
+});
 
 test('regular spin groups are random-looking while respecting the customer prize rule', () => {
     const arrangements = new Set<string>();

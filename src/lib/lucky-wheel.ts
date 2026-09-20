@@ -46,6 +46,10 @@ export async function getLuckyWheelSettings() {
         if (!settings.milestoneRewards?.length) settings.milestoneRewards = DEFAULT_MILESTONE_REWARDS;
         await settings.save();
     }
+    if (settings.campaignName === 'Vòng quay may mắn Go Nuts') {
+        settings.campaignName = DEFAULT_WHEEL_COPY.campaignName;
+        await settings.save();
+    }
     return settings;
 }
 
