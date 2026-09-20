@@ -6,24 +6,68 @@ import {
     isCampaignActive,
     milestonePrizeValues,
     prizeForSpin,
+    randomizedPrizeCycle,
     spinsForTopUp,
     withdrawalRequestDecision,
 } from '../src/lib/lucky-wheel-rules.ts';
 import { matchesWithdrawalTransaction } from '../src/lib/lucky-wheel-withdrawal-rules.ts';
 import { findVietnamBank, searchVietnamBanks, VIETNAM_BANKS } from '../src/lib/vietnam-banks.ts';
 
-test('every five reveals follow the exact published order', () => {
-    for (let cycle = 0; cycle < 20; cycle += 1) {
-        const prizes = Array.from({ length: 5 }, (_, index) => prizeForSpin(cycle * 5 + index + 1));
-        assert.deepEqual(prizes, [0, 1000, 0, 5000, 0]);
-        assert.equal(prizes.reduce((sum, value) => sum + value, 0), 6000);
+test('regular spin groups are random-looking while respecting the customer prize rule', () => {
+    const arrangements = new Set<string>();
+    let highPrizeGroups = 0;
+    const regularWinningCounts = new Set<number>();
+
+    for (let cycle = 0; cycle < 300; cycle += 1) {
+        const prizes = randomizedPrizeCycle(cycle, undefined, 'customer-a:secret');
+        arrangements.add(prizes.join(','));
+
+        if (prizes.includes(5_000)) {
+            highPrizeGroups += 1;
+            assert.equal(prizes.filter(value => value === 5_000).length, 1);
+            assert.equal(prizes.filter(value => value === 1_000).length, 1);
+            assert.equal(prizes.filter(value => value === 0).length, 3);
+            assert.equal(prizes.reduce((sum, value) => sum + value, 0), 6_000);
+        } else {
+            assert.ok(prizes.every(value => value === 0 || value === 1_000));
+            const oneThousandCount = prizes.filter(value => value === 1_000).length;
+            assert.ok(oneThousandCount >= 1 && oneThousandCount <= prizes.length);
+            regularWinningCounts.add(oneThousandCount);
+        }
     }
+
+    assert.ok(arrangements.size > 20);
+    assert.ok(highPrizeGroups > 0);
+    assert.deepEqual([...regularWinningCounts].sort((a, b) => a - b), [1, 2, 3, 4, 5]);
 });
 
-test('reveal result is deterministic for audit and idempotency', () => {
-    assert.equal(prizeForSpin(7), 1000);
-    assert.equal(prizeForSpin(4, [0, 2000, 5000]), 0);
-    assert.equal(prizeForSpin(5, [0, 2000, 5000]), 2000);
+test('randomized result remains deterministic for audit and idempotency', () => {
+    const firstRead = Array.from({ length: 20 }, (_, index) => prizeForSpin(index + 1, undefined, 'customer-a:secret'));
+    const retryRead = Array.from({ length: 20 }, (_, index) => prizeForSpin(index + 1, undefined, 'customer-a:secret'));
+    const anotherCustomer = Array.from({ length: 20 }, (_, index) => prizeForSpin(index + 1, undefined, 'customer-b:secret'));
+
+    assert.deepEqual(retryRead, firstRead);
+    assert.notDeepEqual(anotherCustomer, firstRead);
+});
+
+test('custom structures without the 1k/5k policy are still shuffled instead of repeated in fixed order', () => {
+    const prizes = [0, 2_000, 5_000];
+    const cycle = randomizedPrizeCycle(4, prizes, 'custom-structure');
+    assert.deepEqual([...cycle].sort((a, b) => a - b), prizes);
+    assert.deepEqual(randomizedPrizeCycle(4, prizes, 'custom-structure'), cycle);
+
+    const extendedPrizes = [0, 1_000, 5_000, 10_000];
+    assert.deepEqual(
+        [...randomizedPrizeCycle(4, extendedPrizes, 'extended-structure')].sort((a, b) => a - b),
+        extendedPrizes,
+    );
+});
+
+test('existing players begin a fresh randomized group without changing their historical spin count', () => {
+    const source = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
+    assert.match(source, /regularSpinRandomOffset:[\s\S]*?\$ifNull:[\s\S]*?\$lifetimeSpinsUsed/);
+    assert.match(source, /randomizedSequence = sequence - Number\(account\.regularSpinRandomOffset \|\| 0\)/);
+    assert.match(source, /updatePipeline: true/);
 });
 
 test('fixed-benefit program can be activated without a random-draw approval field', () => {

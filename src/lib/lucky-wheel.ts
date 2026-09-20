@@ -23,11 +23,11 @@ export async function getLuckyWheelSettings() {
     await dbConnect();
     const settings = await LuckyWheelSettings.findOneAndUpdate(
         { key: 'default' },
-        { $setOnInsert: { key: 'default', enabled: true, programVersion: 5 } },
+        { $setOnInsert: { key: 'default', enabled: true, programVersion: 6 } },
         { new: true, upsert: true, setDefaultsOnInsert: true },
     );
-    if ((settings.programVersion || 0) < 5) {
-        settings.programVersion = 5;
+    if ((settings.programVersion || 0) < 6) {
+        settings.programVersion = 6;
         settings.memberBadgeText ||= DEFAULT_WHEEL_COPY.memberBadgeText;
         settings.introText ||= DEFAULT_WHEEL_COPY.introText;
         settings.inactiveMessage ||= DEFAULT_WHEEL_COPY.inactiveMessage;
@@ -94,7 +94,7 @@ export async function applyPaidLuckyWheelTopUp(paymentRef: string, amount: numbe
             await topUp.save({ session });
             await LuckyWheelAccount.findOneAndUpdate(
                 { userId: topUp.userId },
-                { $inc: { availableSpins: topUp.spins, lifetimeSpinsGranted: topUp.spins, qualifyingRevenue: topUp.amount }, $setOnInsert: { lifetimeSpinsUsed: 0 } },
+                { $inc: { availableSpins: topUp.spins, lifetimeSpinsGranted: topUp.spins, qualifyingRevenue: topUp.amount }, $setOnInsert: { lifetimeSpinsUsed: 0, regularSpinRandomOffset: 0 } },
                 { upsert: true, session, setDefaultsOnInsert: true },
             );
         });
@@ -250,10 +250,11 @@ export async function spinLuckyWheel(userId: string, requestId: string, adminTes
     if (existing) return existing;
 
     const settings = await getLuckyWheelSettings();
+    const randomEntropy = `${userId}:${process.env.LUCKY_WHEEL_RANDOM_SECRET || process.env.JWT_SECRET || 'gonuts-lucky-wheel-v6'}`;
     if (adminTestMode) {
         const latestTestSpin = await LuckyWheelSpin.findOne({ userId, isTest: true }).sort({ sequence: -1 }).select('sequence').lean();
         const testSequence = latestTestSpin ? Math.max(1, latestTestSpin.sequence - 1_000_000_000 + 1) : 1;
-        const prizeValue = prizeForSpin(testSequence, settings.regularSpinPrizes);
+        const prizeValue = prizeForSpin(testSequence, settings.regularSpinPrizes, randomEntropy);
         return LuckyWheelSpin.create({
             userId,
             requestId,
@@ -276,13 +277,22 @@ export async function spinLuckyWheel(userId: string, requestId: string, adminTes
             }
             const account = await LuckyWheelAccount.findOneAndUpdate(
                 { userId, availableSpins: { $gt: 0 } },
-                { $inc: { availableSpins: -1, lifetimeSpinsUsed: 1 } },
-                { new: true, session },
+                [{
+                    $set: {
+                        regularSpinRandomOffset: {
+                            $ifNull: ['$regularSpinRandomOffset', { $ifNull: ['$lifetimeSpinsUsed', 0] }],
+                        },
+                        availableSpins: { $subtract: ['$availableSpins', 1] },
+                        lifetimeSpinsUsed: { $add: [{ $ifNull: ['$lifetimeSpinsUsed', 0] }, 1] },
+                    },
+                }],
+                { new: true, session, updatePipeline: true },
             );
             if (!account) throw new Error('NO_SPINS');
 
             const sequence = account.lifetimeSpinsUsed;
-            const prizeValue = prizeForSpin(sequence, settings.regularSpinPrizes);
+            const randomizedSequence = sequence - Number(account.regularSpinRandomOffset || 0);
+            const prizeValue = prizeForSpin(randomizedSequence, settings.regularSpinPrizes, randomEntropy);
             const [spin] = await LuckyWheelSpin.create([{
                 userId,
                 requestId,
@@ -468,7 +478,7 @@ export async function awardLuckyWheelMilestone(adminUserId: string) {
                 milestone.winners.push({ userId, prizeValue });
                 await LuckyWheelAccount.updateOne(
                     { userId },
-                    { $inc: { prizeBalance: prizeValue, lifetimeWinnings: prizeValue, lifetimeVoucherWinnings: prizeValue }, $setOnInsert: { availableSpins: 0, lifetimeSpinsGranted: 0, lifetimeSpinsUsed: 0, qualifyingRevenue: 0 } },
+                    { $inc: { prizeBalance: prizeValue, lifetimeWinnings: prizeValue, lifetimeVoucherWinnings: prizeValue }, $setOnInsert: { availableSpins: 0, lifetimeSpinsGranted: 0, lifetimeSpinsUsed: 0, regularSpinRandomOffset: 0, qualifyingRevenue: 0 } },
                     { upsert: true, session },
                 );
             }

@@ -5,6 +5,7 @@ export interface ILuckyWheelAccount {
     availableSpins: number;
     lifetimeSpinsGranted: number;
     lifetimeSpinsUsed: number;
+    regularSpinRandomOffset?: number;
     lifetimeVoucherWinnings: number;
     qualifyingRevenue: number;
     prizeBalance: number;
@@ -20,6 +21,7 @@ const schema = new Schema<ILuckyWheelAccount>({
     availableSpins: { type: Number, default: 0, min: 0 },
     lifetimeSpinsGranted: { type: Number, default: 0, min: 0 },
     lifetimeSpinsUsed: { type: Number, default: 0, min: 0 },
+    regularSpinRandomOffset: { type: Number, min: 0 },
     lifetimeVoucherWinnings: { type: Number, default: 0, min: 0 },
     qualifyingRevenue: { type: Number, default: 0, min: 0 },
     prizeBalance: { type: Number, default: 0, min: 0 },
