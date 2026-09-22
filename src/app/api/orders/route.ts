@@ -296,7 +296,7 @@ export async function POST(req: Request) {
             voucherCode: voucherToApply ? voucherCode : undefined,
             voucherSource: voucherToApply?.source,
             voucherDiscountAmount: discountAmount,
-            vipSavings: voucherToApply?.source === 'package' ? discountAmount : 0,
+            vipSavings: voucherToApply?.source === 'package' || voucherToApply?.source === 'partner' ? discountAmount : 0,
             luckyWheelCreditUsed,
         });
         reservedWheelCredit = 0;

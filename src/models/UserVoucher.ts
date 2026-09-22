@@ -13,10 +13,11 @@ export interface IUserVoucher {
     isUnlimited?: boolean;
     usedAt?: Date;
     orderId?: mongoose.Types.ObjectId;
-    source?: 'package' | 'manual' | 'campaign' | 'order_reward'; // Where did this voucher come from?
+    source?: 'package' | 'partner' | 'manual' | 'campaign' | 'order_reward'; // Where did this voucher come from?
     sourceId?: mongoose.Types.ObjectId; // ID of package or campaign
     sourceOrderId?: mongoose.Types.ObjectId;
     sourceIndex?: number;
+    partnerMembershipId?: mongoose.Types.ObjectId;
     // Extension fields
     extensionCount?: number;          // Number of times extended
     extensionFee?: number;            // Fee to extend this voucher
@@ -41,10 +42,11 @@ const UserVoucherSchema: Schema<IUserVoucher> = new Schema(
         isUnlimited: { type: Boolean, default: false },
         usedAt: { type: Date },
         orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
-        source: { type: String, enum: ['package', 'manual', 'campaign', 'order_reward'], default: 'manual' },
+        source: { type: String, enum: ['package', 'partner', 'manual', 'campaign', 'order_reward'], default: 'manual' },
         sourceId: { type: Schema.Types.ObjectId }, // e.g., Package ID
         sourceOrderId: { type: Schema.Types.ObjectId, ref: 'Order' },
         sourceIndex: { type: Number },
+        partnerMembershipId: { type: Schema.Types.ObjectId, ref: 'PartnerMembership' },
         // Extension fields
         extensionCount: { type: Number, default: 0 },
         extensionFee: { type: Number },

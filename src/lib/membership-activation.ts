@@ -3,9 +3,11 @@ import Order from '@/models/Order';
 import SubscriptionPackage from '@/models/SubscriptionPackage';
 import UserMembership from '@/models/UserMembership';
 import UserVoucher from '@/models/UserVoucher';
+import User from '@/models/User';
 import { buildMembershipVoucherCode, isConfirmedPaymentStatus } from '@/lib/customer-ownership';
 import { syncAffiliateCommissionsForOrderStatus } from '@/lib/affiliate-commission-lifecycle';
 import { buildMembershipVoucherIssuance } from '@/lib/membership-vouchers';
+import { sendMembershipToPartner } from '@/lib/partner-membership-server';
 
 export class MembershipActivationError extends Error {
     status: number;
@@ -89,6 +91,23 @@ export async function activateMembershipOrder(orderId: string) {
     }
     await syncAffiliateCommissionsForOrderStatus(order, 'completed');
     await order.save();
+
+    const member = await User.findById(order.user).select('email phone').lean();
+    if (member) {
+        void sendMembershipToPartner({
+            sourceBrand: 'gonuts',
+            externalMembershipId: String(membership._id),
+            packageName: pkg.name,
+            email: member.email,
+            phone: member.phone,
+            discountType: pkg.discountType,
+            discountValue: Number(pkg.discountValue) || 0,
+            maxDiscount: Number(pkg.maxDiscount) || 0,
+            minOrderValue: Number(pkg.minOrderValue) || 0,
+            startsAt: membership.startDate.toISOString(),
+            expiresAt: membership.endDate.toISOString(),
+        }).catch((error) => console.error('Partner membership sync failed:', error));
+    }
 
     return {
         membershipId: String(membership._id),
