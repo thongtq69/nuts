@@ -54,23 +54,23 @@ function BankPendingContent() {
                 if (!active) return;
                 if (response.ok && data?.paid) {
                     setAutoCheckStatus('paid');
-                    router.push(data?.orderType === 'membership'
+                    router.replace(data?.orderType === 'membership'
                         ? '/checkout/membership/success'
                         : '/checkout/success');
                     return;
                 }
 
                 setAutoCheckStatus(response.ok ? 'idle' : 'error');
-                scheduleNext(response.ok ? 5_000 : 10_000);
+                scheduleNext(response.ok ? 2_000 : 5_000);
             } catch (error) {
                 console.error('Bank payment status check failed:', error);
                 if (!active) return;
                 setAutoCheckStatus('error');
-                scheduleNext(10_000);
+                scheduleNext(5_000);
             }
         };
 
-        scheduleNext(5_000);
+        void checkPaymentStatus();
 
         return () => {
             active = false;

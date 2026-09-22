@@ -81,6 +81,8 @@ interface OrderCreateResponse {
     totalAmount?: number;
 }
 
+type BankAutoCheckStatus = 'checking' | 'waiting' | 'paid' | 'error';
+
 export default function CheckoutPage() {
     const router = useRouter();
     const { cartItems, cartTotal, originalTotal, savingsTotal, clearCart, getItemPrice } = useCart();
@@ -96,6 +98,7 @@ export default function CheckoutPage() {
     const [paymentReference, setPaymentReference] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [bankPaymentModal, setBankPaymentModal] = useState<BankPaymentModalData | null>(null);
+    const [bankAutoCheckStatus, setBankAutoCheckStatus] = useState<BankAutoCheckStatus>('waiting');
     const [prizeBalance, setPrizeBalance] = useState(0);
     const [usePrizeBalance, setUsePrizeBalance] = useState(false);
 
@@ -359,6 +362,44 @@ export default function CheckoutPage() {
         if (!bankPaymentModal) return;
         router.push(href(getBankPendingUrl(bankPaymentModal)));
     };
+
+    useEffect(() => {
+        if (!bankPaymentModal) return;
+        let active = true;
+        let timer = 0;
+
+        const checkPaymentStatus = async () => {
+            setBankAutoCheckStatus('checking');
+            try {
+                const params = new URLSearchParams({
+                    order: bankPaymentModal.orderCode,
+                    ref: bankPaymentModal.paymentReference,
+                    amount: String(bankPaymentModal.amount),
+                });
+                const response = await fetch(`/api/bank/payment-status?${params.toString()}`, { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!active) return;
+                if (response.ok && result?.paid) {
+                    setBankAutoCheckStatus('paid');
+                    router.replace(href('/checkout/success'));
+                    return;
+                }
+                setBankAutoCheckStatus(response.ok ? 'waiting' : 'error');
+                timer = window.setTimeout(checkPaymentStatus, response.ok ? 2_000 : 5_000);
+            } catch (error) {
+                console.error('Checkout payment status check failed:', error);
+                if (!active) return;
+                setBankAutoCheckStatus('error');
+                timer = window.setTimeout(checkPaymentStatus, 5_000);
+            }
+        };
+
+        void checkPaymentStatus();
+        return () => {
+            active = false;
+            if (timer) window.clearTimeout(timer);
+        };
+    }, [bankPaymentModal, href, router]);
 
     useEffect(() => {
         if (user) {
@@ -897,11 +938,15 @@ export default function CheckoutPage() {
                             />
                         </div>
                         <div className="payment-modal-note">
-                            {t('Đơn hàng đang ở trạng thái chờ thanh toán. Hệ thống chỉ tự xác nhận sau khi nhận được giao dịch khớp số tiền và nội dung chuyển khoản.')}
+                            {bankAutoCheckStatus === 'paid'
+                                ? t('Thanh toán thành công. Đang chuyển sang trang hoàn tất đơn hàng.')
+                                : bankAutoCheckStatus === 'checking'
+                                    ? t('Hệ thống đang kiểm tra giao dịch ACB và sẽ tự động xác nhận ngay khi khớp.')
+                                    : t('Không cần xác nhận thủ công. Hệ thống tự động cập nhật ngay khi ACB ghi nhận đúng số tiền và nội dung chuyển khoản.')}
                         </div>
                         <div className="payment-modal-actions">
                             <button type="button" onClick={goToBankPending}>
-                                {t('Tôi đã lưu thông tin thanh toán')}
+                                {t('Mở trang theo dõi thanh toán')}
                             </button>
                         </div>
                     </div>

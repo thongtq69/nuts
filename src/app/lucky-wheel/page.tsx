@@ -121,18 +121,31 @@ export default function LuckyWheelPage() {
 
     useEffect(() => {
         if (!topUp || topUp.status !== 'pending') return;
-        const timer = window.setInterval(async () => {
-            const response = await fetch(`/api/lucky-wheel/top-up/${topUp.paymentRef}`, { cache: 'no-store' });
-            if (!response.ok) return;
-            const result = await response.json();
-            if (result.topUp?.status === 'paid') {
-                setTopUp(result.topUp);
-                setMessage(`Nạp tiền thành công! Bạn đã nhận ${result.topUp.spins} lượt quay.`);
-                setMessageTone('success');
-                await load();
+        let active = true;
+        let timer = 0;
+        const checkTopUp = async () => {
+            try {
+                const response = await fetch(`/api/lucky-wheel/top-up/${topUp.paymentRef}`, { cache: 'no-store' });
+                const result = await response.json().catch(() => null);
+                if (!active) return;
+                if (response.ok && result?.topUp?.status === 'paid') {
+                    setTopUp(result.topUp);
+                    setMessage(`Nạp tiền thành công! Bạn đã nhận ${result.topUp.spins} lượt quay.`);
+                    setMessageTone('success');
+                    await load();
+                    return;
+                }
+                timer = window.setTimeout(checkTopUp, response.ok ? 2_000 : 5_000);
+            } catch (error) {
+                console.error('Lucky wheel top-up status check failed:', error);
+                if (active) timer = window.setTimeout(checkTopUp, 5_000);
             }
-        }, 5_000);
-        return () => window.clearInterval(timer);
+        };
+        void checkTopUp();
+        return () => {
+            active = false;
+            if (timer) window.clearTimeout(timer);
+        };
     }, [topUp, load]);
 
     const segments = data?.campaign.wheelSegments?.length === 6 ? data.campaign.wheelSegments : DEFAULT_WHEEL_SEGMENTS;
@@ -265,7 +278,7 @@ export default function LuckyWheelPage() {
                 </section>
             </div>
         </div></section>
-        {topUp && <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:grid sm:place-items-center sm:p-4"><div className="max-h-[94dvh] w-full max-w-2xl overflow-auto rounded-t-[28px] bg-white p-5 shadow-2xl sm:max-h-[92vh] sm:rounded-3xl sm:p-7"><div className="mb-5 flex items-start justify-between gap-4"><div><p className="text-[11px] font-bold uppercase tracking-widest text-[#9c7043] sm:text-xs">Nạp lượt vòng quay</p><h2 className="mt-1 text-xl font-black sm:text-2xl">Quét mã để thanh toán</h2></div><button aria-label="Đóng" onClick={() => setTopUp(null)} className="shrink-0 rounded-full bg-slate-100 p-2"><X/></button></div>{topUp.status === 'paid' ? <div className="rounded-2xl bg-emerald-50 p-6 text-center text-emerald-800 sm:p-8"><CheckCircle2 className="mx-auto mb-3" size={52}/><h3 className="text-xl font-black">Đã nhận thanh toán</h3><p className="mt-2">{topUp.spins} lượt quay đã được cộng vào tài khoản.</p></div> : <><BankInfoDisplay amount={topUp.amount} description={topUp.paymentRef}/><div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-blue-50 p-3 text-center text-xs font-semibold text-blue-700 sm:text-sm"><Clock3 className="shrink-0" size={17}/> Hệ thống tự kiểm tra giao dịch mỗi 5 giây</div></>}</div></div>}
+        {topUp && <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:grid sm:place-items-center sm:p-4"><div className="max-h-[94dvh] w-full max-w-2xl overflow-auto rounded-t-[28px] bg-white p-5 shadow-2xl sm:max-h-[92vh] sm:rounded-3xl sm:p-7"><div className="mb-5 flex items-start justify-between gap-4"><div><p className="text-[11px] font-bold uppercase tracking-widest text-[#9c7043] sm:text-xs">Nạp lượt vòng quay</p><h2 className="mt-1 text-xl font-black sm:text-2xl">Quét mã để thanh toán</h2></div><button aria-label="Đóng" onClick={() => setTopUp(null)} className="shrink-0 rounded-full bg-slate-100 p-2"><X/></button></div>{topUp.status === 'paid' ? <div className="rounded-2xl bg-emerald-50 p-6 text-center text-emerald-800 sm:p-8"><CheckCircle2 className="mx-auto mb-3" size={52}/><h3 className="text-xl font-black">Thanh toán thành công</h3><p className="mt-2">{topUp.spins} lượt chơi đã được tự động cộng vào tài khoản.</p></div> : <><BankInfoDisplay amount={topUp.amount} description={topUp.paymentRef}/><div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-blue-50 p-3 text-center text-xs font-semibold text-blue-700 sm:text-sm"><Clock3 className="shrink-0" size={17}/> Tự động xác nhận ngay khi ACB ghi nhận giao dịch</div></>}</div></div>}
         {withdrawOpen && <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:grid sm:place-items-center sm:p-4"><div className="max-h-[94dvh] w-full max-w-lg overflow-auto rounded-t-[28px] bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6"><div className="flex items-center justify-between gap-4"><h2 className="text-xl font-black sm:text-2xl">{data?.campaign.withdrawalTitle}</h2><button aria-label="Đóng" onClick={() => setWithdrawOpen(false)} className="shrink-0 rounded-full bg-slate-100 p-2"><X/></button></div><div className="mt-4 rounded-2xl bg-emerald-50 p-4"><p className="text-sm text-emerald-800">Số dư khả dụng</p><strong className="mt-1 block text-2xl text-emerald-700">{money(data?.account.availablePrizeBalance || 0)}</strong></div><p className="mt-3 text-xs leading-5 text-slate-500">Tiền chỉ bị trừ khỏi tài khoản sau khi admin duyệt lệnh rút thành công.</p><div className="mt-5 space-y-4"><label className="block text-sm font-semibold">Số tiền<input type="number" min={data?.campaign.minimumWithdrawal || 100000} step={1000} value={withdrawForm.amount} onChange={event => setWithdrawForm({...withdrawForm, amount: Number(event.target.value)})} className="mt-1 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-[#9c7043] focus:ring-2 focus:ring-[#9c7043]/15"/></label><div className="block text-sm font-semibold">Ngân hàng<BankCombobox value={withdrawForm.bankName} onChange={bankName => setWithdrawForm(current => ({ ...current, bankName }))} disabled={submittingWithdrawal}/></div><label className="block text-sm font-semibold">Số tài khoản<input inputMode="numeric" value={withdrawForm.accountNumber} onChange={event => setWithdrawForm({...withdrawForm, accountNumber: event.target.value.replace(/\D/g, '')})} className="mt-1 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-[#9c7043] focus:ring-2 focus:ring-[#9c7043]/15"/></label><label className="block text-sm font-semibold">Họ tên chủ tài khoản<input value={withdrawForm.accountName} onChange={event => setWithdrawForm({...withdrawForm, accountName: event.target.value})} className="mt-1 w-full rounded-xl border border-slate-300 p-3 uppercase outline-none focus:border-[#9c7043] focus:ring-2 focus:ring-[#9c7043]/15"/></label><button onClick={requestWithdrawal} disabled={submittingWithdrawal || !withdrawForm.bankName || withdrawForm.accountNumber.length < 6 || !withdrawForm.accountName.trim()} className="w-full rounded-xl bg-[#2c2119] px-5 py-3.5 font-bold text-white shadow-lg transition hover:bg-[#9c7043] disabled:cursor-not-allowed disabled:opacity-50">{submittingWithdrawal ? 'Đang gửi...' : 'Gửi lệnh rút tiền'}</button></div></div></div>}
         {spinResult && <SpinResultCelebration prize={spinResult.prize} isTest={spinResult.isTest} onClose={() => setSpinResult(null)} />}
         <Footer />

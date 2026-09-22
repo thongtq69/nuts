@@ -620,6 +620,30 @@ test('membership packages only accept bank transfer payments', async () => {
     assert.match(paymentStatusSource, /orderType: latestOrder\?\.orderType \|\| order\.orderType/);
 });
 
+test('bank transfers and lucky-wheel top-ups confirm automatically without a manual customer action', async () => {
+    const [checkoutSource, bankPendingSource, wheelSource, topUpStatusSource, acbPaymentsSource] = await Promise.all([
+        readFile(new URL('../src/app/checkout/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/checkout/bank-pending/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/lucky-wheel/top-up/[ref]/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/acb-payments.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(checkoutSource, /fetch\(`\/api\/bank\/payment-status\?\$\{params\.toString\(\)\}`/);
+    assert.match(checkoutSource, /void checkPaymentStatus\(\)/);
+    assert.match(checkoutSource, /response\.ok \? 2_000 : 5_000/);
+    assert.doesNotMatch(checkoutSource, /Tôi đã lưu thông tin thanh toán/);
+    assert.match(bankPendingSource, /void checkPaymentStatus\(\)/);
+    assert.match(bankPendingSource, /response\.ok \? 2_000 : 5_000/);
+    assert.match(bankPendingSource, /router\.replace/);
+    assert.match(wheelSource, /void checkTopUp\(\)/);
+    assert.match(wheelSource, /response\.ok \? 2_000 : 5_000/);
+    assert.match(topUpStatusSource, /reconcileAcbPaymentRef/);
+    assert.match(acbPaymentsSource, /if \(paymentRef\.startsWith\('LW'\)\)/);
+    assert.match(acbPaymentsSource, /for \(let offset = 0; offset <= daysBack; offset \+= 1\)/);
+    assert.doesNotMatch(acbPaymentsSource, /applyPaidLuckyWheelWithdrawal/);
+});
+
 test('bank payment references support product and membership orders', () => {
     assert.equal(isBankPaymentRef('GOABC123'), true);
     assert.equal(isBankPaymentRef('VIP6E78227770'), true);

@@ -395,11 +395,12 @@ function formatDateInVietnam(date: Date): string {
     return formatter.format(date);
 }
 
-function dateRangeForReconcile(daysBack: number, daysForward = 1): string[] {
+function dateRangeForReconcile(daysBack: number): string[] {
     const dates: string[] = [];
-    for (let offset = -daysForward; offset <= daysBack; offset += 1) {
-        const date = new Date();
-        date.setDate(date.getDate() - offset);
+    const today = new Date();
+    for (let offset = 0; offset <= daysBack; offset += 1) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - offset);
         dates.push(formatDateInVietnam(date));
     }
     return dates;
