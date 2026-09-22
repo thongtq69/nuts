@@ -340,12 +340,21 @@ export async function getLuckyWheelUserSummary(userId: string, adminTestMode = f
     await dbConnect();
     await ensureWithdrawalAccountingV2(userId);
     const historyWindowStart = luckyWheelHistoryWindowStart();
+    const activityFilter = adminTestMode
+        ? { userId }
+        : { userId, createdAt: { $gte: historyWindowStart } };
+    const historyQuery = LuckyWheelSpin.find(activityFilter).sort({ createdAt: -1 }).populate('voucherId');
+    const topUpsQuery = LuckyWheelTopUp.find(activityFilter).sort({ createdAt: -1 });
+    const withdrawalsQuery = LuckyWheelWithdrawal.find(activityFilter).sort({ createdAt: -1 });
+
+    // Customer activity starts fresh on every clock hour. Admin history is
+    // intentionally never windowed or truncated, so management records stay intact.
     const [settings, account, history, topUps, withdrawals] = await Promise.all([
         getLuckyWheelSettings(),
         LuckyWheelAccount.findOne({ userId }).lean(),
-        LuckyWheelSpin.find({ userId, createdAt: { $gte: historyWindowStart } }).sort({ createdAt: -1 }).limit(20).populate('voucherId').lean(),
-        LuckyWheelTopUp.find({ userId, createdAt: { $gte: historyWindowStart } }).sort({ createdAt: -1 }).limit(10).lean(),
-        LuckyWheelWithdrawal.find({ userId, createdAt: { $gte: historyWindowStart } }).sort({ createdAt: -1 }).limit(10).lean(),
+        historyQuery.lean(),
+        topUpsQuery.lean(),
+        withdrawalsQuery.lean(),
     ]);
     return {
         campaign: {
@@ -389,7 +398,7 @@ export async function getLuckyWheelUserSummary(userId: string, adminTestMode = f
         history,
         topUps,
         withdrawals,
-        historyWindowStart,
+        historyWindowStart: adminTestMode ? null : historyWindowStart,
     };
 }
 
@@ -416,11 +425,11 @@ export async function getLuckyWheelAdminSummary() {
             prizeBalance: { $sum: '$prizeBalance' },
         } }]),
         LuckyWheelTopUp.aggregate([{ $match: { status: 'paid' } }, { $group: { _id: null, revenue: { $sum: '$amount' }, topUps: { $sum: 1 } } }]),
-        LuckyWheelSpin.find({}).sort({ createdAt: -1 }).limit(50).populate('userId', 'name email').lean(),
+        LuckyWheelSpin.find({}).sort({ createdAt: -1 }).populate('userId', 'name email').lean(),
         LuckyWheelMilestone.find({}).sort({ cycle: -1 }).lean(),
-        LuckyWheelWithdrawal.find({}).sort({ createdAt: -1 }).limit(50).populate('userId', 'name email').lean(),
-        LuckyWheelAccount.find({}).sort({ updatedAt: -1 }).limit(100).populate('userId', 'name email').lean(),
-        LuckyWheelTopUp.find({}).sort({ createdAt: -1 }).limit(50).populate('userId', 'name email').lean(),
+        LuckyWheelWithdrawal.find({}).sort({ createdAt: -1 }).populate('userId', 'name email').lean(),
+        LuckyWheelAccount.find({}).sort({ updatedAt: -1 }).populate('userId', 'name email').lean(),
+        LuckyWheelTopUp.find({}).sort({ createdAt: -1 }).populate('userId', 'name email').lean(),
     ]);
     const totals = accountTotals[0] || { customers: 0, availableSpins: 0, spinsGranted: 0, spinsUsed: 0, voucherWinnings: 0 };
     const paid = topUpTotals[0] || { revenue: 0, topUps: 0 };

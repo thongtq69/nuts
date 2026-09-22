@@ -108,6 +108,7 @@ export default function LuckyWheelPage() {
     useEffect(() => { void load(); }, [load]);
 
     useEffect(() => {
+        if (user?.role === 'admin') return;
         let interval = 0;
         const resetAtNextHour = window.setTimeout(() => {
             setHistoryClock(Date.now());
@@ -125,7 +126,7 @@ export default function LuckyWheelPage() {
             window.clearTimeout(resetAtNextHour);
             if (interval) window.clearInterval(interval);
         };
-    }, [load]);
+    }, [load, user?.role]);
 
     useEffect(() => {
         if (!topUp || topUp.status !== 'pending') return;
@@ -181,13 +182,13 @@ export default function LuckyWheelPage() {
             detail: item.rejectionReason || (item.bankTransactionId ? `Mã GD: ${item.bankTransactionId}` : ''),
         }));
         return [...topUps, ...withdrawals]
-            .filter(item => isInCurrentLuckyWheelHistoryWindow(item.createdAt, new Date(historyClock)))
+            .filter(item => data?.campaign.adminTestMode || isInCurrentLuckyWheelHistoryWindow(item.createdAt, new Date(historyClock)))
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [data?.topUps, data?.withdrawals, historyClock]);
+    }, [data?.campaign.adminTestMode, data?.topUps, data?.withdrawals, historyClock]);
 
-    const currentHourSpinHistory = useMemo(
-        () => (data?.history || []).filter(item => isInCurrentLuckyWheelHistoryWindow(item.createdAt, new Date(historyClock))),
-        [data?.history, historyClock],
+    const visibleScopeSpinHistory = useMemo(
+        () => (data?.history || []).filter(item => data?.campaign.adminTestMode || isInCurrentLuckyWheelHistoryWindow(item.createdAt, new Date(historyClock))),
+        [data?.campaign.adminTestMode, data?.history, historyClock],
     );
 
     const selectedMoneyHistory = useMemo(
@@ -237,7 +238,7 @@ export default function LuckyWheelPage() {
     if (!user) return <main><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Bánh xe quà tặng' }]} /><section className="mx-auto max-w-xl px-5 py-20 text-center"><Gift className="mx-auto mb-5 text-[#42a9c7]" size={52}/><h1 className="whitespace-nowrap text-[clamp(1rem,4vw,1.875rem)] font-black tracking-tight text-[#28415f]">Bánh xe quà tặng GO NUTS</h1><p className="mt-4 text-slate-600">Vui lòng đăng ký thành viên hoặc đăng nhập để tham gia góc quà vui.</p><Link href="/login" className="mt-7 inline-flex rounded-full bg-[#4fb3d2] px-7 py-3 font-bold text-white shadow-[0_5px_0_#2e829e]">Đăng nhập ngay</Link></section><Footer /></main>;
     if (!data) return <main className="min-h-screen bg-[#fffaf0]"><Header /><Navbar /><Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Vòng quay may mắn' }]} /><section className="mx-auto grid min-h-[55vh] max-w-xl place-items-center px-5 py-16"><div className="w-full rounded-[28px] border border-amber-200 bg-white p-7 text-center shadow-xl sm:p-10"><RefreshCw className="mx-auto text-amber-600" size={42}/><h1 className="mt-4 text-2xl font-black text-[#2c2119]">Chưa tải được vòng quay</h1><p className="mt-3 text-sm leading-6 text-slate-600">{loadError || 'Kết nối tạm thời chưa ổn định. Dữ liệu cũ sẽ không được hiển thị thành số 0.'}</p><button onClick={() => { setLoading(true); void load(); }} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#2c2119] px-6 py-3 font-bold text-white transition hover:bg-[#9c7043]"><RefreshCw size={17}/> Tải lại dữ liệu</button></div></section><Footer /></main>;
 
-    const visibleSpinHistory = currentHourSpinHistory.slice(0, visibleHistoryCount);
+    const visibleSpinHistory = visibleScopeSpinHistory.slice(0, visibleHistoryCount);
     const visibleMoneyHistory = selectedMoneyHistory.slice(0, visibleMoneyCount);
     const displayCampaignName = data.campaign.name === 'Vòng quay may mắn GO NUTS' ? 'Bánh xe quà tặng GO NUTS' : data.campaign.name;
     const displayMemberBadge = data.campaign.memberBadgeText === 'Thành viên Go Nuts' ? 'Góc quà vui Go Nuts' : data.campaign.memberBadgeText;
@@ -272,13 +273,13 @@ export default function LuckyWheelPage() {
                 </section>
                 <section className="relative overflow-hidden rounded-[26px] border-2 border-[#f9d9a0] bg-white p-5 shadow-[0_9px_0_#f6e8c7] sm:rounded-3xl sm:p-6">
                     <CupcakeIllustration className="pointer-events-none absolute -bottom-7 -right-4 w-28 -rotate-6 opacity-[.13]"/>
-                    <div className="relative flex flex-wrap items-center justify-between gap-2"><h2 className="flex items-center gap-2 text-lg font-black text-[#4d495f]"><History className="shrink-0 text-[#ef9f37]"/> {data?.campaign.historyTitle}</h2><span className="rounded-full bg-[#fff6d8] px-3 py-1 text-[11px] font-bold text-[#8c671e]">Tự làm mới mỗi giờ</span></div>
-                    <div className="relative mt-4 max-h-64 space-y-2 overflow-auto pr-1">{!currentHourSpinHistory.length ? <p className="rounded-2xl bg-[#fffaf0] p-5 text-center text-sm text-slate-500">Chưa có lượt chơi trong giờ này.</p> : visibleSpinHistory.map(item => <div key={item._id || item.requestId} className="flex flex-col gap-2 rounded-2xl bg-[#fffaf0] px-4 py-3 text-sm min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between"><span className="text-xs text-slate-500 sm:text-sm">{item.isTest && <b className="mr-2 rounded bg-blue-100 px-2 py-1 text-[10px] text-blue-700">TEST</b>}{item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : ''}</span><strong className={item.isTest ? 'text-blue-700' : item.prizeValue ? 'text-emerald-600' : 'text-slate-500'}>{item.prizeValue ? `${item.isTest ? '' : '+'}${money(item.prizeValue)}` : 'Chúc may mắn'}</strong></div>)}</div>
-                    <ProgressiveListControls total={currentHourSpinHistory.length} visible={visibleHistoryCount} step={5} onVisibleChange={setVisibleHistoryCount} className="relative mt-3 px-0 pb-0"/>
+                    <div className="relative flex flex-wrap items-center justify-between gap-2"><h2 className="flex items-center gap-2 text-lg font-black text-[#4d495f]"><History className="shrink-0 text-[#ef9f37]"/> {data.campaign.adminTestMode ? 'Toàn bộ hoạt động' : data.campaign.historyTitle}</h2><span className="rounded-full bg-[#fff6d8] px-3 py-1 text-[11px] font-bold text-[#8c671e]">{data.campaign.adminTestMode ? 'Lưu đầy đủ cho Admin' : 'Tự làm mới mỗi giờ'}</span></div>
+                    <div className="relative mt-4 max-h-64 space-y-2 overflow-auto pr-1">{!visibleScopeSpinHistory.length ? <p className="rounded-2xl bg-[#fffaf0] p-5 text-center text-sm text-slate-500">{data.campaign.adminTestMode ? 'Chưa có lượt nào.' : 'Chưa có lượt trong giờ này.'}</p> : visibleSpinHistory.map(item => <div key={item._id || item.requestId} className="flex flex-col gap-2 rounded-2xl bg-[#fffaf0] px-4 py-3 text-sm min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between"><span className="text-xs text-slate-500 sm:text-sm">{item.isTest && <b className="mr-2 rounded bg-blue-100 px-2 py-1 text-[10px] text-blue-700">TEST</b>}{item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : ''}</span><strong className={item.isTest ? 'text-blue-700' : item.prizeValue ? 'text-emerald-600' : 'text-slate-500'}>{item.prizeValue ? `${item.isTest ? '' : '+'}${money(item.prizeValue)}` : 'Chúc may mắn'}</strong></div>)}</div>
+                    <ProgressiveListControls total={visibleScopeSpinHistory.length} visible={visibleHistoryCount} step={5} onVisibleChange={setVisibleHistoryCount} className="relative mt-3 px-0 pb-0"/>
                 </section>
                 <section className="relative overflow-hidden rounded-[26px] border-2 border-[#c8e6f6] bg-white p-5 shadow-[0_9px_0_#dcedf6] sm:rounded-3xl sm:p-6 lg:col-span-2">
                     <RainbowCloudIllustration className="pointer-events-none absolute -bottom-4 -right-6 hidden w-44 opacity-[.13] sm:block"/>
-                    <div className="relative flex flex-wrap items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-lg font-black text-[#304c67]"><WalletCards className="shrink-0 text-[#4aa9cb]"/> Hoạt động tài khoản</h2><span className="rounded-full bg-[#eaf8ff] px-3 py-1 text-[11px] font-bold text-[#397b98]">Chỉ hiển thị trong giờ hiện tại</span></div>
+                    <div className="relative flex flex-wrap items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-lg font-black text-[#304c67]"><WalletCards className="shrink-0 text-[#4aa9cb]"/> Hoạt động tài khoản</h2><span className="rounded-full bg-[#eaf8ff] px-3 py-1 text-[11px] font-bold text-[#397b98]">{data.campaign.adminTestMode ? 'Hiển thị toàn bộ lịch sử' : 'Chỉ hiển thị trong giờ hiện tại'}</span></div>
                     <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-[#f2f8fb] p-1.5" role="tablist" aria-label="Chọn loại giao dịch">
                         <button type="button" role="tab" aria-selected={moneyTab === 'top-up'} onClick={() => setMoneyTab('top-up')} className={`flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-black transition ${moneyTab === 'top-up' ? 'bg-white text-[#2185aa] shadow-sm' : 'text-slate-500 hover:text-[#2185aa]'}`}><ArrowUpFromLine size={17}/> Nạp tiền</button>
                         <button type="button" role="tab" aria-selected={moneyTab === 'withdrawal'} onClick={() => setMoneyTab('withdrawal')} className={`flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-black transition ${moneyTab === 'withdrawal' ? 'bg-white text-[#db6e62] shadow-sm' : 'text-slate-500 hover:text-[#db6e62]'}`}><ArrowDownToLine size={17}/> Rút tiền</button>

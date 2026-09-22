@@ -633,15 +633,42 @@ test('bank transfers and lucky-wheel top-ups confirm automatically without a man
     assert.match(checkoutSource, /void checkPaymentStatus\(\)/);
     assert.match(checkoutSource, /response\.ok \? 2_000 : 5_000/);
     assert.doesNotMatch(checkoutSource, /Tôi đã lưu thông tin thanh toán/);
+    assert.doesNotMatch(checkoutSource, /payment-modal-note/);
+    assert.doesNotMatch(checkoutSource, /Không cần xác nhận thủ công\. Hệ thống tự động cập nhật/);
     assert.match(bankPendingSource, /void checkPaymentStatus\(\)/);
     assert.match(bankPendingSource, /response\.ok \? 2_000 : 5_000/);
     assert.match(bankPendingSource, /router\.replace/);
+    assert.doesNotMatch(bankPendingSource, /pending-note/);
+    assert.doesNotMatch(bankPendingSource, /Giữ trang này mở sau khi chuyển khoản/);
     assert.match(wheelSource, /void checkTopUp\(\)/);
     assert.match(wheelSource, /response\.ok \? 2_000 : 5_000/);
     assert.match(topUpStatusSource, /reconcileAcbPaymentRef/);
     assert.match(acbPaymentsSource, /if \(paymentRef\.startsWith\('LW'\)\)/);
     assert.match(acbPaymentsSource, /for \(let offset = 0; offset <= daysBack; offset \+= 1\)/);
     assert.doesNotMatch(acbPaymentsSource, /applyPaidLuckyWheelWithdrawal/);
+});
+
+test('checkout applies lucky-wheel credit to the remainder and restores it after a valid cancellation', async () => {
+    const [checkoutSource, orderApiSource, cancellationSource] = await Promise.all([
+        readFile(new URL('../src/app/checkout/page.tsx', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/orders/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/order-cancellation.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(checkoutSource, /Dùng tiền thưởng vòng quay/);
+    assert.match(checkoutSource, /Hệ thống tự trừ vào tổng đơn/);
+    assert.match(checkoutSource, /nếu đủ toàn bộ, bạn không cần chuyển khoản/);
+    assert.match(checkoutSource, /Đơn hủy hợp lệ sẽ được hoàn lại tiền thưởng/);
+    assert.match(checkoutSource, /useLuckyWheelBalance: usePrizeBalance/);
+    assert.match(orderApiSource, /Math\.min\(finalTotal, availablePrizeBalance/);
+    assert.match(orderApiSource, /prizeBalance: -luckyWheelCreditUsed/);
+    assert.match(orderApiSource, /finalTotal -= luckyWheelCreditUsed/);
+    assert.match(orderApiSource, /paymentStatus: finalTotal === 0 \? 'paid' : 'pending'/);
+    assert.match(orderApiSource, /status: finalTotal === 0 \? 'confirmed' : 'pending'/);
+    assert.match(orderApiSource, /totalAmount: finalTotal/);
+    assert.match(cancellationSource, /cancellationEffectsAppliedAt: null/);
+    assert.match(cancellationSource, /prizeBalance: amount, lifetimeSpentOnOrders: -amount/);
+    assert.match(cancellationSource, /effects\.luckyWheelCreditRestored = amount/);
 });
 
 test('bank payment references support product and membership orders', () => {

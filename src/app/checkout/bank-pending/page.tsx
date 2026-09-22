@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -8,8 +8,6 @@ import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import BankInfoDisplay from '@/components/payment/BankInfoDisplay';
-
-type AutoCheckStatus = 'idle' | 'checking' | 'paid' | 'error';
 
 function BankPendingContent() {
     const router = useRouter();
@@ -20,7 +18,6 @@ function BankPendingContent() {
     const customerEmail = searchParams.get('email') || '';
     const customerPhone = searchParams.get('phone') || '';
     const amount = Number(searchParams.get('amount') || 0);
-    const [autoCheckStatus, setAutoCheckStatus] = useState<AutoCheckStatus>('idle');
     const hasPaymentInfo = Boolean(paymentRef && Number.isFinite(amount) && amount > 0);
     const lookupHref = customerEmail || customerPhone
         ? `/tra-cuu-don-hang?email=${encodeURIComponent(customerEmail)}&phone=${encodeURIComponent(customerPhone)}`
@@ -38,8 +35,6 @@ function BankPendingContent() {
         };
 
         const checkPaymentStatus = async () => {
-            setAutoCheckStatus('checking');
-
             try {
                 const params = new URLSearchParams({
                     order: orderCode,
@@ -53,19 +48,16 @@ function BankPendingContent() {
 
                 if (!active) return;
                 if (response.ok && data?.paid) {
-                    setAutoCheckStatus('paid');
                     router.replace(data?.orderType === 'membership'
                         ? '/checkout/membership/success'
                         : '/checkout/success');
                     return;
                 }
 
-                setAutoCheckStatus(response.ok ? 'idle' : 'error');
                 scheduleNext(response.ok ? 2_000 : 5_000);
             } catch (error) {
                 console.error('Bank payment status check failed:', error);
                 if (!active) return;
-                setAutoCheckStatus('error');
                 scheduleNext(5_000);
             }
         };
@@ -108,14 +100,6 @@ function BankPendingContent() {
                         Không tìm thấy thông tin QR trên đường dẫn này. Anh có thể tra cứu đơn hàng bằng email và số điện thoại đã đặt.
                     </div>
                 )}
-
-                <div className={`pending-note ${autoCheckStatus === 'error' ? 'pending-note-warning' : ''}`}>
-                    {autoCheckStatus === 'checking'
-                        ? 'Hệ thống đang kiểm tra giao dịch khớp với nội dung chuyển khoản của đơn này.'
-                        : autoCheckStatus === 'paid'
-                            ? 'Đã nhận được thanh toán. Đang chuyển sang trang hoàn tất đơn hàng.'
-                            : 'Giữ trang này mở sau khi chuyển khoản. Hệ thống sẽ tự kiểm tra và xác nhận đơn khi ACB trả giao dịch khớp số tiền và nội dung.'}
-                </div>
 
                 <div className="action-buttons">
                     <Link href={lookupHref} className="btn-secondary">
@@ -173,22 +157,6 @@ function BankPendingContent() {
                     background: #fffbeb;
                     color: #92400e;
                     font-weight: 600;
-                }
-                .pending-note {
-                    width: 100%;
-                    margin-bottom: 34px;
-                    padding: 16px 18px;
-                    border: 1px solid #bfdbfe;
-                    border-radius: 8px;
-                    background: #eff6ff;
-                    color: #1d4ed8;
-                    font-weight: 600;
-                    line-height: 1.6;
-                }
-                .pending-note-warning {
-                    border-color: #fbbf24;
-                    background: #fffbeb;
-                    color: #92400e;
                 }
                 .action-buttons {
                     display: flex;

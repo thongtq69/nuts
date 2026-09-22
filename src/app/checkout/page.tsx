@@ -81,8 +81,6 @@ interface OrderCreateResponse {
     totalAmount?: number;
 }
 
-type BankAutoCheckStatus = 'checking' | 'waiting' | 'paid' | 'error';
-
 export default function CheckoutPage() {
     const router = useRouter();
     const { cartItems, cartTotal, originalTotal, savingsTotal, clearCart, getItemPrice } = useCart();
@@ -98,7 +96,6 @@ export default function CheckoutPage() {
     const [paymentReference, setPaymentReference] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [bankPaymentModal, setBankPaymentModal] = useState<BankPaymentModalData | null>(null);
-    const [bankAutoCheckStatus, setBankAutoCheckStatus] = useState<BankAutoCheckStatus>('waiting');
     const [prizeBalance, setPrizeBalance] = useState(0);
     const [usePrizeBalance, setUsePrizeBalance] = useState(false);
 
@@ -369,7 +366,6 @@ export default function CheckoutPage() {
         let timer = 0;
 
         const checkPaymentStatus = async () => {
-            setBankAutoCheckStatus('checking');
             try {
                 const params = new URLSearchParams({
                     order: bankPaymentModal.orderCode,
@@ -380,16 +376,13 @@ export default function CheckoutPage() {
                 const result = await response.json().catch(() => null);
                 if (!active) return;
                 if (response.ok && result?.paid) {
-                    setBankAutoCheckStatus('paid');
                     router.replace(href('/checkout/success'));
                     return;
                 }
-                setBankAutoCheckStatus(response.ok ? 'waiting' : 'error');
                 timer = window.setTimeout(checkPaymentStatus, response.ok ? 2_000 : 5_000);
             } catch (error) {
                 console.error('Checkout payment status check failed:', error);
                 if (!active) return;
-                setBankAutoCheckStatus('error');
                 timer = window.setTimeout(checkPaymentStatus, 5_000);
             }
         };
@@ -884,8 +877,8 @@ export default function CheckoutPage() {
                                 </div>
                             )}
                             {user && prizeBalance > 0 && (
-                                <label className="my-3 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm">
-                                    <span><strong className="block text-emerald-800">Dùng tiền thưởng vòng quay</strong><small className="text-emerald-700">Số dư: {prizeBalance.toLocaleString('vi-VN')}đ</small></span>
+                                <label className="my-3 flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm">
+                                    <span><strong className="block text-emerald-800">Dùng tiền thưởng vòng quay</strong><small className="mt-1 block leading-5 text-emerald-700">Số dư: {prizeBalance.toLocaleString('vi-VN')}đ. Hệ thống tự trừ vào tổng đơn; nếu đủ toàn bộ, bạn không cần chuyển khoản. Đơn hủy hợp lệ sẽ được hoàn lại tiền thưởng.</small></span>
                                     <input type="checkbox" checked={usePrizeBalance} onChange={event => setUsePrizeBalance(event.target.checked)} className="h-5 w-5 accent-emerald-600" />
                                 </label>
                             )}
@@ -936,13 +929,6 @@ export default function CheckoutPage() {
                                 description={bankPaymentModal.paymentReference}
                                 customerName={bankPaymentModal.customerName}
                             />
-                        </div>
-                        <div className="payment-modal-note">
-                            {bankAutoCheckStatus === 'paid'
-                                ? t('Thanh toán thành công. Đang chuyển sang trang hoàn tất đơn hàng.')
-                                : bankAutoCheckStatus === 'checking'
-                                    ? t('Hệ thống đang kiểm tra giao dịch ACB và sẽ tự động xác nhận ngay khi khớp.')
-                                    : t('Không cần xác nhận thủ công. Hệ thống tự động cập nhật ngay khi ACB ghi nhận đúng số tiền và nội dung chuyển khoản.')}
                         </div>
                         <div className="payment-modal-actions">
                             <button type="button" onClick={goToBankPending}>
@@ -1149,16 +1135,6 @@ export default function CheckoutPage() {
             }
             .payment-modal-body {
                 padding: 24px;
-            }
-            .payment-modal-note {
-                margin: 0 24px 20px;
-                padding: 14px 16px;
-                border: 1px solid #bbf7d0;
-                border-radius: 8px;
-                background: #f0fdf4;
-                color: #166534;
-                font-size: 14px;
-                font-weight: 600;
             }
             .payment-modal-actions {
                 padding: 0 24px 24px;
@@ -1507,9 +1483,6 @@ export default function CheckoutPage() {
                 }
                 .payment-modal-body {
                     padding: 18px;
-                }
-                .payment-modal-note {
-                    margin: 0 18px 18px;
                 }
                 .payment-modal-actions {
                     padding: 0 18px 18px;

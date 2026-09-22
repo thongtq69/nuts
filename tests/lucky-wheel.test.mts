@@ -30,7 +30,7 @@ test('gift wheel title uses GO NUTS and stays on one line for the default campai
     assert.match(wheelService, /settings\.campaignName = DEFAULT_WHEEL_COPY\.campaignName/);
 });
 
-test('customer histories reset at every hour boundary without deleting source records', () => {
+test('customer histories reset hourly while admin histories remain complete', () => {
     const now = new Date('2026-09-22T16:34:39.000+07:00');
     assert.equal(luckyWheelHistoryWindowStart(now).toISOString(), '2026-09-22T09:00:00.000Z');
     assert.equal(millisecondsUntilNextLuckyWheelHistoryReset(now), 1_521_250);
@@ -39,11 +39,24 @@ test('customer histories reset at every hour boundary without deleting source re
 
     const service = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
     const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
-    assert.match(service, /createdAt: \{ \$gte: historyWindowStart \}/);
+    assert.match(service, /const activityFilter = adminTestMode/);
+    assert.match(service, /\? \{ userId \}/);
+    assert.match(service, /: \{ userId, createdAt: \{ \$gte: historyWindowStart \} \}/);
+    assert.match(service, /historyWindowStart: adminTestMode \? null : historyWindowStart/);
     assert.match(customerPage, /millisecondsUntilNextLuckyWheelHistoryReset/);
+    assert.match(customerPage, /if \(user\?\.role === 'admin'\) return/);
+    assert.match(customerPage, /data\?\.campaign\.adminTestMode \|\| isInCurrentLuckyWheelHistoryWindow/);
     assert.match(customerPage, /setMoneyTab\('top-up'\)/);
     assert.match(customerPage, /setMoneyTab\('withdrawal'\)/);
     assert.match(customerPage, /Tự làm mới mỗi giờ/);
+    assert.match(customerPage, /Lưu đầy đủ cho Admin/);
+    assert.match(customerPage, /Hiển thị toàn bộ lịch sử/);
+    assert.doesNotMatch(customerPage, /Chưa có lượt chơi trong giờ này/);
+
+    const adminSummary = service.split('export async function getLuckyWheelAdminSummary()')[1];
+    assert.ok(adminSummary);
+    assert.doesNotMatch(adminSummary, /historyWindowStart/);
+    assert.doesNotMatch(adminSummary, /\.limit\(/);
 });
 
 test('regular spin groups are random-looking while respecting the customer prize rule', () => {
