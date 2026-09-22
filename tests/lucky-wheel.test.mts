@@ -17,6 +17,7 @@ import {
     luckyWheelHistoryWindowStart,
     millisecondsUntilNextLuckyWheelHistoryReset,
 } from '../src/lib/lucky-wheel-history.ts';
+import { matchesMemberSearch, normalizeMemberSearch } from '../src/lib/member-search.ts';
 
 test('gift wheel title uses GO NUTS and stays on one line for the default campaign', () => {
     const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
@@ -245,6 +246,23 @@ test('long lucky wheel and voucher lists are revealed incrementally', () => {
     assert.match(adminWheel, /visibleMemberAccounts/);
     assert.match(adminWheel, /visibleWithdrawals/);
     assert.match(account, /group\.vouchers\.slice\(0, visibleVoucherCount\)/);
+});
+
+test('admin wheel lists have live name and email search with separate money history tabs', () => {
+    assert.equal(normalizeMemberSearch('  Trần Văn An  '), 'tran van an');
+    assert.equal(matchesMemberSearch({ name: 'Trần Văn An', email: 'eostradingvn@gmail.com' }, 'van an'), true);
+    assert.equal(matchesMemberSearch({ name: 'Trần Văn An', email: 'eostradingvn@gmail.com' }, 'eostra'), true);
+    assert.equal(matchesMemberSearch({ name: 'Trần Văn An', email: 'eostradingvn@gmail.com' }, 'khong co'), false);
+
+    const adminWheel = readFileSync(new URL('../src/app/admin/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    assert.match(adminWheel, /moneyHistoryTab/);
+    assert.match(adminWheel, /Nạp tiền \(\{data\.recentTopUps\.length\}\)/);
+    assert.match(adminWheel, /Rút tiền \(\{data\.withdrawals\.length\}\)/);
+    assert.match(adminWheel, /filteredMemberAccounts/);
+    assert.match(adminWheel, /filteredWithdrawals/);
+    assert.match(adminWheel, /filteredMoneyHistory/);
+    assert.match(adminWheel, /filteredSpins/);
+    assert.equal((adminWheel.match(/<MemberSearchField/g) || []).length, 4);
 });
 
 test('admin mobile lists avoid horizontal scrolling and floating wheel does not cover pagination', () => {
