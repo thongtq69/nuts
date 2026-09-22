@@ -72,6 +72,10 @@ export interface ISiteSettings {
     homePromoBannerNote: string;
     homePromoBannerEnabled: boolean;
 
+    // Private cross-brand VIP integration settings (never selected publicly)
+    membershipPartnerSecret?: string;
+    membershipPartnerSyncUrl?: string;
+
     updatedAt?: Date;
     translations?: {
         en?: {
@@ -176,6 +180,8 @@ const SiteSettingsSchema: Schema<ISiteSettings> = new Schema(
         homePromoBannerButtonLink: { type: String, default: '/register' },
         homePromoBannerNote: { type: String, default: '*Áp dụng cho đơn hàng từ 300.000đ' },
         homePromoBannerEnabled: { type: Boolean, default: true },
+        membershipPartnerSecret: { type: String, select: false },
+        membershipPartnerSyncUrl: { type: String, select: false },
         translations: {
             en: { type: SiteSettingsEnglishTranslationSchema, default: undefined },
         },

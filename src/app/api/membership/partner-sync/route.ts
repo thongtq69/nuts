@@ -4,9 +4,10 @@ import User from '@/models/User';
 import UserVoucher from '@/models/UserVoucher';
 import PartnerMembership from '@/models/PartnerMembership';
 import { buildPartnerVoucherCode, type PartnerMembershipPayload, verifyPartnerSignature } from '@/lib/partner-membership';
+import { getPartnerMembershipConfig } from '@/lib/partner-membership-server';
 
 export async function POST(request: Request) {
-  const secret = process.env.MEMBERSHIP_PARTNER_SECRET;
+  const { secret } = await getPartnerMembershipConfig();
   if (!secret) return NextResponse.json({ message: 'Partner sync chưa được cấu hình' }, { status: 503 });
 
   const rawBody = await request.text();

@@ -7,7 +7,7 @@ import User from '@/models/User';
 import { buildMembershipVoucherCode, isConfirmedPaymentStatus } from '@/lib/customer-ownership';
 import { syncAffiliateCommissionsForOrderStatus } from '@/lib/affiliate-commission-lifecycle';
 import { buildMembershipVoucherIssuance } from '@/lib/membership-vouchers';
-import { sendMembershipToPartner } from '@/lib/partner-membership';
+import { sendMembershipToPartner } from '@/lib/partner-membership-server';
 
 export class MembershipActivationError extends Error {
     status: number;

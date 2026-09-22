@@ -118,6 +118,8 @@ export async function GET(request: Request) {
         }
 
         const responseSettings = localizeSettings(settings.toObject(), getUrlLocale(request));
+        delete (responseSettings as unknown as Record<string, unknown>).membershipPartnerSecret;
+        delete (responseSettings as unknown as Record<string, unknown>).membershipPartnerSyncUrl;
         return NextResponse.json(responseSettings, {
             headers: { 'Cache-Control': 'no-store, max-age=0' }
         });

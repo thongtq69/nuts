@@ -1,6 +1,6 @@
 # GoNuts × ChillPop VIP sync
 
-Production requires the same `MEMBERSHIP_PARTNER_SECRET` on both deployments.
+Production requires the same `MEMBERSHIP_PARTNER_SECRET` on both deployments. GoNuts can alternatively store both values in the private `SiteSettings` fields `membershipPartnerSecret` and `membershipPartnerSyncUrl`; these fields are excluded from the public settings response.
 
 - GoNuts: `MEMBERSHIP_PARTNER_SYNC_URL=https://kem-mocha.vercel.app/api/membership/partner-sync`
 - ChillPop: `MEMBERSHIP_PARTNER_SYNC_URL=https://gonuts.vn/api/membership/partner-sync`
