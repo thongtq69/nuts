@@ -183,7 +183,9 @@ test('wheel result presentation removes admin notes, uses radial labels and cele
     assert.doesNotMatch(customerPage, /Admin được quay test không giới hạn/);
     assert.match(customerPage, /const labelRotation = angleDegrees - 90/);
     assert.match(resultCelebration, /won && <div/);
-    assert.match(resultCelebration, /fireworks\.map/);
+    assert.match(resultCelebration, /data-fireworks-canvas/);
+    assert.match(resultCelebration, /window\.requestAnimationFrame\(draw\)/);
+    assert.match(resultCelebration, /window\.setInterval\(createBurst, 520\)/);
     assert.match(resultCelebration, /celebration-glow/);
     assert.match(resultCelebration, /animation-iteration-count: 3/);
 });
