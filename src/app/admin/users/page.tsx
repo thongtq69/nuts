@@ -258,8 +258,19 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="flex flex-col lg:flex-row gap-4">
-                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-                    <div className="flex gap-2 min-w-max">
+                <label className="lg:hidden">
+                    <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Nhóm người dùng</span>
+                    <select value={filter} onChange={event => { setFilter(event.target.value as typeof filter); setCurrentPage(1); }} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 shadow-sm outline-none focus:border-brand">
+                        <option value="all">Tất cả ({users.length})</option>
+                        <option value="user">Khách hàng ({users.filter(user => user.role === 'user').length})</option>
+                        <option value="sale">Đại lý/CTV ({users.filter(user => user.role === 'sale').length})</option>
+                        <option value="staff">Nhân viên ({users.filter(user => user.role === 'staff').length})</option>
+                        <option value="admin">Quản trị viên ({users.filter(user => user.role === 'admin').length})</option>
+                        {pendingCount > 0 && <option value="pending">Chờ duyệt ({pendingCount})</option>}
+                    </select>
+                </label>
+                <div className="hidden rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:block">
+                    <div className="flex flex-wrap gap-2">
                         <button
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === 'all' ? 'bg-brand text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                             onClick={() => setFilter('all')}
@@ -311,7 +322,23 @@ export default function AdminUsersPage() {
             />
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="divide-y divide-slate-100 lg:hidden">
+                    {paginatedUsers.length === 0 ? <p className="px-5 py-12 text-center italic text-slate-500">Không tìm thấy người dùng nào.</p> : paginatedUsers.map((user, index) => <article key={`mobile-${user._id}`} onClick={() => window.location.href = `/admin/users/${user._id}`} className="cursor-pointer p-4 transition hover:bg-slate-50">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0"><span className="text-xs font-bold text-slate-400">#{startIndex + index + 1}</span><h2 className="mt-1 font-bold text-slate-800">{user.name}</h2><p className="break-all text-sm text-slate-600">{user.email}</p>{user.phone && <p className="mt-1 text-xs text-slate-500">{user.phone}</p>}</div>
+                            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${user.role === 'admin' ? 'bg-red-100 text-red-600' : user.role === 'staff' ? 'bg-brand/10 text-brand' : user.role === 'sale' ? 'bg-brand-light/30 text-brand-dark' : 'bg-slate-100 text-slate-600'}`}>{user.role === 'user' ? 'Khách hàng' : user.role === 'sale' ? (user.affiliateLevel === 'collaborator' || user.saleType === 'collaborator' ? 'CTV' : 'Đại lý') : user.role === 'staff' ? 'Nhân viên' : 'Admin'}</span>
+                        </div>
+                        {user.role === 'user' && <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs"><span className="text-slate-400">Nhân viên quản lý</span><p className="mt-1 font-semibold text-slate-700">{user.managedBy?.name || 'Chưa gắn nhân viên'}</p></div>}
+                        <div className="mt-3 flex items-center justify-between gap-3"><span className="text-xs text-slate-400">Tham gia {new Date(user.createdAt).toLocaleDateString('vi-VN')}</span>{user.isActive === false && <span className="rounded-full bg-red-100 px-2 py-1 text-[10px] font-semibold text-red-700">Đã vô hiệu hóa</span>}{user.saleApplicationStatus === 'pending' && <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700">Chờ duyệt</span>}</div>
+                        <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3" onClick={event => event.stopPropagation()}>
+                            {user.isActive !== false && user.saleApplicationStatus === 'pending' && <><button onClick={() => handleApproveSale(user._id)} className="rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700">Duyệt</button><button onClick={() => handleRejectSale(user._id)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600">Từ chối</button></>}
+                            {user.isActive !== false && user.role === 'user' && !user.saleApplicationStatus && <button onClick={() => handleChangeRole(user._id, 'sale')} className="rounded-lg bg-brand/10 px-3 py-2 text-xs font-bold text-brand">Nâng cấp Đại lý</button>}
+                            {user.isActive !== false && user.role === 'sale' && <button onClick={() => handleChangeRole(user._id, 'user')} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Hạ cấp</button>}
+                            {user.role !== 'admin' && user.isActive !== false && <button onClick={() => openDeleteModal(user._id, user.name, user.role)} disabled={deleting === user._id} className="ml-auto rounded-lg bg-red-50 p-2 text-red-600 disabled:opacity-50" aria-label={`Xóa ${user.name}`}>{deleting === user._id ? <Loader2 size={16} className="animate-spin"/> : <UserX size={16}/>}</button>}
+                        </div>
+                    </article>)}
+                </div>
+                <div className="hidden lg:block">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold tracking-wider">

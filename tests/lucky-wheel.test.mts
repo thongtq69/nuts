@@ -169,7 +169,7 @@ test('wheel prizes are rendered directly on their segments without fixed cards',
         customerPage.indexOf('</div>;', customerPage.indexOf('data-wheel-prize')),
     );
 
-    assert.match(prizeMarkup, /labelRotation/);
+    assert.match(prizeMarkup, /readableLabelRotation/);
     assert.match(prizeMarkup, /text-shadow/);
     assert.doesNotMatch(prizeMarkup, /bg-white|rounded-(?:lg|xl)|border-white/);
     assert.match(customerPage, /key={`divider-\$\{segment\.label\}`}/);
@@ -185,10 +185,38 @@ test('wheel result presentation removes admin notes, uses radial labels and cele
     assert.match(resultCelebration, /won && <div/);
     assert.match(resultCelebration, /data-fireworks-canvas/);
     assert.match(resultCelebration, /window\.requestAnimationFrame\(draw\)/);
-    assert.match(resultCelebration, /const burstSchedule = \[0, 160, 620/);
-    assert.match(resultCelebration, /Math\.min\(window\.devicePixelRatio \|\| 1, 1\.25\)/);
+    assert.match(resultCelebration, /const burstSchedule = \[0, 420, 940, 1_520\]/);
+    assert.match(resultCelebration, /const ratio = 1/);
+    assert.match(resultCelebration, /width < 640 \? 10 : 14/);
     assert.doesNotMatch(resultCelebration, /setInterval/);
     assert.doesNotMatch(resultCelebration, /backdrop-blur/);
     assert.match(resultCelebration, /celebration-glow/);
-    assert.match(resultCelebration, /animation-iteration-count: 2/);
+    assert.match(resultCelebration, /animation-iteration-count: 1/);
+});
+
+test('long lucky wheel and voucher lists are revealed incrementally', () => {
+    const customerWheel = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const adminWheel = readFileSync(new URL('../src/app/admin/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const account = readFileSync(new URL('../src/app/account/page.tsx', import.meta.url), 'utf8');
+    const controls = readFileSync(new URL('../src/components/common/ProgressiveListControls.tsx', import.meta.url), 'utf8');
+
+    assert.match(controls, /Xem thêm/);
+    assert.match(controls, /Thu gọn/);
+    assert.match(customerWheel, /visibleMoneyHistory/);
+    assert.match(adminWheel, /visibleMemberAccounts/);
+    assert.match(adminWheel, /visibleWithdrawals/);
+    assert.match(account, /group\.vouchers\.slice\(0, visibleVoucherCount\)/);
+});
+
+test('admin mobile lists avoid horizontal scrolling and floating wheel does not cover pagination', () => {
+    const usersPage = readFileSync(new URL('../src/app/admin/users/page.tsx', import.meta.url), 'utf8');
+    const floatingWheel = readFileSync(new URL('../src/components/lucky-wheel/LuckyWheelFloatingButton.tsx', import.meta.url), 'utf8');
+    const customerWheel = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+
+    assert.match(usersPage, /<select value=\{filter\}/);
+    assert.match(usersPage, /key={`mobile-\$\{user\._id\}`}/);
+    assert.match(usersPage, /hidden lg:block/);
+    assert.match(floatingWheel, /pathname\.startsWith\('\/admin'\)/);
+    assert.match(customerWheel, /toneWheelColor\(segment\.color\)/);
+    assert.match(customerWheel, /readableLabelRotation/);
 });

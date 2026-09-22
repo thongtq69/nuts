@@ -10,12 +10,12 @@ export interface LuckyWheelMilestoneRewardConfig {
 }
 
 export const DEFAULT_WHEEL_SEGMENTS: LuckyWheelSegmentConfig[] = [
-    { label: 'Chúc may mắn', value: 0, color: '#fff7db' },
-    { label: '1.000đ', value: 1_000, color: '#f6bd4b' },
-    { label: '5.000đ', value: 5_000, color: '#e96f65' },
-    { label: '10.000đ', value: 10_000, color: '#8bbd75' },
-    { label: '50.000đ', value: 50_000, color: '#73a9d8' },
-    { label: '100.000đ', value: 100_000, color: '#b68ad6' },
+    { label: 'Chúc may mắn', value: 0, color: '#eee7dc' },
+    { label: '1.000đ', value: 1_000, color: '#cbb28a' },
+    { label: '5.000đ', value: 5_000, color: '#b99f91' },
+    { label: '10.000đ', value: 10_000, color: '#aebdad' },
+    { label: '50.000đ', value: 50_000, color: '#aab8c2' },
+    { label: '100.000đ', value: 100_000, color: '#b7a9b4' },
 ];
 
 export const DEFAULT_REGULAR_SPIN_PRIZES = [0, 1_000, 0, 5_000, 0];

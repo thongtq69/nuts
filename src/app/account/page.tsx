@@ -20,6 +20,7 @@ import {
     paymentStatusLabel,
 } from '@/lib/order-status';
 import ChangePasswordModal from '@/components/account/ChangePasswordModal';
+import ProgressiveListControls from '@/components/common/ProgressiveListControls';
 
 // Helper functions for vouchers
 function maskVoucherCode(code: string): string {
@@ -69,6 +70,7 @@ export default function AccountPage() {
     const [revealedVoucherId, setRevealedVoucherId] = useState<string | null>(null);
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
     const [voucherFilter, setVoucherFilter] = useState<'all' | 'available' | 'used' | 'expired'>('all');
+    const [voucherVisibleCounts, setVoucherVisibleCounts] = useState<Record<string, number>>({});
 
     // Membership packages state
     const [membershipPackages, setMembershipPackages] = useState<any[]>([]);
@@ -726,52 +728,22 @@ export default function AccountPage() {
                                 ) : (
                                     <>
                                         {/* Stats */}
-                                        <div style={{ 
-                                            display: 'grid', 
-                                            gridTemplateColumns: 'repeat(4, 1fr)', 
-                                            gap: '12px', 
-                                            marginBottom: '20px' 
-                                        }}>
-                                            <div style={{ 
-                                                background: '#fff', 
-                                                padding: '16px', 
-                                                borderRadius: '12px', 
-                                                textAlign: 'center',
-                                                border: '1px solid #e5e7eb'
-                                            }}>
-                                                <div style={{ fontSize: '24px', fontWeight: '700', color: '#374151' }}>{voucherStats.total}</div>
-                                                <div style={{ fontSize: '12px', color: '#6b7280' }}>Tong</div>
-                                            </div>
-                                            <div style={{
-                                                background: '#fff',
-                                                padding: '16px',
-                                                borderRadius: '12px',
-                                                textAlign: 'center',
-                                                border: '1px solid #E3E846/30'
-                                            }}>
-                                                <div style={{ fontSize: '24px', fontWeight: '700', color: '#E3E846' }}>{voucherStats.available}</div>
-                                                <div style={{ fontSize: '12px', color: '#6b7280' }}>Con hieu luc</div>
-                                            </div>
-                                            <div style={{ 
-                                                background: '#fff', 
-                                                padding: '16px', 
-                                                borderRadius: '12px', 
-                                                textAlign: 'center',
-                                                border: '1px solid #e5e7eb'
-                                            }}>
-                                                <div style={{ fontSize: '24px', fontWeight: '700', color: '#9ca3af' }}>{voucherStats.used}</div>
-                                                <div style={{ fontSize: '12px', color: '#6b7280' }}>Da dung</div>
-                                            </div>
-                                            <div style={{ 
-                                                background: '#fff', 
-                                                padding: '16px', 
-                                                borderRadius: '12px', 
-                                                textAlign: 'center',
-                                                border: '1px solid #fee2e2'
-                                            }}>
-                                                <div style={{ fontSize: '24px', fontWeight: '700', color: '#ef4444' }}>{voucherStats.expired}</div>
-                                                <div style={{ fontSize: '12px', color: '#6b7280' }}>Het han</div>
-                                            </div>
+                                        <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+                                            {[
+                                                { key: 'all', value: voucherStats.total, label: 'Tổng' },
+                                                { key: 'available', value: voucherStats.available, label: 'Còn hiệu lực' },
+                                                { key: 'used', value: voucherStats.used, label: 'Đã dùng' },
+                                                { key: 'expired', value: voucherStats.expired, label: 'Hết hạn' },
+                                            ].map(item => <button
+                                                type="button"
+                                                key={item.key}
+                                                onClick={() => setVoucherFilter(item.key as typeof voucherFilter)}
+                                                aria-pressed={voucherFilter === item.key}
+                                                className={`rounded-xl border bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-[#9C7043] hover:shadow-md ${voucherFilter === item.key ? 'border-[#9C7043] ring-2 ring-[#9C7043]/15' : 'border-gray-200'}`}
+                                            >
+                                                <span className="block text-2xl font-bold text-gray-900">{item.value}</span>
+                                                <span className="mt-1 block text-xs text-gray-500">{item.label}</span>
+                                            </button>)}
                                         </div>
 
                                         {/* Filter Tabs */}
@@ -807,6 +779,7 @@ export default function AccountPage() {
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                                 {groupedVouchers.map(group => {
                                                     const isCollapsed = collapsedGroups.has(group.key);
+                                                    const visibleVoucherCount = voucherVisibleCounts[group.key] || 6;
                                                     return (
                                                         <div 
                                                             key={group.key} 
@@ -867,14 +840,14 @@ export default function AccountPage() {
                                                             </button>
 
                                                             {/* Group Content */}
-                                                            {!isCollapsed && (
+                                                            {!isCollapsed && <>
                                                                 <div style={{ 
                                                                     padding: '16px', 
                                                                     display: 'grid', 
                                                                     gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
                                                                     gap: '12px' 
                                                                 }}>
-                                                                    {group.vouchers.map((voucher: any) => {
+                                                                    {group.vouchers.slice(0, visibleVoucherCount).map((voucher: any) => {
                                                                         const status = getVoucherStatus(voucher);
                                                                         const isRevealed = revealedVoucherId === voucher._id;
                                                                         const isDisabled = status === 'used' || status === 'expired';
@@ -1018,7 +991,8 @@ export default function AccountPage() {
                                                                         );
                                                                     })}
                                                                 </div>
-                                                            )}
+                                                                <ProgressiveListControls total={group.vouchers.length} visible={visibleVoucherCount} step={6} onVisibleChange={next => setVoucherVisibleCounts(current => ({ ...current, [group.key]: next }))}/>
+                                                            </>}
                                                         </div>
                                                     );
                                                 })}

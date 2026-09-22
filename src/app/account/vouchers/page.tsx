@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import ChangePasswordModal from '@/components/account/ChangePasswordModal';
 import { KeyRound, LogOut } from 'lucide-react';
+import ProgressiveListControls from '@/components/common/ProgressiveListControls';
 
 interface Voucher {
     _id: string;
@@ -69,6 +70,7 @@ export default function UserVouchersPage() {
     
     // State for collapsed groups
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+    const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
     useEffect(() => {
@@ -79,7 +81,7 @@ export default function UserVouchersPage() {
         if (user) {
             fetchVouchers();
         }
-    }, [user, authLoading]);
+    }, [user, authLoading, router]);
 
     const fetchVouchers = async () => {
         try {
@@ -199,8 +201,6 @@ export default function UserVouchersPage() {
 
         return result;
     }, [vouchers, filter]);
-
-    const totalFilteredVouchers = groupedVouchers.reduce((sum, g) => sum + g.vouchers.length, 0);
 
     const copyToClipboard = (code: string) => {
         navigator.clipboard.writeText(code);
@@ -347,23 +347,16 @@ export default function UserVouchersPage() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <div className="text-3xl font-bold text-gray-800">{stats.total}</div>
-                        <div className="text-sm text-gray-500">Tong voucher</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-brand-light/30">
-                        <div className="text-3xl font-bold text-brand-light">{stats.available}</div>
-                        <div className="text-sm text-gray-500">Con hieu luc</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <div className="text-3xl font-bold text-gray-400">{stats.used}</div>
-                        <div className="text-sm text-gray-500">Da su dung</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-red-100">
-                        <div className="text-3xl font-bold text-red-500">{stats.expired}</div>
-                        <div className="text-sm text-gray-500">Het han</div>
-                    </div>
+                <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+                    {[
+                        { key: 'all', value: stats.total, label: 'Tổng voucher' },
+                        { key: 'available', value: stats.available, label: 'Còn hiệu lực' },
+                        { key: 'used', value: stats.used, label: 'Đã sử dụng' },
+                        { key: 'expired', value: stats.expired, label: 'Hết hạn' },
+                    ].map(item => <button type="button" key={item.key} onClick={() => setFilter(item.key as typeof filter)} aria-pressed={filter === item.key} className={`rounded-xl border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand hover:shadow-md ${filter === item.key ? 'border-brand ring-2 ring-brand/15' : 'border-gray-200'}`}>
+                        <span className="block text-3xl font-bold text-gray-900">{item.value}</span>
+                        <span className="mt-1 block text-sm text-gray-500">{item.label}</span>
+                    </button>)}
                 </div>
 
                 {/* Filter Tabs */}
@@ -393,6 +386,7 @@ export default function UserVouchersPage() {
                     <div className="space-y-6">
                         {groupedVouchers.map(group => {
                             const isCollapsed = collapsedGroups.has(group.key);
+                            const visibleCount = visibleCounts[group.key] || 6;
                             return (
                                 <div key={group.key} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                                     {/* Group Header */}
@@ -418,9 +412,9 @@ export default function UserVouchersPage() {
                                     </button>
 
                                     {/* Group Content */}
-                                    {!isCollapsed && (
+                                    {!isCollapsed && <>
                                         <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {group.vouchers.map(voucher => {
+                                            {group.vouchers.slice(0, visibleCount).map(voucher => {
                                                 const status = getVoucherStatus(voucher);
                                                 const isRevealed = revealedVoucherId === voucher._id;
                                                 const isDisabled = status === 'used' || status === 'expired';
@@ -525,7 +519,8 @@ export default function UserVouchersPage() {
                                                 );
                                             })}
                                         </div>
-                                    )}
+                                        <ProgressiveListControls total={group.vouchers.length} visible={visibleCount} step={6} onVisibleChange={next => setVisibleCounts(current => ({ ...current, [group.key]: next }))}/>
+                                    </>}
                                 </div>
                             );
                         })}

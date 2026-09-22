@@ -8,7 +8,7 @@ interface SpinResultCelebrationProps {
 }
 
 const colors = ['#f6bd4b', '#e96f65', '#73a9d8', '#8bbd75', '#b68ad6', '#ffffff'];
-const confetti = Array.from({ length: 32 }, (_, index) => ({
+const confetti = Array.from({ length: 16 }, (_, index) => ({
     left: (index * 37) % 100,
     delay: (index % 14) * 0.08,
     duration: 2.1 + (index % 7) * 0.14,
@@ -47,13 +47,11 @@ function FireworksCanvas() {
         let animationFrame = 0;
         let completedBursts = 0;
         const particles: FireworkParticle[] = [];
-        const burstPositions = [
-            [.12, .22], [.88, .2], [.2, .68], [.82, .72], [.5, .12], [.08, .82], [.92, .84],
-        ];
-        const burstSchedule = [0, 160, 620, 1_100, 1_680, 2_320, 3_000];
+        const burstPositions = [[.16, .24], [.84, .22], [.22, .72], [.8, .7]];
+        const burstSchedule = [0, 420, 940, 1_520];
 
         const resize = () => {
-            const ratio = Math.min(window.devicePixelRatio || 1, 1.25);
+            const ratio = 1;
             width = window.innerWidth;
             height = window.innerHeight;
             canvas.width = Math.round(width * ratio);
@@ -72,11 +70,11 @@ function FireworksCanvas() {
             const originX = width * positionX;
             const originY = height * positionY;
             const color = fireworkColors[completedBursts % fireworkColors.length];
-            const particleCount = width < 640 ? 22 : 30;
+            const particleCount = width < 640 ? 10 : 14;
             completedBursts += 1;
             for (let index = 0; index < particleCount; index += 1) {
                 const angle = (Math.PI * 2 * index) / particleCount + Math.random() * .08;
-                const speed = 2.4 + Math.random() * 3.8;
+                const speed = 2.2 + Math.random() * 3.1;
                 particles.push({
                     x: originX,
                     y: originY,
@@ -84,8 +82,8 @@ function FireworksCanvas() {
                     velocityY: Math.sin(angle) * speed,
                     gravity: .05 + Math.random() * .03,
                     alpha: 1,
-                    decay: .014 + Math.random() * .009,
-                    size: 1.5 + Math.random() * 1.4,
+                    decay: .022 + Math.random() * .01,
+                    size: 1.4 + Math.random() * 1.1,
                     color,
                 });
             }
@@ -93,10 +91,8 @@ function FireworksCanvas() {
 
         const draw = () => {
             context.clearRect(0, 0, width, height);
-            context.globalCompositeOperation = 'lighter';
+            context.globalCompositeOperation = 'source-over';
             context.lineCap = 'round';
-            context.shadowColor = 'rgba(255,255,255,.7)';
-            context.shadowBlur = 3;
             for (let index = particles.length - 1; index >= 0; index -= 1) {
                 const particle = particles[index];
                 particle.velocityX *= .988;
@@ -119,7 +115,6 @@ function FireworksCanvas() {
                 context.stroke();
             }
             context.globalAlpha = 1;
-            context.shadowBlur = 0;
             if (particles.length > 0 || completedBursts < burstSchedule.length) {
                 animationFrame = window.requestAnimationFrame(draw);
             }
@@ -169,7 +164,7 @@ export default function SpinResultCelebration({ prize, isTest, onClose }: SpinRe
             .result-card { animation: result-pop .48s cubic-bezier(.2,.9,.25,1.2) both; will-change: transform, opacity; }
             .prize-glow { animation: prize-pulse 1.15s ease-in-out infinite alternate; text-shadow: 0 8px 28px rgba(181,110,32,.25); }
             .celebration-glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 46%, rgba(255,210,93,.2), transparent 33%); }
-            .confetti { position: absolute; top: -8%; width: 8px; height: 16px; border-radius: 2px; opacity: 0; animation-name: confetti-fall; animation-timing-function: cubic-bezier(.15,.75,.35,1); animation-iteration-count: 2; will-change: translate, rotate, opacity; }
+            .confetti { position: absolute; top: -8%; width: 7px; height: 14px; border-radius: 2px; opacity: 0; animation-name: confetti-fall; animation-timing-function: cubic-bezier(.15,.75,.35,1); animation-iteration-count: 1; will-change: translate, rotate, opacity; }
             @keyframes result-pop { from { opacity: 0; transform: translateY(24px) scale(.82); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes prize-pulse { from { transform: scale(.98); } to { transform: scale(1.035); } }
             @keyframes confetti-fall { 0% { opacity: 0; translate: 0 -20px; rotate: 0deg; } 12% { opacity: 1; } 100% { opacity: .9; translate: 45px 112vh; rotate: 760deg; } }
