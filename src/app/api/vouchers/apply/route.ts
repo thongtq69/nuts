@@ -83,7 +83,7 @@ export async function POST(req: Request) {
             discountValue: voucher.discountValue,
             voucherMaxDiscount: voucher.maxDiscount,
             items: discountItems,
-            applyProductCaps: voucher.source === 'package'
+            applyProductCaps: voucher.source === 'package' || voucher.source === 'partner'
         });
 
         // Return valid logic

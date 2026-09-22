@@ -10,6 +10,7 @@
     "test:customer-features": "node --experimental-strip-types --test tests/customer-features.test.mts",
     "test:i18n": "node --experimental-strip-types --test tests/i18n.test.mts",
     "test:lucky-wheel": "node --experimental-strip-types --test tests/lucky-wheel.test.mts",
+    "test:partner-membership": "node --experimental-strip-types --test tests/partner-membership.test.mts",
     "setup:i18n:translator": ".translation-venv/bin/python scripts/setup-local-translation.py",
     "audit:i18n:dual": "node scripts/sync-english-content.mjs --audit-only",
     "preview:i18n:dual": "node scripts/sync-english-content.mjs",

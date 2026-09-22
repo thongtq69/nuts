@@ -50,7 +50,7 @@ export interface IOrder {
     cancellationEffectsAppliedAt?: Date;
     voucherId?: mongoose.Types.ObjectId;
     voucherCode?: string;
-    voucherSource?: 'package' | 'manual' | 'campaign' | 'order_reward';
+    voucherSource?: 'package' | 'partner' | 'manual' | 'campaign' | 'order_reward';
     voucherDiscountAmount?: number;
     vipSavings?: number;
     luckyWheelCreditUsed?: number;
@@ -120,7 +120,7 @@ const OrderSchema: Schema<IOrder> = new Schema(
         cancellationEffectsAppliedAt: { type: Date },
         voucherId: { type: Schema.Types.ObjectId, ref: 'UserVoucher' },
         voucherCode: { type: String },
-        voucherSource: { type: String, enum: ['package', 'manual', 'campaign', 'order_reward'] },
+        voucherSource: { type: String, enum: ['package', 'partner', 'manual', 'campaign', 'order_reward'] },
         voucherDiscountAmount: { type: Number, min: 0 },
         vipSavings: { type: Number, min: 0 },
         luckyWheelCreditUsed: { type: Number, min: 0, default: 0 },
