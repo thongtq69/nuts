@@ -241,3 +241,18 @@ test('admin mobile lists avoid horizontal scrolling and floating wheel does not 
     assert.match(customerWheel, /pastelWheelColor\(segment\.color\)/);
     assert.match(customerWheel, /readableLabelRotation/);
 });
+
+test('gift wheel uses lightweight playful food and sky illustrations', () => {
+    const customerWheel = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const decorations = readFileSync(new URL('../src/components/lucky-wheel/PlayfulWheelDecorations.tsx', import.meta.url), 'utf8');
+
+    assert.match(customerWheel, /<PlayfulWheelBackdrop\/>/);
+    assert.match(customerWheel, /<PlayfulJoyBanner\/>/);
+    assert.match(customerWheel, /<CupcakeIllustration/);
+    assert.match(customerWheel, /<AcornFriendIllustration/);
+    assert.match(customerWheel, /<CookieFriendIllustration/);
+    assert.match(customerWheel, /<RainbowCloudIllustration/);
+    assert.match(decorations, /data-playful-illustrations/);
+    assert.match(decorations, /Bánh nhỏ xinh · Niềm vui thật trong veo/);
+    assert.doesNotMatch(decorations, /<img|https?:\/\//);
+});
