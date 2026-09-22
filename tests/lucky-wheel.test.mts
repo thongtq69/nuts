@@ -10,7 +10,6 @@ import {
     spinsForTopUp,
     withdrawalRequestDecision,
 } from '../src/lib/lucky-wheel-rules.ts';
-import { matchesWithdrawalTransaction } from '../src/lib/lucky-wheel-withdrawal-rules.ts';
 import { findVietnamBank, searchVietnamBanks, VIETNAM_BANKS } from '../src/lib/vietnam-banks.ts';
 import { DEFAULT_WHEEL_COPY } from '../src/lib/lucky-wheel-config.ts';
 import {
@@ -133,28 +132,34 @@ test('top-up conversion and milestone prize pool are fixed', () => {
     assert.equal(prizes.filter(value => value === 50_000).length, 5);
 });
 
-test('withdrawal is only settled by an exact posted ACB debit', () => {
-    const target = {
-        amount: 100_000,
-        beneficiaryAccount: '123456789',
-        payoutReference: 'WDABC123',
-        transactionId: 'TRACE-9988',
-    };
-    const transaction = {
-        transactionCode: 'TRACE-9988',
-        transactionAmount: 100_000,
-        transactionDescription: 'Chi thuong WDABC123',
-        beneficiaryAccount: '123456789',
-        transactionStatus: 'SUCCESS',
-        debitOrCredit: 'D',
-    };
+test('withdrawals use complete bank details and an atomic manual Admin approval', () => {
+    const service = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
+    const customerApi = readFileSync(new URL('../src/app/api/lucky-wheel/withdraw/route.ts', import.meta.url), 'utf8');
+    const adminApi = readFileSync(new URL('../src/app/api/admin/lucky-wheel/route.ts', import.meta.url), 'utf8');
+    const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const adminPage = readFileSync(new URL('../src/app/admin/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const model = readFileSync(new URL('../src/models/LuckyWheelWithdrawal.ts', import.meta.url), 'utf8');
 
-    assert.equal(matchesWithdrawalTransaction(transaction, target), true);
-    assert.equal(matchesWithdrawalTransaction({ ...transaction, debitOrCredit: 'C' }, target), false);
-    assert.equal(matchesWithdrawalTransaction({ ...transaction, transactionAmount: 99_000 }, target), false);
-    assert.equal(matchesWithdrawalTransaction({ ...transaction, beneficiaryAccount: '000000000' }, target), false);
-    assert.equal(matchesWithdrawalTransaction({ ...transaction, transactionDescription: 'Chi thuong khac' }, target), false);
-    assert.equal(matchesWithdrawalTransaction({ ...transaction, transactionCode: 'TRACE-OTHER' }, target), false);
+    for (const field of ['accountName', 'accountNumber', 'bankName', 'payoutReference']) {
+        assert.match(model, new RegExp(field));
+    }
+    assert.match(customerPage, /Họ tên chủ tài khoản/);
+    assert.match(customerPage, /Số tài khoản/);
+    assert.match(customerPage, /<BankCombobox/);
+    assert.match(customerPage, /Nội dung đối chiếu sẽ được hệ thống tự tạo/);
+    assert.match(customerApi, /Nội dung đối chiếu: \$\{withdrawal\.payoutReference\}/);
+    assert.match(service, /rejectionCode: 'BELOW_MINIMUM'/);
+    assert.match(service, /rejectionCode: 'INSUFFICIENT_BALANCE'/);
+    assert.ok(service.indexOf("rejectionCode: 'BELOW_MINIMUM'") < service.indexOf("amount % 1_000 !== 0"));
+    assert.match(service, /export async function approveLuckyWheelWithdrawal/);
+    assert.match(service, /status: 'paid'/);
+    assert.match(service, /prizeBalance: -withdrawal\.amount, pendingWithdrawal: -withdrawal\.amount, lifetimeWithdrawn: withdrawal\.amount/);
+    assert.match(adminApi, /action === 'withdrawal-approved'/);
+    assert.match(adminApi, /minimumWithdrawal < LUCKY_WHEEL_MINIMUM_WITHDRAWAL/);
+    assert.match(adminPage, /Duyệt thủ công/);
+    assert.match(adminPage, /Nội dung đối chiếu do hệ thống tạo/);
+    assert.doesNotMatch(adminPage, /Mã giao dịch ACB|Xác minh ACB/);
+    assert.doesNotMatch(service, /verifyWithdrawalInAcbHistory/);
 });
 
 test('withdrawal requests reserve availability but only deduct the total balance after approval', () => {

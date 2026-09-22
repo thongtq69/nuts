@@ -8,7 +8,6 @@ import LuckyWheelSpin from '@/models/LuckyWheelSpin';
 import LuckyWheelMilestone from '@/models/LuckyWheelMilestone';
 import LuckyWheelTopUp, { type ILuckyWheelTopUp } from '@/models/LuckyWheelTopUp';
 import LuckyWheelWithdrawal from '@/models/LuckyWheelWithdrawal';
-import { verifyWithdrawalInAcbHistory } from '@/lib/lucky-wheel-withdrawal-verification';
 import { findVietnamBank } from '@/lib/vietnam-banks';
 import {
     DEFAULT_MILESTONE_REWARDS,
@@ -130,7 +129,7 @@ export async function requestLuckyWheelWithdrawal(userId: string, input: { amoun
     const bankName = bank?.shortName || '';
     const accountNumber = String(input.accountNumber || '').trim();
     const accountName = String(input.accountName || '').trim().toUpperCase();
-    if (!Number.isFinite(amount) || amount < 1 || amount % 1_000 !== 0) throw new Error('INVALID_WITHDRAWAL_AMOUNT');
+    if (!Number.isFinite(amount) || amount < 1) throw new Error('INVALID_WITHDRAWAL_AMOUNT');
     if (!bank || !/^\d{6,30}$/.test(accountNumber) || !accountName) throw new Error('INVALID_BANK_INFO');
     await ensureWithdrawalAccountingV2(userId);
     const payoutReference = createLuckyWheelWithdrawalRef();
@@ -142,6 +141,7 @@ export async function requestLuckyWheelWithdrawal(userId: string, input: { amoun
             reviewedAt: new Date(),
         });
     }
+    if (amount % 1_000 !== 0) throw new Error('INVALID_WITHDRAWAL_AMOUNT');
     const session = await mongoose.startSession();
     let withdrawal = null;
     try {
@@ -192,16 +192,8 @@ export async function reviewLuckyWheelWithdrawal(adminUserId: string, withdrawal
     return withdrawal;
 }
 
-export async function verifyAndCompleteLuckyWheelWithdrawal(
-    adminUserId: string,
-    withdrawalId: string,
-    bankTransactionId: string,
-    note = '',
-) {
+export async function approveLuckyWheelWithdrawal(adminUserId: string, withdrawalId: string, note = '') {
     await dbConnect();
-    const normalizedTransactionId = bankTransactionId.trim().toUpperCase();
-    if (!/^[A-Z0-9._\/-]{4,120}$/.test(normalizedTransactionId)) throw new Error('INVALID_BANK_TRANSACTION_ID');
-
     const withdrawal = await LuckyWheelWithdrawal.findOne({ _id: withdrawalId, status: 'pending' });
     if (!withdrawal) throw new Error('WITHDRAWAL_NOT_FOUND');
     await ensureWithdrawalAccountingV2(String(withdrawal.userId));
@@ -210,31 +202,9 @@ export async function verifyAndCompleteLuckyWheelWithdrawal(
         await withdrawal.save();
         throw new Error('WITHDRAWAL_REFERENCE_CREATED');
     }
-    const duplicate = await LuckyWheelWithdrawal.exists({
-        bankTransactionId: normalizedTransactionId,
-        _id: { $ne: withdrawal._id },
-    });
-    if (duplicate) throw new Error('BANK_TRANSACTION_ALREADY_USED');
-
-    let verified;
-    try {
-        verified = await verifyWithdrawalInAcbHistory({
-            amount: withdrawal.amount,
-            beneficiaryAccount: withdrawal.accountNumber,
-            payoutReference: withdrawal.payoutReference,
-            transactionId: normalizedTransactionId,
-            createdAt: (withdrawal as typeof withdrawal & { createdAt: Date }).createdAt,
-        });
-    } catch (error) {
-        if (error instanceof Error && ['BANK_TRANSACTION_NOT_CONFIRMED', 'ACB_ACCOUNT_NOT_CONFIGURED'].includes(error.message)) throw error;
-        console.error('ACB withdrawal verification failed', error);
-        throw new Error('BANK_VERIFICATION_UNAVAILABLE');
-    }
 
     const session = await mongoose.startSession();
     let completed = null;
-    const bankTransactionDate = verified.transactionDate ? new Date(verified.transactionDate) : new Date();
-    if (Number.isNaN(bankTransactionDate.getTime())) bankTransactionDate.setTime(Date.now());
     try {
         await session.withTransaction(async () => {
             completed = await LuckyWheelWithdrawal.findOneAndUpdate(
@@ -242,15 +212,14 @@ export async function verifyAndCompleteLuckyWheelWithdrawal(
                 { $set: {
                     status: 'paid',
                     note: note.trim(),
-                    bankTransactionId: verified.transactionId || normalizedTransactionId,
-                    bankTransactionDate,
-                    bankVerifiedAt: new Date(),
                     reviewedBy: adminUserId,
                     reviewedAt: new Date(),
                 } },
                 { new: true, session },
             );
             if (!completed) throw new Error('WITHDRAWAL_NOT_FOUND');
+            // The request amount was only reserved in pendingWithdrawal. Deduct
+            // the real balance exactly once, when Admin manually approves it.
             const accountUpdate = await LuckyWheelAccount.updateOne(
                 { userId: withdrawal.userId, pendingWithdrawal: { $gte: withdrawal.amount }, prizeBalance: { $gte: withdrawal.amount } },
                 { $inc: { prizeBalance: -withdrawal.amount, pendingWithdrawal: -withdrawal.amount, lifetimeWithdrawn: withdrawal.amount } },

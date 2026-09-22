@@ -14,7 +14,7 @@ export async function POST(request: Request) {
         if (withdrawal?.status === 'rejected') {
             return NextResponse.json({ message: `Lệnh rút đã bị từ chối: ${withdrawal.rejectionReason}`, withdrawal });
         }
-        return NextResponse.json({ message: 'Đã gửi lệnh rút tiền. Số tiền sẽ chỉ bị trừ sau khi admin duyệt thành công.', withdrawal });
+        return NextResponse.json({ message: `Đã gửi lệnh rút tiền. Nội dung đối chiếu: ${withdrawal.payoutReference}. Số tiền chỉ bị trừ sau khi Admin duyệt thành công.`, withdrawal });
     } catch (error) {
         const code = error instanceof Error ? error.message : '';
         const messages: Record<string, string> = {

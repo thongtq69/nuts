@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth-permissions';
-import { awardLuckyWheelMilestone, getLuckyWheelAdminSummary, getLuckyWheelSettings, reviewLuckyWheelWithdrawal, updateLuckyWheelMemberAccount, verifyAndCompleteLuckyWheelWithdrawal } from '@/lib/lucky-wheel';
+import { approveLuckyWheelWithdrawal, awardLuckyWheelMilestone, getLuckyWheelAdminSummary, getLuckyWheelSettings, reviewLuckyWheelWithdrawal, updateLuckyWheelMemberAccount } from '@/lib/lucky-wheel';
+import { LUCKY_WHEEL_MINIMUM_WITHDRAWAL } from '@/lib/lucky-wheel-rules';
 import mongoose from 'mongoose';
 
 const textFields = [
@@ -48,6 +49,9 @@ export async function PATCH(request: Request) {
     const milestoneTopUps = positiveInteger(body.milestoneTopUps, 1);
     if (!minimumTopUp || !spinsPerTopUpUnit || !minimumWithdrawal || !milestoneTopUps) {
         return NextResponse.json({ message: 'Các mức tiền, lượt quay và mốc thưởng phải là số nguyên dương hợp lệ.' }, { status: 400 });
+    }
+    if (minimumWithdrawal < LUCKY_WHEEL_MINIMUM_WITHDRAWAL) {
+        return NextResponse.json({ message: 'Số tiền rút tối thiểu không được thấp hơn 100.000đ.' }, { status: 400 });
     }
 
     const topUpOptions = Array.isArray(body.topUpOptions)
@@ -111,18 +115,17 @@ export async function POST(request: Request) {
             const milestone = await awardLuckyWheelMilestone(user._id);
             return NextResponse.json({ message: `Đã chọn ngẫu nhiên và cộng tiền thưởng cho ${milestone?.winners.length || 0} thành viên.`, milestone });
         }
-        if (action === 'withdrawal-verify-paid') {
-            const withdrawal = await verifyAndCompleteLuckyWheelWithdrawal(
+        if (action === 'withdrawal-approved') {
+            const withdrawal = await approveLuckyWheelWithdrawal(
                 user._id,
                 String(body.withdrawalId || ''),
-                String(body.bankTransactionId || ''),
                 String(body.note || ''),
             );
-            return NextResponse.json({ message: 'ACB đã xác nhận giao dịch. Yêu cầu rút tiền đã hoàn tất.', withdrawal });
+            return NextResponse.json({ message: 'Đã duyệt lệnh rút và trừ số dư thưởng của khách hàng.', withdrawal });
         }
         if (action === 'withdrawal-rejected') {
             const withdrawal = await reviewLuckyWheelWithdrawal(user._id, String(body.withdrawalId || ''), 'rejected', String(body.note || ''));
-            return NextResponse.json({ message: 'Đã từ chối và hoàn lại số dư.', withdrawal });
+            return NextResponse.json({ message: 'Đã từ chối lệnh rút và giải phóng số tiền đang chờ.', withdrawal });
         }
         if (action === 'account-update') {
             const account = await updateLuckyWheelMemberAccount(String(body.userId || ''), {
@@ -143,14 +146,8 @@ export async function POST(request: Request) {
             INVALID_ACCOUNT_VALUES: 'Lượt quay và các số tiền phải là số nguyên không âm.',
             BALANCE_BELOW_PENDING_WITHDRAWALS: 'Số dư thưởng không được thấp hơn tổng tiền đang chờ rút.',
             WITHDRAWAL_NOT_FOUND: 'Yêu cầu rút tiền không còn ở trạng thái chờ xử lý.',
-            INVALID_BANK_TRANSACTION_ID: 'Mã giao dịch ngân hàng không hợp lệ.',
-            BANK_TRANSACTION_ALREADY_USED: 'Mã giao dịch ngân hàng này đã được dùng cho một yêu cầu khác.',
-            BANK_TRANSACTION_NOT_CONFIRMED: 'Chưa tìm thấy giao dịch ACB đã hoàn tất khớp mã giao dịch, số tiền, tài khoản nhận và nội dung chuyển khoản.',
-            BANK_VERIFICATION_UNAVAILABLE: 'Tạm thời không thể đối soát ACB. Yêu cầu vẫn ở trạng thái chờ, vui lòng thử lại.',
-            ACB_ACCOUNT_NOT_CONFIGURED: 'Chưa cấu hình tài khoản ACB nguồn để đối soát giao dịch.',
-            WITHDRAWAL_REFERENCE_CREATED: 'Đã tạo mã chi cho yêu cầu cũ. Vui lòng chuyển khoản theo mã mới rồi xác minh lại.',
+            WITHDRAWAL_REFERENCE_CREATED: 'Đã tạo nội dung đối chiếu cho yêu cầu cũ. Vui lòng kiểm tra thông tin rồi duyệt lại.',
         };
-        const status = errorMessage === 'BANK_VERIFICATION_UNAVAILABLE' ? 503 : 409;
-        return NextResponse.json({ message: messages[errorMessage] || 'Không thể thực hiện thao tác.' }, { status });
+        return NextResponse.json({ message: messages[errorMessage] || 'Không thể thực hiện thao tác.' }, { status: 409 });
     }
 }
