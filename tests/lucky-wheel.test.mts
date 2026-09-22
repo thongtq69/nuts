@@ -161,3 +161,16 @@ test('withdrawal form uses an accessible searchable bank combobox', () => {
     assert.match(component, /ArrowDown/);
     assert.match(customerPage, /<BankCombobox/);
 });
+
+test('wheel prizes are rendered directly on their segments without fixed cards', () => {
+    const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const prizeMarkup = customerPage.slice(
+        customerPage.indexOf('data-wheel-prize'),
+        customerPage.indexOf('</div>;', customerPage.indexOf('data-wheel-prize')),
+    );
+
+    assert.match(prizeMarkup, /labelRotation/);
+    assert.match(prizeMarkup, /text-shadow/);
+    assert.doesNotMatch(prizeMarkup, /bg-white|rounded-(?:lg|xl)|border-white/);
+    assert.match(customerPage, /key={`divider-\$\{segment\.label\}`}/);
+});
