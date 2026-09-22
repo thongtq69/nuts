@@ -185,7 +185,10 @@ test('wheel result presentation removes admin notes, uses radial labels and cele
     assert.match(resultCelebration, /won && <div/);
     assert.match(resultCelebration, /data-fireworks-canvas/);
     assert.match(resultCelebration, /window\.requestAnimationFrame\(draw\)/);
-    assert.match(resultCelebration, /window\.setInterval\(createBurst, 520\)/);
+    assert.match(resultCelebration, /const burstSchedule = \[0, 160, 620/);
+    assert.match(resultCelebration, /Math\.min\(window\.devicePixelRatio \|\| 1, 1\.25\)/);
+    assert.doesNotMatch(resultCelebration, /setInterval/);
+    assert.doesNotMatch(resultCelebration, /backdrop-blur/);
     assert.match(resultCelebration, /celebration-glow/);
-    assert.match(resultCelebration, /animation-iteration-count: 3/);
+    assert.match(resultCelebration, /animation-iteration-count: 2/);
 });

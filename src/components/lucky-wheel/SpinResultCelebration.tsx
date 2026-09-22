@@ -8,7 +8,7 @@ interface SpinResultCelebrationProps {
 }
 
 const colors = ['#f6bd4b', '#e96f65', '#73a9d8', '#8bbd75', '#b68ad6', '#ffffff'];
-const confetti = Array.from({ length: 56 }, (_, index) => ({
+const confetti = Array.from({ length: 32 }, (_, index) => ({
     left: (index * 37) % 100,
     delay: (index % 14) * 0.08,
     duration: 2.1 + (index % 7) * 0.14,
@@ -22,8 +22,6 @@ const money = (value: number) => `${Number(value || 0).toLocaleString('vi-VN')}Ä
 interface FireworkParticle {
     x: number;
     y: number;
-    previousX: number;
-    previousY: number;
     velocityX: number;
     velocityY: number;
     gravity: number;
@@ -47,14 +45,15 @@ function FireworksCanvas() {
         let width = 0;
         let height = 0;
         let animationFrame = 0;
-        let burstIndex = 0;
+        let completedBursts = 0;
         const particles: FireworkParticle[] = [];
         const burstPositions = [
-            [.12, .22], [.88, .2], [.2, .68], [.82, .72], [.5, .12], [.3, .34], [.7, .36], [.08, .82], [.92, .84],
+            [.12, .22], [.88, .2], [.2, .68], [.82, .72], [.5, .12], [.08, .82], [.92, .84],
         ];
+        const burstSchedule = [0, 160, 620, 1_100, 1_680, 2_320, 3_000];
 
         const resize = () => {
-            const ratio = Math.min(window.devicePixelRatio || 1, 2);
+            const ratio = Math.min(window.devicePixelRatio || 1, 1.25);
             width = window.innerWidth;
             height = window.innerHeight;
             canvas.width = Math.round(width * ratio);
@@ -65,26 +64,28 @@ function FireworksCanvas() {
         };
 
         const createBurst = () => {
-            const [positionX, positionY] = burstPositions[burstIndex % burstPositions.length];
+            if (document.hidden) {
+                completedBursts += 1;
+                return;
+            }
+            const [positionX, positionY] = burstPositions[completedBursts % burstPositions.length];
             const originX = width * positionX;
             const originY = height * positionY;
-            const color = fireworkColors[burstIndex % fireworkColors.length];
-            const particleCount = width < 640 ? 42 : 62;
-            burstIndex += 1;
+            const color = fireworkColors[completedBursts % fireworkColors.length];
+            const particleCount = width < 640 ? 22 : 30;
+            completedBursts += 1;
             for (let index = 0; index < particleCount; index += 1) {
                 const angle = (Math.PI * 2 * index) / particleCount + Math.random() * .08;
-                const speed = 2.4 + Math.random() * 4.8;
+                const speed = 2.4 + Math.random() * 3.8;
                 particles.push({
                     x: originX,
                     y: originY,
-                    previousX: originX,
-                    previousY: originY,
                     velocityX: Math.cos(angle) * speed,
                     velocityY: Math.sin(angle) * speed,
-                    gravity: .045 + Math.random() * .035,
+                    gravity: .05 + Math.random() * .03,
                     alpha: 1,
-                    decay: .009 + Math.random() * .009,
-                    size: 1.1 + Math.random() * 2.2,
+                    decay: .014 + Math.random() * .009,
+                    size: 1.5 + Math.random() * 1.4,
                     color,
                 });
             }
@@ -93,10 +94,11 @@ function FireworksCanvas() {
         const draw = () => {
             context.clearRect(0, 0, width, height);
             context.globalCompositeOperation = 'lighter';
+            context.lineCap = 'round';
+            context.shadowColor = 'rgba(255,255,255,.7)';
+            context.shadowBlur = 3;
             for (let index = particles.length - 1; index >= 0; index -= 1) {
                 const particle = particles[index];
-                particle.previousX = particle.x;
-                particle.previousY = particle.y;
                 particle.velocityX *= .988;
                 particle.velocityY = particle.velocityY * .988 + particle.gravity;
                 particle.x += particle.velocityX;
@@ -111,48 +113,36 @@ function FireworksCanvas() {
                 context.globalAlpha = particle.alpha;
                 context.strokeStyle = particle.color;
                 context.lineWidth = particle.size;
-                context.lineCap = 'round';
-                context.shadowColor = particle.color;
-                context.shadowBlur = 12;
                 context.beginPath();
-                context.moveTo(particle.previousX, particle.previousY);
+                context.moveTo(particle.x - particle.velocityX * 2.8, particle.y - particle.velocityY * 2.8);
                 context.lineTo(particle.x, particle.y);
                 context.stroke();
-                context.beginPath();
-                context.arc(particle.x, particle.y, particle.size * .55, 0, Math.PI * 2);
-                context.fillStyle = '#ffffff';
-                context.fill();
             }
             context.globalAlpha = 1;
             context.shadowBlur = 0;
-            animationFrame = window.requestAnimationFrame(draw);
+            if (particles.length > 0 || completedBursts < burstSchedule.length) {
+                animationFrame = window.requestAnimationFrame(draw);
+            }
         };
 
         resize();
-        createBurst();
-        const openingBurstTimer = window.setTimeout(createBurst, 120);
-        const burstTimer = window.setInterval(createBurst, 520);
-        const stopTimer = window.setTimeout(() => window.clearInterval(burstTimer), 8_500);
-        const animationStopTimer = window.setTimeout(() => window.cancelAnimationFrame(animationFrame), 11_000);
+        const burstTimers = burstSchedule.map(delay => window.setTimeout(createBurst, delay));
         animationFrame = window.requestAnimationFrame(draw);
         window.addEventListener('resize', resize);
 
         return () => {
-            window.clearTimeout(openingBurstTimer);
-            window.clearInterval(burstTimer);
-            window.clearTimeout(stopTimer);
-            window.clearTimeout(animationStopTimer);
+            burstTimers.forEach(timer => window.clearTimeout(timer));
             window.cancelAnimationFrame(animationFrame);
             window.removeEventListener('resize', resize);
         };
     }, []);
 
-    return <canvas ref={canvasRef} data-fireworks-canvas className="absolute inset-0 h-full w-full" aria-hidden="true" />;
+    return <canvas ref={canvasRef} data-fireworks-canvas className="absolute inset-0 h-full w-full [contain:strict] [transform:translateZ(0)]" aria-hidden="true" />;
 }
 
 export default function SpinResultCelebration({ prize, isTest, onClose }: SpinResultCelebrationProps) {
     const won = prize > 0;
-    return <div className="fixed inset-0 z-[140] grid place-items-center overflow-hidden bg-[#160f0a]/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="spin-result-title">
+    return <div className="fixed inset-0 z-[140] grid place-items-center overflow-hidden bg-[#160f0a]/80 p-4" role="dialog" aria-modal="true" aria-labelledby="spin-result-title">
         {won && <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
             <div className="celebration-glow" />
             <FireworksCanvas />
@@ -176,14 +166,13 @@ export default function SpinResultCelebration({ prize, isTest, onClose }: SpinRe
         </div>
 
         <style jsx>{`
-            .result-card { animation: result-pop .48s cubic-bezier(.2,.9,.25,1.2) both; }
+            .result-card { animation: result-pop .48s cubic-bezier(.2,.9,.25,1.2) both; will-change: transform, opacity; }
             .prize-glow { animation: prize-pulse 1.15s ease-in-out infinite alternate; text-shadow: 0 8px 28px rgba(181,110,32,.25); }
-            .celebration-glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 46%, rgba(255,210,93,.22), transparent 33%); animation: celebration-glow 1.3s ease-in-out infinite alternate; }
-            .confetti { position: absolute; top: -8%; width: 9px; height: 18px; border-radius: 2px; opacity: 0; animation-name: confetti-fall; animation-timing-function: cubic-bezier(.15,.75,.35,1); animation-iteration-count: 3; }
+            .celebration-glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 46%, rgba(255,210,93,.2), transparent 33%); }
+            .confetti { position: absolute; top: -8%; width: 8px; height: 16px; border-radius: 2px; opacity: 0; animation-name: confetti-fall; animation-timing-function: cubic-bezier(.15,.75,.35,1); animation-iteration-count: 2; will-change: translate, rotate, opacity; }
             @keyframes result-pop { from { opacity: 0; transform: translateY(24px) scale(.82); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes prize-pulse { from { transform: scale(.98); } to { transform: scale(1.035); } }
             @keyframes confetti-fall { 0% { opacity: 0; translate: 0 -20px; rotate: 0deg; } 12% { opacity: 1; } 100% { opacity: .9; translate: 45px 112vh; rotate: 760deg; } }
-            @keyframes celebration-glow { from { opacity: .45; scale: .92; } to { opacity: 1; scale: 1.08; } }
             @media (prefers-reduced-motion: reduce) { .result-card, .prize-glow, .confetti, .celebration-glow { animation: none !important; } }
         `}</style>
     </div>;
