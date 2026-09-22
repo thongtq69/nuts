@@ -13,16 +13,37 @@ import {
 import { matchesWithdrawalTransaction } from '../src/lib/lucky-wheel-withdrawal-rules.ts';
 import { findVietnamBank, searchVietnamBanks, VIETNAM_BANKS } from '../src/lib/vietnam-banks.ts';
 import { DEFAULT_WHEEL_COPY } from '../src/lib/lucky-wheel-config.ts';
+import {
+    isInCurrentLuckyWheelHistoryWindow,
+    luckyWheelHistoryWindowStart,
+    millisecondsUntilNextLuckyWheelHistoryReset,
+} from '../src/lib/lucky-wheel-history.ts';
 
-test('lucky wheel title uses GO NUTS and stays on one line for the default campaign', () => {
+test('gift wheel title uses GO NUTS and stays on one line for the default campaign', () => {
     const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
     const wheelService = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
 
-    assert.equal(DEFAULT_WHEEL_COPY.campaignName, 'Vòng quay may mắn GO NUTS');
+    assert.equal(DEFAULT_WHEEL_COPY.campaignName, 'Bánh xe quà tặng GO NUTS');
     assert.match(customerPage, /whitespace-nowrap text-\[clamp\(1rem,4vw,3\.4rem\)\]/);
     assert.match(customerPage, /Vòng quay may mắn GO NUTS/);
     assert.match(wheelService, /settings\.campaignName === 'Vòng quay may mắn Go Nuts'/);
     assert.match(wheelService, /settings\.campaignName = DEFAULT_WHEEL_COPY\.campaignName/);
+});
+
+test('customer histories reset at every hour boundary without deleting source records', () => {
+    const now = new Date('2026-09-22T16:34:39.000+07:00');
+    assert.equal(luckyWheelHistoryWindowStart(now).toISOString(), '2026-09-22T09:00:00.000Z');
+    assert.equal(millisecondsUntilNextLuckyWheelHistoryReset(now), 1_521_250);
+    assert.equal(isInCurrentLuckyWheelHistoryWindow('2026-09-22T16:00:00.000+07:00', now), true);
+    assert.equal(isInCurrentLuckyWheelHistoryWindow('2026-09-22T15:59:59.999+07:00', now), false);
+
+    const service = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
+    const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    assert.match(service, /createdAt: \{ \$gte: historyWindowStart \}/);
+    assert.match(customerPage, /millisecondsUntilNextLuckyWheelHistoryReset/);
+    assert.match(customerPage, /setMoneyTab\('top-up'\)/);
+    assert.match(customerPage, /setMoneyTab\('withdrawal'\)/);
+    assert.match(customerPage, /Tự làm mới mỗi giờ/);
 });
 
 test('regular spin groups are random-looking while respecting the customer prize rule', () => {
@@ -217,6 +238,6 @@ test('admin mobile lists avoid horizontal scrolling and floating wheel does not 
     assert.match(usersPage, /key={`mobile-\$\{user\._id\}`}/);
     assert.match(usersPage, /hidden lg:block/);
     assert.match(floatingWheel, /pathname\.startsWith\('\/admin'\)/);
-    assert.match(customerWheel, /toneWheelColor\(segment\.color\)/);
+    assert.match(customerWheel, /pastelWheelColor\(segment\.color\)/);
     assert.match(customerWheel, /readableLabelRotation/);
 });

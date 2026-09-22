@@ -18,12 +18,13 @@ import {
     DEFAULT_WHEEL_SEGMENTS,
     DEFAULT_WHEEL_TERMS,
 } from '@/lib/lucky-wheel-config';
+import { luckyWheelHistoryWindowStart } from '@/lib/lucky-wheel-history';
 
 export async function getLuckyWheelSettings() {
     await dbConnect();
     const settings = await LuckyWheelSettings.findOneAndUpdate(
         { key: 'default' },
-        { $setOnInsert: { key: 'default', enabled: true, programVersion: 6 } },
+        { $setOnInsert: { key: 'default', enabled: true, programVersion: 7 } },
         { new: true, upsert: true, setDefaultsOnInsert: true },
     );
     if ((settings.programVersion || 0) < 6) {
@@ -48,6 +49,17 @@ export async function getLuckyWheelSettings() {
     }
     if (settings.campaignName === 'Vòng quay may mắn Go Nuts') {
         settings.campaignName = DEFAULT_WHEEL_COPY.campaignName;
+        await settings.save();
+    }
+    if ((settings.programVersion || 0) < 7) {
+        settings.programVersion = 7;
+        if (settings.campaignName === 'Vòng quay may mắn GO NUTS') settings.campaignName = DEFAULT_WHEEL_COPY.campaignName;
+        if (settings.memberBadgeText === 'Thành viên Go Nuts') settings.memberBadgeText = DEFAULT_WHEEL_COPY.memberBadgeText;
+        if (settings.introText === 'Nạp 10.000đ nhận 5 lượt quay. Tiền thưởng được cộng thẳng vào tài khoản để rút hoặc dùng khi mua hàng.') settings.introText = DEFAULT_WHEEL_COPY.introText;
+        if (settings.spinButtonText === 'Quay ngay') settings.spinButtonText = DEFAULT_WHEEL_COPY.spinButtonText;
+        if (settings.totalWinningsLabel === 'Tổng tiền đã trúng') settings.totalWinningsLabel = DEFAULT_WHEEL_COPY.totalWinningsLabel;
+        if (settings.balanceLabel === 'Số dư thưởng') settings.balanceLabel = DEFAULT_WHEEL_COPY.balanceLabel;
+        if (settings.historyTitle === 'Lịch sử gần đây') settings.historyTitle = DEFAULT_WHEEL_COPY.historyTitle;
         await settings.save();
     }
     return settings;
@@ -327,12 +339,13 @@ export async function spinLuckyWheel(userId: string, requestId: string, adminTes
 export async function getLuckyWheelUserSummary(userId: string, adminTestMode = false) {
     await dbConnect();
     await ensureWithdrawalAccountingV2(userId);
+    const historyWindowStart = luckyWheelHistoryWindowStart();
     const [settings, account, history, topUps, withdrawals] = await Promise.all([
         getLuckyWheelSettings(),
         LuckyWheelAccount.findOne({ userId }).lean(),
-        LuckyWheelSpin.find({ userId }).sort({ createdAt: -1 }).limit(20).populate('voucherId').lean(),
-        LuckyWheelTopUp.find({ userId }).sort({ createdAt: -1 }).limit(10).lean(),
-        LuckyWheelWithdrawal.find({ userId }).sort({ createdAt: -1 }).limit(10).lean(),
+        LuckyWheelSpin.find({ userId, createdAt: { $gte: historyWindowStart } }).sort({ createdAt: -1 }).limit(20).populate('voucherId').lean(),
+        LuckyWheelTopUp.find({ userId, createdAt: { $gte: historyWindowStart } }).sort({ createdAt: -1 }).limit(10).lean(),
+        LuckyWheelWithdrawal.find({ userId, createdAt: { $gte: historyWindowStart } }).sort({ createdAt: -1 }).limit(10).lean(),
     ]);
     return {
         campaign: {
@@ -376,6 +389,7 @@ export async function getLuckyWheelUserSummary(userId: string, adminTestMode = f
         history,
         topUps,
         withdrawals,
+        historyWindowStart,
     };
 }
 

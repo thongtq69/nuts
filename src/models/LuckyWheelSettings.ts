@@ -41,7 +41,7 @@ export interface ILuckyWheelSettings {
 
 const schema = new Schema<ILuckyWheelSettings>({
     key: { type: String, default: 'default', unique: true, immutable: true },
-    programVersion: { type: Number, default: 6 },
+    programVersion: { type: Number, default: 7 },
     enabled: { type: Boolean, default: true },
     campaignName: { type: String, default: DEFAULT_WHEEL_COPY.campaignName, trim: true, maxlength: 120 },
     memberBadgeText: { type: String, default: DEFAULT_WHEEL_COPY.memberBadgeText, trim: true, maxlength: 80 },

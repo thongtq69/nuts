@@ -10,12 +10,12 @@ export interface LuckyWheelMilestoneRewardConfig {
 }
 
 export const DEFAULT_WHEEL_SEGMENTS: LuckyWheelSegmentConfig[] = [
-    { label: 'Chúc may mắn', value: 0, color: '#eee7dc' },
-    { label: '1.000đ', value: 1_000, color: '#cbb28a' },
-    { label: '5.000đ', value: 5_000, color: '#b99f91' },
-    { label: '10.000đ', value: 10_000, color: '#aebdad' },
-    { label: '50.000đ', value: 50_000, color: '#aab8c2' },
-    { label: '100.000đ', value: 100_000, color: '#b7a9b4' },
+    { label: 'Chúc may mắn', value: 0, color: '#ffe89a' },
+    { label: '1.000đ', value: 1_000, color: '#90d7f0' },
+    { label: '5.000đ', value: 5_000, color: '#ffaea5' },
+    { label: '10.000đ', value: 10_000, color: '#a7e3ca' },
+    { label: '50.000đ', value: 50_000, color: '#bfc2f4' },
+    { label: '100.000đ', value: 100_000, color: '#f7c1df' },
 ];
 
 export const DEFAULT_REGULAR_SPIN_PRIZES = [0, 1_000, 0, 5_000, 0];
@@ -32,15 +32,15 @@ export const DEFAULT_MILESTONE_REWARDS: LuckyWheelMilestoneRewardConfig[] = [
 ];
 
 export const DEFAULT_WHEEL_COPY = {
-    campaignName: 'Vòng quay may mắn GO NUTS',
-    memberBadgeText: 'Thành viên Go Nuts',
-    introText: 'Nạp 10.000đ nhận 5 lượt quay. Tiền thưởng được cộng thẳng vào tài khoản để rút hoặc dùng khi mua hàng.',
+    campaignName: 'Bánh xe quà tặng GO NUTS',
+    memberBadgeText: 'Góc quà vui Go Nuts',
+    introText: 'Mỗi lượt mở ra một bất ngờ nhỏ. Quà nhận được sẽ được lưu ngay vào tài khoản của bạn.',
     inactiveMessage: 'Chương trình hiện đang tạm dừng.',
-    spinButtonText: 'Quay ngay',
-    totalWinningsLabel: 'Tổng tiền đã trúng',
-    balanceLabel: 'Số dư thưởng',
+    spinButtonText: 'Mở quà',
+    totalWinningsLabel: 'Tổng quà đã nhận',
+    balanceLabel: 'Ví quà của bạn',
     topUpTitle: 'Nạp lượt chơi',
     withdrawalTitle: 'Rút tiền thưởng',
     termsTitle: 'Thể lệ tham gia',
-    historyTitle: 'Lịch sử gần đây',
+    historyTitle: 'Hoạt động trong giờ',
 };
