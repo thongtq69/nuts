@@ -174,3 +174,16 @@ test('wheel prizes are rendered directly on their segments without fixed cards',
     assert.doesNotMatch(prizeMarkup, /bg-white|rounded-(?:lg|xl)|border-white/);
     assert.match(customerPage, /key={`divider-\$\{segment\.label\}`}/);
 });
+
+test('wheel result presentation removes admin notes, uses radial labels and celebrates wins', () => {
+    const customerPage = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const resultCelebration = readFileSync(new URL('../src/components/lucky-wheel/SpinResultCelebration.tsx', import.meta.url), 'utf8');
+
+    assert.doesNotMatch(customerPage, /Chế độ test Admin: quay không giới hạn/);
+    assert.doesNotMatch(customerPage, /Admin được quay test không giới hạn/);
+    assert.match(customerPage, /const labelRotation = angleDegrees - 90/);
+    assert.match(resultCelebration, /won && <div/);
+    assert.match(resultCelebration, /fireworks\.map/);
+    assert.match(resultCelebration, /celebration-glow/);
+    assert.match(resultCelebration, /animation-iteration-count: 3/);
+});

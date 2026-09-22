@@ -16,11 +16,20 @@ const confetti = Array.from({ length: 56 }, (_, index) => ({
     rotate: (index * 67) % 360,
 }));
 const sparks = Array.from({ length: 14 }, (_, index) => index * (360 / 14));
+const fireworks = [
+    { left: '12%', top: '25%', delay: '0s', color: '#ffd86e', size: 1.05 },
+    { left: '87%', top: '21%', delay: '.18s', color: '#ff7a70', size: .9 },
+    { left: '25%', top: '68%', delay: '.48s', color: '#7cc7ff', size: .78 },
+    { left: '78%', top: '72%', delay: '.72s', color: '#9bea7f', size: 1.05 },
+    { left: '50%', top: '14%', delay: '.95s', color: '#d9a9ff', size: .72 },
+    { left: '8%', top: '82%', delay: '1.18s', color: '#ffba62', size: .68 },
+    { left: '92%', top: '84%', delay: '1.42s', color: '#fff18a', size: .7 },
+];
 
 const money = (value: number) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
 
-function Firework({ left, top, delay, color }: { left: string; top: string; delay: string; color: string }) {
-    return <span className="firework" style={{ left, top, '--firework-delay': delay, '--firework-color': color } as CSSProperties}>
+function Firework({ left, top, delay, color, size }: { left: string; top: string; delay: string; color: string; size: number }) {
+    return <span className="firework" style={{ left, top, '--firework-delay': delay, '--firework-color': color, '--firework-size': size } as CSSProperties}>
         {sparks.map(angle => <i key={angle} style={{ '--spark-angle': `${angle}deg` } as CSSProperties} />)}
     </span>;
 }
@@ -29,9 +38,8 @@ export default function SpinResultCelebration({ prize, isTest, onClose }: SpinRe
     const won = prize > 0;
     return <div className="fixed inset-0 z-[140] grid place-items-center overflow-hidden bg-[#160f0a]/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="spin-result-title">
         {won && <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-            <Firework left="18%" top="28%" delay="0s" color="#f6ca62" />
-            <Firework left="82%" top="24%" delay=".25s" color="#e96f65" />
-            <Firework left="72%" top="72%" delay=".55s" color="#73a9d8" />
+            <div className="celebration-glow" />
+            {fireworks.map(item => <Firework key={`${item.left}-${item.top}`} {...item} />)}
             {confetti.map((item, index) => <i key={index} className="confetti" style={{ left: `${item.left}%`, backgroundColor: item.color, animationDelay: `${item.delay}s`, animationDuration: `${item.duration}s`, transform: `rotate(${item.rotate}deg)` }} />)}
         </div>}
 
@@ -54,15 +62,20 @@ export default function SpinResultCelebration({ prize, isTest, onClose }: SpinRe
         <style jsx>{`
             .result-card { animation: result-pop .48s cubic-bezier(.2,.9,.25,1.2) both; }
             .prize-glow { animation: prize-pulse 1.15s ease-in-out infinite alternate; text-shadow: 0 8px 28px rgba(181,110,32,.25); }
-            .confetti { position: absolute; top: -8%; width: 9px; height: 18px; border-radius: 2px; opacity: 0; animation-name: confetti-fall; animation-timing-function: cubic-bezier(.15,.75,.35,1); animation-iteration-count: 2; }
-            .firework { position: absolute; width: 8px; height: 8px; animation: firework-flash 1.3s ease-out var(--firework-delay) 2 both; }
-            .firework i { position: absolute; left: 50%; top: 50%; width: 5px; height: 20px; border-radius: 999px; background: var(--firework-color); transform-origin: 50% 0; animation: spark-burst 1.3s ease-out var(--firework-delay) 2 both; transform: rotate(var(--spark-angle)); box-shadow: 0 0 10px var(--firework-color); }
+            .celebration-glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 46%, rgba(255,210,93,.22), transparent 33%); animation: celebration-glow 1.3s ease-in-out infinite alternate; }
+            .confetti { position: absolute; top: -8%; width: 9px; height: 18px; border-radius: 2px; opacity: 0; animation-name: confetti-fall; animation-timing-function: cubic-bezier(.15,.75,.35,1); animation-iteration-count: 3; }
+            .firework { position: absolute; width: 8px; height: 8px; scale: var(--firework-size); animation: firework-flash 1.55s ease-out var(--firework-delay) 3 both; }
+            .firework::after { content: ''; position: absolute; inset: -5px; border-radius: 999px; background: var(--firework-color); box-shadow: 0 0 20px 6px var(--firework-color); animation: firework-core 1.55s ease-out var(--firework-delay) 3 both; }
+            .firework i { position: absolute; left: 50%; top: 50%; width: 4px; height: 22px; border-radius: 999px; background: linear-gradient(to bottom,var(--firework-color),rgba(255,255,255,.9),transparent); transform-origin: 50% 0; animation: spark-burst 1.55s ease-out var(--firework-delay) 3 both; transform: rotate(var(--spark-angle)); filter: drop-shadow(0 0 5px var(--firework-color)); }
             @keyframes result-pop { from { opacity: 0; transform: translateY(24px) scale(.82); } to { opacity: 1; transform: translateY(0) scale(1); } }
             @keyframes prize-pulse { from { transform: scale(.98); } to { transform: scale(1.035); } }
             @keyframes confetti-fall { 0% { opacity: 0; translate: 0 -20px; rotate: 0deg; } 12% { opacity: 1; } 100% { opacity: .9; translate: 45px 112vh; rotate: 760deg; } }
-            @keyframes firework-flash { 0%, 8% { opacity: 0; transform: scale(.2); } 18%, 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.1); } }
-            @keyframes spark-burst { 0%, 10% { height: 3px; translate: 0 0; opacity: 0; } 20% { opacity: 1; } 100% { height: 2px; translate: 0 -120px; opacity: 0; } }
-            @media (prefers-reduced-motion: reduce) { .result-card, .prize-glow, .confetti, .firework, .firework i { animation: none !important; } }
+            @keyframes celebration-glow { from { opacity: .45; scale: .92; } to { opacity: 1; scale: 1.08; } }
+            @keyframes firework-flash { 0%, 8% { opacity: 0; } 16%, 68% { opacity: 1; } 100% { opacity: 0; } }
+            @keyframes firework-core { 0%, 10% { opacity: 0; scale: .1; } 16% { opacity: 1; scale: 1; } 38%, 100% { opacity: 0; scale: 2.5; } }
+            @keyframes spark-burst { 0%, 10% { height: 3px; translate: 0 0; opacity: 0; } 17% { opacity: 1; } 72% { opacity: .95; } 100% { height: 2px; translate: 0 -118px; opacity: 0; } }
+            @media (max-width: 640px) { .firework { scale: .65; } }
+            @media (prefers-reduced-motion: reduce) { .result-card, .prize-glow, .confetti, .firework, .firework::after, .firework i, .celebration-glow { animation: none !important; } }
         `}</style>
     </div>;
 }
