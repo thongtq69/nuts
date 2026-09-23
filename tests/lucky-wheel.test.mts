@@ -209,7 +209,8 @@ test('wheel prizes are rendered directly on their segments without fixed cards',
         customerPage.indexOf('</div>;', customerPage.indexOf('data-wheel-prize')),
     );
 
-    assert.match(prizeMarkup, /readableLabelRotation/);
+    assert.match(prizeMarkup, /rotate\(\$\{labelRotation\}deg\)/);
+    assert.doesNotMatch(prizeMarkup, /readableLabelRotation|labelRotation \+ 180/);
     assert.match(prizeMarkup, /text-shadow/);
     assert.doesNotMatch(prizeMarkup, /bg-white|rounded-(?:lg|xl)|border-white/);
     assert.match(customerPage, /key={`divider-\$\{segment\.label\}`}/);
@@ -222,6 +223,7 @@ test('wheel result presentation removes admin notes, uses radial labels and cele
     assert.doesNotMatch(customerPage, /Chế độ test Admin: quay không giới hạn/);
     assert.doesNotMatch(customerPage, /Admin được quay test không giới hạn/);
     assert.match(customerPage, /const labelRotation = angleDegrees - 90/);
+    assert.doesNotMatch(customerPage, /const readableLabelRotation/);
     assert.match(resultCelebration, /won && <div/);
     assert.match(resultCelebration, /data-fireworks-canvas/);
     assert.match(resultCelebration, /window\.requestAnimationFrame\(draw\)/);
@@ -274,18 +276,24 @@ test('admin mobile lists avoid horizontal scrolling and floating wheel does not 
     assert.match(usersPage, /key={`mobile-\$\{user\._id\}`}/);
     assert.match(usersPage, /hidden lg:block/);
     assert.match(floatingWheel, /pathname\.startsWith\('\/admin'\)/);
-    assert.match(customerWheel, /pastelWheelColor\(segment\.color\)/);
-    assert.match(customerWheel, /readableLabelRotation/);
+    assert.match(customerWheel, /toneWheelColor\(segment\.color\)/);
+    assert.match(customerWheel, /rotate\(\$\{labelRotation\}deg\)/);
 });
 
-test('gift wheel uses lightweight playful food and sky illustrations', () => {
+test('gift wheel keeps the legacy deployment background and wheel color treatment', () => {
     const customerWheel = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
     const decorations = readFileSync(new URL('../src/components/lucky-wheel/PlayfulWheelDecorations.tsx', import.meta.url), 'utf8');
 
-    assert.match(customerWheel, /<PlayfulWheelBackdrop\/>/);
+    assert.match(customerWheel, /min-h-screen overflow-x-hidden bg-\[#fffaf0\]/);
+    assert.match(customerWheel, /h-80 bg-\[radial-gradient\(circle_at_50%_0%,rgba\(235,191,91,\.3\),transparent_70%\)\]/);
+    assert.match(customerWheel, /-right-28 top-80 h-80 w-80 rounded-full bg-emerald-100\/45 blur-3xl/);
+    assert.doesNotMatch(customerWheel, /<PlayfulWheelBackdrop\/>|bg-sky-200\/35/);
+    assert.match(customerWheel, /bg-\[linear-gradient\(145deg,#24282b,#15181a\)\]/);
+    assert.match(customerWheel, /bg-\[#765d47\]/);
+    assert.match(customerWheel, /border-\[#e7dcc9\] bg-\[linear-gradient\(145deg,#5c493a,#2c2926\)\]/);
     assert.match(customerWheel, /<PlayfulJoyBanner\/>/);
     assert.match(customerWheel, /<CupcakeIllustration/);
-    assert.match(customerWheel, /<AcornFriendIllustration/);
+    assert.match(decorations, /AcornFriendIllustration/);
     assert.match(customerWheel, /<CookieFriendIllustration/);
     assert.match(customerWheel, /<RainbowCloudIllustration/);
     assert.match(decorations, /data-playful-illustrations/);
