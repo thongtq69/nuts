@@ -286,12 +286,16 @@ test('gift wheel uses the clean light wheel panel without decorative illustratio
 
     assert.match(customerWheel, /min-h-screen overflow-x-hidden bg-\[#fffaf0\]/);
     assert.match(customerWheel, /h-80 bg-\[radial-gradient\(circle_at_50%_0%,rgba\(235,191,91,\.3\),transparent_70%\)\]/);
-    assert.match(customerWheel, /-right-28 top-80 h-80 w-80 rounded-full bg-emerald-100\/45 blur-3xl/);
+    assert.match(customerWheel, /-right-28 top-80 h-80 w-80 rounded-full bg-amber-100\/50 blur-3xl/);
     assert.doesNotMatch(customerWheel, /<PlayfulWheelBackdrop\/>|bg-sky-200\/35/);
     assert.match(customerWheel, /bg-\[linear-gradient\(145deg,#fffdf8,#f7eddf\)\]/);
     assert.doesNotMatch(customerWheel, /bg-\[linear-gradient\(145deg,#24282b,#15181a\)\]/);
     assert.match(customerWheel, /bg-\[#765d47\]/);
     assert.match(customerWheel, /border-\[#e7dcc9\] bg-\[linear-gradient\(145deg,#5c493a,#2c2926\)\]/);
+    assert.match(customerWheel, /border-\[#ecd29a\]/);
+    assert.match(customerWheel, /bg-\[linear-gradient\(135deg,#b98143,#8b5a32\)\]/);
+    assert.match(customerWheel, /border-\[#ead2a8\]/);
+    assert.doesNotMatch(customerWheel, /bg-\[linear-gradient\(135deg,#4fb3d2,#36a3c6\)\]/);
     assert.doesNotMatch(customerWheel, /PlayfulJoyBanner|CupcakeIllustration|CookieFriendIllustration|RainbowCloudIllustration/);
     assert.match(customerWheel, /Vòng quay may mắn GO NUTS/);
     assert.match(customerWheel, /Vui lòng đăng ký thành viên hoặc đăng nhập để nạp lượt và tham gia\./);
