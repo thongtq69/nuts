@@ -280,23 +280,24 @@ test('admin mobile lists avoid horizontal scrolling and floating wheel does not 
     assert.match(customerWheel, /rotate\(\$\{labelRotation\}deg\)/);
 });
 
-test('gift wheel keeps the legacy deployment background and wheel color treatment', () => {
+test('gift wheel uses the clean light wheel panel without decorative illustrations', () => {
     const customerWheel = readFileSync(new URL('../src/app/lucky-wheel/page.tsx', import.meta.url), 'utf8');
-    const decorations = readFileSync(new URL('../src/components/lucky-wheel/PlayfulWheelDecorations.tsx', import.meta.url), 'utf8');
+    const floatingWheel = readFileSync(new URL('../src/components/lucky-wheel/LuckyWheelFloatingButton.tsx', import.meta.url), 'utf8');
 
     assert.match(customerWheel, /min-h-screen overflow-x-hidden bg-\[#fffaf0\]/);
     assert.match(customerWheel, /h-80 bg-\[radial-gradient\(circle_at_50%_0%,rgba\(235,191,91,\.3\),transparent_70%\)\]/);
     assert.match(customerWheel, /-right-28 top-80 h-80 w-80 rounded-full bg-emerald-100\/45 blur-3xl/);
     assert.doesNotMatch(customerWheel, /<PlayfulWheelBackdrop\/>|bg-sky-200\/35/);
-    assert.match(customerWheel, /bg-\[linear-gradient\(145deg,#24282b,#15181a\)\]/);
+    assert.match(customerWheel, /bg-\[linear-gradient\(145deg,#fffdf8,#f7eddf\)\]/);
+    assert.doesNotMatch(customerWheel, /bg-\[linear-gradient\(145deg,#24282b,#15181a\)\]/);
     assert.match(customerWheel, /bg-\[#765d47\]/);
     assert.match(customerWheel, /border-\[#e7dcc9\] bg-\[linear-gradient\(145deg,#5c493a,#2c2926\)\]/);
-    assert.match(customerWheel, /<PlayfulJoyBanner\/>/);
-    assert.match(customerWheel, /<CupcakeIllustration/);
-    assert.match(decorations, /AcornFriendIllustration/);
-    assert.match(customerWheel, /<CookieFriendIllustration/);
-    assert.match(customerWheel, /<RainbowCloudIllustration/);
-    assert.match(decorations, /data-playful-illustrations/);
-    assert.match(decorations, /Bánh nhỏ xinh · Niềm vui thật trong veo/);
-    assert.doesNotMatch(decorations, /<img|https?:\/\//);
+    assert.doesNotMatch(customerWheel, /PlayfulJoyBanner|CupcakeIllustration|CookieFriendIllustration|RainbowCloudIllustration/);
+    assert.match(customerWheel, /Vòng quay may mắn GO NUTS/);
+    assert.match(customerWheel, /Vui lòng đăng ký thành viên hoặc đăng nhập để nạp lượt và tham gia\./);
+    assert.match(customerWheel, /bg-\[#9c7043\]/);
+    assert.match(floatingWheel, /bg-\[linear-gradient\(135deg,#b98143,#70472a\)\]/);
+    assert.match(floatingWheel, /Thử vận may/);
+    assert.match(floatingWheel, /Vòng quay Go Nuts/);
+    assert.doesNotMatch(floatingWheel, /Mở quà vui|Bánh xe GO NUTS/);
 });
