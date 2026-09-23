@@ -17,6 +17,7 @@ import {
     HOMEPAGE_SECTION_CONFIG,
     HomepageSelectionError,
     normalizeHomepageSelection,
+    prioritizeHomepageProductIds,
 } from '../src/lib/homepage-products.ts';
 import { DEFAULT_HOME_FEATURES, normalizeHomeFeatures } from '../src/lib/site-features.ts';
 import { formatStaffCode } from '../src/lib/staff-code.ts';
@@ -1114,6 +1115,30 @@ test('a linked product submenu is normalized before persistence', () => {
 
     assert.equal(product.isLinkedProduct, true);
     assert.equal(product.linkedCategory, 'Táo đỏ');
+});
+
+test('a product selected from its form is guaranteed a slot in a full homepage section', () => {
+    assert.deepEqual(
+        prioritizeHomepageProductIds('new-product', ['old-1', 'old-2', 'old-3'], 3),
+        ['new-product', 'old-1', 'old-2'],
+    );
+    assert.deepEqual(
+        prioritizeHomepageProductIds('old-2', ['old-1', 'old-2', 'old-3'], 3),
+        ['old-2', 'old-1', 'old-3'],
+    );
+});
+
+test('product create and update APIs synchronize form selections with homepage sections', async () => {
+    const [createRoute, updateRoute, syncSource] = await Promise.all([
+        readFile(new URL('../src/app/api/products/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/app/api/products/[id]/route.ts', import.meta.url), 'utf8'),
+        readFile(new URL('../src/lib/homepage-product-sync.ts', import.meta.url), 'utf8'),
+    ]);
+
+    assert.match(createRoute, /synchronizeProductHomepageSelections\(product\._id, body\)/);
+    assert.match(updateRoute, /synchronizeProductHomepageSelections\(product\._id, body\)/);
+    assert.match(syncSource, /config\.limit - 1/);
+    assert.match(syncSource, /updatePipeline: true/);
 });
 
 test('homepage product placements can be selected together and synchronize storefront tags', () => {

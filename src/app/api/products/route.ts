@@ -6,6 +6,7 @@ import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payl
 import { describeProductPersistenceError } from '@/lib/product-persistence-error';
 import { getUrlLocale } from '@/i18n/server';
 import { localizeProduct } from '@/lib/localized-content';
+import { synchronizeProductHomepageSelections } from '@/lib/homepage-product-sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
         await dbConnect();
         const body = normalizeProductPayload(await request.json());
         const product = await Product.create(body);
+        await synchronizeProductHomepageSelections(product._id, body);
         return NextResponse.json(product, { status: 201 });
     } catch (error) {
         if (error instanceof ProductPayloadError) {

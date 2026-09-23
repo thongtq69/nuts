@@ -66,3 +66,17 @@ export function normalizeHomepageSelection(
 
     return { section, productIds: normalizedIds };
 }
+
+export function prioritizeHomepageProductIds(
+    productId: string,
+    existingIds: string[],
+    limit: number,
+): string[] {
+    const normalizedProductId = String(productId).trim();
+    if (!normalizedProductId || limit <= 0) return [];
+
+    return [
+        normalizedProductId,
+        ...existingIds.map(id => String(id).trim()).filter(id => id && id !== normalizedProductId),
+    ].slice(0, limit);
+}

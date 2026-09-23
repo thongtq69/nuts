@@ -5,6 +5,7 @@ import { normalizeProductPayload, ProductPayloadError } from '@/lib/product-payl
 import { describeProductPersistenceError } from '@/lib/product-persistence-error';
 import { getUrlLocale } from '@/i18n/server';
 import { isPublishedForLocale, localizeProduct } from '@/lib/localized-content';
+import { synchronizeProductHomepageSelections } from '@/lib/homepage-product-sync';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -28,6 +29,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         const body = normalizeProductPayload(await request.json());
         const product = await Product.findByIdAndUpdate(id, body, { new: true, runValidators: true });
         if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        await synchronizeProductHomepageSelections(product._id, body);
         return NextResponse.json(product);
     } catch (error) {
         if (error instanceof ProductPayloadError) {
