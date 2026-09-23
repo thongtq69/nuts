@@ -25,7 +25,10 @@ import {
     Wallet,
     Link2,
     Crown,
-    Languages
+    Languages,
+    Flame,
+    Sparkles,
+    Percent,
 } from 'lucide-react';
 import { RichTextEditor } from './ui';
 import TagInput from './TagInput';
@@ -83,6 +86,9 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         category: initialData.category || '',
         isLinkedProduct: initialData.isLinkedProduct || false,
         linkedCategory: initialData.linkedCategory || '',
+        showOnHomepageBestSeller: initialData.showOnHomepageBestSeller ?? initialData.tags?.includes('best-seller') ?? false,
+        showOnHomepageNew: initialData.showOnHomepageNew ?? initialData.tags?.includes('new') ?? false,
+        showOnHomepagePromo: initialData.showOnHomepagePromo ?? initialData.tags?.includes('promo') ?? false,
         vipMaxDiscount: initialData.vipMaxDiscount || 0,
         shortDescription: initialData.shortDescription || '',
         description: initialData.description || '',
@@ -289,7 +295,7 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
             return;
         }
 
-        if (!categoryInput.trim()) {
+        if (formData.isLinkedProduct && !categoryInput.trim()) {
             setActiveTab('basic');
             toast.error('Thiếu danh mục', 'Vui lòng chọn hoặc nhập tên danh mục.');
             return;
@@ -306,36 +312,51 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
         try {
             const method = isEdit ? 'PUT' : 'POST';
             const url = isEdit ? `/api/products/${initialData._id || initialData.id}` : '/api/products';
-            const normalizedCategoryInput = categoryInput.trim().replace(/\s+/g, ' ');
-            let selectedCategory = productCategories.find(category =>
-                category.label.toLocaleLowerCase('vi') === normalizedCategoryInput.toLocaleLowerCase('vi') ||
-                category.value.toLocaleLowerCase('vi') === normalizedCategoryInput.toLocaleLowerCase('vi')
-            );
+            let selectedCategory: ProductCategoryOption | undefined;
+            if (formData.isLinkedProduct) {
+                const normalizedCategoryInput = categoryInput.trim().replace(/\s+/g, ' ');
+                selectedCategory = productCategories.find(category =>
+                    category.label.toLocaleLowerCase('vi') === normalizedCategoryInput.toLocaleLowerCase('vi') ||
+                    category.value.toLocaleLowerCase('vi') === normalizedCategoryInput.toLocaleLowerCase('vi')
+                );
 
-            if (!selectedCategory) {
-                const categoryResponse = await fetch('/api/product-categories', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: normalizedCategoryInput }),
-                });
-                const categoryResult = await categoryResponse.json();
-                if (!categoryResponse.ok) {
-                    throw new Error(categoryResult.error || 'Không thể lưu danh mục mới');
+                if (!selectedCategory) {
+                    const categoryResponse = await fetch('/api/product-categories', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: normalizedCategoryInput }),
+                    });
+                    const categoryResult = await categoryResponse.json();
+                    if (!categoryResponse.ok) {
+                        throw new Error(categoryResult.error || 'Không thể lưu danh mục mới');
+                    }
+                    selectedCategory = categoryResult;
+                    setProductCategories(previous => (
+                        previous.some(category => category.value === categoryResult.value)
+                            ? previous
+                            : sortProductCategoriesAlphabetically([...previous, categoryResult])
+                    ));
                 }
-                selectedCategory = categoryResult;
-                setProductCategories(previous => (
-                    previous.some(category => category.value === categoryResult.value)
-                        ? previous
-                        : sortProductCategoriesAlphabetically([...previous, categoryResult])
-                ));
-            }
-            if (!selectedCategory?.value) {
-                throw new Error('Không thể xác định danh mục sản phẩm');
+                if (!selectedCategory?.value) {
+                    throw new Error('Không thể xác định danh mục sản phẩm');
+                }
             }
 
             const processedData = {
                 ...formData,
-                category: selectedCategory.value,
+                category: formData.isLinkedProduct ? selectedCategory?.value || '' : initialData.category || '',
+                showOnHomepageBestSeller: formData.showOnHomepageBestSeller
+                    ? true
+                    : (initialData.showOnHomepageBestSeller === true || initialData.tags?.includes('best-seller') ? false : undefined),
+                showOnHomepageNew: formData.showOnHomepageNew
+                    ? true
+                    : (initialData.showOnHomepageNew === true || initialData.tags?.includes('new') ? false : undefined),
+                showOnHomepagePromo: formData.showOnHomepagePromo
+                    ? true
+                    : (initialData.showOnHomepagePromo === true || initialData.tags?.includes('promo') ? false : undefined),
+                showOnHomepageLinked: formData.isLinkedProduct
+                    ? true
+                    : (initialData.isLinkedProduct ? false : undefined),
                 tags: formData.tags,
                 currentPrice: Number(formData.currentPrice),
                 originalPrice: Number(formData.originalPrice),
@@ -609,78 +630,114 @@ export default function ProductForm({ initialData = {}, isEdit = false }: Produc
                                     </p>
                                 </div>
 
-                                {/* Category */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Danh mục <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="category"
-                                        list="product-category-options"
-                                        value={categoryInput}
-                                        onChange={handleCategoryChange}
-                                        required
-                                        placeholder="Chọn hoặc nhập danh mục mới"
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
-                                    />
-                                    <datalist id="product-category-options">
-                                        {productCategories.map(category => (
-                                            <option key={category.value} value={category.label} />
-                                        ))}
-                                    </datalist>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        Chọn danh mục đã có hoặc nhập tên mới; danh mục mới sẽ được lưu khi lưu sản phẩm.
-                                    </p>
-                                </div>
-
-                                {/* Linked product classification */}
-                                <div className="lg:col-span-2 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                                    <label className="flex items-start gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.isLinkedProduct}
-                                            onChange={(event) => setFormData(previous => ({
-                                                ...previous,
-                                                isLinkedProduct: event.target.checked,
-                                                linkedCategory: event.target.checked ? previous.linkedCategory : '',
-                                            }))}
-                                            className="mt-1 h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
-                                        />
-                                        <span>
-                                            <span className="flex items-center gap-2 font-semibold text-slate-800">
-                                                <Link2 size={16} className="text-blue-600" />
-                                                Sản phẩm liên kết
+                                {/* Storefront placement */}
+                                <div className="lg:col-span-2 rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
+                                    <div>
+                                        <h3 className="font-semibold text-slate-900">Vị trí hiển thị sản phẩm</h3>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            Có thể chọn đồng thời Bán chạy, Sản phẩm mới và Khuyến mãi. Sản phẩm liên kết là nhóm riêng và cần chọn danh mục.
+                                        </p>
+                                    </div>
+                                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                        {([
+                                            { field: 'showOnHomepageBestSeller', label: 'Sản phẩm bán chạy', description: 'Hiển thị tại mục Bán chạy.', icon: Flame },
+                                            { field: 'showOnHomepageNew', label: 'Sản phẩm mới', description: 'Hiển thị tại mục Sản phẩm mới.', icon: Sparkles },
+                                            { field: 'showOnHomepagePromo', label: 'Khuyến mãi', description: 'Hiển thị tại mục Khuyến mãi.', icon: Percent },
+                                        ] as const).map(option => {
+                                            const Icon = option.icon;
+                                            return (
+                                                <label key={option.field} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${formData[option.field] ? 'border-amber-400 bg-white shadow-sm' : 'border-amber-100 bg-white/70 hover:border-amber-300'}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData[option.field]}
+                                                        onChange={event => setFormData(previous => ({
+                                                            ...previous,
+                                                            [option.field]: event.target.checked,
+                                                            isLinkedProduct: event.target.checked ? false : previous.isLinkedProduct,
+                                                            linkedCategory: event.target.checked ? '' : previous.linkedCategory,
+                                                        }))}
+                                                        className="mt-1 h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                                                    />
+                                                    <span>
+                                                        <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                                            <Icon size={16} className="text-amber-600" />
+                                                            {option.label}
+                                                        </span>
+                                                        <span className="mt-1 block text-xs leading-5 text-slate-500">{option.description}</span>
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                        <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${formData.isLinkedProduct ? 'border-blue-400 bg-white shadow-sm' : 'border-blue-100 bg-white/70 hover:border-blue-300'}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.isLinkedProduct}
+                                                onChange={event => setFormData(previous => ({
+                                                    ...previous,
+                                                    isLinkedProduct: event.target.checked,
+                                                    linkedCategory: event.target.checked ? previous.linkedCategory : '',
+                                                    showOnHomepageBestSeller: event.target.checked ? false : previous.showOnHomepageBestSeller,
+                                                    showOnHomepageNew: event.target.checked ? false : previous.showOnHomepageNew,
+                                                    showOnHomepagePromo: event.target.checked ? false : previous.showOnHomepagePromo,
+                                                }))}
+                                                className="mt-1 h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span>
+                                                <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                                    <Link2 size={16} className="text-blue-600" />
+                                                    Sản phẩm liên kết
+                                                </span>
+                                                <span className="mt-1 block text-xs leading-5 text-slate-500">Hiển thị trong mục Sản phẩm liên kết.</span>
                                             </span>
-                                            <span className="mt-1 block text-xs text-slate-500">
-                                                Sản phẩm sẽ xuất hiện trong mục “Sản phẩm liên kết” trên website.
-                                            </span>
-                                        </span>
-                                    </label>
+                                        </label>
+                                    </div>
 
                                     {formData.isLinkedProduct && (
-                                        <div className="mt-4">
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                                Submenu sản phẩm liên kết <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="linkedCategory"
-                                                list="linked-product-categories"
-                                                value={formData.linkedCategory}
-                                                onChange={handleChange}
-                                                required
-                                                placeholder="VD: Bánh, Kẹo, Táo đỏ"
-                                                className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
-                                            />
-                                            <datalist id="linked-product-categories">
-                                                {linkedCategories.map(category => (
-                                                    <option key={category} value={category} />
-                                                ))}
-                                            </datalist>
-                                            <p className="text-xs text-slate-500 mt-1">
-                                                Có thể chọn submenu đã có hoặc nhập tên mới; submenu mới sẽ được tạo tự động khi lưu sản phẩm.
-                                            </p>
+                                        <div className="mt-4 grid gap-4 border-t border-blue-100 pt-4 lg:grid-cols-2">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                    Danh mục <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="category"
+                                                    list="product-category-options"
+                                                    value={categoryInput}
+                                                    onChange={handleCategoryChange}
+                                                    required
+                                                    placeholder="Chọn hoặc nhập danh mục mới"
+                                                    className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                                />
+                                                <datalist id="product-category-options">
+                                                    {productCategories.map(category => (
+                                                        <option key={category.value} value={category.label} />
+                                                    ))}
+                                                </datalist>
+                                                <p className="text-xs text-slate-500 mt-1">Danh mục chỉ cần chọn cho sản phẩm liên kết.</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                    Submenu sản phẩm liên kết <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="linkedCategory"
+                                                    list="linked-product-categories"
+                                                    value={formData.linkedCategory}
+                                                    onChange={handleChange}
+                                                    required
+                                                    placeholder="VD: Bánh, Kẹo, Táo đỏ"
+                                                    className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition-all"
+                                                />
+                                                <datalist id="linked-product-categories">
+                                                    {linkedCategories.map(category => (
+                                                        <option key={category} value={category} />
+                                                    ))}
+                                                </datalist>
+                                                <p className="text-xs text-slate-500 mt-1">
+                                                    Có thể chọn submenu đã có hoặc nhập tên mới; submenu mới sẽ được tạo tự động khi lưu sản phẩm.
+                                                </p>
+                                            </div>
                                         </div>
                                     )}
                                 </div>

@@ -1107,12 +1107,88 @@ test('a linked product requires a submenu', () => {
 test('a linked product submenu is normalized before persistence', () => {
     const product = normalizeProductPayload({
         isLinkedProduct: true,
+        category: 'Nuts',
         linkedCategory: '  Táo   đỏ  ',
         vipMaxDiscount: 0,
     });
 
     assert.equal(product.isLinkedProduct, true);
     assert.equal(product.linkedCategory, 'Táo đỏ');
+});
+
+test('homepage product placements can be selected together and synchronize storefront tags', () => {
+    const product = normalizeProductPayload({
+        isLinkedProduct: false,
+        showOnHomepageBestSeller: true,
+        showOnHomepageNew: true,
+        showOnHomepagePromo: true,
+        tags: ['organic', 'best-seller'],
+        vipMaxDiscount: 0,
+    });
+
+    assert.equal(product.showOnHomepageBestSeller, true);
+    assert.equal(product.showOnHomepageNew, true);
+    assert.equal(product.showOnHomepagePromo, true);
+    assert.deepEqual(product.tags, ['organic', 'best-seller', 'new', 'promo']);
+});
+
+test('untouched homepage groups stay unconfigured when a product is assigned to one group', () => {
+    const product = normalizeProductPayload({
+        isLinkedProduct: false,
+        showOnHomepageBestSeller: true,
+        tags: [],
+        vipMaxDiscount: 0,
+    });
+
+    assert.equal(product.showOnHomepageBestSeller, true);
+    assert.equal('showOnHomepageNew' in product, false);
+    assert.equal('showOnHomepagePromo' in product, false);
+    assert.equal('showOnHomepageLinked' in product, false);
+});
+
+test('linked products stay separate from regular homepage product placements', () => {
+    const product = normalizeProductPayload({
+        isLinkedProduct: true,
+        category: 'Nuts',
+        linkedCategory: 'Bánh',
+        showOnHomepageBestSeller: true,
+        showOnHomepageNew: true,
+        showOnHomepagePromo: true,
+        tags: ['best-seller', 'new', 'promo', 'partner'],
+        vipMaxDiscount: 0,
+    });
+
+    assert.equal(product.showOnHomepageBestSeller, false);
+    assert.equal(product.showOnHomepageNew, false);
+    assert.equal(product.showOnHomepagePromo, false);
+    assert.equal(product.showOnHomepageLinked, true);
+    assert.deepEqual(product.tags, ['partner']);
+});
+
+test('the product form exposes three multi-select homepage groups and only shows categories for linked products', async () => {
+    const productForm = await readFile(
+        new URL('../src/components/admin/ProductForm.tsx', import.meta.url),
+        'utf8',
+    );
+
+    assert.match(productForm, /showOnHomepageBestSeller/);
+    assert.match(productForm, /showOnHomepageNew/);
+    assert.match(productForm, /showOnHomepagePromo/);
+    assert.match(productForm, /Có thể chọn đồng thời Bán chạy, Sản phẩm mới và Khuyến mãi/);
+    assert.match(productForm, /\{formData\.isLinkedProduct && \(/);
+    assert.match(productForm, /Danh mục chỉ cần chọn cho sản phẩm liên kết/);
+});
+
+test('a linked product requires a regular category as well as its submenu', () => {
+    assert.throws(
+        () => normalizeProductPayload({
+            isLinkedProduct: true,
+            category: '   ',
+            linkedCategory: 'Bánh',
+            vipMaxDiscount: 0,
+        }),
+        /phải có danh mục/,
+    );
 });
 
 test('a regular product does not retain a linked submenu', () => {
