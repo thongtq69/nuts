@@ -244,9 +244,12 @@ function RegisterForm() {
                     color: #9c7044;
                     letter-spacing: 0.04em;
                 }
-                .role-option {
+                .auth-form .form-group .role-selector > .role-option {
                     position: relative;
-                    padding: 16px;
+                    min-width: 0;
+                    min-height: 188px;
+                    margin: 0;
+                    padding: 20px 12px 14px;
                     border: 2px solid #e5e7eb;
                     border-radius: 12px;
                     cursor: pointer;
@@ -254,41 +257,59 @@ function RegisterForm() {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
+                    justify-content: flex-start;
                     text-align: center;
+                    font-size: 14px;
                 }
-                .role-option:hover {
+                .auth-form .form-group .role-selector > .role-option:hover {
                     border-color: #9C7043;
                     background: #faf6f2;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(90, 57, 30, 0.09);
                 }
-                .role-option.active {
+                .auth-form .form-group .role-selector > .role-option.active {
                     border-color: #9C7043;
-                    background: #f5eadb;
-                    box-shadow: 0 0 0 3px rgba(156, 112, 67, 0.14);
+                    background: linear-gradient(180deg, #fffaf3 0%, #f6eadb 100%);
+                    box-shadow: 0 0 0 3px rgba(156, 112, 67, 0.12), 0 10px 24px rgba(90, 57, 30, 0.1);
                 }
                 .role-option input {
                     position: absolute;
                     opacity: 0;
+                    pointer-events: none;
                 }
                 .role-label {
+                    display: block;
                     font-weight: 600;
                     color: #333;
                     margin-bottom: 4px;
+                    line-height: 1.35;
                 }
                 .role-desc {
+                    display: block;
+                    flex: 1;
                     font-size: 12px;
                     color: #666;
+                    line-height: 1.55;
                 }
                 .role-option.active .role-label {
                     color: #9C7043;
                 }
                 .role-selected {
-                    margin-top: 8px;
-                    padding: 3px 9px;
+                    display: inline-flex;
+                    flex: 0 0 auto;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 4px;
+                    margin-top: 12px;
+                    padding: 6px 10px;
                     border-radius: 999px;
                     background: #9C7043;
                     color: #fff;
                     font-size: 11px;
                     font-weight: 700;
+                    line-height: 1;
+                    white-space: nowrap;
+                    box-shadow: 0 4px 10px rgba(90, 57, 30, 0.18);
                 }
                 .role-notice {
                     margin-top: 12px;
@@ -301,6 +322,19 @@ function RegisterForm() {
                 @media (max-width: 640px) {
                     .role-selector {
                         grid-template-columns: 1fr;
+                    }
+                    .auth-form .form-group .role-selector > .role-option {
+                        min-height: 0;
+                        padding: 16px 112px 16px 18px;
+                        align-items: flex-start;
+                        text-align: left;
+                    }
+                    .role-selected {
+                        position: absolute;
+                        top: 50%;
+                        right: 16px;
+                        margin-top: 0;
+                        transform: translateY(-50%);
                     }
                 }
             `}</style>
