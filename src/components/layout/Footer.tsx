@@ -29,7 +29,7 @@ interface SiteSettings {
 export default function Footer() {
     const [settings, setSettings] = useState<SiteSettings | null>(null);
     const toast = useToast();
-    const { t, href, apiPath } = useLocale();
+    const { t, href, apiPath, locale } = useLocale();
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -115,6 +115,9 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link href={href('/tra-cuu-don-hang')}>{t('Tra cứu đơn hàng')}</Link>
+                            </li>
+                            <li>
+                                <Link href={href('/qr')}>{locale === 'en' ? 'Website QR code' : 'Mã QR website'}</Link>
                             </li>
                         </ul>
                     </div>
