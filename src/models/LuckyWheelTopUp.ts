@@ -8,6 +8,9 @@ export interface ILuckyWheelTopUp {
     status: 'pending' | 'paid' | 'expired';
     acbTransactionNo?: string;
     paidAt?: Date;
+    manuallyApprovedBy?: mongoose.Types.ObjectId;
+    manuallyApprovedAt?: Date;
+    manualApprovalNote?: string;
     adminNotificationStatus?: 'processing' | 'sent' | 'failed' | 'skipped';
     adminNotificationSentAt?: Date;
     adminNotificationLastAttemptAt?: Date;
@@ -21,6 +24,9 @@ const schema = new Schema<ILuckyWheelTopUp>({
     status: { type: String, enum: ['pending', 'paid', 'expired'], default: 'pending', index: true },
     acbTransactionNo: { type: String, sparse: true, unique: true },
     paidAt: Date,
+    manuallyApprovedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    manuallyApprovedAt: Date,
+    manualApprovalNote: { type: String, maxlength: 500 },
     adminNotificationStatus: { type: String, enum: ['processing', 'sent', 'failed', 'skipped'] },
     adminNotificationSentAt: Date,
     adminNotificationLastAttemptAt: Date,

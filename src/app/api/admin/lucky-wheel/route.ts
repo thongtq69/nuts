@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth-permissions';
-import { approveLuckyWheelWithdrawal, awardLuckyWheelMilestone, getLuckyWheelAdminSummary, getLuckyWheelSettings, reviewLuckyWheelWithdrawal, updateLuckyWheelMemberAccount } from '@/lib/lucky-wheel';
+import { approveLuckyWheelTopUpManually, approveLuckyWheelWithdrawal, awardLuckyWheelMilestone, getLuckyWheelAdminSummary, getLuckyWheelSettings, reviewLuckyWheelWithdrawal, updateLuckyWheelMemberAccount } from '@/lib/lucky-wheel';
 import { LUCKY_WHEEL_MINIMUM_WITHDRAWAL } from '@/lib/lucky-wheel-rules';
 import mongoose from 'mongoose';
 
@@ -115,6 +115,18 @@ export async function POST(request: Request) {
             const milestone = await awardLuckyWheelMilestone(user._id);
             return NextResponse.json({ message: `Đã chọn ngẫu nhiên và cộng tiền thưởng cho ${milestone?.winners.length || 0} thành viên.`, milestone });
         }
+        if (action === 'top-up-approved-manual') {
+            const topUp = await approveLuckyWheelTopUpManually(
+                user._id,
+                String(body.topUpId || ''),
+                String(body.transactionId || ''),
+                String(body.note || ''),
+            );
+            return NextResponse.json({
+                message: `Đã duyệt nạp tiền và cộng ${topUp.spins} lượt quay cho khách hàng.`,
+                topUp,
+            });
+        }
         if (action === 'withdrawal-approved') {
             const withdrawal = await approveLuckyWheelWithdrawal(
                 user._id,
@@ -145,6 +157,10 @@ export async function POST(request: Request) {
             ACCOUNT_NOT_FOUND: 'Không tìm thấy tài khoản vòng quay của thành viên.',
             INVALID_ACCOUNT_VALUES: 'Lượt quay và các số tiền phải là số nguyên không âm.',
             BALANCE_BELOW_PENDING_WITHDRAWALS: 'Số dư thưởng không được thấp hơn tổng tiền đang chờ rút.',
+            TOP_UP_NOT_PENDING: 'Lệnh nạp không còn ở trạng thái chờ xử lý.',
+            TOP_UP_TRANSACTION_DUPLICATE: 'Mã giao dịch ngân hàng này đã được dùng cho một lệnh nạp khác.',
+            INVALID_TOP_UP_TRANSACTION: 'Vui lòng nhập mã giao dịch ngân hàng hợp lệ.',
+            INVALID_ADMIN: 'Không xác định được Admin thực hiện thao tác.',
             WITHDRAWAL_NOT_FOUND: 'Yêu cầu rút tiền không còn ở trạng thái chờ xử lý.',
             WITHDRAWAL_REFERENCE_CREATED: 'Đã tạo nội dung đối chiếu cho yêu cầu cũ. Vui lòng kiểm tra thông tin rồi duyệt lại.',
         };

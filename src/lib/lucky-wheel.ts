@@ -98,8 +98,12 @@ export async function applyPaidLuckyWheelTopUp(
     paymentRef: string,
     amount: number,
     transactionId: string,
+    manualApproval?: { adminUserId: string; note?: string },
 ): Promise<mongoose.HydratedDocument<ILuckyWheelTopUp> | null> {
     await dbConnect();
+    const normalizedTransactionId = String(transactionId || '').trim();
+    if (!normalizedTransactionId || normalizedTransactionId.length > 100) throw new Error('INVALID_TOP_UP_TRANSACTION');
+    if (manualApproval && !mongoose.isValidObjectId(manualApproval.adminUserId)) throw new Error('INVALID_ADMIN');
     const session = await mongoose.startSession();
     let topUp: mongoose.HydratedDocument<ILuckyWheelTopUp> | null = null;
     try {
@@ -108,8 +112,13 @@ export async function applyPaidLuckyWheelTopUp(
             if (!topUp) return;
             if (Number(topUp.amount) !== Number(amount)) throw new Error('TOP_UP_AMOUNT_MISMATCH');
             topUp.status = 'paid';
-            topUp.acbTransactionNo = transactionId;
+            topUp.acbTransactionNo = normalizedTransactionId;
             topUp.paidAt = new Date();
+            if (manualApproval) {
+                topUp.manuallyApprovedBy = new mongoose.Types.ObjectId(manualApproval.adminUserId);
+                topUp.manuallyApprovedAt = new Date();
+                topUp.manualApprovalNote = String(manualApproval.note || '').trim().slice(0, 500);
+            }
             await topUp.save({ session });
             await LuckyWheelAccount.findOneAndUpdate(
                 { userId: topUp.userId },
@@ -119,6 +128,33 @@ export async function applyPaidLuckyWheelTopUp(
         });
     } finally { await session.endSession(); }
     return topUp;
+}
+
+export async function approveLuckyWheelTopUpManually(
+    adminUserId: string,
+    topUpId: string,
+    transactionId: string,
+    note = '',
+) {
+    await dbConnect();
+    if (!mongoose.isValidObjectId(topUpId)) throw new Error('TOP_UP_NOT_PENDING');
+    const topUp = await LuckyWheelTopUp.findOne({ _id: topUpId, status: 'pending' })
+        .select('paymentRef amount')
+        .lean();
+    if (!topUp) throw new Error('TOP_UP_NOT_PENDING');
+    try {
+        const paidTopUp = await applyPaidLuckyWheelTopUp(
+            topUp.paymentRef,
+            topUp.amount,
+            transactionId,
+            { adminUserId, note },
+        );
+        if (!paidTopUp) throw new Error('TOP_UP_NOT_PENDING');
+        return paidTopUp;
+    } catch (error) {
+        if ((error as { code?: number })?.code === 11000) throw new Error('TOP_UP_TRANSACTION_DUPLICATE');
+        throw error;
+    }
 }
 
 export async function requestLuckyWheelWithdrawal(userId: string, input: { amount: number; bankName: string; accountNumber: string; accountName: string }) {

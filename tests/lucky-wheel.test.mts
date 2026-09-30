@@ -163,6 +163,26 @@ test('withdrawals use complete bank details and an atomic manual Admin approval'
     assert.doesNotMatch(service, /verifyWithdrawalInAcbHistory/);
 });
 
+test('Admin can manually approve a pending top-up with an auditable bank transaction', () => {
+    const service = readFileSync(new URL('../src/lib/lucky-wheel.ts', import.meta.url), 'utf8');
+    const adminApi = readFileSync(new URL('../src/app/api/admin/lucky-wheel/route.ts', import.meta.url), 'utf8');
+    const adminPage = readFileSync(new URL('../src/app/admin/lucky-wheel/page.tsx', import.meta.url), 'utf8');
+    const model = readFileSync(new URL('../src/models/LuckyWheelTopUp.ts', import.meta.url), 'utf8');
+
+    assert.match(service, /export async function approveLuckyWheelTopUpManually/);
+    assert.match(service, /status: 'pending'/);
+    assert.match(service, /manualApprovalNote/);
+    assert.match(service, /topUp\.spins/);
+    assert.match(service, /withTransaction/);
+    assert.match(adminApi, /action === 'top-up-approved-manual'/);
+    assert.match(adminApi, /approveLuckyWheelTopUpManually/);
+    assert.match(adminPage, /Duyệt nạp thủ công/);
+    assert.match(adminPage, /Mã giao dịch ngân hàng/);
+    assert.match(adminPage, /Xác nhận và cộng \$\{settlingTopUp\.spins\} lượt/);
+    assert.match(model, /manuallyApprovedBy/);
+    assert.match(model, /manualApprovalNote/);
+});
+
 test('withdrawal requests reserve availability but only deduct the total balance after approval', () => {
     assert.equal(availablePrizeBalance(300_000, 100_000), 200_000);
     assert.equal(withdrawalRequestDecision(50_000, 300_000, 0), 'below_minimum');

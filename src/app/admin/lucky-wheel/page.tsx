@@ -79,6 +79,7 @@ interface Withdrawal {
 interface TopUpHistory {
   _id: string;
   amount: number;
+  spins: number;
   status: "pending" | "paid" | "expired";
   paymentRef: string;
   acbTransactionNo?: string;
@@ -187,6 +188,9 @@ export default function AdminLuckyWheelPage() {
   const [settlingWithdrawal, setSettlingWithdrawal] =
     useState<Withdrawal | null>(null);
   const [approvalNote, setApprovalNote] = useState("");
+  const [settlingTopUp, setSettlingTopUp] = useState<TopUpHistory | null>(null);
+  const [topUpTransactionId, setTopUpTransactionId] = useState("");
+  const [topUpApprovalNote, setTopUpApprovalNote] = useState("");
   const [visibleLists, setVisibleLists] = useState({
     members: 6,
     withdrawals: 6,
@@ -292,6 +296,25 @@ export default function AdminLuckyWheelPage() {
     if (succeeded) {
       setSettlingWithdrawal(null);
       setApprovalNote("");
+    }
+  };
+
+  const approveTopUp = async () => {
+    if (!settlingTopUp || !topUpTransactionId.trim()) return;
+    const succeeded = await request(
+      "POST",
+      {
+        action: "top-up-approved-manual",
+        topUpId: settlingTopUp._id,
+        transactionId: topUpTransactionId.trim(),
+        note: topUpApprovalNote,
+      },
+      `top-up-paid-${settlingTopUp._id}`,
+    );
+    if (succeeded) {
+      setSettlingTopUp(null);
+      setTopUpTransactionId("");
+      setTopUpApprovalNote("");
     }
   };
 
@@ -402,6 +425,7 @@ export default function AdminLuckyWheelPage() {
             ? "rejected"
             : "pending",
       detail: item.acbTransactionNo ? `GD: ${item.acbTransactionNo}` : "",
+      topUp: item,
     })),
     ...(data.withdrawals || []).map((item) => ({
       id: item._id,
@@ -419,6 +443,7 @@ export default function AdminLuckyWheelPage() {
       detail:
         item.rejectionReason ||
         (item.bankTransactionId ? `GD: ${item.bankTransactionId}` : ""),
+      topUp: undefined,
     })),
   ].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -1582,6 +1607,19 @@ export default function AdminLuckyWheelPage() {
                     ? new Date(item.createdAt).toLocaleString("vi-VN")
                     : "-"}
                 </p>
+                {item.topUp && item.status === "pending" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettlingTopUp(item.topUp);
+                      setTopUpTransactionId("");
+                      setTopUpApprovalNote("");
+                    }}
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#9c7043] px-4 py-3 text-sm font-black text-white shadow-[0_6px_16px_rgba(90,57,30,.18)] transition hover:bg-[#7d5734] focus:outline-none focus:ring-2 focus:ring-[#c99b68] focus:ring-offset-2"
+                  >
+                    <ShieldCheck size={17} /> Duyệt nạp thủ công
+                  </button>
+                )}
               </article>
             ))
           ) : (
@@ -1601,6 +1639,7 @@ export default function AdminLuckyWheelPage() {
                 <th className="p-3">Số tiền</th>
                 <th className="p-3">Nội dung</th>
                 <th className="p-3">Trạng thái</th>
+                <th className="p-3">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -1621,6 +1660,23 @@ export default function AdminLuckyWheelPage() {
                       <span className="text-xs text-slate-500">
                         {item.customer?.email || ""}
                       </span>
+                    </td>
+                    <td className="p-3">
+                      {item.topUp && item.status === "pending" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSettlingTopUp(item.topUp);
+                            setTopUpTransactionId("");
+                            setTopUpApprovalNote("");
+                          }}
+                          className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-[#d9b98f] bg-[#fff8ee] px-3.5 py-2 text-xs font-black text-[#81572f] transition hover:border-[#9c7043] hover:bg-[#9c7043] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#c99b68] focus:ring-offset-2"
+                        >
+                          <ShieldCheck size={15} /> Duyệt thủ công
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="p-3 font-black">{money(item.amount)}</td>
                     <td className="p-3">
@@ -1648,7 +1704,7 @@ export default function AdminLuckyWheelPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-6 text-center text-slate-500">
+                  <td colSpan={6} className="p-6 text-center text-slate-500">
                     {moneyHistorySearch
                       ? "Không tìm thấy giao dịch phù hợp."
                       : `Chưa có giao dịch ${moneyHistoryTab === "topup" ? "nạp tiền" : "rút tiền"}.`}
@@ -1782,6 +1838,102 @@ export default function AdminLuckyWheelPage() {
           className="mt-4 px-0 pb-0"
         />
       </section>
+      {settlingTopUp && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center overflow-y-auto bg-slate-950/70 p-0 backdrop-blur-sm sm:grid sm:place-items-center sm:p-4">
+          <div className="max-h-[94dvh] w-full max-w-2xl overflow-auto rounded-t-[28px] bg-white p-5 shadow-2xl sm:my-6 sm:max-h-[92vh] sm:rounded-3xl sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-bold text-[#9c7043] sm:text-xs">
+                  Duyệt nạp tiền thủ công
+                </p>
+                <h2 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">
+                  Xác nhận đã nhận chuyển khoản
+                </h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Đóng"
+                onClick={() => setSettlingTopUp(null)}
+                className="shrink-0 rounded-full bg-slate-100 p-2 text-slate-600 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-[#c99b68]"
+              >
+                <X />
+              </button>
+            </div>
+            <div className="mt-5 grid gap-3 rounded-2xl border border-[#ead8bf] bg-[#fffaf2] p-4 sm:mt-6 sm:grid-cols-2 sm:p-5">
+              <div>
+                <p className="text-xs text-slate-500">Khách hàng</p>
+                <p className="mt-1 font-black text-slate-900">
+                  {settlingTopUp.userId?.name || "Thành viên"}
+                </p>
+                <p className="mt-0.5 break-all text-xs text-slate-500">
+                  {settlingTopUp.userId?.email || ""}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Số tiền / lượt được cộng</p>
+                <p className="mt-1 text-lg font-black text-[#81572f]">
+                  {money(settlingTopUp.amount)} · {settlingTopUp.spins} lượt
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-xs text-slate-500">Mã lệnh nạp</p>
+                <p className="mt-1 break-all font-mono text-base font-black text-slate-900 sm:text-lg">
+                  {settlingTopUp.paymentRef}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+              <div className="flex gap-3">
+                <AlertTriangle className="mt-0.5 shrink-0 text-amber-600" size={20} />
+                <div>
+                  <strong>Chỉ duyệt sau khi đã kiểm tra ngân hàng</strong>
+                  <p className="mt-1">
+                    Dùng khi khách chuyển đúng số tiền nhưng ghi sai nội dung. Hệ thống sẽ đánh dấu lệnh thành công và cộng lượt đúng một lần.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <label className={`${labelClass} mt-5`}>
+              Mã giao dịch ngân hàng <span className="text-red-500">*</span>
+              <input
+                autoFocus
+                required
+                value={topUpTransactionId}
+                onChange={(event) => setTopUpTransactionId(event.target.value)}
+                className={fieldClass}
+                maxLength={100}
+                placeholder="Ví dụ: 16305994041"
+                autoComplete="off"
+              />
+            </label>
+            <label className={`${labelClass} mt-4`}>
+              Ghi chú nội bộ (không bắt buộc)
+              <textarea
+                rows={2}
+                value={topUpApprovalNote}
+                onChange={(event) => setTopUpApprovalNote(event.target.value)}
+                className={fieldClass}
+                maxLength={500}
+                placeholder="Ví dụ: Khách ghi sai nội dung chuyển khoản"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={Boolean(busy) || !topUpTransactionId.trim()}
+              onClick={() => void approveTopUp()}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#9c7043] px-5 py-3.5 font-bold text-white shadow-[0_8px_20px_rgba(90,57,30,.2)] transition hover:bg-[#7d5734] focus:outline-none focus:ring-2 focus:ring-[#c99b68] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <CheckCircle2 size={19} />
+              {busy === `top-up-paid-${settlingTopUp._id}`
+                ? "Đang xác nhận..."
+                : `Xác nhận và cộng ${settlingTopUp.spins} lượt`}
+            </button>
+            <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+              Mã giao dịch được lưu để đối chiếu. Lệnh đã duyệt không thể được cộng lượt lần hai.
+            </p>
+          </div>
+        </div>
+      )}
       {settlingWithdrawal && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center overflow-y-auto bg-slate-950/70 p-0 backdrop-blur-sm sm:grid sm:place-items-center sm:p-4">
           <div className="max-h-[94dvh] w-full max-w-2xl overflow-auto rounded-t-[28px] bg-white p-5 shadow-2xl sm:my-6 sm:max-h-[92vh] sm:rounded-3xl sm:p-8">
